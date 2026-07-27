@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# DuckDB WASM assets (copied from node_modules on install)
+# WASM assets (copied from node_modules on install)
 public/duckdb/*.wasm
 public/duckdb/*.worker.js
+public/liteparse/*.wasm

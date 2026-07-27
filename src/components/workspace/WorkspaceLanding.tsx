@@ -40,7 +40,7 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
     >
       <div className="flex w-full max-w-3xl flex-col items-center text-center">
         <p className="text-subtle-foreground text-xs font-medium tracking-wide uppercase">
-          Browser Doc Agent
+          Scoper Doc Agent
         </p>
         <h1 className="text-foreground mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
           What would you like to do?

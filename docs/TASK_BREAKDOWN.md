@@ -323,17 +323,20 @@ flowchart LR
 ### **ID:** BDA-021
 
 **Title:** LiteParse WASM worker for PDF parse  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** Critical  
 **Description:** Worker: `init()` from `@llamaindex/liteparse-wasm`, `LiteParse({ ocrEnabled: false, outputFormat: 'json' })`, parse `Uint8Array` → pages with textItems. Return normalized blocks with bbox. Configure vite for WASM/top-level await.  
 **Completed Changes:**
-- 🔄 liteparse.worker.ts
-- 🔄 liteparse-client.ts
-- 🔄 Vite wasm plugin config
+- ✅ `liteparse.worker.ts` — WASM init, `LiteParse` parse, postMessage protocol
+- ✅ `liteparse-client.ts` — typed `init`, `parsePdf`, `runLiteParseHarness`
+- ✅ `liteparse-protocol.ts` + `liteparse-normalize.ts` — message types, textItems → blocks with bbox
+- ✅ `scripts/copy-liteparse-assets.mjs` — copies wasm to `public/liteparse/` on install/dev/build
+- ✅ Vite: `assetsInclude` for wasm, `build.target: esnext`, worker ES format, optimizeDeps exclude
+- ✅ `public/sample/minimal.pdf` for dev harness
 **Test Strategy:** Parse sample PDF bytes; returns pages.length > 0 and textItems with coordinates.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; `runLiteParseHarness()` parses sample PDF in dev (check console for errors)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.3, [LiteParse browser usage](https://developers.llamaindex.ai/liteparse/guides/browser-usage/)  
 

@@ -6,16 +6,19 @@
   "packageManager": "pnpm@11.17.0",
   "scripts": {
     "copy:duckdb": "node scripts/copy-duckdb-assets.mjs",
-    "dev": "pnpm copy:duckdb && vite",
-    "build": "pnpm copy:duckdb && tsc -b && vite build",
+    "copy:liteparse": "node scripts/copy-liteparse-assets.mjs",
+    "copy:assets": "pnpm copy:duckdb && pnpm copy:liteparse",
+    "dev": "pnpm copy:assets && vite",
+    "build": "pnpm copy:assets && tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "postinstall": "node scripts/copy-duckdb-assets.mjs"
+    "postinstall": "pnpm copy:assets"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
     "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
     "@fontsource-variable/geist": "^5.3.0",
+    "@llamaindex/liteparse-wasm": "^2.9.0",
     "@shadcn/react": "^0.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -14,6 +14,10 @@ export default defineConfig({
     format: 'es',
   },
   optimizeDeps: {
-    exclude: ['@duckdb/duckdb-wasm'],
+    exclude: ['@duckdb/duckdb-wasm', '@llamaindex/liteparse-wasm'],
   },
+  build: {
+    target: 'esnext',
+  },
+  assetsInclude: ['**/*.wasm'],
 })

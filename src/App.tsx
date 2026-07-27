@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
 import { runDuckdbHarness } from '@/services/duckdb-client'
+import { runLiteParseHarness } from '@/services/liteparse-client'
 import { runSessionStoreHarness } from '@/store/session-store'
 
 function App() {
@@ -10,6 +11,9 @@ function App() {
       runSessionStoreHarness()
       void runDuckdbHarness().catch((error) => {
         console.error('[duckdb-harness]', error)
+      })
+      void runLiteParseHarness().catch((error) => {
+        console.error('[liteparse-harness]', error)
       })
     }
   }, [])

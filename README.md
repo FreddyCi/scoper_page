@@ -1,4 +1,4 @@
-# Browser Doc Agent Demo
+# Scoper Doc Agent Demo
 
 Local-first document intelligence in the browser: RFP qualification, scope creep analysis, visual citations, and on-device AI chat.
 

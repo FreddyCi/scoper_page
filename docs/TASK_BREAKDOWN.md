@@ -302,18 +302,19 @@ flowchart LR
 ### **ID:** BDA-020
 
 **Title:** DuckDB WASM worker and schema  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** Critical  
 **Description:** Worker bootstraps `@duckdb/duckdb-wasm` (eh variant). Copy wasm assets to `public/duckdb/`. Create tables: documents, blocks, results_profiles, profile_criteria, scope_flags, comments. Expose query/insert via message protocol. Client wrapper `duckdb-client.ts`.  
 **Completed Changes:**
-- 🔄 duckdb.worker.ts
-- 🔄 duckdb-client.ts with typed API
-- 🔄 Schema DDL on init
-- 🔄 Build script or vite config for wasm assets
+- ✅ `duckdb.worker.ts` — eh bundle bootstrap, schema init, query/insert message protocol
+- ✅ `duckdb-client.ts` — typed `init`, `query`, `insertDocument`, `insertBlock`, `runDuckdbHarness`
+- ✅ `duckdb-schema.ts` + `duckdb-protocol.ts` — DDL and worker message types
+- ✅ `scripts/copy-duckdb-assets.mjs` — copies eh wasm + worker to `public/duckdb/` on install/dev/build
+- ✅ Vite worker config; dev harness in `App.tsx`
 **Test Strategy:** Worker starts; `INSERT` document + block; `SELECT` returns row.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; `runDuckdbHarness()` INSERT + SELECT in dev (check console for errors)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.3, Plan §DuckDB schema, [DuckDB WASM deploy](https://duckdb.org/docs/lts/clients/wasm/deploying_duckdb_wasm)  
 

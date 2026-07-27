@@ -279,16 +279,17 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
   return (
     <div
       className={cn(
-        'rounded-panel border-border bg-surface shadow-panel flex w-full flex-col border',
+        'border-border bg-surface shadow-panel flex w-full flex-col overflow-hidden rounded-2xl border',
         className,
       )}
     >
       {attachments.length > 0 ? (
-        <div className="border-border border-b px-4 py-3">
+        <div className="border-border/70 border-b px-4 py-3">
           <FileStackPreview items={attachments} onRemove={handleRemoveFile} />
         </div>
       ) : null}
 
+      <div className="px-4 pt-4 pb-2">
       <label className="sr-only" htmlFor="command-input-textarea">
         Command input
       </label>
@@ -297,23 +298,24 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
         value={prompt}
         onChange={(event) => setPrompt(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+          if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault()
             handleSubmit()
           }
         }}
         rows={4}
         placeholder={PLACEHOLDER_COPY[mode]}
-        className="text-foreground placeholder:text-subtle-foreground min-h-[7rem] w-full resize-none bg-transparent px-4 pt-4 pb-2 text-sm leading-relaxed outline-none"
+        className="text-foreground placeholder:text-subtle-foreground min-h-[6.5rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
       />
+      </div>
 
-      <div className="flex items-center justify-between gap-2 px-3 pb-3">
+      <div className="border-border/70 flex items-center justify-between gap-2 border-t px-3 py-2.5">
         <div className="flex min-w-0 items-center gap-1">
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground rounded-full"
             aria-label="Attach files"
             onClick={() => fileInputRef.current?.click()}
           >
@@ -326,7 +328,7 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
               type="button"
               size="icon-sm"
               variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground rounded-full"
               aria-label="Command settings"
               aria-expanded={settingsOpen}
               onClick={() => setSettingsOpen((value) => !value)}
@@ -343,7 +345,7 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
           <button
             type="button"
             disabled
-            className="text-muted-foreground ml-1 inline-flex min-w-0 items-center gap-1 truncate text-xs"
+            className="text-muted-foreground ml-1 inline-flex min-w-0 items-center gap-1 truncate rounded-full px-1.5 py-1 text-xs transition-colors"
             aria-haspopup="listbox"
           >
             <span className="truncate">Bonsai 1.7B</span>
@@ -351,17 +353,14 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
           </button>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
+        <div className="flex shrink-0 items-center gap-2">
+          <button
             type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground hidden sm:inline-flex"
-            aria-label="Open upload popup"
+            className="text-muted-foreground hover:text-foreground px-1 text-xs font-medium transition-colors"
             onClick={() => setUploadPopupOpen(true)}
           >
-            <span className="text-xs">Upload</span>
-          </Button>
+            Upload
+          </button>
           <Button
             type="button"
             size="icon-sm"

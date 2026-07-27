@@ -113,19 +113,24 @@ flowchart LR
 ### **ID:** BDA-004
 
 **Title:** Define core TypeScript types and schemas  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** Critical  
 **Description:** Create `src/lib/types.ts`: `CitationRef`, `CriterionStatus`, `CriterionResult`, `RfpResultsProfile`, `ScopeCreepProfile`, `DocumentMeta`, `WorkspaceMode`. Create `src/lib/schemas.ts` with JSON schema objects for bitgpu `format: { json: { schema } }`.  
 **Completed Changes:**
-- 🔄 Export all types from plan/PRD
-- 🔄 RFP + generic extract schemas in schemas.ts
-- 🔄 Scope creep flag schema stub
+- ✅ Expanded `src/lib/types.ts`: domain types, DuckDB row shapes, ingest/find_clause helpers, verdict labels
+- ✅ Aligned with plan: `source_doc_id`, `flag_type` + `evidence` on scope flags
+- ✅ Added `blockToCitation()` mapper and `RFP_VERDICT_LABELS` / `SCOPE_CREEP_VERDICT_LABELS`
+- ✅ Full bitgpu-compatible schemas in `src/lib/schemas.ts` (`additionalProperties: false` throughout)
+- ✅ Schemas: citation, criterion, RFP profiles/requirements, scope creep, find_clause
+- ✅ `bitgpuSchemas` registry + `bitgpuJsonFormat()` helper; barrel export `src/lib/index.ts`
 **Test Strategy:** Types compile; schemas are valid JSON Schema objects importable by bitgpu client.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
-**Context/Artifacts:** PRD §9.5, Plan §RFP Results Profiles, Plan §Citation contract  
+- ✅ `pnpm build` — 0 TypeScript errors (strict mode)
+- ✅ All schemas use bitgpu-enforceable subset (type, properties, required, enum, items)
+- ✅ `bitgpuJsonFormat(bitgpuSchemas.rfpProfiles)` ready for BDA-050 client
+**Assigned:** Completed  
+**Context/Artifacts:** PRD §9.5, Plan §RFP Results Profiles, Plan §Citation contract, [bitgpu JSON schema](https://github.com/stfurkan/bitgpu#guaranteed-valid-json-format-json)  
 
 ---
 

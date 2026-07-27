@@ -368,17 +368,20 @@ flowchart LR
 ### **ID:** BDA-023
 
 **Title:** Ingest router and mime dispatch  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-021, BDA-020  
 **Priority:** Critical  
 **Description:** `ingest-router.ts`: detect mime → PDF via LiteParse (MVP); stub handlers for docx/md/xlsx until Phase 10. Generate stable `doc_id`, `block_id`. Return ingest result summary.  
 **Completed Changes:**
-- 🔄 Router function `ingestFile(file: File)`
-- 🔄 PDF path calls liteparse + duckdb insert
-- 🔄 Error handling per file
+- ✅ `ingest-router.ts` — `ingestFile`, `ingestFiles`, mime dispatch, PDF → LiteParse + DuckDB persist
+- ✅ `stable-id.ts` — SHA-256 content hash → stable `doc_id`
+- ✅ Word/Markdown/Excel stub handlers throw Phase 10 message; per-file error isolation in `ingestFiles`
+- ✅ `use-ingest-pipeline.ts` — passes `ocrEnabled` from session store; returns succeeded/failed arrays
+- ✅ `use-upload-queue.ts` — surfaces per-file ingest errors in queue UI
+- ✅ `runIngestHarness()` — ingests `minimal.pdf`, verifies DuckDB document + block rows
 **Test Strategy:** Upload PDF through router → document + blocks rows in DuckDB.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; `runIngestHarness()` verifies INSERT + SELECT in dev
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.3, Plan §Ingest  
 

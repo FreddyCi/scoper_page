@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
 import { runDuckdbHarness } from '@/services/duckdb-client'
+import { runIngestHarness } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
 import { runOcrHarness } from '@/services/ocr-client'
 import { runSessionStoreHarness } from '@/store/session-store'
@@ -21,6 +22,9 @@ function App() {
       })
       void runLiteParseOcrHarness().catch((error) => {
         console.error('[liteparse-ocr-harness]', error)
+      })
+      void runIngestHarness().catch((error) => {
+        console.error('[ingest-harness]', error)
       })
     }
   }, [])

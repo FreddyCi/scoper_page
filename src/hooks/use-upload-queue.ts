@@ -64,7 +64,25 @@ export function useUploadQueue() {
     )
 
     try {
-      await enqueueFiles(items.map((item) => item.file))
+      const { succeeded, failed } = await enqueueFiles(items.map((item) => item.file))
+
+      if (failed.length > 0) {
+        setItems((current) =>
+          current.map((item) => {
+            const failure = failed.find((entry) => entry.filename === item.file.name)
+            if (!failure) {
+              return { ...item, status: 'done' as const }
+            }
+            return {
+              ...item,
+              status: 'error' as const,
+              error: failure.error,
+            }
+          }),
+        )
+        return succeeded.length > 0
+      }
+
       await new Promise((resolve) => setTimeout(resolve, 700))
       setItems((current) =>
         current.map((item) => ({ ...item, status: 'done' as const })),

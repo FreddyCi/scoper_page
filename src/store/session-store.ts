@@ -38,6 +38,7 @@ export type SessionState = {
   chatCollapsed: boolean
   workspaceView: WorkspaceView
   activeDocId: string | null
+  uploadPopupOpen: boolean
 
   setSessionName: (name: string) => void
   setMode: (mode: WorkspaceMode) => void
@@ -52,6 +53,7 @@ export type SessionState = {
   toggleChatCollapsed: () => void
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
+  setUploadPopupOpen: (open: boolean) => void
   resetSession: () => void
 }
 
@@ -65,6 +67,7 @@ const initialState = {
   chatCollapsed: readChatCollapsedPreference(),
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
+  uploadPopupOpen: false,
 }
 
 function resolveActiveDocId(
@@ -162,6 +165,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setWorkspaceView: (workspaceView) => set({ workspaceView }),
 
   setActiveDocId: (activeDocId) => set({ activeDocId }),
+
+  setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
 
   resetSession: () => {
     writeChatCollapsedPreference(false)

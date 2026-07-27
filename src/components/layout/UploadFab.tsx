@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 import { UploadIcon } from 'lucide-react'
 
 import { UploadPopup } from '@/components/layout/UploadPopup'
@@ -6,13 +6,15 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useUploadQueue } from '@/hooks/use-upload-queue'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 type UploadFabProps = {
   className?: string
 }
 
 export function UploadFab({ className }: UploadFabProps) {
-  const [open, setOpen] = useState(false)
+  const open = useSessionStore((s) => s.uploadPopupOpen)
+  const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
   const {
     items,
     count,
@@ -29,10 +31,10 @@ export function UploadFab({ className }: UploadFabProps) {
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      setOpen(next)
+      setUploadPopupOpen(next)
       if (!next && !isSubmitting) clearQueue()
     },
-    [clearQueue, isSubmitting],
+    [clearQueue, isSubmitting, setUploadPopupOpen],
   )
 
   return (
@@ -55,7 +57,7 @@ export function UploadFab({ className }: UploadFabProps) {
         className="shadow-elevated border-border bg-surface relative size-10 rounded-full border"
         aria-label="Upload documents"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setUploadPopupOpen(!open)}
       >
         <UploadIcon className="size-4" />
         {count > 0 ? (

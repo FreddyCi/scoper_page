@@ -255,17 +255,19 @@ flowchart LR
 ### **ID:** BDA-014
 
 **Title:** Build WorkspaceLanding and QuickActionCards  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-010, BDA-005  
 **Priority:** Critical  
 **Description:** Centered greeting, fanned cards: Analyse RFP, Check scope creep, Upload docs. Card click sets mode and triggers upload flow (open BDA-013 or focus command input). Reference [`Screenshot 2026-07-27 at 2.51.53 PM.png`](Screenshot%202026-07-27%20at%202.51.53%E2%80%AFPM.png).  
 **Completed Changes:**
-- 🔄 WorkspaceLanding layout
-- 🔄 QuickActionCards with icons/labels
-- 🔄 Actions wired to store + upload popup
+- ✅ `WorkspaceLanding.tsx` — centered greeting and intro copy
+- ✅ `QuickActionCards.tsx` — fanned card layout with icons; mode + upload popup wiring
+- ✅ `WorkspaceContent.tsx` — renders landing via `useShowLanding()`
+- ✅ `uploadPopupOpen` in session store; `UploadFab` reads shared open state
+- ✅ Removed dev `seedDevDocuments()` auto-run so landing is visible on load
 **Test Strategy:** Each card sets correct mode; Upload docs opens popup; landing hides when `workspaceView !== landing`.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; cards set RFP/Creep mode; all three open upload popup; landing hidden when docs present or view changes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.2, PRD §6.3, Plan §Landing  
 

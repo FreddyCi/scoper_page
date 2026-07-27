@@ -1,4 +1,5 @@
-import { useSessionStore } from '@/store/session-store'
+import { useSessionStore, useShowLanding } from '@/store/session-store'
+import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
@@ -6,14 +7,19 @@ const MODE_COPY: Record<WorkspaceMode, string> = {
   scope_creep: 'Scope Creep — compare baseline vs change documents for drift flags.',
 }
 
-/** Routes workspace body by session view — filled in by BDA-014+ */
+/** Routes workspace body by session view — command center in BDA-015 */
 export function WorkspaceContent() {
+  const showLanding = useShowLanding()
   const workspaceView = useSessionStore((s) => s.workspaceView)
   const mode = useSessionStore((s) => s.mode)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const documents = useSessionStore((s) => s.documents)
 
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId)
+
+  if (showLanding) {
+    return <WorkspaceLanding />
+  }
 
   if (workspaceView === 'profiles') {
     return (
@@ -46,7 +52,7 @@ export function WorkspaceContent() {
           Active document: <span className="text-foreground">{activeDoc.filename}</span>
         </p>
       ) : (
-        <p className="text-subtle-foreground text-xs">Landing and command center — BDA-014</p>
+        <p className="text-subtle-foreground text-xs">Command input card — BDA-015</p>
       )}
     </div>
   )

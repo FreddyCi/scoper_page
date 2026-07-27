@@ -214,17 +214,18 @@ flowchart LR
 ### **ID:** BDA-012
 
 **Title:** Build WorkspaceHeader component  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-010, BDA-005  
 **Priority:** High  
 **Description:** Session name dropdown, mode toggle (RFP Analysis / Scope Creep), doc tabs when `documents.length > 0`. Doc role badges deferred to BDA-070.  
 **Completed Changes:**
-- 🔄 Header bar UI
-- 🔄 Mode toggle updates store
-- 🔄 Doc tabs switch activeDocId
+- ✅ `WorkspaceHeader.tsx` — session name dropdown (presets), Saving label, mode toggle, Open chat when collapsed
+- ✅ `DocumentTabs` — renders when `documents.length > 0`; switches `activeDocId`
+- ✅ `WorkspaceContent.tsx` — mode-specific placeholder copy reflects `mode` and active doc
+- ✅ `seedDevDocuments()` — dev-only mock docs after store harness for tab UI
 **Test Strategy:** Mode switch changes placeholder copy; tabs appear after mock docs in store.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; mode toggle updates landing copy; doc tabs visible in dev with mock docs
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.3, Plan §Workspace header  
 

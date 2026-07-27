@@ -1,5 +1,6 @@
 export {
   runSessionStoreHarness,
+  seedDevDocuments,
   selectActiveDocument,
   selectHasDocuments,
   selectShowLanding,

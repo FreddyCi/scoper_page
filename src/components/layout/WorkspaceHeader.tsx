@@ -1,4 +1,5 @@
-import { ChevronDownIcon, MessageSquareIcon } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDownIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { shellWorkspaceColumnClass } from '@/components/layout/shell-layout'
@@ -11,65 +12,176 @@ type WorkspaceHeaderProps = {
   className?: string
 }
 
-const MODE_LABELS: Record<WorkspaceMode, string> = {
-  rfp: 'RFP Analysis',
-  scope_creep: 'Scope Creep',
-}
+const MODE_OPTIONS: Array<{ value: WorkspaceMode; label: string; short: string }> = [
+  { value: 'rfp', label: 'RFP Analysis', short: 'RFP' },
+  { value: 'scope_creep', label: 'Scope Creep', short: 'Creep' },
+]
 
-export function WorkspaceHeader({ chatCollapsed, className }: WorkspaceHeaderProps) {
+const SESSION_PRESETS = [
+  'Untitled session',
+  'RFP qualification review',
+  'Scope creep check',
+]
+
+function SessionNameDropdown() {
   const sessionName = useSessionStore((s) => s.sessionName)
-  const mode = useSessionStore((s) => s.mode)
-  const setMode = useSessionStore((s) => s.setMode)
-  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+  const setSessionName = useSessionStore((s) => s.setSessionName)
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
 
   return (
-    <header
-      className={cn(
-        'bg-workspace flex items-center gap-3 px-[var(--spacing-panel)] py-3',
-        shellWorkspaceColumnClass,
-        !chatCollapsed && 'border-border border-r',
-        className,
-      )}
-    >
+    <div ref={rootRef} className="relative shrink-0">
       <button
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
         className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[14rem] items-center gap-2 border px-3 py-1 text-sm font-medium transition-colors"
       >
         <span className="truncate">{sessionName}</span>
         <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
       </button>
 
-      <span className="text-subtle-foreground text-xs">Saving</span>
-
-      <div className="ml-auto flex items-center gap-2">
-        <div className="border-border bg-surface hidden items-center rounded-lg border p-0.5 sm:flex">
-          <Button
-            size="xs"
-            variant={mode === 'rfp' ? 'default' : 'ghost'}
-            className="rounded-md"
-            onClick={() => setMode('rfp')}
-          >
-            RFP
-          </Button>
-          <Button
-            size="xs"
-            variant={mode === 'scope_creep' ? 'default' : 'ghost'}
-            className="rounded-md"
-            onClick={() => setMode('scope_creep')}
-          >
-            Creep
-          </Button>
+      {open ? (
+        <div
+          role="listbox"
+          className="border-border bg-surface shadow-elevated absolute top-[calc(100%+0.375rem)] left-0 z-20 min-w-[12rem] rounded-lg border py-1"
+        >
+          {SESSION_PRESETS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="option"
+              aria-selected={sessionName === name}
+              onClick={() => {
+                setSessionName(name)
+                setOpen(false)
+              }}
+              className={cn(
+                'hover:bg-muted block w-full px-3 py-1.5 text-left text-sm transition-colors',
+                sessionName === name && 'bg-muted font-medium',
+              )}
+            >
+              {name}
+            </button>
+          ))}
         </div>
+      ) : null}
+    </div>
+  )
+}
 
-        {chatCollapsed ? (
-          <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
-            <MessageSquareIcon className="size-3.5" />
-            Open chat
-          </Button>
-        ) : null}
+function WorkspaceModeToggle() {
+  const mode = useSessionStore((s) => s.mode)
+  const setMode = useSessionStore((s) => s.setMode)
+
+  return (
+    <div
+      className="border-border bg-surface flex items-center rounded-lg border p-0.5"
+      role="group"
+      aria-label="Workspace mode"
+    >
+      {MODE_OPTIONS.map((option) => (
+        <Button
+          key={option.value}
+          size="xs"
+          variant={mode === option.value ? 'default' : 'ghost'}
+          className="rounded-md px-2 sm:px-2.5"
+          onClick={() => setMode(option.value)}
+          aria-pressed={mode === option.value}
+        >
+          <span className="sm:hidden">{option.short}</span>
+          <span className="hidden sm:inline">{option.label}</span>
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+function DocumentTabs() {
+  const documents = useSessionStore((s) => s.documents)
+  const activeDocId = useSessionStore((s) => s.activeDocId)
+  const setActiveDocId = useSessionStore((s) => s.setActiveDocId)
+
+  if (documents.length === 0) return null
+
+  return (
+    <div className="border-border scrollbar-none flex gap-1 overflow-x-auto border-t px-[var(--spacing-panel)] py-2">
+      {documents.map((doc) => {
+        const isActive = doc.doc_id === activeDocId
+
+        return (
+          <button
+            key={doc.doc_id}
+            type="button"
+            onClick={() => setActiveDocId(doc.doc_id)}
+            aria-selected={isActive}
+            className={cn(
+              'inline-flex max-w-[12rem] shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors',
+              isActive
+                ? 'border-border bg-surface text-foreground border shadow-sm'
+                : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground',
+            )}
+          >
+            <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
+            <span className="truncate">{doc.filename}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+export function WorkspaceHeader({ chatCollapsed, className }: WorkspaceHeaderProps) {
+  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+
+  return (
+    <header
+      className={cn(
+        'bg-workspace flex min-w-0 flex-col',
+        shellWorkspaceColumnClass,
+        !chatCollapsed && 'border-border border-r',
+        className,
+      )}
+    >
+      <div className="flex items-center gap-3 px-[var(--spacing-panel)] py-3">
+        <SessionNameDropdown />
+        <span className="text-subtle-foreground text-xs">Saving</span>
+
+        <div className="ml-auto flex items-center gap-2">
+          <WorkspaceModeToggle />
+
+          {chatCollapsed ? (
+            <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
+              <MessageSquareIcon className="size-3.5" />
+              <span className="hidden sm:inline">Open chat</span>
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      <span className="sr-only">Mode: {MODE_LABELS[mode]}</span>
+      <DocumentTabs />
     </header>
   )
 }

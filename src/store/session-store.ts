@@ -208,6 +208,37 @@ export function useHasDocuments() {
   return useSessionStore(selectHasDocuments)
 }
 
+/** Dev-only sample documents for header tab UI (BDA-012) */
+export function seedDevDocuments() {
+  const store = useSessionStore.getState()
+  if (store.documents.length > 0) return
+
+  store.setDocuments([
+    {
+      doc_id: 'doc-rfp',
+      filename: 'City-RFP-2026.pdf',
+      mime: 'application/pdf',
+      role: 'unknown',
+      uploaded_at: new Date().toISOString(),
+    },
+    {
+      doc_id: 'doc-bid-a',
+      filename: 'Bidder-A-Response.pdf',
+      mime: 'application/pdf',
+      role: 'unknown',
+      uploaded_at: new Date().toISOString(),
+    },
+    {
+      doc_id: 'doc-bid-b',
+      filename: 'Bidder-B-Response.pdf',
+      mime: 'application/pdf',
+      role: 'unknown',
+      uploaded_at: new Date().toISOString(),
+    },
+  ])
+  store.setActiveDocId('doc-rfp')
+}
+
 /**
  * Dev harness — assert store actions behave as expected.
  * Called from App in development; no-op in production builds.

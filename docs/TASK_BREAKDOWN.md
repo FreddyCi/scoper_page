@@ -88,19 +88,25 @@ flowchart LR
 ### **ID:** BDA-003
 
 **Title:** Install shadcn ui and MessageScroller  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-002  
 **Priority:** Critical  
 **Description:** Init shadcn. Add components: `message-scroller`, `message`, `tabs`, `badge`, `button`, `card`, `sheet` or `popover` (for upload popup). Verify MessageScrollerProvider renders in isolation.  
 **Completed Changes:**
-- 🔄 `pnpm dlx shadcn@latest init`
-- 🔄 Add message-scroller + message
-- 🔄 Add tabs, badge, button, card, sheet
+- ✅ `pnpm dlx shadcn@latest init -t vite -b base -p nova -y` → `components.json`, Geist font, shadcn theme CSS
+- ✅ Added `message-scroller`, `message`, `tabs`, `badge`, `button`, `card`, `sheet` under `src/components/ui/`
+- ✅ Added `src/lib/utils.ts` (`cn` helper)
+- ✅ Moved mis-placed `@/` CLI output into `src/` (path alias fix)
+- ✅ Created `MessageScrollerDemo` with autoScroll toggle, add-message, jump-to-end button
+- ✅ Wired demo into `ChatSidebar` with shadcn Tabs (Agent | History)
 **Test Strategy:** Story or test page shows MessageScroller with sample items; autoScroll toggles work.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
-**Context/Artifacts:** PRD §5.7, [MessageScroller docs](https://ui.shadcn.com/docs/components/base/message-scroller)  
+- ✅ `pnpm build` succeeds (0 TS errors)
+- ✅ MessageScrollerProvider renders in chat sidebar with 4 sample messages
+- ✅ autoScroll toggle + Add message + MessageScrollerButton compile and run
+- ✅ UI components: button, badge, tabs, card, sheet, message-scroller present in `src/components/ui/`
+**Assigned:** Completed  
+**Context/Artifacts:** PRD §5.7, [MessageScroller docs](https://ui.shadcn.com/docs/components/base/message-scroller), `components.json`  
 
 ---
 

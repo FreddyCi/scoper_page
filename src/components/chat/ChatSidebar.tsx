@@ -25,6 +25,7 @@ type ChatSidebarProps = {
 function ChatSidebarHeaderControls() {
   const sessionName = useSessionStore((s) => s.sessionName)
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+  const clearChat = useSessionStore((s) => s.clearChat)
 
   return (
     <>
@@ -57,7 +58,7 @@ function ChatSidebarHeaderControls() {
         <Button type="button" size="icon-xs" variant="ghost" aria-label="New chat">
           <PlusIcon className="size-3.5" />
         </Button>
-        <Button type="button" size="icon-xs" variant="ghost" aria-label="Refresh chat">
+        <Button type="button" size="icon-xs" variant="ghost" aria-label="Refresh chat" onClick={clearChat}>
           <RotateCcwIcon className="size-3.5" />
         </Button>
         <Button

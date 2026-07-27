@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 import type {
   CitationRef,
+  ChatMessage,
   DocumentMeta,
   DocumentRole,
   RfpResultsProfile,
@@ -11,6 +12,23 @@ import type {
 } from '@/lib/types'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
+const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
+
+function readChatStartedPreference(): boolean {
+  try {
+    return sessionStorage.getItem(CHAT_STARTED_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeChatStartedPreference(started: boolean) {
+  try {
+    sessionStorage.setItem(CHAT_STARTED_STORAGE_KEY, started ? '1' : '0')
+  } catch {
+    // sessionStorage unavailable (private mode, etc.)
+  }
+}
 
 function readChatCollapsedPreference(): boolean {
   try {
@@ -28,6 +46,20 @@ function writeChatCollapsedPreference(collapsed: boolean) {
   }
 }
 
+function readInitialChatCollapsed(): boolean {
+  if (!readChatStartedPreference()) return true
+  return readChatCollapsedPreference()
+}
+
+/** Stub assistant line until bitgpu chat (BDA-051) */
+function stubAssistantReply(prompt: string): string {
+  if (/scope|creep|baseline|change/i.test(prompt)) {
+    return 'I can compare baseline and change documents once files are ingested. Upload both sets to get started.'
+  }
+
+  return 'I found 12 evaluation criteria across sections 3.1–3.4. Three look like hard pass/fail requirements.'
+}
+
 export type SessionState = {
   sessionName: string
   mode: WorkspaceMode
@@ -36,6 +68,8 @@ export type SessionState = {
   creepProfiles: ScopeCreepProfile[]
   selectedCitation: CitationRef | null
   chatCollapsed: boolean
+  chatStarted: boolean
+  chatMessages: ChatMessage[]
   workspaceView: WorkspaceView
   activeDocId: string | null
   uploadPopupOpen: boolean
@@ -51,6 +85,8 @@ export type SessionState = {
   selectCitation: (citation: CitationRef | null) => void
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
+  sendChatPrompt: (text: string) => void
+  clearChat: () => void
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
@@ -64,7 +100,9 @@ const initialState = {
   profiles: [] as RfpResultsProfile[],
   creepProfiles: [] as ScopeCreepProfile[],
   selectedCitation: null as CitationRef | null,
-  chatCollapsed: readChatCollapsedPreference(),
+  chatCollapsed: readInitialChatCollapsed(),
+  chatStarted: readChatStartedPreference(),
+  chatMessages: [] as ChatMessage[],
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
   uploadPopupOpen: false,
@@ -162,6 +200,47 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { chatCollapsed }
     }),
 
+  sendChatPrompt: (text) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+
+    const state = get()
+    const isFirstPrompt = !state.chatStarted
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      text: trimmed,
+      created_at: new Date().toISOString(),
+    }
+    const assistantMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'assistant',
+      text: stubAssistantReply(trimmed),
+      created_at: new Date().toISOString(),
+    }
+
+    if (isFirstPrompt) {
+      writeChatStartedPreference(true)
+      writeChatCollapsedPreference(false)
+    }
+
+    set({
+      chatStarted: true,
+      chatCollapsed: isFirstPrompt ? false : state.chatCollapsed,
+      chatMessages: [...state.chatMessages, userMessage, assistantMessage],
+    })
+  },
+
+  clearChat: () => {
+    writeChatStartedPreference(false)
+    writeChatCollapsedPreference(true)
+    set({
+      chatStarted: false,
+      chatCollapsed: true,
+      chatMessages: [],
+    })
+  },
+
   setWorkspaceView: (workspaceView) => set({ workspaceView }),
 
   setActiveDocId: (activeDocId) => set({ activeDocId }),
@@ -169,8 +248,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
 
   resetSession: () => {
-    writeChatCollapsedPreference(false)
-    set({ ...initialState, chatCollapsed: false })
+    writeChatStartedPreference(false)
+    writeChatCollapsedPreference(true)
+    set({
+      ...initialState,
+      chatStarted: false,
+      chatCollapsed: true,
+      chatMessages: [],
+    })
   },
 }))
 
@@ -284,9 +369,28 @@ export function runSessionStoreHarness(): void {
     throw new Error('selectCitation failed')
   }
 
+  const beforeToggle = useSessionStore.getState().chatCollapsed
   store.toggleChatCollapsed()
-  if (!useSessionStore.getState().chatCollapsed) {
+  if (useSessionStore.getState().chatCollapsed === beforeToggle) {
     throw new Error('toggleChatCollapsed failed')
+  }
+
+  store.sendChatPrompt('Harness smoke test')
+  const afterChat = useSessionStore.getState()
+  if (
+    !afterChat.chatStarted ||
+    afterChat.chatCollapsed ||
+    afterChat.chatMessages.length < 2
+  ) {
+    throw new Error('sendChatPrompt failed')
+  }
+
+  store.clearChat()
+  if (
+    useSessionStore.getState().chatStarted ||
+    !useSessionStore.getState().chatCollapsed
+  ) {
+    throw new Error('clearChat failed')
   }
 
   store.removeDocument('doc-1')

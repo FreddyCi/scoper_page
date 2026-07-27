@@ -1,11 +1,36 @@
+import { useCallback } from 'react'
+
+import {
+  CommandInputCard,
+  type CommandInputSubmitPayload,
+} from '@/components/workspace/CommandInputCard'
 import { QuickActionCards } from '@/components/workspace/QuickActionCards'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 type WorkspaceLandingProps = {
   className?: string
 }
 
 export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
+  const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
+
+  const handleSubmit = useCallback(
+    (payload: CommandInputSubmitPayload) => {
+      if (payload.prompt.trim()) {
+        sendChatPrompt(payload.prompt)
+      }
+
+      if (import.meta.env.DEV && payload.files.length > 0) {
+        console.debug('[command-input] files attached (ingest BDA-024)', {
+          fileNames: payload.files.map((file) => file.name),
+          mode: payload.mode,
+        })
+      }
+    },
+    [sendChatPrompt],
+  )
+
   return (
     <div
       className={cn(
@@ -27,6 +52,11 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
       </div>
 
       <QuickActionCards className="mt-10 sm:mt-12" />
+
+      <CommandInputCard
+        onSubmit={handleSubmit}
+        className="mt-8 max-w-2xl"
+      />
     </div>
   )
 }

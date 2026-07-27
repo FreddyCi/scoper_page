@@ -276,17 +276,18 @@ flowchart LR
 ### **ID:** BDA-015
 
 **Title:** Build CommandInputCard with file stack  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-014, BDA-013  
 **Priority:** Critical  
 **Description:** Large rounded input card: stacked doc thumbnails, `"N files"` pill, textarea, paperclip (upload), settings popover (mode, model stub, OCR toggle stub), model dropdown stub, send button. Placeholder varies by mode. Reference [`Screenshot 2026-07-27 at 2.49.33 PM.png`](Screenshot%202026-07-27%20at%202.49.33%E2%80%AFPM.png).  
 **Completed Changes:**
-- 🔄 CommandInputCard UI
-- 🔄 File stack preview from pending uploads
-- 🔄 Send triggers `onSubmit` callback (wire to ingest in BDA-024)
+- ✅ `CommandInputCard.tsx` — rounded panel, fanned file stack, `"N files"` badge, mode-specific placeholder
+- ✅ Paperclip multi-select, settings popover (mode, model stub, OCR toggle stub), model label stub, send button
+- ✅ `onSubmit` callback with `{ prompt, files, mode }`; wired on landing + post-landing workspace view
+- ✅ Cmd/Ctrl+Enter sends; dev console logs submit payload until BDA-024
 **Test Strategy:** Attach files → stack visible; send fires callback with files + prompt text.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; file stack + pill render on attach; send logs prompt/files/mode in dev
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.2, Plan §Command input card  
 

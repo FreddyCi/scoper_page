@@ -116,6 +116,15 @@ export type WorkspaceMode = 'rfp' | 'scope_creep'
 
 export type WorkspaceView = 'landing' | 'profiles' | 'split'
 
+export type ChatMessageRole = 'user' | 'assistant'
+
+export type ChatMessage = {
+  id: string
+  role: ChatMessageRole
+  text: string
+  created_at: string
+}
+
 /** Agent tool: find_clause response */
 export type FindClauseResult = {
   matches: Array<{

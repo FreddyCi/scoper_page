@@ -1,5 +1,11 @@
-import { useSessionStore, useShowLanding } from '@/store/session-store'
+import { useCallback } from 'react'
+
+import {
+  CommandInputCard,
+  type CommandInputSubmitPayload,
+} from '@/components/workspace/CommandInputCard'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
+import { useSessionStore, useShowLanding } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
@@ -7,15 +13,32 @@ const MODE_COPY: Record<WorkspaceMode, string> = {
   scope_creep: 'Scope Creep — compare baseline vs change documents for drift flags.',
 }
 
-/** Routes workspace body by session view — command center in BDA-015 */
+/** Routes workspace body by session view */
 export function WorkspaceContent() {
   const showLanding = useShowLanding()
   const workspaceView = useSessionStore((s) => s.workspaceView)
+  const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
   const mode = useSessionStore((s) => s.mode)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const documents = useSessionStore((s) => s.documents)
 
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId)
+
+  const handleCommandSubmit = useCallback(
+    (payload: CommandInputSubmitPayload) => {
+      if (payload.prompt.trim()) {
+        sendChatPrompt(payload.prompt)
+      }
+
+      if (import.meta.env.DEV && payload.files.length > 0) {
+        console.debug('[command-input] files attached (ingest BDA-024)', {
+          fileNames: payload.files.map((file) => file.name),
+          mode: payload.mode,
+        })
+      }
+    },
+    [sendChatPrompt],
+  )
 
   if (showLanding) {
     return <WorkspaceLanding />
@@ -45,15 +68,18 @@ export function WorkspaceContent() {
   }
 
   return (
-    <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 px-[var(--spacing-panel)] text-center text-sm">
-      <p>{MODE_COPY[mode]}</p>
-      {activeDoc ? (
-        <p className="text-subtle-foreground text-xs">
-          Active document: <span className="text-foreground">{activeDoc.filename}</span>
-        </p>
-      ) : (
-        <p className="text-subtle-foreground text-xs">Command input card — BDA-015</p>
-      )}
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-[var(--spacing-panel)] py-8">
+      <div className="mb-6 max-w-lg text-center">
+        <p className="text-muted-foreground text-sm">{MODE_COPY[mode]}</p>
+        {activeDoc ? (
+          <p className="text-subtle-foreground mt-2 text-xs">
+            Active document:{' '}
+            <span className="text-foreground">{activeDoc.filename}</span>
+          </p>
+        ) : null}
+      </div>
+
+      <CommandInputCard onSubmit={handleCommandSubmit} className="max-w-2xl" />
     </div>
   )
 }

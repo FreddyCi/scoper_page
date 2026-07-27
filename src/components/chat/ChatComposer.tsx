@@ -1,12 +1,14 @@
+import { useState } from 'react'
 import {
+  ArrowUpIcon,
   ChevronDownIcon,
-  MicIcon,
   PaperclipIcon,
   SparklesIcon,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 type ChatComposerProps = {
   className?: string
@@ -14,6 +16,15 @@ type ChatComposerProps = {
 
 /** Composer shell — wired to bitgpu in BDA-052 */
 export function ChatComposer({ className }: ChatComposerProps) {
+  const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
+  const [draft, setDraft] = useState('')
+
+  function handleSend() {
+    if (!draft.trim()) return
+    sendChatPrompt(draft)
+    setDraft('')
+  }
+
   return (
     <div
       className={cn(
@@ -27,6 +38,14 @@ export function ChatComposer({ className }: ChatComposerProps) {
       <textarea
         id="chat-composer-input"
         rows={3}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+            event.preventDefault()
+            handleSend()
+          }
+        }}
         placeholder="Ask the agent… / for skills, @ for context"
         className="text-foreground placeholder:text-subtle-foreground min-h-[5.5rem] w-full resize-none bg-transparent px-3.5 pt-3.5 pb-2 text-sm leading-relaxed outline-none"
       />
@@ -68,9 +87,11 @@ export function ChatComposer({ className }: ChatComposerProps) {
             size="icon-sm"
             variant="default"
             className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
-            aria-label="Voice input"
+            aria-label="Send message"
+            disabled={!draft.trim()}
+            onClick={handleSend}
           >
-            <MicIcon className="size-4" />
+            <ArrowUpIcon className="size-4" />
           </Button>
         </div>
       </div>

@@ -36,6 +36,7 @@ export type CommandInputSubmitPayload = {
   prompt: string
   files: File[]
   mode: WorkspaceMode
+  ocrEnabled: boolean
 }
 
 type CommandInputCardProps = {
@@ -153,7 +154,8 @@ function CommandSettingsPopover({
 }) {
   const mode = useSessionStore((s) => s.mode)
   const setMode = useSessionStore((s) => s.setMode)
-  const [ocrEnabled, setOcrEnabled] = useState(true)
+  const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
+  const setOcrEnabled = useSessionStore((s) => s.setOcrEnabled)
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -246,6 +248,7 @@ function CommandSettingsPopover({
 
 export function CommandInputCard({ onSubmit, className }: CommandInputCardProps) {
   const mode = useSessionStore((s) => s.mode)
+  const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
   const [prompt, setPrompt] = useState('')
   const [attachments, setAttachments] = useState<CommandAttachment[]>([])
@@ -270,6 +273,7 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
       prompt: prompt.trim(),
       files: attachments.map((item) => item.file),
       mode,
+      ocrEnabled,
     })
 
     setPrompt('')

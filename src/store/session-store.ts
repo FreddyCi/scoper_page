@@ -73,6 +73,7 @@ export type SessionState = {
   workspaceView: WorkspaceView
   activeDocId: string | null
   uploadPopupOpen: boolean
+  ocrEnabled: boolean
 
   setSessionName: (name: string) => void
   setMode: (mode: WorkspaceMode) => void
@@ -90,6 +91,7 @@ export type SessionState = {
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
+  setOcrEnabled: (enabled: boolean) => void
   resetSession: () => void
 }
 
@@ -106,6 +108,7 @@ const initialState = {
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
   uploadPopupOpen: false,
+  ocrEnabled: true,
 }
 
 function resolveActiveDocId(
@@ -246,6 +249,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setActiveDocId: (activeDocId) => set({ activeDocId }),
 
   setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
+
+  setOcrEnabled: (ocrEnabled) => set({ ocrEnabled }),
 
   resetSession: () => {
     writeChatStartedPreference(false)

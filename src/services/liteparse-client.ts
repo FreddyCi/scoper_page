@@ -76,9 +76,18 @@ export class LiteParseClient {
     return this.send<string>({ type: 'ping' })
   }
 
-  async parsePdf(docId: string, bytes: Uint8Array): Promise<LiteParseParseResult> {
+  async parsePdf(
+    docId: string,
+    bytes: Uint8Array,
+    options?: { ocrEnabled?: boolean },
+  ): Promise<LiteParseParseResult> {
     await this.init()
-    return this.send<LiteParseParseResult>({ type: 'parse', doc_id: docId, bytes })
+    return this.send<LiteParseParseResult>({
+      type: 'parse',
+      doc_id: docId,
+      bytes,
+      ocrEnabled: options?.ocrEnabled,
+    })
   }
 
   async terminate(): Promise<void> {
@@ -144,6 +153,56 @@ export async function runLiteParseHarness(): Promise<void> {
 
     if (parsed.blocks.length === 0) {
       throw new Error('LiteParse harness: expected normalized blocks')
+    }
+  } finally {
+    await client.terminate()
+  }
+}
+
+/** Dev harness — parse scanned PDF with OCR enabled (BDA-022) */
+export async function runLiteParseOcrHarness(): Promise<void> {
+  const client = createLiteParseClient()
+
+  try {
+    await client.init()
+
+    const withoutOcr = await fetch('/sample/scanned.pdf')
+    if (!withoutOcr.ok) {
+      throw new Error(`Failed to load scanned PDF: ${withoutOcr.status}`)
+    }
+
+    const scannedBytes = new Uint8Array(await withoutOcr.arrayBuffer())
+    const noOcrResult = await client.parsePdf('harness-scanned-off', scannedBytes, {
+      ocrEnabled: false,
+    })
+
+    if (noOcrResult.blocks.length > 0) {
+      throw new Error('LiteParse OCR harness: scanned PDF should have no blocks without OCR')
+    }
+
+    const withOcrResult = await client.parsePdf('harness-scanned-on', scannedBytes, {
+      ocrEnabled: true,
+    })
+
+    if (withOcrResult.pages.length === 0) {
+      throw new Error('LiteParse OCR harness: expected pages.length > 0')
+    }
+
+    if (withOcrResult.blocks.length === 0) {
+      throw new Error('LiteParse OCR harness: expected blocks with OCR enabled')
+    }
+
+    const hasCoordinates = withOcrResult.pages.some((page) =>
+      page.textItems.some(
+        (item) =>
+          Number.isFinite(item.x) &&
+          Number.isFinite(item.y) &&
+          Number.isFinite(item.width) &&
+          Number.isFinite(item.height),
+      ),
+    )
+    if (!hasCoordinates) {
+      throw new Error('LiteParse OCR harness: expected textItems with coordinates')
     }
   } finally {
     await client.terminate()

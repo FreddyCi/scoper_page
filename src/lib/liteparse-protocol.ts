@@ -27,7 +27,7 @@ export type LiteParseParseResult = {
 export type LiteParseWorkerRequest =
   | { type: 'init' }
   | { type: 'ping' }
-  | { type: 'parse'; doc_id: string; bytes: Uint8Array }
+  | { type: 'parse'; doc_id: string; bytes: Uint8Array; ocrEnabled?: boolean }
 
 export type LiteParseWorkerSuccess = {
   ok: true

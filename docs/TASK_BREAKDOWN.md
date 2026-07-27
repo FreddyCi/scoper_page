@@ -345,17 +345,21 @@ flowchart LR
 ### **ID:** BDA-022
 
 **Title:** OCR worker and LiteParse ocrEngine bridge  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-021  
 **Priority:** High  
 **Description:** `ocr.worker.ts` with tesseract.js. Implement `ocrEngine.recognize(imageData, w, h, lang)` returning `{ text, bbox, confidence }[]`. Wire into LiteParse when `ocrEnabled: true` (settings toggle from BDA-015).  
 **Completed Changes:**
-- 🔄 ocr.worker.ts
-- 🔄 ocrEngine adapter in liteparse worker
-- 🔄 Settings toggle passes ocrEnabled flag
+- ✅ `ocr.worker.ts` — tesseract.js `createWorker`, PNG recognize → word bbox results
+- ✅ `ocr-engine-bridge.ts` — LiteParse `ocrEngine` adapter delegating to OCR worker
+- ✅ `ocr-client.ts` + `ocr-protocol.ts` + `ocr-results.ts` — typed client and result mapping
+- ✅ `liteparse.worker.ts` — recreates parser with `ocrEngine` when `ocrEnabled: true` on parse
+- ✅ `ocrEnabled` in session store; CommandInputCard settings toggle wired; submit payload includes flag
+- ✅ `scripts/copy-tesseract-assets.mjs` — worker script to `public/tesseract/`
+- ✅ `public/sample/ocr-test.png`, `public/sample/scanned.pdf` for harness
 **Test Strategy:** Parse scanned PDF sample; blocks populated where text layer empty.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; `runOcrHarness()` + `runLiteParseOcrHarness()` in dev (first run downloads tessdata from CDN)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.3, Plan §OCR path  
 

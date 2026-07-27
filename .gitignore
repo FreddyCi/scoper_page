@@ -27,3 +27,4 @@ dist-ssr
 public/duckdb/*.wasm
 public/duckdb/*.worker.js
 public/liteparse/*.wasm
+public/tesseract/*.js

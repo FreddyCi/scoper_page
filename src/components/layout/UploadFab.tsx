@@ -1,26 +1,72 @@
+import { useCallback, useState } from 'react'
 import { UploadIcon } from 'lucide-react'
 
+import { UploadPopup } from '@/components/layout/UploadPopup'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useUploadQueue } from '@/hooks/use-upload-queue'
 import { cn } from '@/lib/utils'
 
 type UploadFabProps = {
   className?: string
 }
 
-/** Bottom-left FAB shell — popup wired in BDA-013 */
 export function UploadFab({ className }: UploadFabProps) {
+  const [open, setOpen] = useState(false)
+  const {
+    items,
+    count,
+    isSubmitting,
+    addFiles,
+    removeFile,
+    clearQueue,
+    submitUpload,
+  } = useUploadQueue()
+
+  const handleCancel = useCallback(() => {
+    if (!isSubmitting) clearQueue()
+  }, [clearQueue, isSubmitting])
+
+  const handleOpenChange = useCallback(
+    (next: boolean) => {
+      setOpen(next)
+      if (!next && !isSubmitting) clearQueue()
+    },
+    [clearQueue, isSubmitting],
+  )
+
   return (
-    <Button
-      type="button"
-      size="icon"
-      variant="secondary"
-      className={cn(
-        'shadow-elevated border-border bg-surface size-10 rounded-full border',
-        className,
-      )}
-      aria-label="Upload documents"
-    >
-      <UploadIcon className="size-4" />
-    </Button>
+    <div className={cn('relative', className)}>
+      <UploadPopup
+        open={open}
+        items={items}
+        isSubmitting={isSubmitting}
+        onOpenChange={handleOpenChange}
+        onAddFiles={addFiles}
+        onRemoveFile={removeFile}
+        onCancel={handleCancel}
+        onUpload={submitUpload}
+      />
+
+      <Button
+        type="button"
+        size="icon"
+        variant="secondary"
+        className="shadow-elevated border-border bg-surface relative size-10 rounded-full border"
+        aria-label="Upload documents"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <UploadIcon className="size-4" />
+        {count > 0 ? (
+          <Badge
+            variant="default"
+            className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1.5"
+          >
+            {count}
+          </Badge>
+        ) : null}
+      </Button>
+    </div>
   )
 }

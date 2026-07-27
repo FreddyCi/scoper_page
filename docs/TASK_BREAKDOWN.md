@@ -234,17 +234,19 @@ flowchart LR
 ### **ID:** BDA-013
 
 **Title:** Build UploadFab and UploadPopup  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-010, BDA-003  
 **Priority:** Critical  
 **Description:** Bottom-left FAB (position from `main.png` ? icon). Opens sheet/popover with multi-file drop zone, accept PDF/Word/MD/Excel, file list, remove file, parse progress placeholder. Emit files to ingest pipeline hook (stub until BDA-023).  
 **Completed Changes:**
-- 🔄 UploadFab fixed position
-- 🔄 UploadPopup with react-dropzone or native input
-- 🔄 File queue UI with count pill
+- ✅ `UploadFab.tsx` — bottom-left FAB with file-count badge pill; toggles popup
+- ✅ `UploadPopup.tsx` — anchored panel above FAB; native drag-drop + multi-select input
+- ✅ `use-upload-queue.ts` — queue add/remove, parse progress states, cancel clears without ingest
+- ✅ `use-ingest-pipeline.ts` — stub hook calling `ingest-router` (BDA-023)
+- ✅ `upload-accept.ts` — PDF/Word/MD/Excel validation and accept string
 **Test Strategy:** FAB opens popup; multi-select files listed; cancel closes without side effects.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; FAB opens popup above FAB; multi-file queue + remove; Cancel clears queue; Upload shows parsing shimmer then closes (stub ingest)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.2, [`main.png`](main.png), Plan §UploadFab  
 

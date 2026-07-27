@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDownIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { shellWorkspaceColumnClass } from '@/components/layout/shell-layout'
+import {
+  shellChatColumnClasses,
+  shellWorkspaceColumnClass,
+} from '@/components/layout/shell-layout'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
@@ -119,7 +122,45 @@ function WorkspaceModeToggle() {
   )
 }
 
-function DocumentTabs() {
+/** Top header row — session controls and mode toggle */
+export function WorkspaceHeaderTopRow({
+  chatCollapsed,
+  className,
+}: WorkspaceHeaderProps) {
+  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+
+  return (
+    <div
+      className={cn(
+        'bg-workspace flex min-w-0 items-center gap-3 px-[var(--spacing-panel)] py-3',
+        shellWorkspaceColumnClass,
+        !chatCollapsed && 'border-border border-r',
+        className,
+      )}
+    >
+      <SessionNameDropdown />
+      <span className="text-subtle-foreground text-xs">Saving</span>
+
+      <div className="ml-auto flex items-center gap-2">
+        <WorkspaceModeToggle />
+
+        {chatCollapsed ? (
+          <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
+            <MessageSquareIcon className="size-3.5" />
+            <span className="hidden sm:inline">Open chat</span>
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+/** Document tabs — second header row, workspace column only */
+export function WorkspaceDocumentTabsRow({
+  chatCollapsed,
+  chatColumnClass,
+  className,
+}: WorkspaceHeaderProps & { chatColumnClass: string }) {
   const documents = useSessionStore((s) => s.documents)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const setActiveDocId = useSessionStore((s) => s.setActiveDocId)
@@ -127,61 +168,56 @@ function DocumentTabs() {
   if (documents.length === 0) return null
 
   return (
-    <div className="border-border scrollbar-none flex gap-1 overflow-x-auto border-t px-[var(--spacing-panel)] py-2">
-      {documents.map((doc) => {
-        const isActive = doc.doc_id === activeDocId
+    <div className={cn('flex', className)}>
+      <div
+        className={cn(
+          'bg-workspace scrollbar-none flex min-w-0 gap-1 overflow-x-auto px-[var(--spacing-panel)] py-2',
+          shellWorkspaceColumnClass,
+          !chatCollapsed && 'border-border border-r',
+        )}
+      >
+        {documents.map((doc) => {
+          const isActive = doc.doc_id === activeDocId
 
-        return (
-          <button
-            key={doc.doc_id}
-            type="button"
-            onClick={() => setActiveDocId(doc.doc_id)}
-            aria-selected={isActive}
-            className={cn(
-              'inline-flex max-w-[12rem] shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors',
-              isActive
-                ? 'border-border bg-surface text-foreground border shadow-sm'
-                : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground',
-            )}
-          >
-            <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
-            <span className="truncate">{doc.filename}</span>
-          </button>
-        )
-      })}
+          return (
+            <button
+              key={doc.doc_id}
+              type="button"
+              onClick={() => setActiveDocId(doc.doc_id)}
+              aria-selected={isActive}
+              className={cn(
+                'inline-flex max-w-[12rem] shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors',
+                isActive
+                  ? 'border-border bg-surface text-foreground border shadow-sm'
+                  : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground',
+              )}
+            >
+              <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
+              <span className="truncate">{doc.filename}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      {!chatCollapsed ? (
+        <div
+          className={cn('bg-surface shrink-0', chatColumnClass)}
+          aria-hidden
+        />
+      ) : null}
     </div>
   )
 }
 
-export function WorkspaceHeader({ chatCollapsed, className }: WorkspaceHeaderProps) {
-  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
-
+/** @deprecated Use WorkspaceHeaderTopRow + WorkspaceDocumentTabsRow in AppShell */
+export function WorkspaceHeader(props: WorkspaceHeaderProps) {
   return (
-    <header
-      className={cn(
-        'bg-workspace flex min-w-0 flex-col',
-        shellWorkspaceColumnClass,
-        !chatCollapsed && 'border-border border-r',
-        className,
-      )}
-    >
-      <div className="flex items-center gap-3 px-[var(--spacing-panel)] py-3">
-        <SessionNameDropdown />
-        <span className="text-subtle-foreground text-xs">Saving</span>
-
-        <div className="ml-auto flex items-center gap-2">
-          <WorkspaceModeToggle />
-
-          {chatCollapsed ? (
-            <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
-              <MessageSquareIcon className="size-3.5" />
-              <span className="hidden sm:inline">Open chat</span>
-            </Button>
-          ) : null}
-        </div>
-      </div>
-
-      <DocumentTabs />
-    </header>
+    <>
+      <WorkspaceHeaderTopRow {...props} />
+      <WorkspaceDocumentTabsRow
+        {...props}
+        chatColumnClass={shellChatColumnClasses(props.chatCollapsed)}
+      />
+    </>
   )
 }

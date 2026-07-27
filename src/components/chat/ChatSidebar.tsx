@@ -28,27 +28,24 @@ function ChatSidebarHeaderControls() {
 
   return (
     <>
-      <TabsList
-        variant="line"
-        className="h-auto shrink-0 items-end self-stretch bg-transparent p-0"
-      >
+      <TabsList variant="line" className="h-auto shrink-0 bg-transparent p-0">
         <TabsTrigger
           value="agent"
-          className="h-full -mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
+          className="-mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
         >
           <SparklesIcon className="size-3.5" />
           Agent
         </TabsTrigger>
         <TabsTrigger
           value="history"
-          className="h-full -mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
+          className="-mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
         >
           <HistoryIcon className="size-3.5" />
           History
         </TabsTrigger>
       </TabsList>
 
-      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 self-center">
+      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1">
         <button
           type="button"
           className="text-foreground hover:bg-muted hidden max-w-[7rem] items-center gap-1 truncate rounded-md px-2 py-1 text-xs font-medium sm:inline-flex"
@@ -82,7 +79,7 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
     return (
       <div
         className={cn(
-          'flex w-full min-w-[17.5rem] items-stretch gap-2 px-[var(--spacing-panel)]',
+          'flex w-full min-w-[17.5rem] items-center gap-2 px-[var(--spacing-panel)]',
           className,
         )}
       >

@@ -8,7 +8,10 @@ import {
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
 import { UploadFab } from '@/components/layout/UploadFab'
-import { WorkspaceHeader } from '@/components/layout/WorkspaceHeader'
+import {
+  WorkspaceDocumentTabsRow,
+  WorkspaceHeaderTopRow,
+} from '@/components/layout/WorkspaceHeader'
 import { WorkspaceContent } from '@/components/workspace/WorkspaceContent'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -39,18 +42,25 @@ export function AppShell({ children }: AppShellProps) {
               shellPanelMinWidthClass,
             )}
           >
-            <div className="border-border flex shrink-0 border-b">
-              <WorkspaceHeader chatCollapsed={chatCollapsed} />
+            <div className="shrink-0">
+              <div className="border-border flex border-b">
+                <WorkspaceHeaderTopRow chatCollapsed={chatCollapsed} />
 
-              <header
-                className={cn(
-                  'bg-surface flex items-stretch',
-                  chatColumnClass,
-                )}
-                aria-hidden={chatCollapsed}
-              >
-                <ChatSidebar variant="header" />
-              </header>
+                <header
+                  className={cn(
+                    'bg-surface flex items-stretch',
+                    chatColumnClass,
+                  )}
+                  aria-hidden={chatCollapsed}
+                >
+                  <ChatSidebar variant="header" />
+                </header>
+              </div>
+
+              <WorkspaceDocumentTabsRow
+                chatCollapsed={chatCollapsed}
+                chatColumnClass={chatColumnClass}
+              />
             </div>
 
             <div className="flex min-h-0 flex-1 overflow-hidden">

@@ -50,6 +50,11 @@
   /* Spacing scale helpers */
   --spacing-shell: 0.75rem;
   --spacing-panel: 1.5rem;
+
+  /* Shell layout — ~65/35 split */
+  --shell-chat-min: 17.5rem;
+  --shell-chat-max: 26.25rem;
+  --shell-panel-min: 720px;
 }
 
 @layer base {
@@ -126,6 +131,11 @@
 
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
+  }
+
+  .shell-scroll-x {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
   }
 }
 /*

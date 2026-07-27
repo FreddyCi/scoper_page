@@ -168,17 +168,22 @@ flowchart LR
 ### **ID:** BDA-010
 
 **Title:** Build AppShell two-column layout  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-002, BDA-005  
 **Priority:** Critical  
 **Description:** `AppShell.tsx`: flex row, workspace flex-1, chat fixed width ~35%. Workspace expands when chat collapsed. Rounded outer container on gray canvas per `main.png`.  
 **Completed Changes:**
-- 🔄 Layout component
-- 🔄 Responsive min-width handling
+- ✅ Refactored `AppShell.tsx` — flex row body, shared header row, gray canvas + rounded `shadow-panel` shell
+- ✅ Chat column `clamp(17.5rem, 35%, 26.25rem)`; workspace `flex-1` (~65/35 split via `shell-layout.ts`)
+- ✅ Workspace expands full width when `chatCollapsed`; horizontal scroll below `min-w-[720px]`
+- ✅ Extracted `WorkspaceHeader`, `WorkspaceContent` router, positioned `UploadFab` (shell placeholder)
+- ✅ Max-width container `max-w-[100rem]` centered on canvas
 **Test Strategy:** Toggle chat collapsed → workspace fills width; layout matches wireframe proportions.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors
+- ✅ × collapses chat → workspace full width; “Open chat” restores ~35% sidebar
+- ✅ Header border spans both columns on one line; proportions match `main.png`
+**Assigned:** Completed  
 **Context/Artifacts:** PRD §5.1, [`main.png`](main.png), Plan §UI layout  
 
 ---

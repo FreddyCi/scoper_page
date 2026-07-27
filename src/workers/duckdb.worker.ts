@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { AsyncDuckDB, ConsoleLogger } from '@duckdb/duckdb-wasm'
+import { AsyncDuckDB, VoidLogger } from '@duckdb/duckdb-wasm'
 
 import type {
   DuckdbQueryParam,
@@ -27,7 +27,7 @@ async function ensureInitialized() {
 
   initPromise = (async () => {
     const innerWorker = new Worker(EH_WORKER_URL)
-    db = new AsyncDuckDB(new ConsoleLogger(), innerWorker)
+    db = new AsyncDuckDB(new VoidLogger(), innerWorker)
     await db.instantiate(WASM_URL)
     await db.open({ path: ':memory:' })
     connection = await db.connect()

@@ -4,6 +4,7 @@ import type {
   LiteParseWorkerRequest,
   LiteParseWorkerResponse,
 } from '@/lib/liteparse-protocol'
+import { parsePdfOnMainThread } from '@/services/liteparse-main'
 
 type PendingRequest = {
   resolve: (value: unknown) => void
@@ -81,12 +82,16 @@ export class LiteParseClient {
     bytes: Uint8Array,
     options?: { ocrEnabled?: boolean },
   ): Promise<LiteParseParseResult> {
+    if (options?.ocrEnabled) {
+      return parsePdfOnMainThread(docId, bytes)
+    }
+
     await this.init()
     return this.send<LiteParseParseResult>({
       type: 'parse',
       doc_id: docId,
       bytes,
-      ocrEnabled: options?.ocrEnabled,
+      ocrEnabled: false,
     })
   }
 

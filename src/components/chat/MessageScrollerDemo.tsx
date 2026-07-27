@@ -81,6 +81,7 @@ export function MessageScrollerDemo() {
               {messages.map((item, index) => (
                 <MessageScrollerItem
                   key={item.id}
+                  messageId={item.id}
                   scrollAnchor={item.role === 'user'}
                 >
                   <MessageGroup>

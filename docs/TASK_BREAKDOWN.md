@@ -65,18 +65,22 @@ flowchart LR
 ### **ID:** BDA-002
 
 **Title:** Configure Tailwind 4 and base styles  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** Critical  
 **Description:** Add Tailwind 4 via Vite plugin. Create `src/index.css` with design tokens (light gray canvas, rounded panels, spacing). Match wireframe feel from `docs/main.png`.  
 **Completed Changes:**
-- 🔄 Install `@tailwindcss/vite`
-- 🔄 Define CSS variables for surfaces, borders, radii
-- 🔄 Apply base typography
+- ✅ Installed `tailwindcss@4.3.3` and `@tailwindcss/vite@4.3.3`
+- ✅ Added Tailwind Vite plugin to `vite.config.ts`
+- ✅ Defined `@theme` tokens: canvas, surface, workspace, foreground, borders, radii, shadows
+- ✅ Added `@layer base` typography and reset; utility classes for panel radius/shadow
+- ✅ Updated `AppShell` preview to use token utilities (~65/35 split per main.png)
 **Test Strategy:** Utility classes render; app background matches reference shell.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
+- ✅ `pnpm build` succeeds; Tailwind CSS output 11 KB (3.15 KB gzip)
+- ✅ Token utilities (`bg-canvas`, `bg-workspace`, `bg-surface`, `rounded-panel`) compile
+- ✅ AppShell renders two-column shell preview matching wireframe palette
+**Assigned:** Completed  
 **Context/Artifacts:** PRD §10.1, PRD §10.3 [`main.png`](main.png)  
 
 ---

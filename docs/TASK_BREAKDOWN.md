@@ -137,17 +137,22 @@ flowchart LR
 ### **ID:** BDA-005
 
 **Title:** Implement Zustand session store  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-004  
 **Priority:** Critical  
 **Description:** Create `src/store/session-store.ts` with: `mode` (rfp | scope_creep), `documents[]`, `profiles[]`, `creepProfiles[]`, `selectedCitation`, `chatCollapsed`, `workspaceView` (landing | profiles | split), `activeDocId`. Actions for mode switch, doc add/remove, cite selection, chat toggle.  
 **Completed Changes:**
-- 🔄 Store slice + actions
-- 🔄 Selectors for active doc and view mode
+- ✅ Installed `zustand@5.0.14`
+- ✅ Full `session-store.ts`: state, actions (mode, docs, profiles, citation, chat, view)
+- ✅ Selectors: `selectActiveDocument`, `selectVisibleProfiles`, `selectShowLanding`, `selectHasDocuments` + hook wrappers
+- ✅ `runSessionStoreHarness()` dev assertions (runs in `App.tsx` when `import.meta.env.DEV`)
+- ✅ Wired AppShell: session name, mode toggle, chat collapse/expand; ChatSidebar × → `toggleChatCollapsed`
 **Test Strategy:** Unit test or dev harness: dispatch actions, state updates correctly.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors
+- ✅ Dev harness validates setMode, addDocument, selectCitation, toggleChatCollapsed, removeDocument, resetSession
+- ✅ UI: × collapses chat; “Open chat” restores sidebar; RFP/Creep mode buttons update workspace copy
+**Assigned:** Completed  
 **Context/Artifacts:** PRD §5.1, Plan §session-store.ts  
 
 ---

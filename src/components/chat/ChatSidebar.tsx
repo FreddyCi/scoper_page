@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 import { MessageScrollerDemo } from '@/components/chat/MessageScrollerDemo'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useSessionStore } from '@/store/session-store'
 
 type ChatSidebarProps = {
   /** Rendered inside the shared header row (AppShell grid) */
@@ -9,6 +10,8 @@ type ChatSidebarProps = {
 }
 
 export function ChatSidebar({ variant = 'body' }: ChatSidebarProps) {
+  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+
   if (variant === 'header') {
     return (
       <>
@@ -20,6 +23,7 @@ export function ChatSidebar({ variant = 'body' }: ChatSidebarProps) {
           type="button"
           className="text-subtle-foreground hover:text-foreground text-lg leading-none transition-colors"
           aria-label="Close chat sidebar"
+          onClick={toggleChatCollapsed}
         >
           ×
         </button>

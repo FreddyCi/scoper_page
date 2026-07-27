@@ -1,41 +1,83 @@
 import type { ReactNode } from 'react'
 
 import { ChatSidebar, ChatSidebarTabs } from '@/components/chat/ChatSidebar'
+import { Button } from '@/components/ui/button'
+import { useSessionStore } from '@/store/session-store'
+import type { WorkspaceMode } from '@/lib/types'
 
 type AppShellProps = {
   children?: ReactNode
 }
 
+const MODE_LABELS: Record<WorkspaceMode, string> = {
+  rfp: 'RFP Analysis',
+  scope_creep: 'Scope Creep',
+}
+
 /**
  * Shell preview — full two-column layout lands in BDA-010.
- * Tokens match docs/main.png: gray canvas, workspace tint, white chat panel.
+ * Session store wired for name, mode, and chat collapse (BDA-005).
  */
 export function AppShell({ children }: AppShellProps) {
+  const sessionName = useSessionStore((s) => s.sessionName)
+  const mode = useSessionStore((s) => s.mode)
+  const chatCollapsed = useSessionStore((s) => s.chatCollapsed)
+  const setMode = useSessionStore((s) => s.setMode)
+  const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
+
+  const headerCols = chatCollapsed ? 'grid-cols-1' : 'grid-cols-[1.85fr_1fr]'
+  const bodyCols = chatCollapsed ? 'grid-cols-1' : 'grid-cols-[1.85fr_1fr]'
+
   return (
     <div className="bg-canvas min-h-screen p-[var(--spacing-shell)]">
       <ChatSidebarTabs>
         <div className="shadow-panel flex h-[calc(100vh-var(--spacing-shell)*2)] flex-col overflow-hidden rounded-panel">
-          {/* Shared header row — single border-b spans both columns */}
-          <div className="border-border grid shrink-0 grid-cols-[1.85fr_1fr] border-b">
-            <header className="bg-workspace border-border flex items-center gap-3 border-r px-[var(--spacing-panel)] py-3">
+          <div className={`border-border grid shrink-0 border-b ${headerCols}`}>
+            <header className="bg-workspace border-border flex items-center gap-3 px-[var(--spacing-panel)] py-3">
               <span className="rounded-pill border-border bg-surface text-foreground inline-flex items-center gap-2 border px-3 py-1 text-sm font-medium">
-                Untitled session
+                {sessionName}
               </span>
               <span className="text-subtle-foreground text-xs">Saving</span>
+
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  size="xs"
+                  variant={mode === 'rfp' ? 'default' : 'outline'}
+                  onClick={() => setMode('rfp')}
+                >
+                  RFP
+                </Button>
+                <Button
+                  size="xs"
+                  variant={mode === 'scope_creep' ? 'default' : 'outline'}
+                  onClick={() => setMode('scope_creep')}
+                >
+                  Creep
+                </Button>
+                {chatCollapsed ? (
+                  <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
+                    Open chat
+                  </Button>
+                ) : null}
+              </div>
             </header>
 
-            <header className="bg-surface flex items-center justify-between gap-3 px-[var(--spacing-panel)] py-3">
-              <ChatSidebar variant="header" />
-            </header>
+            {!chatCollapsed ? (
+              <header className="bg-surface border-border flex items-center justify-between gap-3 border-l px-[var(--spacing-panel)] py-3">
+                <ChatSidebar variant="header" />
+              </header>
+            ) : null}
           </div>
 
-          {/* Body row */}
-          <div className="grid min-h-0 flex-1 grid-cols-[1.85fr_1fr]">
-            <section className="bg-workspace border-border flex min-w-0 flex-col border-r">
+          <div className={`grid min-h-0 flex-1 ${bodyCols}`}>
+            <section
+              className={`bg-workspace flex min-w-0 flex-col ${chatCollapsed ? '' : 'border-border border-r'}`}
+            >
               <div className="flex flex-1 flex-col items-center justify-center px-[var(--spacing-panel)]">
                 <h1 className="text-foreground text-xl font-semibold">Browser Doc Agent Demo</h1>
                 <p className="text-muted-foreground mt-2 max-w-md text-center text-sm">
-                  shadcn MessageScroller wired in chat sidebar — shell polish lands in BDA-010.
+                  Mode: {MODE_LABELS[mode]}
+                  {chatCollapsed ? ' · Chat collapsed' : ''} — workspace views land in BDA-010.
                 </p>
                 {children}
               </div>
@@ -44,9 +86,11 @@ export function AppShell({ children }: AppShellProps) {
               </footer>
             </section>
 
-            <aside className="bg-surface flex min-w-0 flex-col">
-              <ChatSidebar variant="body" />
-            </aside>
+            {!chatCollapsed ? (
+              <aside className="bg-surface flex min-w-0 flex-col">
+                <ChatSidebar variant="body" />
+              </aside>
+            ) : null}
           </div>
         </div>
       </ChatSidebarTabs>

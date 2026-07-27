@@ -1,52 +1,104 @@
 import type { ReactNode } from 'react'
 
-import { MessageScrollerDemo } from '@/components/chat/MessageScrollerDemo'
+import {
+  ChevronDownIcon,
+  HistoryIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  SparklesIcon,
+  XIcon,
+} from 'lucide-react'
+
+import { ChatComposer } from '@/components/chat/ChatComposer'
+import { ChatTranscript } from '@/components/chat/ChatTranscript'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
 type ChatSidebarProps = {
-  /** Rendered inside the shared header row (AppShell grid) */
+  /** Rendered inside the shared header row (AppShell) */
   variant?: 'body' | 'header'
+  className?: string
 }
 
-export function ChatSidebar({ variant = 'body' }: ChatSidebarProps) {
+function ChatSidebarHeaderControls() {
+  const sessionName = useSessionStore((s) => s.sessionName)
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
 
-  if (variant === 'header') {
-    return (
-      <>
-        <TabsList variant="line" className="h-auto bg-transparent p-0">
-          <TabsTrigger value="agent">Agent</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+  return (
+    <>
+      <TabsList variant="line" className="h-auto shrink-0 bg-transparent p-0">
+        <TabsTrigger value="agent" className="gap-1.5 px-2">
+          <SparklesIcon className="size-3.5" />
+          Agent
+        </TabsTrigger>
+        <TabsTrigger value="history" className="gap-1.5 px-2">
+          <HistoryIcon className="size-3.5" />
+          History
+        </TabsTrigger>
+      </TabsList>
+
+      <div className="ml-auto flex min-w-0 items-center gap-1">
         <button
           type="button"
-          className="text-subtle-foreground hover:text-foreground text-lg leading-none transition-colors"
+          className="text-foreground hover:bg-muted hidden max-w-[7rem] items-center gap-1 truncate rounded-md px-2 py-1 text-xs font-medium sm:inline-flex"
+        >
+          <span className="truncate">{sessionName}</span>
+          <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
+        </button>
+
+        <Button type="button" size="icon-xs" variant="ghost" aria-label="New chat">
+          <PlusIcon className="size-3.5" />
+        </Button>
+        <Button type="button" size="icon-xs" variant="ghost" aria-label="Refresh chat">
+          <RotateCcwIcon className="size-3.5" />
+        </Button>
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
           aria-label="Close chat sidebar"
           onClick={toggleChatCollapsed}
         >
-          ×
-        </button>
-      </>
+          <XIcon className="size-4" />
+        </Button>
+      </div>
+    </>
+  )
+}
+
+export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
+  if (variant === 'header') {
+    return (
+      <div className={cn('flex w-full min-w-[17.5rem] items-center gap-2', className)}>
+        <ChatSidebarHeaderControls />
+      </div>
     )
   }
 
   return (
-    <>
-      <TabsContent value="agent" className="flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-3">
-        <MessageScrollerDemo />
+    <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
+      <TabsContent
+        value="agent"
+        className="mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] pt-3 pb-2"
+      >
+        <ChatTranscript />
       </TabsContent>
 
-      <TabsContent value="history" className="text-muted-foreground px-[var(--spacing-panel)] py-3 text-sm">
-        History tab — scope creep markers land in BDA-073.
+      <TabsContent
+        value="history"
+        className="text-muted-foreground mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-3 text-sm"
+      >
+        <p className="m-auto max-w-xs text-center">
+          Scope creep markers and past runs will appear here — BDA-073.
+        </p>
       </TabsContent>
 
-      <footer className="border-border mt-auto shrink-0 border-t p-[var(--spacing-panel)]">
-        <div className="rounded-control border-border bg-workspace-muted text-subtle-foreground border px-3 py-2 text-sm">
-          Ask the agent… @ to mention
-        </div>
+      <footer className="border-border shrink-0 border-t p-[var(--spacing-panel)]">
+        <ChatComposer />
       </footer>
-    </>
+    </div>
   )
 }
 

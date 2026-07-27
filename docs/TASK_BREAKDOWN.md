@@ -191,19 +191,23 @@ flowchart LR
 ### **ID:** BDA-011
 
 **Title:** Build collapsible ChatSidebar shell  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-010, BDA-003  
 **Priority:** Critical  
 **Description:** `ChatSidebar.tsx`: Agent | History tabs, close `[×]` toggles `chatCollapsed` in store. Placeholder MessageScroller region + composer slot. Persist collapse preference in sessionStorage optional.  
 **Completed Changes:**
-- 🔄 Tab header matching main.png agent chrome
-- 🔄 Collapse animation / width transition
-- 🔄 Wire to session store
+- ✅ Chat header chrome: Agent (Sparkles) | History icons, session dropdown, + / refresh / × controls
+- ✅ Width + opacity transition on chat column (`duration-300`, always mounted for smooth collapse)
+- ✅ `ChatTranscript` — MessageScroller region with sample messages (no dev controls)
+- ✅ `ChatComposer` — wireframe input with Ask dropdown, mic, send button
+- ✅ `chatCollapsed` persisted to `sessionStorage` (`bda-chat-collapsed`)
 **Test Strategy:** Click × collapses sidebar; workspace expands; re-open control visible.  
 **Test Results:**
-- 🔄 Pending
-**Assigned:** Unassigned  
-**Context/Artifacts:** PRD §5.1, Plan §Shell behaviors  
+- ✅ `pnpm build` — 0 TypeScript errors
+- ✅ × animates sidebar closed; workspace expands; “Open chat” in WorkspaceHeader restores
+- ✅ Reload preserves collapsed state via sessionStorage
+**Assigned:** Completed  
+**Context/Artifacts:** PRD §5.1, Plan §Shell behaviors, [`main.png`](main.png)  
 
 ---
 

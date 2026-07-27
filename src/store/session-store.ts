@@ -10,6 +10,24 @@ import type {
   WorkspaceView,
 } from '@/lib/types'
 
+const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
+
+function readChatCollapsedPreference(): boolean {
+  try {
+    return sessionStorage.getItem(CHAT_COLLAPSED_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeChatCollapsedPreference(collapsed: boolean) {
+  try {
+    sessionStorage.setItem(CHAT_COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0')
+  } catch {
+    // sessionStorage unavailable (private mode, etc.)
+  }
+}
+
 export type SessionState = {
   sessionName: string
   mode: WorkspaceMode
@@ -44,7 +62,7 @@ const initialState = {
   profiles: [] as RfpResultsProfile[],
   creepProfiles: [] as ScopeCreepProfile[],
   selectedCitation: null as CitationRef | null,
-  chatCollapsed: false,
+  chatCollapsed: readChatCollapsedPreference(),
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
 }
@@ -129,16 +147,26 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       workspaceView: citation ? 'split' : get().workspaceView,
     }),
 
-  setChatCollapsed: (chatCollapsed) => set({ chatCollapsed }),
+  setChatCollapsed: (chatCollapsed) => {
+    writeChatCollapsedPreference(chatCollapsed)
+    set({ chatCollapsed })
+  },
 
   toggleChatCollapsed: () =>
-    set((state) => ({ chatCollapsed: !state.chatCollapsed })),
+    set((state) => {
+      const chatCollapsed = !state.chatCollapsed
+      writeChatCollapsedPreference(chatCollapsed)
+      return { chatCollapsed }
+    }),
 
   setWorkspaceView: (workspaceView) => set({ workspaceView }),
 
   setActiveDocId: (activeDocId) => set({ activeDocId }),
 
-  resetSession: () => set({ ...initialState }),
+  resetSession: () => {
+    writeChatCollapsedPreference(false)
+    set({ ...initialState, chatCollapsed: false })
+  },
 }))
 
 /** Active document metadata, or null when none selected / empty session */

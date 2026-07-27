@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 
 import { ChatSidebar, ChatSidebarTabs } from '@/components/chat/ChatSidebar'
 import {
-  shellChatColumnClass,
+  shellChatColumnClasses,
+  shellChatColumnTransitionClass,
   shellPanelMinWidthClass,
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
@@ -18,10 +19,15 @@ type AppShellProps = {
 
 /**
  * Two-column app shell — workspace ~65%, agent chat ~35% per docs/main.png.
- * Workspace expands to full width when chat is collapsed (BDA-005 store).
+ * Chat column animates closed; preference persisted in sessionStorage (BDA-011).
  */
 export function AppShell({ children }: AppShellProps) {
   const chatCollapsed = useSessionStore((s) => s.chatCollapsed)
+
+  const chatColumnClass = cn(
+    shellChatColumnTransitionClass,
+    shellChatColumnClasses(chatCollapsed),
+  )
 
   return (
     <div className="bg-canvas min-h-svh p-[var(--spacing-shell)]">
@@ -33,27 +39,25 @@ export function AppShell({ children }: AppShellProps) {
               shellPanelMinWidthClass,
             )}
           >
-            {/* Shared header row — single border-b, aligned columns */}
             <div className="border-border flex shrink-0 border-b">
               <WorkspaceHeader chatCollapsed={chatCollapsed} />
 
-              {!chatCollapsed ? (
-                <header
-                  className={cn(
-                    'bg-surface flex items-center justify-between gap-3 px-[var(--spacing-panel)] py-3',
-                    shellChatColumnClass,
-                  )}
-                >
-                  <ChatSidebar variant="header" />
-                </header>
-              ) : null}
+              <header
+                className={cn(
+                  'bg-surface flex items-center px-[var(--spacing-panel)] py-3',
+                  chatColumnClass,
+                  !chatCollapsed && 'border-border border-l',
+                )}
+                aria-hidden={chatCollapsed}
+              >
+                <ChatSidebar variant="header" />
+              </header>
             </div>
 
-            {/* Body — flex row; chat fixed ~35% width */}
-            <div className="flex min-h-0 flex-1">
+            <div className="flex min-h-0 flex-1 overflow-hidden">
               <section
                 className={cn(
-                  'bg-workspace relative flex min-h-0 flex-col',
+                  'bg-workspace relative flex min-h-0 flex-col transition-[border-color] duration-300',
                   shellWorkspaceColumnClass,
                   !chatCollapsed && 'border-border border-r',
                 )}
@@ -71,11 +75,12 @@ export function AppShell({ children }: AppShellProps) {
                 </div>
               </section>
 
-              {!chatCollapsed ? (
-                <aside className={cn('bg-surface flex min-h-0 flex-col', shellChatColumnClass)}>
-                  <ChatSidebar variant="body" />
-                </aside>
-              ) : null}
+              <aside
+                className={cn('bg-surface flex min-h-0 flex-col', chatColumnClass)}
+                aria-hidden={chatCollapsed}
+              >
+                <ChatSidebar variant="body" />
+              </aside>
             </div>
           </div>
         </ChatSidebarTabs>

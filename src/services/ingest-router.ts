@@ -7,6 +7,7 @@ import {
   mimeFromFilename,
 } from '@/lib/upload-accept'
 import { getDuckdbClient } from '@/services/duckdb-client'
+import { cacheDocumentBytes } from '@/services/document-bytes-cache'
 import { getLiteParseClient } from '@/services/liteparse-client'
 
 export type IngestOptions = {
@@ -88,6 +89,7 @@ async function ingestPdf(
   ocrEnabled: boolean,
 ): Promise<IngestResult> {
   const bytes = new Uint8Array(await file.arrayBuffer())
+  cacheDocumentBytes(docId, bytes)
   const liteparse = await getLiteParseClient()
   const parsed = await liteparse.parsePdf(docId, bytes, { ocrEnabled })
 

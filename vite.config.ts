@@ -14,7 +14,12 @@ export default defineConfig({
     format: 'es',
   },
   optimizeDeps: {
-    exclude: ['@duckdb/duckdb-wasm', '@llamaindex/liteparse-wasm', 'tesseract.js'],
+    exclude: [
+      '@duckdb/duckdb-wasm',
+      '@llamaindex/liteparse-wasm',
+      'tesseract.js',
+      'pdfjs-dist',
+    ],
   },
   build: {
     target: 'esnext',

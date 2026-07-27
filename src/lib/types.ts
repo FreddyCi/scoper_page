@@ -118,10 +118,42 @@ export type WorkspaceView = 'landing' | 'profiles' | 'split'
 
 export type ChatMessageRole = 'user' | 'assistant'
 
+export type ChatActionStatus = 'pending' | 'editing' | 'approved' | 'dismissed'
+
+export type ChatActionKind = 'draft' | 'update' | 'analyze'
+
+/** Agent-suggested task row with live-edit + approve/dismiss controls */
+export type ChatActionProposal = {
+  id: string
+  kind: ChatActionKind
+  title: string
+  subtitle: string
+  status: ChatActionStatus
+}
+
+/** Embedded evidence card inside an assistant turn */
+export type ChatCitationCard = {
+  id: string
+  citation: CitationRef
+  body: string
+  highlight: string
+  sourceLabel: string
+  sourceMeta?: string
+}
+
+export type AssistantChatContent = {
+  headline?: string
+  paragraphs: string[]
+  citations?: ChatCitationCard[]
+  actionsIntro?: string
+  actions?: ChatActionProposal[]
+}
+
 export type ChatMessage = {
   id: string
   role: ChatMessageRole
   text: string
+  rich?: AssistantChatContent
   created_at: string
 }
 

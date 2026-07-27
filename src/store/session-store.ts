@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 
+import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type {
+  ChatActionProposal,
+  ChatActionStatus,
   CitationRef,
   ChatMessage,
   DocumentMeta,
@@ -11,6 +14,7 @@ import type {
   WorkspaceMode,
   WorkspaceView,
 } from '@/lib/types'
+import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
@@ -52,13 +56,25 @@ function readInitialChatCollapsed(): boolean {
   return readChatCollapsedPreference()
 }
 
-/** Stub assistant line until bitgpu chat (BDA-051) */
-function stubAssistantReply(prompt: string): string {
-  if (/scope|creep|baseline|change/i.test(prompt)) {
-    return 'I can compare baseline and change documents once files are ingested. Upload both sets to get started.'
-  }
+function mapChatActions(
+  messages: ChatMessage[],
+  messageId: string,
+  actionId: string,
+  map: (action: ChatActionProposal) => ChatActionProposal,
+): ChatMessage[] {
+  return messages.map((message) => {
+    if (message.id !== messageId || !message.rich?.actions) return message
 
-  return 'I found 12 evaluation criteria across sections 3.1–3.4. Three look like hard pass/fail requirements.'
+    return {
+      ...message,
+      rich: {
+        ...message.rich,
+        actions: message.rich.actions.map((action) =>
+          action.id === actionId ? map(action) : action,
+        ),
+      },
+    }
+  })
 }
 
 export type SessionState = {
@@ -88,6 +104,16 @@ export type SessionState = {
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
   sendChatPrompt: (text: string) => void
+  updateChatAction: (
+    messageId: string,
+    actionId: string,
+    patch: Pick<ChatActionProposal, 'title' | 'subtitle'>,
+  ) => void
+  setChatActionStatus: (
+    messageId: string,
+    actionId: string,
+    status: ChatActionStatus,
+  ) => void
   clearChat: () => void
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
@@ -165,6 +191,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   removeDocument: (docId) =>
     set((state) => {
+      removeDocumentBytes(docId)
       const documents = state.documents.filter((doc) => doc.doc_id !== docId)
       const profiles = state.profiles.filter((p) => p.source_doc_id !== docId)
       const creepProfiles = state.creepProfiles.filter(
@@ -228,10 +255,17 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       text: trimmed,
       created_at: new Date().toISOString(),
     }
+    const rich = buildRichAssistantReply({
+      prompt: trimmed,
+      mode: state.mode,
+      documents: state.documents,
+      activeDocId: state.activeDocId,
+    })
     const assistantMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'assistant',
-      text: stubAssistantReply(trimmed),
+      text: rich.paragraphs[0] ?? 'Ready to help with your documents.',
+      rich,
       created_at: new Date().toISOString(),
     }
 
@@ -246,6 +280,22 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatMessages: [...state.chatMessages, userMessage, assistantMessage],
     })
   },
+
+  updateChatAction: (messageId, actionId, patch) =>
+    set((state) => ({
+      chatMessages: mapChatActions(state.chatMessages, messageId, actionId, (action) => ({
+        ...action,
+        ...patch,
+      })),
+    })),
+
+  setChatActionStatus: (messageId, actionId, status) =>
+    set((state) => ({
+      chatMessages: mapChatActions(state.chatMessages, messageId, actionId, (action) => ({
+        ...action,
+        status,
+      })),
+    })),
 
   clearChat: () => {
     writeChatStartedPreference(false)
@@ -296,6 +346,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }),
 
   resetSession: () => {
+    clearDocumentBytesCache()
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
     set({

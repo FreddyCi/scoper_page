@@ -418,17 +418,19 @@ flowchart LR
 ### **ID:** BDA-030
 
 **Title:** PDF.js DocumentViewer with canvas  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-023  
 **Priority:** Critical  
 **Description:** `DocumentViewer.tsx`: load PDF from uploaded bytes, render page to canvas, page prev/next controls. Integrate pdfjs-dist worker.  
 **Completed Changes:**
-- 🔄 DocumentViewer component
-- 🔄 Page navigation
-- 🔄 Loading/error states
+- ✅ `@react-pdf-kit/viewer` + `pdfjs-dist@5.4.530` — toolbar, page navigation, zoom via `RPLayout` + `RPPages`
+- ✅ `DocumentViewer.tsx` — loads cached PDF bytes, loading/error states for missing or non-PDF docs
+- ✅ `document-bytes-cache.ts` — stores PDF bytes on ingest for in-session preview
+- ✅ `scripts/copy-pdfjs-assets.mjs` — copies worker to `public/pdfjs/`
+- ✅ Wired in `WorkspaceContent` profiles + split views
 **Test Strategy:** Open ingested PDF; page 1 renders; navigate pages works.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; upload PDF → viewer renders with toolbar page controls
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.4, Plan §DocumentViewer  
 

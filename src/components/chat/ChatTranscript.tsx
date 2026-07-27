@@ -1,3 +1,4 @@
+import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
 import {
   Message,
   MessageContent,
@@ -30,29 +31,37 @@ export function ChatTranscript() {
       <MessageScroller className="min-h-0 flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent className="gap-4 px-1">
-            {chatMessages.map((item) => (
-              <MessageScrollerItem
-                key={item.id}
-                messageId={item.id}
-                scrollAnchor={item.role === 'user'}
-              >
-                <MessageGroup>
-                  <Message align={item.role === 'user' ? 'end' : 'start'}>
-                    <MessageContent>
-                      <div
-                        className={
-                          item.role === 'user'
-                            ? 'bg-muted text-foreground max-w-[92%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed'
-                            : 'text-foreground max-w-[92%] text-sm leading-relaxed'
-                        }
-                      >
-                        {item.text}
-                      </div>
-                    </MessageContent>
-                  </Message>
-                </MessageGroup>
-              </MessageScrollerItem>
-            ))}
+            {chatMessages.map((item) => {
+              const isUser = item.role === 'user'
+
+              return (
+                <MessageScrollerItem
+                  key={item.id}
+                  messageId={item.id}
+                  scrollAnchor={isUser}
+                >
+                  <MessageGroup>
+                    <Message align={isUser ? 'end' : 'start'}>
+                      <MessageContent>
+                        <div
+                          className={
+                            isUser
+                              ? 'bg-muted text-foreground max-w-[92%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed'
+                              : 'text-foreground w-full max-w-none space-y-1'
+                          }
+                        >
+                          {isUser ? (
+                            item.text
+                          ) : (
+                            <AssistantMessageBody message={item} />
+                          )}
+                        </div>
+                      </MessageContent>
+                    </Message>
+                  </MessageGroup>
+                </MessageScrollerItem>
+              )
+            })}
           </MessageScrollerContent>
         </MessageScrollerViewport>
         <MessageScrollerButton direction="end" />

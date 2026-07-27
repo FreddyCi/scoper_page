@@ -81,7 +81,7 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
       <TabsContent
         value="agent"
-        className="mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] pt-3 pb-2"
+        className="mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] pt-3 pb-3"
       >
         <ChatTranscript />
       </TabsContent>
@@ -95,7 +95,7 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
         </p>
       </TabsContent>
 
-      <footer className="border-border shrink-0 border-t p-[var(--spacing-panel)]">
+      <footer className="shrink-0 px-[var(--spacing-panel)] pb-[var(--spacing-panel)] pt-1">
         <ChatComposer />
       </footer>
     </div>

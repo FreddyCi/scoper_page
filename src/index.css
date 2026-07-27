@@ -41,6 +41,7 @@
   /* Radii */
   --radius-panel: 1rem;
   --radius-control: 0.625rem;
+  --radius-composer: 12px;
   --radius-pill: 9999px;
 
   /* Shadows */
@@ -123,6 +124,10 @@
 
   .rounded-control {
     border-radius: var(--radius-control);
+  }
+
+  .rounded-composer {
+    border-radius: var(--radius-composer);
   }
 
   .shadow-panel {

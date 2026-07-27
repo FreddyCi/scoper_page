@@ -1,7 +1,8 @@
 import {
-  ArrowUpIcon,
   ChevronDownIcon,
   MicIcon,
+  PaperclipIcon,
+  SparklesIcon,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -16,7 +17,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
   return (
     <div
       className={cn(
-        'rounded-control border-border bg-surface border p-3 shadow-sm',
+        'rounded-composer border-border bg-workspace-muted/80 flex flex-col border',
         className,
       )}
     >
@@ -25,40 +26,51 @@ export function ChatComposer({ className }: ChatComposerProps) {
       </label>
       <textarea
         id="chat-composer-input"
-        rows={2}
-        placeholder="Ask the agent… @ to mention"
-        className="text-foreground placeholder:text-subtle-foreground w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
+        rows={3}
+        placeholder="Ask the agent… / for skills, @ for context"
+        className="text-foreground placeholder:text-subtle-foreground min-h-[5.5rem] w-full resize-none bg-transparent px-3.5 pt-3.5 pb-2 text-sm leading-relaxed outline-none"
       />
 
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <Button
-          type="button"
-          size="xs"
-          variant="outline"
-          className="rounded-md"
-          aria-haspopup="listbox"
-        >
-          Ask
-          <ChevronDownIcon className="size-3.5 opacity-60" />
-        </Button>
+      <div className="flex items-center justify-between gap-2 px-2.5 pb-2.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <button
+            type="button"
+            className="border-border bg-surface text-foreground hover:bg-surface/90 inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-medium transition-colors"
+            aria-haspopup="listbox"
+          >
+            <SparklesIcon className="size-3.5 opacity-80" />
+            Agent
+            <ChevronDownIcon className="size-3 opacity-60" />
+          </button>
 
-        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1 truncate text-xs transition-colors"
+            aria-haspopup="listbox"
+          >
+            <span className="truncate">Bonsai 1.7B</span>
+            <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
+          </button>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-0.5">
           <Button
             type="button"
             size="icon-sm"
             variant="ghost"
-            aria-label="Voice input"
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Attach files"
           >
-            <MicIcon className="size-4" />
+            <PaperclipIcon className="size-4" />
           </Button>
           <Button
             type="button"
             size="icon-sm"
             variant="default"
-            className="rounded-full"
-            aria-label="Send message"
+            className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
+            aria-label="Voice input"
           >
-            <ArrowUpIcon className="size-4" />
+            <MicIcon className="size-4" />
           </Button>
         </div>
       </div>

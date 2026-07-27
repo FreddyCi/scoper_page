@@ -390,17 +390,20 @@ flowchart LR
 ### **ID:** BDA-024
 
 **Title:** Wire upload UI to ingest pipeline  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-013, BDA-015, BDA-023, BDA-005  
 **Priority:** Critical  
 **Description:** Connect UploadPopup, CommandInputCard send, and quick actions to `ingest-router`. Update store with documents. Transition `workspaceView` from landing → profiles or split on success. Show parse progress in popup.  
 **Completed Changes:**
-- 🔄 onUpload handler in App
-- 🔄 Progress states: idle | parsing | done | error
-- 🔄 Store documents after ingest
+- ✅ `use-ingest-pipeline.ts` — commits ingest results to session store via `commitIngestResults`
+- ✅ `commitIngestResults` in session store — adds documents, sets active doc, transitions landing → `profiles` (RFP) or `split` (scope creep)
+- ✅ `use-command-ingest.ts` — shared command send + file ingest for landing and workspace views
+- ✅ `CommandInputCard` — `isSubmitting` disables send during parse
+- ✅ Upload FAB popup — per-file parsing/done/error states; closes on success
+- ✅ Quick actions continue to open upload popup (mode preset + FAB)
 **Test Strategy:** Drop PDF via FAB → parse completes → store has doc; landing hidden.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; session harness covers `commitIngestResults`; FAB upload flow wired end-to-end
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1 step 1–2, PRD §6.3  
 

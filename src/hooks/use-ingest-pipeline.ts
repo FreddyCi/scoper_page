@@ -11,24 +11,33 @@ export type IngestPipelineResult = {
 }
 
 export function useIngestPipeline() {
-  const enqueueFiles = useCallback(async (files: File[]): Promise<IngestPipelineResult> => {
-    const ocrEnabled = useSessionStore.getState().ocrEnabled
-    const { results, errors } = await ingestFiles(files, { ocrEnabled })
+  const commitIngestResults = useSessionStore((s) => s.commitIngestResults)
 
-    if (import.meta.env.DEV) {
-      console.debug('[ingest-pipeline]', {
+  const enqueueFiles = useCallback(
+    async (files: File[]): Promise<IngestPipelineResult> => {
+      const ocrEnabled = useSessionStore.getState().ocrEnabled
+      const { results, errors } = await ingestFiles(files, { ocrEnabled })
+
+      if (results.length > 0) {
+        commitIngestResults(results)
+      }
+
+      if (import.meta.env.DEV) {
+        console.debug('[ingest-pipeline]', {
+          queued: files.length,
+          succeeded: results.length,
+          failed: errors.length,
+        })
+      }
+
+      return {
         queued: files.length,
-        succeeded: results.length,
-        failed: errors.length,
-      })
-    }
-
-    return {
-      queued: files.length,
-      succeeded: results,
-      failed: errors,
-    }
-  }, [])
+        succeeded: results,
+        failed: errors,
+      }
+    },
+    [commitIngestResults],
+  )
 
   return { enqueueFiles }
 }

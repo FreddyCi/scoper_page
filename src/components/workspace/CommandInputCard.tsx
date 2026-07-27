@@ -41,6 +41,7 @@ export type CommandInputSubmitPayload = {
 
 type CommandInputCardProps = {
   onSubmit?: (payload: CommandInputSubmitPayload) => void
+  isSubmitting?: boolean
   className?: string
 }
 
@@ -246,7 +247,11 @@ function CommandSettingsPopover({
   )
 }
 
-export function CommandInputCard({ onSubmit, className }: CommandInputCardProps) {
+export function CommandInputCard({
+  onSubmit,
+  isSubmitting = false,
+  className,
+}: CommandInputCardProps) {
   const mode = useSessionStore((s) => s.mode)
   const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
@@ -256,7 +261,8 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const settingsButtonRef = useRef<HTMLButtonElement>(null)
 
-  const canSend = prompt.trim().length > 0 || attachments.length > 0
+  const canSend =
+    !isSubmitting && (prompt.trim().length > 0 || attachments.length > 0)
 
   function handleAddFiles(files: FileList | File[]) {
     setAttachments((current) => mergeAttachments(current, Array.from(files)))
@@ -267,7 +273,7 @@ export function CommandInputCard({ onSubmit, className }: CommandInputCardProps)
   }
 
   function handleSubmit() {
-    if (!canSend) return
+    if (!canSend || isSubmitting) return
 
     onSubmit?.({
       prompt: prompt.trim(),

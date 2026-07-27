@@ -5,6 +5,7 @@ import type {
   ChatMessage,
   DocumentMeta,
   DocumentRole,
+  IngestResult,
   RfpResultsProfile,
   ScopeCreepProfile,
   WorkspaceMode,
@@ -92,6 +93,7 @@ export type SessionState = {
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
   setOcrEnabled: (enabled: boolean) => void
+  commitIngestResults: (results: IngestResult[]) => void
   resetSession: () => void
 }
 
@@ -109,6 +111,17 @@ const initialState = {
   activeDocId: null as string | null,
   uploadPopupOpen: false,
   ocrEnabled: true,
+}
+
+function workspaceViewAfterIngest(
+  mode: WorkspaceMode,
+  currentView: WorkspaceView,
+  hadDocuments: boolean,
+): WorkspaceView {
+  if (currentView !== 'landing' && hadDocuments) {
+    return currentView
+  }
+  return mode === 'rfp' ? 'profiles' : 'split'
 }
 
 function resolveActiveDocId(
@@ -251,6 +264,36 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
 
   setOcrEnabled: (ocrEnabled) => set({ ocrEnabled }),
+
+  commitIngestResults: (results) =>
+    set((state) => {
+      if (results.length === 0) return state
+
+      const hadDocuments = state.documents.length > 0
+      let documents = [...state.documents]
+
+      for (const result of results) {
+        const document: DocumentMeta = {
+          doc_id: result.doc_id,
+          filename: result.filename,
+          mime: result.mime,
+          role: 'unknown',
+          uploaded_at: new Date().toISOString(),
+        }
+        const index = documents.findIndex((doc) => doc.doc_id === document.doc_id)
+        if (index >= 0) {
+          documents[index] = document
+        } else {
+          documents.push(document)
+        }
+      }
+
+      return {
+        documents,
+        activeDocId: results[0]?.doc_id ?? state.activeDocId,
+        workspaceView: workspaceViewAfterIngest(state.mode, state.workspaceView, hadDocuments),
+      }
+    }),
 
   resetSession: () => {
     writeChatStartedPreference(false)
@@ -402,6 +445,25 @@ export function runSessionStoreHarness(): void {
   const afterRemove = useSessionStore.getState()
   if (afterRemove.documents.length !== 0 || afterRemove.workspaceView !== 'landing') {
     throw new Error('removeDocument failed')
+  }
+
+  store.setMode('rfp')
+  store.commitIngestResults([
+    {
+      doc_id: 'harness-ingest',
+      filename: 'harness.pdf',
+      mime: 'application/pdf',
+      block_count: 3,
+      ocr_used: false,
+    },
+  ])
+  const afterIngest = useSessionStore.getState()
+  if (
+    afterIngest.documents.length !== 1 ||
+    afterIngest.workspaceView !== 'profiles' ||
+    afterIngest.activeDocId !== 'harness-ingest'
+  ) {
+    throw new Error('commitIngestResults failed')
   }
 
   store.resetSession()

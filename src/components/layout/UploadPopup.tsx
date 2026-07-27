@@ -53,7 +53,7 @@ function statusLabel(item: PendingUpload): string {
     case 'parsing':
       return 'Parsing…'
     case 'done':
-      return 'Queued for ingest'
+      return 'Ingested'
     case 'error':
       return item.error ?? 'Failed'
   }

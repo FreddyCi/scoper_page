@@ -5,6 +5,7 @@ import {
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
+import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { useSessionStore, useShowLanding } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
@@ -17,27 +18,20 @@ const MODE_COPY: Record<WorkspaceMode, string> = {
 export function WorkspaceContent() {
   const showLanding = useShowLanding()
   const workspaceView = useSessionStore((s) => s.workspaceView)
-  const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
   const mode = useSessionStore((s) => s.mode)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const documents = useSessionStore((s) => s.documents)
+  const { submitCommand, isIngesting } = useCommandIngest()
 
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId)
 
   const handleCommandSubmit = useCallback(
     (payload: CommandInputSubmitPayload) => {
-      if (payload.prompt.trim()) {
-        sendChatPrompt(payload.prompt)
-      }
-
-      if (import.meta.env.DEV && payload.files.length > 0) {
-        console.debug('[command-input] files attached (ingest BDA-024)', {
-          fileNames: payload.files.map((file) => file.name),
-          mode: payload.mode,
-        })
-      }
+      void submitCommand(payload).catch((error) => {
+        console.error('[command-ingest]', error)
+      })
     },
-    [sendChatPrompt],
+    [submitCommand],
   )
 
   if (showLanding) {
@@ -79,7 +73,11 @@ export function WorkspaceContent() {
         ) : null}
       </div>
 
-      <CommandInputCard onSubmit={handleCommandSubmit} className="max-w-2xl" />
+      <CommandInputCard
+        onSubmit={handleCommandSubmit}
+        isSubmitting={isIngesting}
+        className="max-w-2xl"
+      />
     </div>
   )
 }

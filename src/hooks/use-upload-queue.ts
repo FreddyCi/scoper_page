@@ -67,17 +67,21 @@ export function useUploadQueue() {
       const { succeeded, failed } = await enqueueFiles(items.map((item) => item.file))
 
       if (failed.length > 0) {
+        const succeededNames = new Set(succeeded.map((item) => item.filename))
         setItems((current) =>
           current.map((item) => {
             const failure = failed.find((entry) => entry.filename === item.file.name)
-            if (!failure) {
+            if (failure) {
+              return {
+                ...item,
+                status: 'error' as const,
+                error: failure.error,
+              }
+            }
+            if (succeededNames.has(item.file.name)) {
               return { ...item, status: 'done' as const }
             }
-            return {
-              ...item,
-              status: 'error' as const,
-              error: failure.error,
-            }
+            return { ...item, status: 'error' as const, error: 'Ingest failed' }
           }),
         )
         return succeeded.length > 0

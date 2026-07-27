@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import {
   RPConfig,
   RPProvider,
@@ -51,6 +51,19 @@ export function DocumentViewer({
     [document.doc_id],
   )
 
+  const pdfSrc = useMemo(() => {
+    if (!pdfBytes) return null
+    const blob = new Blob([pdfBytes.slice()], { type: 'application/pdf' })
+    return URL.createObjectURL(blob)
+  }, [pdfBytes])
+
+  useEffect(() => {
+    if (!pdfSrc) return
+    return () => {
+      URL.revokeObjectURL(pdfSrc)
+    }
+  }, [pdfSrc])
+
   if (document.mime !== 'application/pdf') {
     return (
       <ViewerState
@@ -61,7 +74,7 @@ export function DocumentViewer({
     )
   }
 
-  if (!pdfBytes) {
+  if (!pdfBytes || !pdfSrc) {
     return (
       <ViewerState
         className={className}
@@ -75,7 +88,7 @@ export function DocumentViewer({
     <div className={cn('bg-workspace min-h-0 flex-1 overflow-hidden rounded-panel', className)}>
       <RPConfig workerUrl={PDFJS_WORKER_URL}>
         <RPProvider
-          src={pdfBytes}
+          src={pdfSrc}
           initialPage={initialPage}
           onPageChange={onPageChange}
           onLoadError={(error) => {

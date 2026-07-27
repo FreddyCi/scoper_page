@@ -23,7 +23,7 @@ async function ensureParser() {
   if (initPromise) return initPromise
 
   initPromise = (async () => {
-    await init(WASM_URL)
+    await init({ module_or_path: WASM_URL })
     parser = new LiteParse({
       ocrEnabled: false,
       outputFormat: 'json',

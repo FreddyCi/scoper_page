@@ -1,19 +1,16 @@
 /// <reference lib="webworker" />
 
-import Tesseract from 'tesseract.js'
-
 import { mapTesseractPageToOcrResults } from '@/lib/ocr-results'
 import type {
   OcrRecognitionResult,
   OcrWorkerMessage,
   OcrWorkerResponse,
 } from '@/lib/ocr-protocol'
+import { createWorker, type TesseractWorker } from '@/lib/tesseract'
 import {
   TESSERACT_CORE_PATH,
   TESSERACT_WORKER_PATH,
 } from '@/lib/tesseract-config'
-
-type TesseractWorker = Awaited<ReturnType<typeof Tesseract.createWorker>>
 
 let worker: TesseractWorker | null = null
 let currentLanguage: string | null = null
@@ -25,7 +22,7 @@ function postResponse(response: OcrWorkerResponse) {
 
 async function ensureTesseract(language: string) {
   if (!worker) {
-    worker = await Tesseract.createWorker(language, 1, {
+    worker = await createWorker(language, 1, {
       workerPath: new URL(TESSERACT_WORKER_PATH, self.location.origin).href,
       corePath: TESSERACT_CORE_PATH,
     })

@@ -1,58 +1,40 @@
 /**
- * Main-thread LiteParse with OCR — WASM OCR merge needs the browser main-thread
- * async runtime; running ocrEngine inside a dedicated worker panics (Tokio reactor).
+ * Main-thread LiteParse helpers — WASM OCR merge needs Tokio and panics in the
+ * browser; use `liteparse-ocr-fallback.ts` for scanned PDFs instead.
  */
 import init, { LiteParse } from '@llamaindex/liteparse-wasm'
 
-import { OcrEngineBridge } from '@/lib/ocr-engine-bridge'
-import { normalizeLiteParseResult } from '@/lib/liteparse-normalize'
 import type { LiteParseParseResult } from '@/lib/liteparse-protocol'
 
 const WASM_URL = '/liteparse/liteparse_wasm_bg.wasm'
 
 let parser: LiteParse | null = null
 let initPromise: Promise<void> | null = null
-let ocrBridge: OcrEngineBridge | null = null
 
-function getOcrBridge(): OcrEngineBridge {
-  if (!ocrBridge) {
-    ocrBridge = new OcrEngineBridge()
-  }
-  return ocrBridge
-}
-
-async function ensureOcrParser(): Promise<void> {
+async function ensureParser(): Promise<void> {
   if (parser) return
   if (initPromise) return initPromise
 
   initPromise = (async () => {
-    await init(WASM_URL)
+    await init({ module_or_path: WASM_URL })
     parser = new LiteParse({
-      ocrEnabled: true,
+      ocrEnabled: false,
       outputFormat: 'json',
-      ocrEngine: {
-        recognize: (
-          imageData: Uint8Array,
-          width: number,
-          height: number,
-          language: string,
-        ) => getOcrBridge().recognize(imageData, width, height, language),
-      },
     })
   })()
 
   return initPromise
 }
 
-export async function parsePdfOnMainThread(
-  docId: string,
-  bytes: Uint8Array,
-): Promise<LiteParseParseResult> {
-  await ensureOcrParser()
+export async function isComplexPdf(bytes: Uint8Array) {
+  await ensureParser()
   if (!parser) throw new Error('LiteParse main-thread parser unavailable')
+  return parser.isComplex(bytes)
+}
 
-  const result = await parser.parse(bytes)
-  return normalizeLiteParseResult(docId, result.pages, result.text)
+export async function pageNumbersNeedingOcr(bytes: Uint8Array): Promise<number[]> {
+  const pages = await isComplexPdf(bytes)
+  return pages.filter((page) => page.needsOcr).map((page) => page.pageNumber)
 }
 
 export async function terminateLiteParseMain(): Promise<void> {
@@ -61,9 +43,12 @@ export async function terminateLiteParseMain(): Promise<void> {
     parser = null
   }
   initPromise = null
+}
 
-  if (ocrBridge) {
-    await ocrBridge.terminate()
-    ocrBridge = null
-  }
+/** @deprecated LiteParse OCR merge panics in WASM — kept for type re-exports only */
+export async function parsePdfOnMainThread(
+  _docId: string,
+  _bytes: Uint8Array,
+): Promise<LiteParseParseResult> {
+  throw new Error('LiteParse OCR is unavailable in the browser; use parsePdfWithOcrFallback')
 }

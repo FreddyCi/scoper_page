@@ -4,7 +4,8 @@ import type {
   LiteParseWorkerRequest,
   LiteParseWorkerResponse,
 } from '@/lib/liteparse-protocol'
-import { parsePdfOnMainThread } from '@/services/liteparse-main'
+import { pageNumbersNeedingOcr } from '@/services/liteparse-main'
+import { parsePdfWithOcrFallback } from '@/services/liteparse-ocr-fallback'
 
 type PendingRequest = {
   resolve: (value: unknown) => void
@@ -82,17 +83,34 @@ export class LiteParseClient {
     bytes: Uint8Array,
     options?: { ocrEnabled?: boolean },
   ): Promise<LiteParseParseResult> {
-    if (options?.ocrEnabled) {
-      return parsePdfOnMainThread(docId, bytes)
-    }
-
     await this.init()
-    return this.send<LiteParseParseResult>({
+    const parsed = await this.send<LiteParseParseResult>({
       type: 'parse',
       doc_id: docId,
       bytes,
       ocrEnabled: false,
     })
+
+    if (!options?.ocrEnabled) {
+      return parsed
+    }
+
+    let ocrPages: number[] = []
+    if (parsed.blocks.length > 0) {
+      ocrPages = await pageNumbersNeedingOcr(bytes).catch(() => [])
+      if (ocrPages.length === 0) {
+        return parsed
+      }
+    }
+
+    const targetPages = parsed.blocks.length === 0 ? undefined : ocrPages
+    const ocrParsed = await parsePdfWithOcrFallback(docId, bytes, targetPages)
+
+    if (parsed.blocks.length === 0) {
+      return ocrParsed
+    }
+
+    return mergeParseResults(docId, parsed, ocrParsed)
   }
 
   async terminate(): Promise<void> {
@@ -118,6 +136,44 @@ export async function getLiteParseClient(): Promise<LiteParseClient> {
     await singletonClient.init()
   }
   return singletonClient
+}
+
+function mergeParseResults(
+  docId: string,
+  base: LiteParseParseResult,
+  ocr: LiteParseParseResult,
+): LiteParseParseResult {
+  const ocrByPage = new Map(ocr.pages.map((page) => [page.pageNum, page]))
+  const mergedPages = base.pages.map((page) => ocrByPage.get(page.pageNum) ?? page)
+
+  for (const page of ocr.pages) {
+    if (!mergedPages.some((entry) => entry.pageNum === page.pageNum)) {
+      mergedPages.push(page)
+    }
+  }
+
+  mergedPages.sort((left, right) => left.pageNum - right.pageNum)
+
+  const text = mergedPages
+    .flatMap((page) => page.textItems.map((item) => item.text))
+    .join('\n')
+
+  return {
+    pages: mergedPages,
+    blocks: mergedPages.flatMap((page) =>
+      page.textItems.map((item, index) => ({
+        block_id: `${docId}:p${page.pageNum}:i${index}`,
+        doc_id: docId,
+        page_num: page.pageNum,
+        text: item.text,
+        x: item.x,
+        y: item.y,
+        width: item.width,
+        height: item.height,
+      })),
+    ),
+    text,
+  }
 }
 
 /** Dev harness — parse sample PDF; verify pages and textItems with bbox (BDA-021) */

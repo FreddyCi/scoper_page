@@ -18,8 +18,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0
       '@llamaindex/liteparse-wasm':
-        specifier: ^2.9.0
-        version: 2.9.0
+        specifier: ^2.10.0
+        version: 2.10.0
       '@react-pdf-kit/viewer':
         specifier: ^2.7.4
         version: 2.7.4(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(pdfjs-dist@5.4.530)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -468,8 +468,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@llamaindex/liteparse-wasm@2.9.0':
-    resolution: {integrity: sha512-aKlq1iraC+UGaw/2z/ya/yLwOlSUI6+DbnMNcPKWeMZPaIZVpS2AMxwEAQ0PZIXC2rlDYlPlAyZvm5ZPFB7Fxw==}
+  '@llamaindex/liteparse-wasm@2.10.0':
+    resolution: {integrity: sha512-0/gj65OrwuBb2c4CuFFdT9Xg1b4zzjcEn2i/l/O1BobXf8Oeo+eWetMe1G44aYmLDMjihBBlXy0vbSXTYJ+efw==}
     engines: {node: '>=18.0.0'}
 
   '@modelcontextprotocol/sdk@1.29.0':
@@ -3112,7 +3112,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@llamaindex/liteparse-wasm@2.9.0': {}
+  '@llamaindex/liteparse-wasm@2.10.0': {}
 
   '@modelcontextprotocol/sdk@1.29.0(supports-color@7.2.0)(zod@3.25.76)':
     dependencies:

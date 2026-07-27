@@ -44,9 +44,8 @@ export function AppShell({ children }: AppShellProps) {
 
               <header
                 className={cn(
-                  'bg-surface flex items-center px-[var(--spacing-panel)] py-3',
+                  'bg-surface flex items-stretch',
                   chatColumnClass,
-                  !chatCollapsed && 'border-border border-l',
                 )}
                 aria-hidden={chatCollapsed}
               >

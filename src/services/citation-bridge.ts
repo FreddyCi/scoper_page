@@ -1,6 +1,18 @@
-import type { CitationRef } from '@/lib/types'
+import { blockToCitation, type CitationRef } from '@/lib/types'
 import { buildMockRfpProfiles } from '@/lib/profile-stub'
+import { fetchBlockById } from '@/services/document-blocks'
 import { useSessionStore } from '@/store/session-store'
+
+async function resolveCitation(ref: CitationRef): Promise<CitationRef> {
+  try {
+    const block = await fetchBlockById(ref.block_id)
+    if (!block) return ref
+    return blockToCitation(block, ref.excerpt)
+  } catch (error) {
+    console.error('[citation-bridge] resolve block failed', error)
+    return ref
+  }
+}
 
 /**
  * Single entry point for citation focus — updates store state so both the
@@ -16,6 +28,24 @@ export function focusCitation(ref: CitationRef | null): void {
 
   store.bumpCitationFocus()
   store.selectCitation(ref)
+
+  void (async () => {
+    const resolved = await resolveCitation(ref)
+    const latest = useSessionStore.getState()
+    if (latest.selectedCitation?.block_id !== ref.block_id) return
+
+    const bboxChanged =
+      resolved.bbox &&
+      (resolved.bbox.x !== ref.bbox?.x ||
+        resolved.bbox.y !== ref.bbox?.y ||
+        resolved.bbox.width !== ref.bbox?.width ||
+        resolved.bbox.height !== ref.bbox?.height)
+
+    if (bboxChanged || resolved.page_num !== ref.page_num) {
+      latest.bumpCitationFocus()
+      latest.selectCitation(resolved)
+    }
+  })()
 }
 
 export function clearCitation(): void {
@@ -44,6 +74,7 @@ export async function runCitationBridgeHarness(): Promise<void> {
   }
 
   focusCitation(citation)
+  await new Promise((resolve) => window.setTimeout(resolve, 0))
 
   const afterFocus = useSessionStore.getState()
   if (afterFocus.workspaceView !== 'split') {
@@ -93,6 +124,7 @@ export async function runCitationClickHarness(): Promise<void> {
   }
 
   focusCitation(criterionCitation)
+  await new Promise((resolve) => window.setTimeout(resolve, 0))
 
   const afterCriterion = useSessionStore.getState()
   if (afterCriterion.workspaceView !== 'split') {
@@ -109,6 +141,7 @@ export async function runCitationClickHarness(): Promise<void> {
     page_num: 3,
     excerpt: 'Chat chip harness excerpt',
   })
+  await new Promise((resolve) => window.setTimeout(resolve, 0))
 
   const afterChip = useSessionStore.getState()
   if (afterChip.workspaceView !== 'split' || afterChip.activeDocId !== criterionCitation.doc_id) {

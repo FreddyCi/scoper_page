@@ -43,6 +43,20 @@ export async function fetchDocumentBlocks(docId: string): Promise<BlockRecord[]>
   return rows.map(normalizeBlock)
 }
 
+export async function fetchBlockById(blockId: string): Promise<BlockRecord | null> {
+  const duckdb = await getDuckdbClient()
+  const rows = await duckdb.query<BlockRow>(
+    `SELECT block_id, doc_id, page_num, section_path, text, x, y, width, height
+     FROM blocks
+     WHERE block_id = ?
+     LIMIT 1`,
+    [blockId],
+  )
+
+  const row = rows[0]
+  return row ? normalizeBlock(row) : null
+}
+
 export type BlocksByPage = {
   pageNum: number | null
   label: string

@@ -65,9 +65,12 @@ export function DocumentViewer({
   const [scale, setScale] = useState(1.25)
 
   const totalPages = pdf?.numPages ?? 0
-  const currentPage = clampPage(page, totalPages)
   const activeCitation =
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
+  const currentPage = clampPage(
+    activeCitation?.page_num ?? page,
+    totalPages,
+  )
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)

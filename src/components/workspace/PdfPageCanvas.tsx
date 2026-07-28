@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { PDFDocumentProxy } from 'pdfjs-dist'
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
 
 import { citationViewportHighlight } from '@/lib/citation-bbox'
 import type { CitationRef } from '@/lib/types'
@@ -45,6 +45,7 @@ export function PdfPageCanvas({
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const renderTaskRef = useRef<RenderTask | null>(null)
   const [rendering, setRendering] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<ReturnType<typeof citationViewportHighlight>>(null)
@@ -58,6 +59,8 @@ export function PdfPageCanvas({
     setRendering(true)
     setRenderError(null)
 
+    renderTaskRef.current?.cancel()
+
     void pdf
       .getPage(pageNumber)
       .then((page) => {
@@ -69,10 +72,12 @@ export function PdfPageCanvas({
 
         canvas.width = Math.floor(viewport.width)
         canvas.height = Math.floor(viewport.height)
-        setHighlight(citationViewportHighlight(citation, pageNumber, viewport))
         setCanvasLayout(readCanvasLayout(canvas))
 
-        return page.render({ canvasContext: context, viewport, canvas }).promise.then(() => {
+        const renderTask = page.render({ canvasContext: context, viewport, canvas })
+        renderTaskRef.current = renderTask
+
+        return renderTask.promise.then(() => {
           if (!cancelled) {
             setCanvasLayout(readCanvasLayout(canvas))
           }
@@ -80,11 +85,38 @@ export function PdfPageCanvas({
       })
       .catch((error) => {
         if (!cancelled) {
-          setRenderError(error instanceof Error ? error.message : String(error))
+          const message = error instanceof Error ? error.message : String(error)
+          if (!message.includes('Rendering cancelled')) {
+            setRenderError(message)
+          }
         }
       })
       .finally(() => {
         if (!cancelled) setRendering(false)
+      })
+
+    return () => {
+      cancelled = true
+      renderTaskRef.current?.cancel()
+      renderTaskRef.current = null
+    }
+  }, [pdf, pageNumber, scale])
+
+  useEffect(() => {
+    let cancelled = false
+
+    void pdf
+      .getPage(pageNumber)
+      .then((page) => {
+        if (cancelled) return
+        const viewport = page.getViewport({ scale })
+        setHighlight(citationViewportHighlight(citation, pageNumber, viewport))
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          console.error('[pdf-page-canvas] highlight failed', error)
+          setHighlight(null)
+        }
       })
 
     return () => {
@@ -110,7 +142,7 @@ export function PdfPageCanvas({
     return () => {
       observer.disconnect()
     }
-  }, [pdf, pageNumber, scale, citation])
+  }, [pdf, pageNumber, scale])
 
   const scaledHighlight =
     highlight && canvasLayout

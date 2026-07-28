@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDownIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
+import { ChevronDownIcon, FileTextIcon, MessageCircleMoreIcon } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
@@ -152,9 +152,13 @@ export function WorkspaceHeaderTopRow({
         <WorkspaceModeToggle />
 
         {chatCollapsed ? (
-          <Button size="xs" variant="secondary" onClick={toggleChatCollapsed}>
-            <MessageSquareIcon className="size-3.5" />
-            <span className="hidden sm:inline">Open chat</span>
+          <Button
+            size="icon-lg"
+            variant="secondary"
+            aria-label="Open chat"
+            onClick={toggleChatCollapsed}
+          >
+            <MessageCircleMoreIcon />
           </Button>
         ) : null}
       </div>

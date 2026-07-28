@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 
 import {
-  ChevronDownIcon,
   HistoryIcon,
   PlusIcon,
   RotateCcwIcon,
@@ -26,7 +25,6 @@ type ChatSidebarProps = {
 const chatTabTriggerClass = 'gap-1.5 sm:px-3'
 
 function ChatSidebarHeaderControls() {
-  const sessionName = useSessionStore((s) => s.sessionName)
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
   const clearChat = useSessionStore((s) => s.clearChat)
 
@@ -43,15 +41,7 @@ function ChatSidebarHeaderControls() {
         </TabsTrigger>
       </TabsList>
 
-      <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1">
-        <button
-          type="button"
-          className="text-foreground hover:bg-muted hidden max-w-[7rem] items-center gap-1 truncate rounded-md px-2 py-1 text-xs font-medium sm:inline-flex"
-        >
-          <span className="truncate">{sessionName}</span>
-          <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
-        </button>
-
+      <div className="ml-auto flex shrink-0 items-center gap-1">
         <Button type="button" size="icon-xs" variant="ghost" aria-label="New chat">
           <PlusIcon className="size-3.5" />
         </Button>

@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
 import { ingestFiles } from '@/services/ingest-router'
+import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import type { IngestResult } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
 
@@ -20,6 +21,12 @@ export function useIngestPipeline() {
 
       if (results.length > 0) {
         commitIngestResults(results)
+
+        const { mode, documents } = useSessionStore.getState()
+        if (mode === 'rfp' && documents.length > 0) {
+          const profiles = await buildRfpProfiles(documents)
+          useSessionStore.getState().setProfiles(profiles)
+        }
       }
 
       if (import.meta.env.DEV) {

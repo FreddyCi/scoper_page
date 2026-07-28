@@ -6,7 +6,7 @@ import type {
 
 const VERDICTS: RfpVerdict[] = ['likely', 'might', 'unlikely']
 
-/** Dev/demo profiles until build_rfp_profiles (BDA-042) lands */
+/** Static mock profiles for UI harnesses (no DuckDB) */
 export function buildMockRfpProfiles(documents: DocumentMeta[]): RfpResultsProfile[] {
   return documents.map((doc, index) => ({
     profile_id: `profile-${doc.doc_id}`,

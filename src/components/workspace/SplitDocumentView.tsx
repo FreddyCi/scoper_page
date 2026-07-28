@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
+import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -26,10 +27,12 @@ const MODE_CTA: Record<WorkspaceMode, string> = {
 function SplitDocumentViewFooter({
   statusLabel,
   ctaLabel,
+  ctaLoading = false,
   onCtaClick,
 }: {
   statusLabel: string
   ctaLabel: string
+  ctaLoading?: boolean
   onCtaClick: () => void
 }) {
   return (
@@ -37,8 +40,8 @@ function SplitDocumentViewFooter({
       <span className="bg-muted text-muted-foreground rounded-pill inline-flex items-center px-3 py-1 text-xs font-medium">
         {statusLabel}
       </span>
-      <Button type="button" size="sm" variant="default" onClick={onCtaClick}>
-        {ctaLabel}
+      <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>
+        {ctaLoading ? 'Qualifying…' : ctaLabel}
       </Button>
     </footer>
   )
@@ -50,8 +53,11 @@ export function SplitDocumentView({
   className,
 }: SplitDocumentViewProps) {
   const [activeTab, setActiveTab] = useState<SplitPaneTab>('extract')
+  const [buildingProfiles, setBuildingProfiles] = useState(false)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
+  const documents = useSessionStore((state) => state.documents)
+  const setProfiles = useSessionStore((state) => state.setProfiles)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
@@ -79,7 +85,23 @@ export function SplitDocumentView({
   }, [blocks.length, blocksLoading, document.doc_id, document.filename, selectedCitation])
 
   function handleCtaClick() {
-    console.info('[split-document-view] analysis CTA stub', { mode, docId: document.doc_id })
+    if (mode !== 'rfp') {
+      console.info('[split-document-view] scope compare CTA stub', { docId: document.doc_id })
+      return
+    }
+
+    setBuildingProfiles(true)
+    void buildRfpProfiles(documents)
+      .then((profiles) => {
+        setProfiles(profiles)
+        setWorkspaceView('profiles')
+      })
+      .catch((error) => {
+        console.error('[split-document-view] buildRfpProfiles failed', error)
+      })
+      .finally(() => {
+        setBuildingProfiles(false)
+      })
   }
 
   return (
@@ -172,6 +194,7 @@ export function SplitDocumentView({
       <SplitDocumentViewFooter
         statusLabel={statusLabel}
         ctaLabel={MODE_CTA[mode]}
+        ctaLoading={buildingProfiles}
         onCtaClick={handleCtaClick}
       />
     </div>

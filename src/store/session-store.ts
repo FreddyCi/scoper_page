@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 
 import { buildRichAssistantReply } from '@/lib/chat-stub'
-import { buildMockRfpProfiles } from '@/lib/profile-stub'
 import type {
   ChatActionProposal,
   ChatActionStatus,
@@ -351,8 +350,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         documents,
         activeDocId: results[0]?.doc_id ?? state.activeDocId,
         workspaceView: workspaceViewAfterIngest(state.mode, state.workspaceView, hadDocuments),
-        profiles:
-          state.mode === 'rfp' ? buildMockRfpProfiles(documents) : state.profiles,
       }
     }),
 

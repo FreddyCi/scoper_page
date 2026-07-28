@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runDuckdbHarness } from '@/services/duckdb-client'
@@ -21,6 +22,7 @@ function App() {
         await runOcrHarness()
         await runLiteParseOcrHarness()
         await runIngestHarness()
+        await runBuildRfpProfilesHarness()
         await runCitationBridgeHarness()
         await runCitationClickHarness()
         runResultsProfileUiHarness()

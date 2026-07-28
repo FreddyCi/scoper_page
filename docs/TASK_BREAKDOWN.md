@@ -573,17 +573,19 @@ flowchart LR
 ### **ID:** BDA-042
 
 **Title:** build_rfp_profiles pipeline stub  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-023, BDA-004, BDA-050  
 **Priority:** Critical  
 **Description:** Service function: given ingested docs, retrieve blocks, call bitgpu JSON schema extract (or rule-based stub for dev), produce `RfpResultsProfile[]`, persist to DuckDB + store. Map criteria to block citations where possible.  
 **Completed Changes:**
-- 🔄 build_rfp_profiles.ts service
-- 🔄 DuckDB insert results_profiles + profile_criteria
-- 🔄 Store update after build
+- ✅ `build-rfp-profiles.ts` — rule-based block scan (cert/pricing/insurance keywords) → criteria + citations
+- ✅ `rfp-profile-store.ts` — persist/fetch `results_profiles` + `profile_criteria` in DuckDB
+- ✅ Ingest pipeline + split-view “Qualify document” CTA update store via `setProfiles`
+- ✅ `runBuildRfpProfilesHarness()` — ingest sample PDF → ≥1 profile with criteria in DuckDB
 **Test Strategy:** After PDF ingest + run analysis → ≥1 profile in store with criteria array.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: ingest + build → DuckDB rows + reloaded profiles with criteria
+- ✅ Manual: upload PDF → profiles grid populated from block-linked criteria
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1 step 3–4, Plan §build_rfp_profiles  
 

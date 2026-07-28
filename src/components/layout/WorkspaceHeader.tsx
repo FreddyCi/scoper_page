@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDownIcon, FileTextIcon, MessageCircleMoreIcon } from 'lucide-react'
+import {
+  ChevronDownIcon,
+  ClipboardCheckIcon,
+  FileTextIcon,
+  GitCompareArrowsIcon,
+  MessageCircleMoreIcon,
+} from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   shellChatColumnClasses,
   shellWorkspaceColumnClass,
@@ -17,10 +24,6 @@ type WorkspaceHeaderProps = {
   className?: string
 }
 
-const MODE_OPTIONS: Array<{ value: WorkspaceMode; label: string; short: string }> = [
-  { value: 'rfp', label: 'RFP Analysis', short: 'RFP' },
-  { value: 'scope_creep', label: 'Scope Creep', short: 'Creep' },
-]
 
 const SESSION_PRESETS = [
   'Untitled session',
@@ -135,56 +138,31 @@ function SessionNameDropdown() {
   )
 }
 
-function SessionSaveStatus() {
-  const sessionName = useSessionStore((s) => s.sessionName)
-  const documents = useSessionStore((s) => s.documents)
-  const [status, setStatus] = useState<'saved' | 'saving'>('saved')
-
-  useEffect(() => {
-    setStatus('saving')
-    const timer = window.setTimeout(() => setStatus('saved'), 450)
-    return () => window.clearTimeout(timer)
-  }, [sessionName, documents])
-
-  return (
-    <span className="text-subtle-foreground text-xs" aria-live="polite">
-      {status === 'saving' ? 'Saving…' : 'Saved'}
-    </span>
-  )
-}
+const MODE_TAB_TRIGGER_CLASS = 'gap-1.5 sm:px-3'
 
 function WorkspaceModeToggle() {
   const mode = useSessionStore((s) => s.mode)
   const setMode = useSessionStore((s) => s.setMode)
 
   return (
-    <div
-      className="bg-muted inline-flex items-center gap-0.5 rounded-full p-1"
-      role="group"
-      aria-label="Workspace mode"
+    <Tabs
+      value={mode}
+      onValueChange={(value) => setMode(value as WorkspaceMode)}
+      className="w-auto gap-0"
     >
-      {MODE_OPTIONS.map((option) => {
-        const isActive = mode === option.value
-
-        return (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => setMode(option.value)}
-            aria-pressed={isActive}
-            className={cn(
-              'inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-all sm:px-3',
-              isActive
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <span className="sm:hidden">{option.short}</span>
-            <span className="hidden sm:inline">{option.label}</span>
-          </button>
-        )
-      })}
-    </div>
+      <TabsList variant="segmented" aria-label="Workspace mode">
+        <TabsTrigger value="rfp" className={MODE_TAB_TRIGGER_CLASS}>
+          <ClipboardCheckIcon className="size-3.5" />
+          <span className="sm:hidden">RFP</span>
+          <span className="hidden sm:inline">RFP Analysis</span>
+        </TabsTrigger>
+        <TabsTrigger value="scope_creep" className={MODE_TAB_TRIGGER_CLASS}>
+          <GitCompareArrowsIcon className="size-3.5" />
+          <span className="sm:hidden">Creep</span>
+          <span className="hidden sm:inline">Scope Creep</span>
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   )
 }
 
@@ -205,7 +183,6 @@ export function WorkspaceHeaderTopRow({
       )}
     >
       <SessionNameDropdown />
-      <SessionSaveStatus />
 
       <div className="ml-auto flex items-center gap-2">
         <WorkspaceModeToggle />

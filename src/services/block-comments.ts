@@ -90,6 +90,64 @@ export type AnnotatedBlockExport = {
   comments: CommentRecord[]
 }
 
+export type DocumentCommentEntry = {
+  comment: CommentRecord
+  block: BlockRecord
+}
+
+/** All review notes for a document, ordered for reading navigation. */
+export async function fetchDocumentComments(docId: string): Promise<DocumentCommentEntry[]> {
+  const duckdb = await getDuckdbClient()
+  const rows = await duckdb.query<{
+    comment_id: string
+    block_id: string
+    comment_text: string
+    created_at: string
+    doc_id: string
+    page_num: number | null
+    section_path: string | null
+    block_text: string
+    x: number | null
+    y: number | null
+    width: number | null
+    height: number | null
+  }>(
+    `SELECT c.comment_id, c.block_id, c.text AS comment_text, c.created_at,
+            b.doc_id, b.page_num, b.section_path, b.text AS block_text,
+            b.x, b.y, b.width, b.height
+     FROM comments c
+     INNER JOIN blocks b ON b.block_id = c.block_id
+     WHERE b.doc_id = ?
+     ORDER BY b.page_num NULLS LAST, b.y NULLS LAST, b.x NULLS LAST,
+              c.created_at ASC, c.comment_id ASC`,
+    [docId],
+  )
+
+  return rows.map((row) => {
+    const block: BlockRecord = {
+      block_id: row.block_id,
+      doc_id: row.doc_id,
+      text: row.block_text,
+    }
+    if (row.page_num != null) block.page_num = row.page_num
+    if (row.section_path != null) block.section_path = row.section_path
+    if (row.x != null) block.x = row.x
+    if (row.y != null) block.y = row.y
+    if (row.width != null) block.width = row.width
+    if (row.height != null) block.height = row.height
+
+    return {
+      comment: {
+        comment_id: row.comment_id,
+        block_id: row.block_id,
+        text: row.comment_text,
+        created_at: row.created_at,
+      },
+      block,
+    }
+  })
+}
+
 /** Blocks with review notes for PDF export — grouped by block, ordered by page position. */
 export async function fetchAnnotatedBlocksForExport(
   docId: string,

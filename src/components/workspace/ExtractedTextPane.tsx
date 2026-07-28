@@ -14,6 +14,8 @@ import { useSessionStore } from '@/store/session-store'
 type ExtractedTextPaneProps = {
   docId: string
   className?: string
+  pendingCommentFocus?: { commentId: string; blockId: string } | null
+  onPendingCommentFocusHandled?: () => void
 }
 
 function isPageGroupLabel(label: string): boolean {
@@ -107,7 +109,12 @@ function BlockRow({
   )
 }
 
-export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) {
+export function ExtractedTextPane({
+  docId,
+  className,
+  pendingCommentFocus = null,
+  onPendingCommentFocusHandled,
+}: ExtractedTextPaneProps) {
   const [commentOpen, setCommentOpen] = useState(false)
   const { blocks, loading, error } = useDocumentBlocks(docId)
   const { blockIds: commentedBlockIds, refresh: refreshCommentedBlockIds } =
@@ -119,6 +126,17 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
   const activeBlockId =
     selectedCitation?.doc_id === docId ? selectedCitation.block_id : null
   const activeBlock = blocks.find((block) => block.block_id === activeBlockId) ?? null
+
+  useEffect(() => {
+    if (!pendingCommentFocus) return
+
+    const block = blocks.find((entry) => entry.block_id === pendingCommentFocus.blockId)
+    if (!block) return
+
+    focusCitation(blockToCitation(block))
+    setCommentOpen(true)
+    onPendingCommentFocusHandled?.()
+  }, [blocks, onPendingCommentFocusHandled, pendingCommentFocus])
 
   function openCommentForBlock(block: BlockRecord) {
     focusCitation(blockToCitation(block))
@@ -138,6 +156,11 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
         onOpenChange={setCommentOpen}
         onCommentAdded={() => {
           void refreshCommentedBlockIds()
+          window.dispatchEvent(
+            new CustomEvent('scoper:comments-imported', {
+              detail: { docId },
+            }),
+          )
         }}
       />
 

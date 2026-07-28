@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DownloadIcon, InfoIcon } from 'lucide-react'
 
+import { CommentNavigator } from '@/components/workspace/CommentNavigator'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { Button } from '@/components/ui/button'
@@ -16,13 +17,16 @@ import {
 import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
+import { useDocumentComments } from '@/hooks/use-document-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
 import { compareScope } from '@/services/compare-scope'
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
 import { beginBlobSave } from '@/lib/download-blob'
+import { blockToCitation } from '@/lib/types'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
 type SplitPaneTab = 'extract' | 'original' | 'profiles'
@@ -60,6 +64,10 @@ function ExtractViewHelpButton() {
           <li>Click a block to highlight the matching passage in the PDF preview.</li>
           <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
+          <li>
+            When review notes exist, use the note navigator in the header to step through each{' '}
+            <span className="font-mono">comment_id</span>.
+          </li>
           <li>Use Export PDF for toggleable markup (hide/show in your PDF viewer) or burned-in notes.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
@@ -176,6 +184,11 @@ export function SplitDocumentView({
   const [comparingScope, setComparingScope] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [commentNavIndex, setCommentNavIndex] = useState(0)
+  const [pendingCommentFocus, setPendingCommentFocus] = useState<{
+    commentId: string
+    blockId: string
+  } | null>(null)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
   const documents = useSessionStore((state) => state.documents)
@@ -184,6 +197,43 @@ export function SplitDocumentView({
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
   const { blocks, loading: blocksLoading } = useDocumentBlocks(document.doc_id)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
+  const { entries: documentComments, loading: documentCommentsLoading } =
+    useDocumentComments(document.doc_id)
+
+  useEffect(() => {
+    if (commentNavIndex >= documentComments.length) {
+      setCommentNavIndex(Math.max(0, documentComments.length - 1))
+    }
+  }, [commentNavIndex, documentComments.length])
+
+  useEffect(() => {
+    if (
+      !selectedCitation ||
+      selectedCitation.doc_id !== document.doc_id ||
+      documentComments.length === 0
+    ) {
+      return
+    }
+
+    const index = documentComments.findIndex(
+      (entry) => entry.comment.block_id === selectedCitation.block_id,
+    )
+    if (index >= 0) {
+      setCommentNavIndex(index)
+    }
+  }, [document.doc_id, documentComments, selectedCitation?.block_id, citationFocusSeq])
+
+  function navigateToComment(index: number) {
+    const entry = documentComments[index]
+    if (!entry) return
+
+    setCommentNavIndex(index)
+    focusCitation(blockToCitation(entry.block))
+    setPendingCommentFocus({
+      commentId: entry.comment.comment_id,
+      blockId: entry.block.block_id,
+    })
+  }
 
   useEffect(() => {
     if (selectedCitation?.doc_id === document.doc_id) {
@@ -309,7 +359,7 @@ export function SplitDocumentView({
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <TabsList variant="segmented">
               <TabsTrigger value="extract">Extract</TabsTrigger>
               <TabsTrigger value="original">Original</TabsTrigger>
@@ -318,7 +368,15 @@ export function SplitDocumentView({
             <ExtractViewHelpButton />
           </div>
 
-          <p className="text-muted-foreground hidden truncate text-xs sm:block">
+          <CommentNavigator
+            entries={documentComments}
+            activeIndex={commentNavIndex}
+            loading={documentCommentsLoading}
+            onIndexChange={navigateToComment}
+            className="mx-auto"
+          />
+
+          <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
             {document.filename}
           </p>
         </div>
@@ -329,7 +387,12 @@ export function SplitDocumentView({
               className="bg-surface min-h-0 min-w-[16rem] overflow-hidden"
               style={{ width: `${ratio * 100}%` }}
             >
-              <ExtractedTextPane docId={document.doc_id} className="h-full border-0 shadow-none" />
+              <ExtractedTextPane
+                docId={document.doc_id}
+                className="h-full border-0 shadow-none"
+                pendingCommentFocus={pendingCommentFocus}
+                onPendingCommentFocusHandled={() => setPendingCommentFocus(null)}
+              />
             </div>
 
             <div

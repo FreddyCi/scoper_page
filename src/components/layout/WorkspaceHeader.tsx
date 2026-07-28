@@ -77,10 +77,10 @@ function SessionNameDropdown() {
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[14rem] items-center gap-2 border px-3 py-1 text-sm font-medium transition-colors"
+        className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[10.5rem] items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
       >
         <span className="truncate">{sessionName}</span>
-        <ChevronDownIcon className="text-muted-foreground size-3.5 shrink-0" />
+        <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
       </button>
 
       {open ? (
@@ -89,24 +89,27 @@ function SessionNameDropdown() {
           anchorRef={rootRef}
           panelRef={panelRef}
           role="listbox"
-          className="min-w-[14rem] p-0"
+          className="w-[10.5rem] p-0"
         >
           <form
-            className="border-border border-b p-2"
+            className="border-border border-b px-2 py-1.5"
             onSubmit={(event) => {
               event.preventDefault()
               applyName(draftName)
             }}
           >
-            <label className="sr-only" htmlFor="session-name-input">
-              Session name
+            <label
+              htmlFor="session-name-input"
+              className="text-subtle-foreground mb-1 block px-1 text-[10px] font-medium tracking-wide uppercase"
+            >
+              Rename
             </label>
             <input
               id="session-name-input"
               type="text"
               value={draftName}
               onChange={(event) => setDraftName(event.target.value)}
-              className="border-border bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-2"
+              className="bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border-0 px-2 py-1 text-xs outline-none focus-visible:ring-1"
               placeholder="Session name"
             />
           </form>
@@ -119,7 +122,7 @@ function SessionNameDropdown() {
               aria-selected={sessionName === name}
               onClick={() => applyName(name)}
               className={cn(
-                'hover:bg-muted block w-full px-3 py-1.5 text-left text-sm transition-colors',
+                'hover:bg-muted block w-full px-2.5 py-1.5 text-left text-xs transition-colors',
                 sessionName === name && 'bg-muted font-medium',
               )}
             >

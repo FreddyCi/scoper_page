@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 
 import { cn } from '@/lib/utils'
@@ -48,6 +48,7 @@ export function useAnchoredMenuPosition(
 type AnchoredMenuPortalProps = {
   open: boolean
   anchorRef: RefObject<HTMLElement | null>
+  panelRef?: RefObject<HTMLDivElement | null>
   children: ReactNode
   className?: string
   style?: CSSProperties
@@ -59,6 +60,7 @@ type AnchoredMenuPortalProps = {
 export function AnchoredMenuPortal({
   open,
   anchorRef,
+  panelRef,
   children,
   className,
   style,
@@ -66,11 +68,14 @@ export function AnchoredMenuPortal({
   'aria-label': ariaLabel,
 }: AnchoredMenuPortalProps) {
   const position = useAnchoredMenuPosition(open, anchorRef)
+  const internalPanelRef = useRef<HTMLDivElement>(null)
+  const resolvedPanelRef = panelRef ?? internalPanelRef
 
   if (!open || !position || typeof document === 'undefined') return null
 
   return createPortal(
     <div
+      ref={resolvedPanelRef}
       role={role}
       aria-label={ariaLabel}
       className={cn(

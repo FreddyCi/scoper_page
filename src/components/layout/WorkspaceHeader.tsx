@@ -187,25 +187,30 @@ export function WorkspaceDocumentTabsRow({
           const isActive = doc.doc_id === activeDocId
 
           return (
-            <button
+            <div
               key={doc.doc_id}
-              type="button"
-              onClick={() => setActiveDocId(doc.doc_id)}
+              role="tab"
               aria-selected={isActive}
               title={doc.filename}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
                 isActive
                   ? 'border-border bg-surface text-foreground max-w-[min(100%,28rem)] border shadow-sm'
                   : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground max-w-[12rem]',
               )}
             >
-              <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
-              <span className={cn(isActive ? 'whitespace-normal break-all' : 'truncate')}>
-                {doc.filename}
-              </span>
+              <button
+                type="button"
+                onClick={() => setActiveDocId(doc.doc_id)}
+                className="inline-flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-black/[0.03]"
+              >
+                <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
+                <span className={cn(isActive ? 'whitespace-normal break-all' : 'truncate')}>
+                  {doc.filename}
+                </span>
+              </button>
               <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
-            </button>
+            </div>
           )
         })}
       </div>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
 import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
@@ -18,32 +17,29 @@ type DocumentRoleSelectorProps = {
   className?: string
 }
 
-function roleBadgeVariant(role: DocumentRole): 'default' | 'secondary' | 'outline' | 'ghost' {
-  switch (role) {
-    case 'baseline':
-      return 'default'
-    case 'change_request':
-      return 'secondary'
-    case 'supporting':
-      return 'outline'
-    default:
-      return 'ghost'
-  }
+const ROLE_VALUE_CLASS: Record<DocumentRole, string> = {
+  baseline: 'text-foreground',
+  change_request: 'text-foreground',
+  supporting: 'text-foreground',
+  unknown: 'text-muted-foreground',
 }
 
-/** Per-document role badge + dropdown — baseline | change | supporting | unknown (BDA-070) */
+/** Per-document role dropdown — baseline | change | supporting | unknown (BDA-070) */
 export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSelectorProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
 
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false)
+      const target = event.target as Node
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) {
+        return
       }
+      setOpen(false)
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -83,25 +79,25 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
         aria-expanded={open}
         aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
         disabled={pending}
+        onMouseDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation()
           setOpen((value) => !value)
         }}
-        className="border-border/70 bg-background/60 hover:bg-background inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
-        <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
-          Role
-        </span>
-        <Badge variant={roleBadgeVariant(role)} className="h-5 px-1.5 text-[10px] uppercase">
+        <span className="text-muted-foreground tracking-wide uppercase">Role</span>
+        <span className={cn('tracking-wide uppercase', ROLE_VALUE_CLASS[role])}>
           {DOCUMENT_ROLE_LABELS[role]}
-        </Badge>
-        <ChevronDownIcon className="text-muted-foreground size-3 opacity-70" />
+        </span>
+        <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-70" />
       </button>
 
       {open ? (
         <AnchoredMenuPortal
           open={open}
           anchorRef={rootRef}
+          panelRef={panelRef}
           role="listbox"
           aria-label="Select document role"
           className="min-w-[15rem]"
@@ -119,6 +115,7 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
               role="option"
               aria-selected={role === option}
               disabled={pending}
+              onMouseDown={(event) => event.stopPropagation()}
               onClick={() => void handleSelect(option)}
               className={cn(
                 'hover:bg-muted block w-full px-3 py-1.5 text-left transition-colors',

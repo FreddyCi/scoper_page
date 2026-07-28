@@ -114,8 +114,38 @@ export class ScoperClient {
     }
   }
 
-  private sendRequest<T = unknown>(request: ScoperWorkerCommand): Promise<T> {
-    const worker = this.ensureWorker()
+  private workerInitPromise: Promise<Worker> | null = null
+
+  private async ensureWorker(): Promise<Worker> {
+    if (this.worker) return this.worker
+
+    if (!this.workerInitPromise) {
+      this.workerInitPromise = this.createWorker()
+    }
+
+    return this.workerInitPromise
+  }
+
+  private async createWorker(): Promise<Worker> {
+    const WorkerModule = await import('../workers/scoper.worker.ts?worker')
+    const worker = new WorkerModule.default()
+    worker.addEventListener('message', this.handleMessage)
+    worker.addEventListener('error', (event) => {
+      const error = new Error(event.message || 'Scoper worker error')
+      this.setState({ status: 'error', lastError: error.message })
+      this.listeners.onError?.(error)
+      for (const pending of this.pending.values()) {
+        pending.reject(error)
+      }
+      this.pending.clear()
+    })
+
+    this.worker = worker
+    return worker
+  }
+
+  private async sendRequest<T = unknown>(request: ScoperWorkerCommand): Promise<T> {
+    const worker = await this.ensureWorker()
     const id = crypto.randomUUID()
 
     return new Promise<T>((resolve, reject) => {
@@ -127,24 +157,8 @@ export class ScoperClient {
     })
   }
 
-  private ensureWorker(): Worker {
-    if (this.worker) return this.worker
-
-    this.worker = new Worker(new URL('../workers/scoper.worker.ts', import.meta.url), {
-      type: 'module',
-    })
-    this.worker.addEventListener('message', this.handleMessage)
-    this.worker.addEventListener('error', (event) => {
-      const error = new Error(event.message || 'Scoper worker error')
-      this.setState({ status: 'error', lastError: error.message })
-      this.listeners.onError?.(error)
-      for (const pending of this.pending.values()) {
-        pending.reject(error)
-      }
-      this.pending.clear()
-    })
-
-    return this.worker
+  setListeners(listeners: ScoperClientListeners) {
+    this.listeners = listeners
   }
 
   private setState(patch: Partial<ScoperClientState>) {
@@ -176,10 +190,6 @@ export class ScoperClient {
     this.pendingSend?.reject(error)
     this.pendingSend = null
     this.abortController = null
-  }
-
-  setListeners(listeners: ScoperClientListeners) {
-    this.listeners = listeners
   }
 
   getState(): ScoperClientState {
@@ -244,30 +254,40 @@ export class ScoperClient {
       }
     })
 
-    void this.ensureWorker().postMessage({
-      type: 'send',
-      messages,
-      temperature: options.temperature,
-      topK: options.topK,
-      maxTokens: options.maxTokens,
+    void this.ensureWorker().then((worker) => {
+      worker.postMessage({
+        type: 'send',
+        messages,
+        temperature: options.temperature,
+        topK: options.topK,
+        maxTokens: options.maxTokens,
+      })
     })
 
     return resultPromise
   }
 
   stop() {
-    this.ensureWorker().postMessage({ type: 'stop' })
+    void this.ensureWorker().then((worker) => {
+      worker.postMessage({ type: 'stop' })
+    })
   }
 
   resetConversation() {
-    this.ensureWorker().postMessage({ type: 'reset' })
+    void this.ensureWorker().then((worker) => {
+      worker.postMessage({ type: 'reset' })
+    })
   }
 
   dispose() {
-    if (!this.worker) return
+    if (!this.worker) {
+      this.workerInitPromise = null
+      return
+    }
     this.worker.removeEventListener('message', this.handleMessage)
     this.worker.terminate()
     this.worker = null
+    this.workerInitPromise = null
     this.pending.clear()
     this.pendingSend = null
     this.abortController = null

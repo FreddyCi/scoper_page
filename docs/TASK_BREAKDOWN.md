@@ -908,17 +908,18 @@ flowchart LR
 ### **ID:** BDA-090
 
 **Title:** Vite production build and WASM assets  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-021, BDA-020, BDA-050  
 **Priority:** High  
 **Description:** Finalize vite.config for workers, wasm, optional COOP/COEP. Copy DuckDB wasm to public. Bundle size check. Lazy-load bitgpu worker.  
 **Completed Changes:**
-- 🔄 vite.config.ts workers + assets
-- 🔄 pnpm build succeeds
-- 🔄 preview serves workers correctly
+- ✅ `vite.config.ts` — ES workers, wasm assets, COOP/COEP on dev/preview, vendor manualChunks
+- ✅ `scripts/copy-duckdb-assets.mjs` (postinstall/build) + `check-bundle-size.mjs` + `verify-build-assets.mjs`
+- ✅ `scoper-client.ts` — lazy `import('?worker')` defers bitgpu worker until chat/ping/load
+- ✅ `preview-smoke.mjs` — preview server serves shell, WASM, sample PDF with correct MIME
 **Test Strategy:** `pnpm build && pnpm preview` — upload PDF flow works from preview server.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` + bundle/asset checks pass; preview smoke script validates WASM paths
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §9.4, Plan §Deploy  
 

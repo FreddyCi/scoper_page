@@ -11,7 +11,10 @@
     "copy:pdfjs": "node scripts/copy-pdfjs-assets.mjs",
     "copy:assets": "pnpm copy:duckdb && pnpm copy:liteparse && pnpm copy:tesseract && pnpm copy:pdfjs",
     "dev": "pnpm copy:assets && vite",
-    "build": "pnpm copy:assets && tsc -b && vite build",
+    "build": "pnpm copy:assets && tsc -b && vite build && pnpm build:check && pnpm verify:build",
+    "build:check": "node scripts/check-bundle-size.mjs",
+    "verify:build": "node scripts/verify-build-assets.mjs",
+    "preview:smoke": "node scripts/preview-smoke.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "postinstall": "pnpm copy:assets"

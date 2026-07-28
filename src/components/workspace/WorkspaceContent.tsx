@@ -1,6 +1,11 @@
 import { useCallback } from 'react'
 
 import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
+import {
   CommandInputCard,
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
@@ -66,10 +71,20 @@ export function WorkspaceContent() {
         </div>
 
         {mode === 'rfp' ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
-            <ResultsProfileGrid profiles={profiles} className="min-h-0 min-w-0 flex-1" />
-            <RfpEvaluationPanel className="w-full shrink-0 lg:w-[22rem] xl:w-[24rem]" />
-          </div>
+          <ResizablePanelGroup
+            orientation="horizontal"
+            className="border-border min-h-0 flex-1 rounded-xl border"
+          >
+            <ResizablePanel defaultSize="50%" minSize="25%" className="min-h-0 min-w-0 p-4">
+              <ResultsProfileGrid profiles={profiles} className="h-full min-h-0" />
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            <ResizablePanel defaultSize="50%" minSize="25%" className="min-h-0 min-w-0 p-4">
+              <RfpEvaluationPanel className="h-full min-h-0" />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         ) : (
           <CreepProfileGrid
             profiles={creepProfiles}

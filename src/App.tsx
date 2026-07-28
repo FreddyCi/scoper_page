@@ -20,7 +20,7 @@ import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/serv
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
-import { runIngestHarness, runMarkdownIngestHarness } from '@/services/ingest-router'
+import { runIngestHarness, runMarkdownIngestHarness, runDocxIngestHarness } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
 import { runOcrHarness } from '@/services/ocr-client'
 import { runSessionStoreHarness } from '@/store/session-store'
@@ -45,6 +45,7 @@ function App() {
         await runLiteParseOcrHarness()
         await runIngestHarness()
         await runMarkdownIngestHarness()
+        await runDocxIngestHarness()
         await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()

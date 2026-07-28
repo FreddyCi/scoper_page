@@ -11,7 +11,10 @@ import { cacheDocumentBytes } from '@/services/document-bytes-cache'
 import { resolveDocumentRoleForIngest } from '@/services/document-roles'
 import { getLiteParseClient } from '@/services/liteparse-client'
 import { parseMarkdownToBlocks } from '@/services/markdown-ingest'
+import { parseDocxToBlocks } from '@/services/docx-ingest'
 import { useSessionStore } from '@/store/session-store'
+
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
 export type IngestOptions = {
   ocrEnabled?: boolean
@@ -166,15 +169,56 @@ async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> 
   }
 }
 
+async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
+  const extension = getFileExtension(file.name)
+  if (extension === 'doc') {
+    throw new Error(
+      `Legacy Word .doc is not supported (${file.name}). Save as .docx and re-upload.`,
+    )
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  cacheDocumentBytes(docId, bytes)
+
+  const arrayBuffer = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  )
+  const blocks = await parseDocxToBlocks(docId, arrayBuffer)
+
+  const role = await resolveDocumentRoleForIngest(
+    docId,
+    useSessionStore.getState().documents,
+    DOCX_MIME,
+  )
+
+  const document: DocumentMeta = {
+    doc_id: docId,
+    filename: file.name,
+    mime: DOCX_MIME,
+    role,
+    uploaded_at: new Date().toISOString(),
+  }
+
+  await persistIngestBlocks(document, blocks)
+
+  return {
+    doc_id: docId,
+    filename: file.name,
+    mime: document.mime,
+    block_count: blocks.length,
+    ocr_used: false,
+    role: document.role,
+  }
+}
+
 function ingestFormatStub(format: IngestFormat, filename: string): never {
-  const labels: Record<Exclude<IngestFormat, 'pdf'>, string> = {
-    word: 'Word',
-    markdown: 'Markdown',
+  const labels: Record<Exclude<IngestFormat, 'pdf' | 'markdown' | 'word'>, string> = {
     excel: 'Excel',
   }
 
-  if (format === 'pdf') {
-    throw new Error(`Unexpected PDF stub for ${filename}`)
+  if (format === 'pdf' || format === 'markdown' || format === 'word') {
+    throw new Error(`Unexpected stub for ${format} (${filename})`)
   }
 
   throw new Error(`${labels[format]} ingest not implemented (Phase 10)`)
@@ -198,6 +242,7 @@ export async function ingestFile(
     case 'markdown':
       return ingestMarkdown(file, docId)
     case 'word':
+      return ingestDocx(file, docId)
     case 'excel':
       return ingestFormatStub(format, file.name)
     default: {
@@ -311,5 +356,45 @@ export async function runMarkdownIngestHarness(): Promise<void> {
   const withSectionPath = blocks.filter((block) => block.section_path?.includes('Smoke Test Plan'))
   if (withSectionPath.length === 0) {
     throw new Error('Markdown ingest harness: expected section_path from headings')
+  }
+}
+
+/** Dev harness — ingest sample .docx; verify DuckDB blocks with section_path (BDA-080) */
+export async function runDocxIngestHarness(): Promise<void> {
+  const response = await fetch('/sample/minimal.docx')
+  if (!response.ok) {
+    throw new Error(`Docx ingest harness: failed to load sample docx (${response.status})`)
+  }
+
+  const blob = await response.blob()
+  const file = new File([blob], 'harness-sample.docx', { type: DOCX_MIME })
+  const ingested = await ingestFile(file)
+
+  if (ingested.block_count < 2) {
+    throw new Error('Docx ingest harness: expected multiple blocks')
+  }
+
+  const duckdb = await getDuckdbClient()
+  const documents = await duckdb.query<{ doc_id: string }>(
+    'SELECT doc_id FROM documents WHERE doc_id = ?',
+    [ingested.doc_id],
+  )
+  const blocks = await duckdb.query<{ section_path: string | null; text: string }>(
+    'SELECT section_path, text FROM blocks WHERE doc_id = ? ORDER BY block_id',
+    [ingested.doc_id],
+  )
+
+  if (documents.length !== 1) {
+    throw new Error('Docx ingest harness: expected document row in DuckDB')
+  }
+
+  const withSectionPath = blocks.filter((block) => block.section_path?.includes('Statement of Work'))
+  if (withSectionPath.length === 0) {
+    throw new Error('Docx ingest harness: expected section_path from Word headings')
+  }
+
+  const nestedSection = blocks.find((block) => block.section_path?.includes('Deliverables'))
+  if (!nestedSection) {
+    throw new Error('Docx ingest harness: expected nested heading section_path')
   }
 }

@@ -845,16 +845,17 @@ flowchart LR
 ### **ID:** BDA-080
 
 **Title:** Word docx parser via mammoth  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-023  
 **Priority:** Medium  
 **Description:** `ingest/docx.ts`: mammoth → HTML/text → blocks with section_path anchors (no bbox). Register in ingest router.  
 **Completed Changes:**
-- 🔄 docx parser module
-- 🔄 Router branch for word mime types
+- ✅ `docx-ingest.ts` — mammoth `convertToHtml` → heading breadcrumb blocks with `section_path` (no bbox)
+- ✅ `ingest-router.ts` — `ingestDocx` branch; legacy `.doc` rejected with clear message
+- ✅ `public/sample/minimal.docx` + `runDocxIngestHarness()`
 **Test Strategy:** Upload .docx → blocks in DuckDB with section_path.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.3, Plan §Ingest table  
 

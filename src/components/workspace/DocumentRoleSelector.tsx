@@ -81,14 +81,17 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}`}
+        aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
         disabled={pending}
         onClick={(event) => {
           event.stopPropagation()
           setOpen((value) => !value)
         }}
-        className="inline-flex items-center gap-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="border-border/70 bg-background/60 hover:bg-background inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
       >
+        <span className="text-muted-foreground text-[10px] font-medium tracking-wide uppercase">
+          Role
+        </span>
         <Badge variant={roleBadgeVariant(role)} className="h-5 px-1.5 text-[10px] uppercase">
           {DOCUMENT_ROLE_LABELS[role]}
         </Badge>
@@ -101,8 +104,14 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
           anchorRef={rootRef}
           role="listbox"
           aria-label="Select document role"
-          className="min-w-[11rem]"
+          className="min-w-[15rem]"
         >
+          <div className="border-border/70 border-b px-3 py-2">
+            <p className="text-foreground text-xs font-semibold">Document role</p>
+            <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug">
+              Tags how this file is used in RFP qualification and scope creep analysis.
+            </p>
+          </div>
           {DOCUMENT_ROLES.map((option) => (
             <button
               key={option}

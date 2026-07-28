@@ -192,15 +192,18 @@ export function WorkspaceDocumentTabsRow({
               type="button"
               onClick={() => setActiveDocId(doc.doc_id)}
               aria-selected={isActive}
+              title={doc.filename}
               className={cn(
-                'inline-flex max-w-[12rem] shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors',
+                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
                 isActive
-                  ? 'border-border bg-surface text-foreground border shadow-sm'
-                  : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground',
+                  ? 'border-border bg-surface text-foreground max-w-[min(100%,28rem)] border shadow-sm'
+                  : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground max-w-[12rem]',
               )}
             >
               <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
-              <span className="truncate">{doc.filename}</span>
+              <span className={cn(isActive ? 'whitespace-normal break-all' : 'truncate')}>
+                {doc.filename}
+              </span>
               <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
             </button>
           )

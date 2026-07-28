@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+import { InfoIcon } from 'lucide-react'
 
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
 import { compareScope } from '@/services/compare-scope'
@@ -22,6 +29,39 @@ type SplitDocumentViewProps = {
 const MODE_CTA: Record<WorkspaceMode, string> = {
   rfp: 'Qualify document',
   scope_creep: 'Compare scope',
+}
+
+function ExtractViewHelpButton() {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Extract view help"
+            className="text-muted-foreground"
+          />
+        }
+      >
+        <InfoIcon className="size-4" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-72 p-3">
+        <p className="text-foreground text-sm font-semibold">Extract &amp; comments</p>
+        <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
+          <li>Click a block to highlight the matching passage in the PDF preview.</li>
+          <li>Use the comment icon on a block row to attach a review note.</li>
+          <li>
+            <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
+            {' '}
+            <span className="text-amber-800 font-medium">Amber ring</span> = block with a review
+            note.
+          </li>
+        </ul>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }
 
 function SplitDocumentViewFooter({
@@ -64,6 +104,7 @@ export function SplitDocumentView({
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
   const { blocks, loading: blocksLoading } = useDocumentBlocks(document.doc_id)
+  const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
 
   useEffect(() => {
     if (selectedCitation?.doc_id === document.doc_id) {
@@ -80,11 +121,13 @@ export function SplitDocumentView({
       selectedCitation?.doc_id === document.doc_id &&
       selectedCitation.page_num != null
     ) {
-      return `${blockCountLabel} · Page ${selectedCitation.page_num} selected`
+      const hasComment = commentedBlockIds.has(selectedCitation.block_id)
+      const commentLabel = hasComment ? ' · Review note attached' : ''
+      return `${blockCountLabel} · Page ${selectedCitation.page_num} selected${commentLabel}`
     }
 
     return `${blockCountLabel} · ${document.filename}`
-  }, [blocks.length, blocksLoading, document.doc_id, document.filename, selectedCitation])
+  }, [blocks.length, blocksLoading, commentedBlockIds, document.doc_id, document.filename, selectedCitation])
 
   function handleCtaClick() {
     if (mode === 'scope_creep') {
@@ -141,11 +184,14 @@ export function SplitDocumentView({
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
         <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
-          <TabsList variant="segmented">
-            <TabsTrigger value="extract">Extract</TabsTrigger>
-            <TabsTrigger value="original">Original</TabsTrigger>
-            <TabsTrigger value="profiles">Profiles</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center gap-2">
+            <TabsList variant="segmented">
+              <TabsTrigger value="extract">Extract</TabsTrigger>
+              <TabsTrigger value="original">Original</TabsTrigger>
+              <TabsTrigger value="profiles">Profiles</TabsTrigger>
+            </TabsList>
+            <ExtractViewHelpButton />
+          </div>
 
           <p className="text-muted-foreground hidden truncate text-xs sm:block">
             {document.filename}

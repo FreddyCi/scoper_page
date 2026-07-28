@@ -11,6 +11,7 @@ type PdfPageCanvasProps = {
   pageNumber: number
   scale: number
   citation?: CitationRef | null
+  hasBlockComment?: boolean
   className?: string
 }
 
@@ -40,6 +41,7 @@ export function PdfPageCanvas({
   pageNumber,
   scale,
   citation,
+  hasBlockComment = false,
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -130,7 +132,12 @@ export function PdfPageCanvas({
           style={{ width: canvasLayout.width, height: canvasLayout.height }}
         >
           <div
-            className="absolute rounded-sm border-2 border-sky-500 bg-sky-400/25"
+            className={cn(
+              'absolute rounded-sm border-2 bg-sky-400/25',
+              hasBlockComment
+                ? 'border-amber-500 ring-2 ring-amber-400/70'
+                : 'border-sky-500',
+            )}
             style={{
               left: scaledHighlight.left,
               top: scaledHighlight.top,

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
 import { useSessionStore } from '@/store/session-store'
@@ -67,6 +68,10 @@ export function DocumentViewer({
   const currentPage = clampPage(page, totalPages)
   const activeCitation =
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
+  const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
+  const activeCitationHasComment = activeCitation
+    ? commentedBlockIds.has(activeCitation.block_id)
+    : false
 
   useEffect(() => {
     setPage(initialPage)
@@ -171,6 +176,7 @@ export function DocumentViewer({
               pageNumber={currentPage}
               scale={scale}
               citation={activeCitation}
+              hasBlockComment={activeCitationHasComment}
             />
           </div>
         )}

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { MessageSquareIcon } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { MessageSquareIcon, MessageSquarePlusIcon } from 'lucide-react'
 
 import { BlockCommentPopover } from '@/components/workspace/CommentPopover'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
@@ -43,14 +43,16 @@ function BlockRow({
   hasComment,
   focusSeq,
   onSelect,
+  onCommentClick,
 }: {
   block: BlockRecord
   selected: boolean
   hasComment: boolean
   focusSeq: number
   onSelect: () => void
+  onCommentClick: () => void
 }) {
-  const rowRef = useRef<HTMLButtonElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (selected) {
@@ -59,31 +61,54 @@ function BlockRow({
   }, [selected, focusSeq, block.block_id])
 
   return (
-    <button
+    <div
       ref={rowRef}
-      type="button"
-      onClick={onSelect}
       className={cn(
-        'border-border hover:bg-muted/60 relative w-full rounded-lg border px-3 py-2 text-left transition-colors',
+        'border-border hover:bg-muted/60 relative w-full rounded-lg border transition-colors',
         selected && 'border-sky-400 bg-sky-50 ring-1 ring-sky-300',
         hasComment && !selected && 'border-amber-300/80 bg-amber-50/40',
+        selected && hasComment && 'border-amber-400 ring-amber-300/80 bg-sky-50 ring-2',
       )}
     >
-      {hasComment ? (
-        <MessageSquareIcon
-          className="text-amber-600 absolute top-2 right-2 size-3.5"
-          aria-label="Has comments"
-        />
-      ) : null}
-      <p className="text-foreground pr-5 text-sm leading-relaxed">{block.text}</p>
-      {block.section_path ? (
-        <p className="text-muted-foreground mt-1 truncate text-xs">{block.section_path}</p>
-      ) : null}
-    </button>
+      <div className="flex items-start gap-1 px-3 py-2">
+        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+            {selected ? (
+              <span className="bg-sky-100 text-sky-800 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                Highlighted
+              </span>
+            ) : null}
+            {hasComment ? (
+              <span className="bg-amber-100 text-amber-900 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                <MessageSquareIcon className="size-3" />
+                Review note
+              </span>
+            ) : null}
+          </div>
+          <p className="text-foreground text-sm leading-relaxed">{block.text}</p>
+          {block.section_path ? (
+            <p className="text-muted-foreground mt-1 truncate text-xs">{block.section_path}</p>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          aria-label={hasComment ? 'View block comment' : 'Add block comment'}
+          className="text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded-md p-1 transition-colors"
+          onClick={onCommentClick}
+        >
+          {hasComment ? (
+            <MessageSquareIcon className="size-3.5 text-amber-600" />
+          ) : (
+            <MessageSquarePlusIcon className="size-3.5" />
+          )}
+        </button>
+      </div>
+    </div>
   )
 }
 
 export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) {
+  const [commentOpen, setCommentOpen] = useState(false)
   const { blocks, loading, error } = useDocumentBlocks(docId)
   const { blockIds: commentedBlockIds, refresh: refreshCommentedBlockIds } =
     useCommentedBlockIds(docId)
@@ -95,26 +120,34 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
     selectedCitation?.doc_id === docId ? selectedCitation.block_id : null
   const activeBlock = blocks.find((block) => block.block_id === activeBlockId) ?? null
 
+  function openCommentForBlock(block: BlockRecord) {
+    focusCitation(blockToCitation(block))
+    setCommentOpen(true)
+  }
+
   return (
     <section
       className={cn(
-        'border-border bg-surface flex min-h-0 flex-col overflow-hidden rounded-panel border',
+        'border-border bg-surface relative flex min-h-0 flex-col overflow-hidden rounded-panel border',
         className,
       )}
     >
-      <header className="border-border/70 relative flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
-        <div>
+      <BlockCommentPopover
+        block={activeBlock}
+        open={commentOpen}
+        onOpenChange={setCommentOpen}
+        onCommentAdded={() => {
+          void refreshCommentedBlockIds()
+        }}
+      />
+
+      <header className="border-border/70 flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
+        <div className="min-w-0">
           <h2 className="text-foreground text-sm font-semibold">Extracted text</h2>
           <p className="text-muted-foreground text-xs">
             {loading ? 'Loading blocks…' : `${blocks.length} blocks`}
           </p>
         </div>
-        <BlockCommentPopover
-          block={activeBlock}
-          onCommentAdded={() => {
-            void refreshCommentedBlockIds()
-          }}
-        />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -146,6 +179,7 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
                       hasComment={commentedBlockIds.has(block.block_id)}
                       focusSeq={citationFocusSeq}
                       onSelect={() => focusCitation(blockToCitation(block))}
+                      onCommentClick={() => openCommentForBlock(block)}
                     />
                   ))}
                 </div>

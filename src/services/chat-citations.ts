@@ -1,6 +1,5 @@
-import { blockToCitation } from '@/lib/types'
 import type { AssistantChatContent, CitationRef, DocumentMeta } from '@/lib/types'
-import { fetchDocumentBlocks } from '@/services/document-blocks'
+import { findClause } from '@/services/find-clause'
 import { ingestFile } from '@/services/ingest-router'
 
 type FindChatCitationsOptions = {
@@ -8,69 +7,18 @@ type FindChatCitationsOptions = {
   limit?: number
 }
 
-function extractSearchTerms(prompt: string): string[] {
-  const cleaned = prompt.replace(/@[\w\s.-]+/g, ' ')
-  const words = cleaned.match(/\b[a-zA-Z]{4,}\b/g) ?? []
-
-  return [...new Set(words.map((word) => word.toLowerCase()))].slice(0, 8)
-}
-
-function scoreBlock(text: string, terms: string[]): number {
-  const lower = text.toLowerCase()
-  return terms.reduce((total, term) => total + (lower.includes(term) ? 1 : 0), 0)
-}
-
-/** Keyword search over DuckDB blocks — lightweight pre–find_clause citation attach (BDA-052) */
+/** Map find_clause matches to inline citation chips for assistant messages */
 export async function findChatCitations(
   prompt: string,
-  documents: DocumentMeta[],
+  _documents: DocumentMeta[],
   options: FindChatCitationsOptions = {},
 ): Promise<CitationRef[]> {
-  const limit = options.limit ?? 3
-  const docIds =
-    options.docIds?.filter(Boolean) ??
-    documents.map((doc) => doc.doc_id).filter(Boolean)
+  const result = await findClause(prompt, {
+    docIds: options.docIds,
+    limit: options.limit ?? 3,
+  })
 
-  if (docIds.length === 0) return []
-
-  const terms = extractSearchTerms(prompt)
-  const scored: Array<{ score: number; blockId: string; citation: CitationRef }> = []
-
-  for (const docId of docIds) {
-    const blocks = await fetchDocumentBlocks(docId)
-
-    for (const block of blocks) {
-      const score = terms.length > 0 ? scoreBlock(block.text, terms) : 1
-      if (score <= 0) continue
-
-      scored.push({
-        score,
-        blockId: block.block_id,
-        citation: blockToCitation(block),
-      })
-    }
-  }
-
-  scored.sort((left, right) => right.score - left.score)
-
-  const citations: CitationRef[] = []
-  const seen = new Set<string>()
-
-  for (const item of scored) {
-    if (seen.has(item.blockId)) continue
-    seen.add(item.blockId)
-    citations.push(item.citation)
-    if (citations.length >= limit) break
-  }
-
-  if (citations.length === 0) {
-    const fallbackBlocks = await fetchDocumentBlocks(docIds[0]!)
-    for (const block of fallbackBlocks.slice(0, limit)) {
-      citations.push(blockToCitation(block))
-    }
-  }
-
-  return citations
+  return result.matches.map((match) => match.citation)
 }
 
 export function buildAssistantRichContent(
@@ -103,16 +51,8 @@ export async function runChatCitationsHarness(): Promise<void> {
     ocrEnabled: false,
   })
 
-  const document: DocumentMeta = {
-    doc_id: ingested.doc_id,
-    filename: ingested.filename,
-    mime: ingested.mime,
-    role: 'unknown',
-    uploaded_at: new Date().toISOString(),
-  }
-
-  const citations = await findChatCitations('@minimal summarize document content', [document], {
-    docIds: [document.doc_id],
+  const citations = await findChatCitations('@minimal summarize document content', [], {
+    docIds: [ingested.doc_id],
     limit: 2,
   })
 
@@ -120,7 +60,7 @@ export async function runChatCitationsHarness(): Promise<void> {
     throw new Error('chat-citations harness: expected citations when blocks exist')
   }
 
-  if (citations[0]?.doc_id !== document.doc_id) {
+  if (citations[0]?.doc_id !== ingested.doc_id) {
     throw new Error('chat-citations harness: expected citation doc_id to match document')
   }
 }

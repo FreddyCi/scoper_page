@@ -667,17 +667,19 @@ flowchart LR
 ### **ID:** BDA-053
 
 **Title:** find_clause tool and basic agent loop  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-050, BDA-023, BDA-033  
 **Priority:** Critical  
 **Description:** Implement agent loop: user message → retrieve relevant blocks (DuckDB search) → bitgpu tool call `find_clause` → return CitationRef[]. MVP: keyword search + LLM summary without full ECP if BDA-060 delayed. Wire tool results to chat + viewer.  
 **Completed Changes:**
-- 🔄 document.search over blocks
-- 🔄 find_clause returns CitationRef[]
-- 🔄 Agent orchestration in agent.ts
+- ✅ `document-search.ts` — keyword + synonym search over DuckDB blocks
+- ✅ `find-clause.ts` — `findClause()` returns `FindClauseResult` with `CitationRef[]` + summary
+- ✅ `agent.ts` — retrieve → find_clause → Scoper summary (or rule-based fallback) → citation chips in chat
+- ✅ `chat-agent.ts` delegates to `runAgentTurn`; chips click through to split view via `focusCitation`
+- ✅ Dev harnesses: `runDocumentSearchHarness`, `runFindClauseHarness`, `runFindClauseAgentHarness`
 **Test Strategy:** Ask "find indemnification" on sample PDF → response includes cite chip; highlight works.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: ingested PDF → find_clause reply with chips → chip opens split view highlight
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1 step 5–6, Plan §Tools find_clause  
 

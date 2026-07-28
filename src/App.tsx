@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
-import { runChatAgentHarness, runChatCitationChipHarness } from '@/services/chat-agent'
+import { runChatAgentHarness, runChatCitationChipHarness, runFindClauseAgentHarness } from '@/services/chat-agent'
 import { runChatCitationsHarness } from '@/services/chat-citations'
+import { runDocumentSearchHarness } from '@/services/document-search'
+import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
@@ -30,6 +32,9 @@ function App() {
         await runChatAgentHarness()
         await runChatCitationsHarness()
         await runChatCitationChipHarness()
+        await runDocumentSearchHarness()
+        await runFindClauseHarness()
+        await runFindClauseAgentHarness()
         await runCitationBridgeHarness()
         await runCitationClickHarness()
         runResultsProfileUiHarness()

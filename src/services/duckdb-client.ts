@@ -96,6 +96,11 @@ export class DuckdbClient {
     await this.send({ type: 'insertBlock', row })
   }
 
+  async updateDocumentRole(docId: string, role: string): Promise<void> {
+    await this.init()
+    await this.send({ type: 'updateDocumentRole', docId, role })
+  }
+
   async terminate(): Promise<void> {
     if (!this.worker) return
 

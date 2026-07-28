@@ -371,12 +371,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       let documents = [...state.documents]
 
       for (const result of results) {
+        const existing = documents.find((doc) => doc.doc_id === result.doc_id)
         const document: DocumentMeta = {
           doc_id: result.doc_id,
           filename: result.filename,
           mime: result.mime,
-          role: 'unknown',
-          uploaded_at: new Date().toISOString(),
+          role: existing?.role ?? 'unknown',
+          uploaded_at: existing?.uploaded_at ?? new Date().toISOString(),
         }
         const index = documents.findIndex((doc) => doc.doc_id === document.doc_id)
         if (index >= 0) {

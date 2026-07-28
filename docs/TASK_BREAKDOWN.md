@@ -760,16 +760,17 @@ flowchart LR
 ### **ID:** BDA-070
 
 **Title:** Document role tagging UI  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-012, BDA-024  
 **Priority:** High  
 **Description:** Per-doc badge/dropdown: baseline | change_request | supporting | unknown. Required before scope analysis in creep mode. Persist role on documents table.  
 **Completed Changes:**
-- 🔄 Role selector in doc tab or upload flow
-- 🔄 DuckDB update documents.role
+- ✅ `DocumentRoleSelector` on document tabs — badge + dropdown with role descriptions
+- ✅ `setDocumentRole()` updates session store + DuckDB `documents.role`; re-ingest preserves existing role
+- ✅ `runDocumentRoleHarness()` — baseline + change_request persist in store and DB
 **Test Strategy:** Tag two docs baseline + change; roles persist in store/DB.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.6, PRD §6.2 step 1  
 

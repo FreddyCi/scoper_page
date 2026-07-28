@@ -8,7 +8,9 @@ import {
 } from '@/lib/upload-accept'
 import { getDuckdbClient } from '@/services/duckdb-client'
 import { cacheDocumentBytes } from '@/services/document-bytes-cache'
+import { resolveDocumentRoleForIngest } from '@/services/document-roles'
 import { getLiteParseClient } from '@/services/liteparse-client'
+import { useSessionStore } from '@/store/session-store'
 
 export type IngestOptions = {
   ocrEnabled?: boolean
@@ -93,11 +95,16 @@ async function ingestPdf(
   const liteparse = await getLiteParseClient()
   const parsed = await liteparse.parsePdf(docId, bytes, { ocrEnabled })
 
+  const role = await resolveDocumentRoleForIngest(
+    docId,
+    useSessionStore.getState().documents,
+  )
+
   const document: DocumentMeta = {
     doc_id: docId,
     filename: file.name,
     mime: 'application/pdf',
-    role: 'unknown',
+    role,
     uploaded_at: new Date().toISOString(),
   }
 

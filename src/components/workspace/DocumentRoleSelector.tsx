@@ -1,0 +1,127 @@
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDownIcon } from 'lucide-react'
+
+import { Badge } from '@/components/ui/badge'
+import {
+  DOCUMENT_ROLE_DESCRIPTIONS,
+  DOCUMENT_ROLE_LABELS,
+  DOCUMENT_ROLES,
+} from '@/lib/document-roles'
+import type { DocumentRole } from '@/lib/types'
+import { cn } from '@/lib/utils'
+import { setDocumentRole } from '@/services/document-roles'
+
+type DocumentRoleSelectorProps = {
+  docId: string
+  role: DocumentRole
+  className?: string
+}
+
+function roleBadgeVariant(role: DocumentRole): 'default' | 'secondary' | 'outline' | 'ghost' {
+  switch (role) {
+    case 'baseline':
+      return 'default'
+    case 'change_request':
+      return 'secondary'
+    case 'supporting':
+      return 'outline'
+    default:
+      return 'ghost'
+  }
+}
+
+/** Per-document role badge + dropdown — baseline | change | supporting | unknown (BDA-070) */
+export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSelectorProps) {
+  const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  async function handleSelect(nextRole: DocumentRole) {
+    if (nextRole === role || pending) {
+      setOpen(false)
+      return
+    }
+
+    setPending(true)
+    try {
+      await setDocumentRole(docId, nextRole)
+      setOpen(false)
+    } catch (error) {
+      console.error('[document-role]', error)
+    } finally {
+      setPending(false)
+    }
+  }
+
+  return (
+    <div ref={rootRef} className={cn('relative shrink-0', className)}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}`}
+        disabled={pending}
+        onClick={(event) => {
+          event.stopPropagation()
+          setOpen((value) => !value)
+        }}
+        className="inline-flex items-center gap-0.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      >
+        <Badge variant={roleBadgeVariant(role)} className="h-5 px-1.5 text-[10px] uppercase">
+          {DOCUMENT_ROLE_LABELS[role]}
+        </Badge>
+        <ChevronDownIcon className="text-muted-foreground size-3 opacity-70" />
+      </button>
+
+      {open ? (
+        <div
+          role="listbox"
+          aria-label="Select document role"
+          className="border-border bg-surface shadow-elevated absolute top-[calc(100%+0.25rem)] left-0 z-30 min-w-[11rem] rounded-lg border py-1"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {DOCUMENT_ROLES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="option"
+              aria-selected={role === option}
+              disabled={pending}
+              onClick={() => void handleSelect(option)}
+              className={cn(
+                'hover:bg-muted block w-full px-3 py-1.5 text-left transition-colors',
+                role === option && 'bg-muted',
+              )}
+            >
+              <span className="text-xs font-medium">{DOCUMENT_ROLE_LABELS[option]}</span>
+              <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug">
+                {DOCUMENT_ROLE_DESCRIPTIONS[option]}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}

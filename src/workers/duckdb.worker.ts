@@ -66,6 +66,10 @@ async function insertDocument(row: DocumentMeta) {
   )
 }
 
+async function updateDocumentRole(docId: string, role: string) {
+  await runQuery('UPDATE documents SET role = ? WHERE doc_id = ?', [role, docId])
+}
+
 async function insertBlock(row: BlockRecord) {
   await runQuery(
     `INSERT OR REPLACE INTO blocks
@@ -116,6 +120,13 @@ self.onmessage = async (event: MessageEvent<DuckdbWorkerMessage>) => {
       case 'insertBlock': {
         await ensureInitialized()
         await insertBlock(event.data.row)
+        postResponse({ id, ok: true })
+        return
+      }
+
+      case 'updateDocumentRole': {
+        await ensureInitialized()
+        await updateDocumentRole(event.data.docId, event.data.role)
         postResponse({ id, ok: true })
         return
       }

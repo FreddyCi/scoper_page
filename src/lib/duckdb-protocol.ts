@@ -6,6 +6,7 @@ export type DuckdbWorkerRequest =
   | { type: 'query'; sql: string; params?: DuckdbQueryParam[] }
   | { type: 'insertDocument'; row: DocumentMeta }
   | { type: 'insertBlock'; row: BlockRecord }
+  | { type: 'updateDocumentRole'; docId: string; role: string }
 
 export type DuckdbQueryParam = string | number | null
 

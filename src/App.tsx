@@ -15,6 +15,7 @@ import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
+import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runIngestHarness } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
@@ -40,6 +41,7 @@ function App() {
         await runOcrHarness()
         await runLiteParseOcrHarness()
         await runIngestHarness()
+        await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()
         await runScoperHarness()
         await runDemoExtensionsHarness()

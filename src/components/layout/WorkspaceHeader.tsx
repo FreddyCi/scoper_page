@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDownIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
 
+import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { Button } from '@/components/ui/button'
 import {
   shellChatColumnClasses,
@@ -194,6 +195,7 @@ export function WorkspaceDocumentTabsRow({
             >
               <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
               <span className="truncate">{doc.filename}</span>
+              <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
             </button>
           )
         })}

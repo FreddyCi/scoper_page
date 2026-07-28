@@ -1,3 +1,4 @@
+import { sortBlocksReadingOrder } from '@/lib/bbox-utils'
 import { getDuckdbClient } from '@/services/duckdb-client'
 import type { BlockRecord } from '@/lib/types'
 
@@ -36,11 +37,11 @@ export async function fetchDocumentBlocks(docId: string): Promise<BlockRecord[]>
     `SELECT block_id, doc_id, page_num, section_path, text, x, y, width, height
      FROM blocks
      WHERE doc_id = ?
-     ORDER BY page_num NULLS LAST, block_id`,
+     ORDER BY page_num NULLS LAST, y NULLS LAST, x NULLS LAST, block_id`,
     [docId],
   )
 
-  return rows.map(normalizeBlock)
+  return sortBlocksReadingOrder(rows.map(normalizeBlock))
 }
 
 export async function fetchBlockById(blockId: string): Promise<BlockRecord | null> {
@@ -82,6 +83,10 @@ export function groupBlocksByPage(blocks: BlockRecord[]): BlocksByPage[] {
     })
   }
 
+  for (const group of groups.values()) {
+    group.blocks = sortBlocksReadingOrder(group.blocks)
+  }
+
   return [...groups.values()].sort((left, right) => {
     if (left.pageNum == null) return 1
     if (right.pageNum == null) return -1
@@ -106,6 +111,10 @@ export function groupBlocksBySection(blocks: BlockRecord[]): BlocksByPage[] {
       label: section,
       blocks: [block],
     })
+  }
+
+  for (const group of groups.values()) {
+    group.blocks = sortBlocksReadingOrder(group.blocks)
   }
 
   return [...groups.values()]

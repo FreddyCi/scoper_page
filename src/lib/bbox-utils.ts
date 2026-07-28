@@ -46,15 +46,28 @@ export function normalizeBbox(bbox: Bbox, minWidth = 8, minHeight = 8): Bbox {
 }
 
 export function compareBlocksReadingOrder(a: BlockRecord, b: BlockRecord): number {
-  const pageA = a.page_num ?? 0
-  const pageB = b.page_num ?? 0
+  const pageA = a.page_num ?? Number.MAX_SAFE_INTEGER
+  const pageB = b.page_num ?? Number.MAX_SAFE_INTEGER
   if (pageA !== pageB) return pageA - pageB
+
+  const aHasPos = a.y != null && a.x != null
+  const bHasPos = b.y != null && b.x != null
+  if (aHasPos && !bHasPos) return -1
+  if (!aHasPos && bHasPos) return 1
 
   const yA = a.y ?? 0
   const yB = b.y ?? 0
   if (Math.abs(yA - yB) > 2) return yA - yB
 
-  return (a.x ?? 0) - (b.x ?? 0)
+  const xA = a.x ?? 0
+  const xB = b.x ?? 0
+  if (xA !== xB) return xA - xB
+
+  return a.block_id.localeCompare(b.block_id)
+}
+
+export function sortBlocksReadingOrder(blocks: BlockRecord[]): BlockRecord[] {
+  return [...blocks].sort(compareBlocksReadingOrder)
 }
 
 export function joinBlockText(left: string, right: string): string {

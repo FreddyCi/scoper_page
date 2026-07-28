@@ -694,17 +694,19 @@ flowchart LR
 ### **ID:** BDA-060
 
 **Title:** ECP environment bootstrap  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** High  
 **Description:** `ecp/environment.ts`: bind browser runtime, registry-control policy (`allowedExtensionNamespaces: ['@demo/*']`), createEcp, freezeRegistry before first agent run.  
 **Completed Changes:**
-- 🔄 Install @executioncontrolprotocol/browser, policies, core
-- 🔄 environment.ts per plan
-- 🔄 Init on app ready before first chat
+- ✅ Protocol-compatible bootstrap in `src/ecp/` (`registry-control`, `browser-registry`, `environment`) — npm `@executioncontrolprotocol/*@0.0.10` not yet published; API matches ECP browser registry + registry-control policy spec
+- ✅ `window.ECP` global — `registerExtension`, `freezeRegistry`, `isRegistryFrozen`
+- ✅ `initScoperEcpEnvironment()` on app ready; `ensureScoperEcpReadyBeforeAgentRun()` before first chat turn
+- ✅ Optional `scripts/ecp-vendor.mjs` to clone/build upstream ECP monorepo for future BDA-061 migration
+- ✅ `runEcpEnvironmentHarness()` — init, `@demo/*` allow, `@unsafe` deny, freeze blocks late register
 **Test Strategy:** ECP init succeeds; registry frozen throws on late extension register.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.7, [ECP browser policy](https://github.com/GuillaumeCleme/executioncontrolprotocol/blob/development/docs/ecp-browser-review-policy.md)  
 

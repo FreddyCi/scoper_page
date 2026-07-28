@@ -1,3 +1,4 @@
+import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { resolveMentionedDocIds } from '@/lib/chat-mentions'
 import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type { AssistantChatContent, ChatMessage as AppChatMessage, FindClauseResult } from '@/lib/types'
@@ -191,6 +192,8 @@ async function applyStubAssistantReply(assistantId: string, prompt: string) {
 export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers): Promise<void> {
   const trimmed = prompt.trim()
   if (!trimmed) return
+
+  await ensureScoperEcpReadyBeforeAgentRun()
 
   const docIds = resolveCitationDocIds(trimmed)
 

@@ -1,0 +1,16 @@
+export {
+  SCOPER_ECP_ENV_ID,
+  SCOPER_ECP_GLOBAL_NAME,
+  ensureScoperEcpReadyBeforeAgentRun,
+  freezeScoperEcpRegistry,
+  getScoperEcp,
+  getScoperEcpRegistry,
+  initScoperEcpEnvironment,
+  isScoperEcpRegistryFrozen,
+  runEcpEnvironmentHarness,
+  RegistryFrozenError,
+  RegistryRegistrationDeniedError,
+  type BrowserEcpGlobal,
+  type BrowserOperationalEcp,
+  type EcpExtensionDefinition,
+} from '@/ecp/environment'

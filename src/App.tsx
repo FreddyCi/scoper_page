@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { initScoperEcpEnvironment, runEcpEnvironmentHarness } from '@/ecp/environment'
 import { runChatAgentHarness, runChatCitationChipHarness, runFindClauseAgentHarness } from '@/services/chat-agent'
 import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
@@ -17,10 +18,17 @@ import { runSessionStoreHarness } from '@/store/session-store'
 
 function App() {
   useEffect(() => {
+    void initScoperEcpEnvironment().catch((error) => {
+      console.error('[ecp-init]', error)
+    })
+  }, [])
+
+  useEffect(() => {
     if (!import.meta.env.DEV) return
 
     void (async () => {
       try {
+        await runEcpEnvironmentHarness()
         runSessionStoreHarness()
         await runDuckdbHarness()
         await runLiteParseHarness()

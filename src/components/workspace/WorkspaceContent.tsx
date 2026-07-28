@@ -66,8 +66,8 @@ export function WorkspaceContent() {
         </div>
 
         {mode === 'rfp' ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
-            <ResultsProfileGrid profiles={profiles} className="min-w-0 flex-1" />
+          <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch">
+            <ResultsProfileGrid profiles={profiles} className="min-h-0 min-w-0 flex-1" />
             <RfpEvaluationPanel className="w-full shrink-0 lg:w-[22rem] xl:w-[24rem]" />
           </div>
         ) : (

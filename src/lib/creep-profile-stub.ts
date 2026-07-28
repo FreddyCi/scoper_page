@@ -1,6 +1,6 @@
 import type { DocumentMeta, ScopeCreepProfile } from '@/lib/types'
 
-/** Mock scope creep profiles until BDA-072 compare_scope pipeline lands */
+/** Dev-only mock creep profiles when baseline + change are tagged but analysis not run yet */
 export function buildMockCreepProfiles(documents: DocumentMeta[]): ScopeCreepProfile[] {
   const baseline = documents.find((doc) => doc.role === 'baseline')
   const change = documents.find((doc) => doc.role === 'change_request')

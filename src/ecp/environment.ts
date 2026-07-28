@@ -264,13 +264,39 @@ export async function runDemoExtensionsHarness(): Promise<void> {
 
   assertFindClauseParity(direct, viaEcp)
 
-  const compareScope = (await ecp.invokeCapability(DOCUMENT_CAPABILITIES.compare_scope, {
-    baselineDocId: ingested.doc_id,
-    candidateDocId: ingested.doc_id,
-  })) as { summary?: string }
+  const baselineMarkdown = [
+    '# Baseline SOW',
+    '',
+    'Monthly PDF reporting package is included in scope.',
+    'All deliverables shall be completed within one hundred twenty (120) calendar days.',
+  ].join('\n')
 
-  if (!compareScope.summary?.includes('compare_scope stub')) {
-    throw new Error('runDemoExtensionsHarness failed: compare_scope stub summary missing')
+  const changeMarkdown = [
+    '# Change Addendum',
+    '',
+    'Contractor shall provide additional analytics dashboards beyond the baseline reporting package.',
+    'All deliverables shall be completed within ninety (90) calendar days.',
+  ].join('\n')
+
+  const baseline = await ingestFile(
+    new File([baselineMarkdown], 'ecp-baseline.md', { type: 'text/markdown' }),
+  )
+  const change = await ingestFile(
+    new File([changeMarkdown], 'ecp-change.md', { type: 'text/markdown' }),
+  )
+
+  const compareScope = (await ecp.invokeCapability(DOCUMENT_CAPABILITIES.compare_scope, {
+    baselineDocId: baseline.doc_id,
+    candidateDocId: change.doc_id,
+  })) as { summary?: string; profiles?: Array<{ flags: unknown[] }> }
+
+  if (!compareScope.summary?.trim()) {
+    throw new Error('runDemoExtensionsHarness failed: compare_scope summary missing')
+  }
+
+  const profile = compareScope.profiles?.[0]
+  if (!profile || profile.flags.length === 0) {
+    throw new Error('runDemoExtensionsHarness failed: compare_scope expected scope flags')
   }
 }
 

@@ -7,6 +7,7 @@ import {
   runEcpEnvironmentHarness,
 } from '@/ecp/environment'
 import { runEcpAgentRunHarness } from '@/ecp/agent-run'
+import { runCompareScopeHarness } from '@/services/compare-scope'
 import { runChatHistoryMarkersHarness } from '@/services/chat-history-harness'
 import { runChatAgentHarness, runChatCitationChipHarness, runFindClauseAgentHarness } from '@/services/chat-agent'
 import { runChatCitationsHarness } from '@/services/chat-citations'
@@ -44,6 +45,7 @@ function App() {
         await runLiteParseOcrHarness()
         await runIngestHarness()
         await runMarkdownIngestHarness()
+        await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()
         await runScoperHarness()

@@ -799,17 +799,18 @@ flowchart LR
 ### **ID:** BDA-072
 
 **Title:** compare_scope and flag_creep tools  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-070, BDA-061, BDA-042  
 **Priority:** High  
 **Description:** Implement cross-doc extract comparison; produce ScopeCreepProfile with evidence CitationRefs. Persist scope_flags table. Heuristics: new deliverables, shall/must shifts, timeline/budget gaps.  
 **Completed Changes:**
-- 🔄 compare_scope service
-- 🔄 flag_creep service
-- 🔄 DuckDB scope_flags insert
+- ✅ `compare-scope.ts` — rule-based heuristics (new_deliverable, shall_must_shift, timeline_gap, budget_gap, missing_clause)
+- ✅ `scope-creep-store.ts` — persist/fetch `scope_flags` with evidence block_ids hydrated to citations
+- ✅ ECP `@demo/document.compare_scope` + `flag_creep` delegate to services; updates session `creepProfiles`
+- ✅ `runCompareScopeHarness()` — baseline + change markdown pair → ≥1 flag with evidence
 **Test Strategy:** Baseline + change PDF pair → ≥1 flag with evidence cites.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes (markdown pair); `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.2, Plan §Creep heuristics  
 

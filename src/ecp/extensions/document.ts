@@ -1,5 +1,6 @@
 import { capabilityId } from '@/ecp/types'
-import type { DocumentMeta, FindClauseResult, ScopeCreepProfile } from '@/lib/types'
+import type { DocumentMeta, FindClauseResult } from '@/lib/types'
+import { compareScope, flagCreep } from '@/services/compare-scope'
 import { buildRfpProfilesForDocuments } from '@/services/build-rfp-profiles'
 import { findClause } from '@/services/find-clause'
 import { ingestFile } from '@/services/ingest-router'
@@ -15,21 +16,6 @@ type CompareScopeInput = {
 type FlagCreepInput = {
   baselineDocId: string
   candidateDocId: string
-}
-
-/** MVP scope creep stubs — full pipeline deferred to BDA-070+ */
-async function compareScopeStub(input: CompareScopeInput) {
-  return {
-    profiles: [] as ScopeCreepProfile[],
-    summary: `compare_scope stub for ${input.baselineDocId} vs ${input.candidateDocId} — full analysis in BDA-070.`,
-  }
-}
-
-async function flagCreepStub(input: FlagCreepInput) {
-  return {
-    flags: [],
-    summary: `flag_creep stub for ${input.baselineDocId} vs ${input.candidateDocId} — full analysis in BDA-070.`,
-  }
 }
 
 export const documentExtension = {
@@ -94,7 +80,7 @@ export const documentExtension = {
         throw new Error('@demo/document.compare_scope requires baselineDocId and candidateDocId')
       }
 
-      return compareScopeStub(payload)
+      return compareScope(payload)
     },
     flag_creep: async (input: unknown) => {
       const payload = input as FlagCreepInput
@@ -102,7 +88,7 @@ export const documentExtension = {
         throw new Error('@demo/document.flag_creep requires baselineDocId and candidateDocId')
       }
 
-      return flagCreepStub(payload)
+      return flagCreep(payload)
     },
   },
 } as const

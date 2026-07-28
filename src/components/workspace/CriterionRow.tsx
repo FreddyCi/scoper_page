@@ -46,6 +46,11 @@ export function CriterionRow({ criterion, onCriterionClick, className }: Criteri
       type="button"
       disabled={!clickable}
       onClick={handleClick}
+      aria-label={
+        clickable
+          ? `View source for ${criterion.label}`
+          : `${criterion.label} — no linked source`
+      }
       className={cn(
         'group flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors',
         'border-border/70 bg-workspace-muted/50',

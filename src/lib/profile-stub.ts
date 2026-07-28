@@ -1,12 +1,10 @@
 import type {
-  CriterionStatus,
   DocumentMeta,
   RfpResultsProfile,
   RfpVerdict,
 } from '@/lib/types'
 
 const VERDICTS: RfpVerdict[] = ['likely', 'might', 'unlikely']
-const STATUSES: CriterionStatus[] = ['pass', 'warn', 'fail']
 
 /** Dev/demo profiles until build_rfp_profiles (BDA-042) lands */
 export function buildMockRfpProfiles(documents: DocumentMeta[]): RfpResultsProfile[] {
@@ -17,12 +15,13 @@ export function buildMockRfpProfiles(documents: DocumentMeta[]): RfpResultsProfi
     subject: {
       name: doc.filename.replace(/\.[^.]+$/, ''),
       role: index === 0 ? 'RFP source' : 'Bidder response',
+      location: index === 0 ? 'City procurement portal' : `Bid package ${index}`,
     },
     criteria: [
       {
         id: `${doc.doc_id}-c1`,
         label: 'CMMI Level 3 certification',
-        status: STATUSES[index % STATUSES.length] ?? 'warn',
+        status: 'pass',
         detail: 'Required within 90 days of award',
         citation: {
           doc_id: doc.doc_id,
@@ -35,7 +34,7 @@ export function buildMockRfpProfiles(documents: DocumentMeta[]): RfpResultsProfi
       {
         id: `${doc.doc_id}-c2`,
         label: 'Pricing tiers documented',
-        status: STATUSES[(index + 1) % STATUSES.length] ?? 'pass',
+        status: 'warn',
         detail: 'Commercial terms in section 3.2',
         citation: {
           doc_id: doc.doc_id,
@@ -48,7 +47,7 @@ export function buildMockRfpProfiles(documents: DocumentMeta[]): RfpResultsProfi
       {
         id: `${doc.doc_id}-c3`,
         label: 'Insurance minimums',
-        status: 'pass',
+        status: 'fail',
         detail: 'General liability coverage',
       },
     ],

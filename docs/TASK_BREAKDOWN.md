@@ -531,17 +531,19 @@ flowchart LR
 ### **ID:** BDA-040
 
 **Title:** ResultsProfileCard and CriterionRow UI  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-003, BDA-004  
 **Priority:** Critical  
-**Description:** Card: verdict badge (likely/might/unlikely), subject name/role/location, criteria list with pass/warn/fail icons, summary footer. CriterionRow clickable when citation present. Match dark qualification mock aesthetic.  
+**Description:** Card: verdict badge (likely/might/unlikely), subject name/role/location, criteria list with pass/warn/fail icons, summary footer. CriterionRow clickable when citation present. Match app light-surface brand (workspace/surface tokens).  
 **Completed Changes:**
-- 🔄 ResultsProfileCard component
-- 🔄 CriterionRow with status icons
-- 🔄 onCriterionClick callback
+- ✅ `ResultsProfileCard` — verdict badge, subject name/role/location, pass/warn/fail summary chips, summary footer
+- ✅ `CriterionRow` — status icons, chevron on cited rows, `onCriterionClick` callback + `focusCitation` default
+- ✅ Light brand styling aligned with QuickActionCards / ChatCitationCard
+- ✅ `runResultsProfileUiHarness()` validates mock profile shape + click callback
 **Test Strategy:** Render with mock `RfpResultsProfile`; badges and icons correct; click fires callback.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: mock profile shape, all verdict/status variants, cited vs uncited click behavior
+- ✅ Manual: profiles view renders card with readable badges, icons, and clickable criteria
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.5, PRD §10.3 RFP results mock  
 

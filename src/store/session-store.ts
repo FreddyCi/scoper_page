@@ -207,14 +207,14 @@ const initialState = {
 }
 
 function workspaceViewAfterIngest(
-  mode: WorkspaceMode,
+  _mode: WorkspaceMode,
   currentView: WorkspaceView,
   hadDocuments: boolean,
 ): WorkspaceView {
   if (currentView !== 'landing' && hadDocuments) {
     return currentView
   }
-  return mode === 'rfp' ? 'profiles' : 'split'
+  return 'split'
 }
 
 function resolveActiveDocId(
@@ -699,7 +699,7 @@ export function runSessionStoreHarness(): void {
   const afterIngest = useSessionStore.getState()
   if (
     afterIngest.documents.length !== 1 ||
-    afterIngest.workspaceView !== 'profiles' ||
+    afterIngest.workspaceView !== 'split' ||
     afterIngest.activeDocId !== 'harness-ingest'
   ) {
     throw new Error('commitIngestResults failed')

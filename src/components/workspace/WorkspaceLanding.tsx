@@ -14,14 +14,14 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
       )}
     >
       <div className="flex w-full max-w-3xl flex-col items-center text-center">
-        <p className="text-subtle-foreground text-xs font-medium tracking-wide uppercase">
+        <p className="text-subtle-foreground text-xs font-medium tracking-[0.2em] uppercase">
           Scoper Doc Agent
         </p>
-        <h1 className="text-foreground mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-          What would you like to do?
+        <h1 className="text-foreground font-serif mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
+          Structure that adapts to your review
         </h1>
-        <p className="text-muted-foreground mt-3 max-w-md text-sm leading-relaxed">
-          Upload procurement documents and markdown context notes — parsed locally, never sent to a
+        <p className="text-muted-foreground mt-4 max-w-lg text-sm leading-relaxed">
+          Upload procurement documents and markdown context — parsed locally, never sent to a
           server.
         </p>
       </div>

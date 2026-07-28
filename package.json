@@ -22,6 +22,7 @@
     "@fontsource-variable/geist": "^5.3.0",
     "@llamaindex/liteparse-wasm": "^2.10.0",
     "@shadcn/react": "^0.2.1",
+    "bitgpu": "^0.19.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.27.0",

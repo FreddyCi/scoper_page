@@ -599,18 +599,22 @@ flowchart LR
 
 ### **ID:** BDA-050
 
-**Title:** bitgpu worker and engine client  
-**Status:** To Do  
+**Title:** Scoper worker and engine client (bitgpu)  
+**Status:** Done  
 **Dependencies:** BDA-001  
 **Priority:** Critical  
-**Description:** `bitgpu.worker.ts`: createEngine Bonsai-1.7B, createChat, load progress, generate/stream. `bitgpu-client.ts`: postMessage protocol, WebGPU check, Cache Storage for weights, `WebGPUUnavailableError` banner data. Options: kvCache q8, overflow sinks.  
+**Description:** `scoper.worker.ts`: createEngine Bonsai-1.7B, createChat, load progress, generate/stream via bitgpu. `scoper-client.ts`: postMessage protocol, WebGPU check, Cache Storage for weights, `ScoperWebGpuUnavailableError` banner data. Options: kvCache q8, overflow sinks.  
 **Completed Changes:**
-- 🔄 bitgpu.worker.ts
-- 🔄 bitgpu-client.ts
-- 🔄 WebGPU availability check in App
+- ✅ `scoper.worker.ts` — bitgpu engine + chat in module worker (load/send/stop/reset/ping)
+- ✅ `scoper-client.ts` — `ScoperClient`, singleton, progress/delta/complete events, harnesses
+- ✅ `scoper-protocol.ts`, `scoper-model.ts`, `scoper-cache.ts`, `scoper-webgpu.ts`
+- ✅ `WebGpuBanner` in AppShell when WebGPU unavailable
+- ✅ `bitgpu@0.19.1` dependency; removed `bitgpu-client.ts` / `bitgpu.worker.ts` stubs
 **Test Strategy:** Load model → progress events; simple prompt returns streamed tokens in worker test harness.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `runScoperHarness()` — WebGPU probe + worker ping (dev chain; skips when no GPU)
+- ✅ `runScoperModelHarness()` — optional full load + stream test (manual / env flag)
+- ✅ `pnpm build` bundles `scoper.worker` separately (~302 kB)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.7, [bitgpu](https://github.com/stfurkan/bitgpu), Plan §bitgpu  
 

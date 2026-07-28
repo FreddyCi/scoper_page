@@ -23,6 +23,9 @@ importers:
       '@shadcn/react':
         specifier: ^0.2.1
         version: 0.2.1(@types/react@19.2.17)(react@19.2.8)
+      bitgpu:
+        specifier: ^0.19.1
+        version: 0.19.1
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1061,6 +1064,9 @@ packages:
     resolution: {integrity: sha512-s4+sLr9mZ/CyqeRritFeYV/Zx73OAtmaHn6kkBS1XRoJn1hrg3xIDUcpicAEX68tkcIN0iBCgti31C8zxtkhsQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
+
+  bitgpu@0.19.1:
+    resolution: {integrity: sha512-N9mugPyfUd0bvKCMgbj7MW3Ukl2/TemRlZYo0ZAH34nkfjs/couAFvQFxpN3CGLya7O8kbBJSR+JlSlMS5b3Xg==}
 
   bmp-js@0.1.0:
     resolution: {integrity: sha512-vHdS19CnY3hwiNdkaqk93DvjVLfbEcI8mys4UjuWrlX1haDmroo8o4xCzh4wD6DGV6HxRCyauwhHRqMTfERtjw==}
@@ -3192,6 +3198,8 @@ snapshots:
   balanced-match@4.0.4: {}
 
   baseline-browser-mapping@2.11.4: {}
+
+  bitgpu@0.19.1: {}
 
   bmp-js@0.1.0: {}
 

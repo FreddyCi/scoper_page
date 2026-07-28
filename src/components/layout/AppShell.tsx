@@ -7,6 +7,7 @@ import {
   shellPanelMinWidthClass,
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
+import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
 import { UploadFab } from '@/components/layout/UploadFab'
 import {
   WorkspaceDocumentTabsRow,
@@ -43,6 +44,7 @@ export function AppShell({ children }: AppShellProps) {
             )}
           >
             <div className="shrink-0">
+              <WebGpuBanner />
               <div className="border-border flex border-b">
                 <WorkspaceHeaderTopRow chatCollapsed={chatCollapsed} />
 

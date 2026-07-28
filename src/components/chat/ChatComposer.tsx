@@ -81,7 +81,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
         className,
       )}
     >
-      <div className="relative px-4 pt-4 pb-2">
+      <div className="relative px-3 pt-2.5 pb-1.5">
         <label className="sr-only" htmlFor="chat-composer-input">
           Ask the agent
         </label>
@@ -126,7 +126,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
         <textarea
           ref={textareaRef}
           id="chat-composer-input"
-          rows={3}
+          rows={2}
           value={draft}
           onChange={(event) => {
             setDraft(event.target.value)
@@ -174,63 +174,63 @@ export function ChatComposer({ className }: ChatComposerProps) {
             isBusy ? 'Agent is responding…' : 'Ask the agent… / for skills, @ for context'
           }
           disabled={isBusy}
-          className="text-foreground placeholder:text-subtle-foreground min-h-[5rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
+          className="text-foreground placeholder:text-subtle-foreground min-h-[3.25rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
         />
       </div>
 
-      <div className="border-border/70 flex items-center justify-between gap-2 border-t px-3 py-2.5">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="border-border/70 flex items-center justify-between gap-2 border-t px-2.5 py-1.5">
+        <div className="flex min-w-0 items-center gap-1.5">
           <button
             type="button"
-            className="border-border/80 bg-surface text-foreground hover:bg-surface/90 inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+            className="border-border/80 bg-surface text-foreground hover:bg-surface/90 inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-[11px] font-medium transition-colors"
             aria-haspopup="listbox"
           >
-            <SparklesIcon className="size-3.5 opacity-80" />
+            <SparklesIcon className="size-3 opacity-80" />
             Agent
-            <ChevronDownIcon className="size-3 opacity-60" />
+            <ChevronDownIcon className="size-2.5 opacity-60" />
           </button>
 
           <button
             type="button"
-            className="text-muted-foreground hover:text-foreground inline-flex min-w-0 items-center gap-1 truncate rounded-full px-1.5 py-1 text-xs transition-colors hover:bg-black/[0.04]"
+            className="text-muted-foreground hover:text-foreground inline-flex h-6 min-w-0 items-center gap-0.5 truncate rounded-full px-1.5 text-[11px] transition-colors hover:bg-black/[0.04]"
             aria-haspopup="listbox"
           >
             <span className="truncate">Bonsai 1.7B</span>
-            <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
+            <ChevronDownIcon className="size-2.5 shrink-0 opacity-60" />
           </button>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-0.5">
           <Button
             type="button"
-            size="icon-sm"
+            size="icon-xs"
             variant="ghost"
             className="text-muted-foreground hover:text-foreground rounded-full"
             aria-label="Attach files"
           >
-            <PaperclipIcon className="size-4" />
+            <PaperclipIcon className="size-3.5" />
           </Button>
 
           {canSend ? (
             <Button
               type="button"
-              size="icon-sm"
+              size="icon-xs"
               variant="default"
               className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
               aria-label="Send message"
               onClick={handleSend}
             >
-              <ArrowUpIcon className="size-4" />
+              <ArrowUpIcon className="size-3.5" />
             </Button>
           ) : (
             <Button
               type="button"
-              size="icon-sm"
+              size="icon-xs"
               variant="default"
               className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
               aria-label="Voice input"
             >
-              <MicIcon className="size-4" />
+              <MicIcon className="size-3.5" />
             </Button>
           )}
         </div>

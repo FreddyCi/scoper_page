@@ -23,6 +23,9 @@ type ChatSidebarProps = {
   className?: string
 }
 
+const chatTabTriggerClass =
+  '-mb-px gap-1.5 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2.5 py-2 text-sm shadow-none data-active:border-foreground data-active:bg-transparent data-active:text-foreground data-active:shadow-none data-active:after:opacity-0'
+
 function ChatSidebarHeaderControls() {
   const sessionName = useSessionStore((s) => s.sessionName)
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
@@ -30,18 +33,12 @@ function ChatSidebarHeaderControls() {
 
   return (
     <>
-      <TabsList variant="line" className="h-auto shrink-0 bg-transparent p-0">
-        <TabsTrigger
-          value="agent"
-          className="-mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
-        >
+      <TabsList variant="line" className="h-auto shrink-0 gap-0 bg-transparent p-0">
+        <TabsTrigger value="agent" className={chatTabTriggerClass}>
           <SparklesIcon className="size-3.5" />
           Agent
         </TabsTrigger>
-        <TabsTrigger
-          value="history"
-          className="-mb-px gap-1.5 rounded-none border-b-2 border-transparent px-2 py-3 data-active:border-foreground data-active:after:opacity-0"
-        >
+        <TabsTrigger value="history" className={chatTabTriggerClass}>
           <HistoryIcon className="size-3.5" />
           History
         </TabsTrigger>
@@ -106,7 +103,7 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
         <ChatHistoryMarkers />
       </TabsContent>
 
-      <footer className="shrink-0 px-[var(--spacing-panel)] pb-[var(--spacing-panel)] pt-1">
+      <footer className="shrink-0 px-[var(--spacing-panel)] pb-3 pt-0.5">
         <ChatComposer />
       </footer>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
   DOCUMENT_ROLE_LABELS,
@@ -95,11 +96,12 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
       </button>
 
       {open ? (
-        <div
+        <AnchoredMenuPortal
+          open={open}
+          anchorRef={rootRef}
           role="listbox"
           aria-label="Select document role"
-          className="border-border bg-surface shadow-elevated absolute top-[calc(100%+0.25rem)] left-0 z-30 min-w-[11rem] rounded-lg border py-1"
-          onClick={(event) => event.stopPropagation()}
+          className="min-w-[11rem]"
         >
           {DOCUMENT_ROLES.map((option) => (
             <button
@@ -120,7 +122,7 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
               </span>
             </button>
           ))}
-        </div>
+        </AnchoredMenuPortal>
       ) : null}
     </div>
   )

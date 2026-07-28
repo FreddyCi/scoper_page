@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ChevronDownIcon, FileTextIcon, MessageSquareIcon } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
+import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
 import { Button } from '@/components/ui/button'
 import {
   shellChatColumnClasses,
@@ -68,10 +69,7 @@ function SessionNameDropdown() {
       </button>
 
       {open ? (
-        <div
-          role="listbox"
-          className="border-border bg-surface shadow-elevated absolute top-[calc(100%+0.375rem)] left-0 z-20 min-w-[12rem] rounded-lg border py-1"
-        >
+        <AnchoredMenuPortal open={open} anchorRef={rootRef} role="listbox" className="min-w-[12rem]">
           {SESSION_PRESETS.map((name) => (
             <button
               key={name}
@@ -90,7 +88,7 @@ function SessionNameDropdown() {
               {name}
             </button>
           ))}
-        </div>
+        </AnchoredMenuPortal>
       ) : null}
     </div>
   )

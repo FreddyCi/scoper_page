@@ -16,6 +16,27 @@ type ExtractedTextPaneProps = {
   className?: string
 }
 
+function isPageGroupLabel(label: string): boolean {
+  return /^page \d+$/i.test(label.trim())
+}
+
+function BlockGroupLabel({ label }: { label: string }) {
+  const isPage = isPageGroupLabel(label)
+
+  return (
+    <h3
+      className={cn(
+        'sticky top-0 z-10 text-xs font-semibold tracking-wide uppercase',
+        isPage
+          ? 'bg-muted text-muted-foreground mb-1 rounded-md px-2 py-1'
+          : 'text-muted-foreground bg-surface/95 supports-[backdrop-filter]:bg-surface/80 px-1 py-1 backdrop-blur-sm',
+      )}
+    >
+      {label}
+    </h3>
+  )
+}
+
 function BlockRow({
   block,
   selected,
@@ -115,9 +136,7 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
           <div className="space-y-4">
             {pageGroups.map((group) => (
               <div key={group.label} className="space-y-2">
-                <h3 className="text-muted-foreground sticky top-0 z-10 bg-[inherit] py-1 text-xs font-semibold tracking-wide uppercase">
-                  {group.label}
-                </h3>
+                <BlockGroupLabel label={group.label} />
                 <div className="space-y-2">
                   {group.blocks.map((block) => (
                     <BlockRow

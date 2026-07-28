@@ -12,12 +12,13 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
+import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
 const MODEL_STATUS_COPY = {
   idle: null,
-  loading: 'Loading Bonsai 1.7B…',
+  loading: `Loading ${SCOPER_BONSAI_17B.label}…`,
   ready: null,
   generating: 'Generating…',
   unavailable: 'On-device model unavailable — using demo replies',

@@ -15,6 +15,7 @@ import {
   findActiveMentionQuery,
   insertDocMention,
 } from '@/lib/chat-mentions'
+import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -195,7 +196,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
             className="text-muted-foreground hover:text-foreground inline-flex h-6 min-w-0 items-center gap-0.5 truncate rounded-full px-1.5 text-[11px] transition-colors hover:bg-black/[0.04]"
             aria-haspopup="listbox"
           >
-            <span className="truncate">Bonsai 1.7B</span>
+            <span className="truncate">{SCOPER_BONSAI_17B.label}</span>
             <ChevronDownIcon className="size-2.5 shrink-0 opacity-60" />
           </button>
         </div>

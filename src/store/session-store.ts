@@ -178,6 +178,8 @@ export type SessionState = {
   setUploadPopupOpen: (open: boolean) => void
   setOcrEnabled: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
+  clearSession: () => void
+  startNewSession: () => void
   resetSession: () => void
 }
 
@@ -496,6 +498,42 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatGenerating: false,
       chatModelStatus: 'idle',
     })
+  },
+
+  clearSession: () => {
+    const { sessionName, companyContext, ocrEnabled } = get()
+    clearDocumentBytesCache()
+    writeChatStartedPreference(false)
+    writeChatCollapsedPreference(true)
+    getScoperClient().resetConversation()
+    set({
+      mode: 'rfp',
+      documents: [],
+      profiles: [],
+      evaluationBaselineProfile: null,
+      evaluationDocId: null,
+      creepProfiles: [],
+      selectedCitation: null,
+      citationFocusSeq: 0,
+      workspaceView: 'landing',
+      activeDocId: null,
+      uploadPopupOpen: false,
+      chatStarted: false,
+      chatCollapsed: true,
+      chatMessages: [],
+      chatGenerating: false,
+      chatModelStatus: 'idle',
+      sessionName,
+      companyContext,
+      ocrEnabled,
+    })
+  },
+
+  startNewSession: () => {
+    writeSessionNamePreference('Untitled session')
+    writeCompanyContextPreference('')
+    get().clearSession()
+    set({ sessionName: 'Untitled session', companyContext: '' })
   },
 }))
 

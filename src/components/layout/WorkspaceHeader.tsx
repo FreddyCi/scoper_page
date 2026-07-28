@@ -5,6 +5,8 @@ import {
   FileTextIcon,
   GitCompareArrowsIcon,
   MessageCircleMoreIcon,
+  PlusIcon,
+  Trash2Icon,
 } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
@@ -12,8 +14,8 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
@@ -33,12 +35,6 @@ type WorkspaceHeaderProps = {
 }
 
 
-const SESSION_PRESETS = [
-  'Untitled session',
-  'RFP qualification review',
-  'Scope creep check',
-]
-
 function ScoperLogoMark({ className }: { className?: string }) {
   return (
     <img
@@ -54,6 +50,8 @@ function ScoperLogoMark({ className }: { className?: string }) {
 function SessionNameDropdown() {
   const sessionName = useSessionStore((s) => s.sessionName)
   const setSessionName = useSessionStore((s) => s.setSessionName)
+  const startNewSession = useSessionStore((s) => s.startNewSession)
+  const clearSession = useSessionStore((s) => s.clearSession)
   const [open, setOpen] = useState(false)
   const [draftName, setDraftName] = useState(sessionName)
 
@@ -82,7 +80,7 @@ function SessionNameDropdown() {
         <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-[10.5rem] p-0">
+      <DropdownMenuContent align="start" className="w-[12rem] p-0">
         <form
           className="border-border border-b px-2 py-1.5"
           onPointerDown={(event) => event.preventDefault()}
@@ -107,17 +105,30 @@ function SessionNameDropdown() {
           />
         </form>
 
-        <DropdownMenuGroup className="p-1">
-          {SESSION_PRESETS.map((name) => (
-            <DropdownMenuItem
-              key={name}
-              className={cn('text-xs', sessionName === name && 'bg-muted font-medium')}
-              onClick={() => applyName(name)}
-            >
-              {name}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+        <div className="p-1">
+          <DropdownMenuItem
+            className="text-xs"
+            onClick={() => {
+              startNewSession()
+              setOpen(false)
+            }}
+          >
+            <PlusIcon />
+            New session
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            className="text-xs"
+            onClick={() => {
+              clearSession()
+              setOpen(false)
+            }}
+          >
+            <Trash2Icon />
+            Clear session
+          </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )

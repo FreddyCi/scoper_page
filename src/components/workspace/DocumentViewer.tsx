@@ -1,13 +1,10 @@
-import { useEffect, useMemo } from 'react'
-import {
-  RPConfig,
-  RPProvider,
-  RPLayout,
-  RPPages,
-} from '@react-pdf-kit/viewer'
+import { useEffect, useMemo, useState } from 'react'
 
-import { PDFJS_WORKER_URL } from '@/lib/pdfjs-config'
+import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
+import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
+import { usePdfDocument } from '@/hooks/use-pdf-document'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
+import { useSessionStore } from '@/store/session-store'
 import type { DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -40,29 +37,52 @@ function ViewerState({
   )
 }
 
+function clampPage(page: number, totalPages: number): number {
+  if (totalPages <= 0) return 1
+  return Math.min(Math.max(page, 1), totalPages)
+}
+
 export function DocumentViewer({
   document,
   initialPage = 1,
   onPageChange,
   className,
 }: DocumentViewerProps) {
+  const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
     [document.doc_id],
   )
+  const { pdf, loading, error } = usePdfDocument(pdfBytes)
+  const [page, setPage] = useState(initialPage)
+  const [scale, setScale] = useState(1.25)
 
-  const pdfSrc = useMemo(() => {
-    if (!pdfBytes) return null
-    const blob = new Blob([pdfBytes.slice()], { type: 'application/pdf' })
-    return URL.createObjectURL(blob)
-  }, [pdfBytes])
+  const totalPages = pdf?.numPages ?? 0
+  const currentPage = clampPage(page, totalPages)
+  const activeCitation =
+    selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
 
   useEffect(() => {
-    if (!pdfSrc) return
-    return () => {
-      URL.revokeObjectURL(pdfSrc)
+    setPage(initialPage)
+  }, [document.doc_id, initialPage])
+
+  useEffect(() => {
+    if (activeCitation?.page_num != null) {
+      setPage(activeCitation.page_num)
     }
-  }, [pdfSrc])
+  }, [activeCitation?.page_num, activeCitation?.block_id])
+
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages)
+    }
+  }, [page, totalPages])
+
+  function updatePage(nextPage: number) {
+    const resolved = clampPage(nextPage, totalPages)
+    setPage(resolved)
+    onPageChange?.(resolved)
+  }
 
   if (document.mime !== 'application/pdf') {
     return (
@@ -74,7 +94,7 @@ export function DocumentViewer({
     )
   }
 
-  if (!pdfBytes || !pdfSrc) {
+  if (!pdfBytes) {
     return (
       <ViewerState
         className={className}
@@ -84,26 +104,48 @@ export function DocumentViewer({
     )
   }
 
+  if (error) {
+    return (
+      <ViewerState
+        className={className}
+        title="Failed to open PDF"
+        message={error.message}
+      />
+    )
+  }
+
   return (
-    <div className={cn('bg-workspace min-h-0 flex-1 overflow-hidden rounded-panel', className)}>
-      <RPConfig workerUrl={PDFJS_WORKER_URL}>
-        <RPProvider
-          src={pdfSrc}
-          initialPage={initialPage}
-          onPageChange={onPageChange}
-          onLoadError={(error) => {
-            console.error('[document-viewer]', error)
-          }}
-        >
-          <RPLayout
-            toolbar
-            style={{ height: '100%', minHeight: '20rem' }}
-            className="rounded-panel"
-          >
-            <RPPages />
-          </RPLayout>
-        </RPProvider>
-      </RPConfig>
+    <div
+      className={cn(
+        'border-border bg-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border',
+        className,
+      )}
+    >
+      <PdfViewerToolbar
+        filename={document.filename}
+        page={currentPage}
+        totalPages={totalPages}
+        scale={scale}
+        onPageChange={updatePage}
+        onScaleChange={setScale}
+      />
+
+      <div className="bg-workspace min-h-0 flex-1 overflow-auto p-4">
+        {loading || !pdf ? (
+          <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center text-sm">
+            Loading PDF…
+          </div>
+        ) : (
+          <div className="mx-auto w-fit">
+            <PdfPageCanvas
+              pdf={pdf}
+              pageNumber={currentPage}
+              scale={scale}
+              citation={activeCitation}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

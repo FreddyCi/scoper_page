@@ -1,14 +1,4 @@
-import * as pdfjs from 'pdfjs-dist'
-
-import { PDFJS_WORKER_URL } from '@/lib/pdfjs-config'
-
-let workerConfigured = false
-
-function ensurePdfWorker() {
-  if (workerConfigured) return
-  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL
-  workerConfigured = true
-}
+import { ensurePdfJsWorker, pdfjs } from '@/lib/pdfjs-viewer'
 
 export type RenderedPdfPage = {
   pageNum: number
@@ -22,7 +12,7 @@ export async function renderPdfPage(
   pageNum: number,
   dpi = 150,
 ): Promise<RenderedPdfPage> {
-  ensurePdfWorker()
+  ensurePdfJsWorker()
 
   const pdf = await pdfjs.getDocument({ data: bytes.slice() }).promise
   const page = await pdf.getPage(pageNum)
@@ -49,7 +39,7 @@ export async function renderPdfPage(
 }
 
 export async function countPdfPages(bytes: Uint8Array): Promise<number> {
-  ensurePdfWorker()
+  ensurePdfJsWorker()
   const pdf = await pdfjs.getDocument({ data: bytes.slice() }).promise
   return pdf.numPages
 }

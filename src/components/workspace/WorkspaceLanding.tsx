@@ -1,11 +1,4 @@
-import { useCallback } from 'react'
-
-import {
-  CommandInputCard,
-  type CommandInputSubmitPayload,
-} from '@/components/workspace/CommandInputCard'
 import { QuickActionCards } from '@/components/workspace/QuickActionCards'
-import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { cn } from '@/lib/utils'
 
 type WorkspaceLandingProps = {
@@ -13,17 +6,6 @@ type WorkspaceLandingProps = {
 }
 
 export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
-  const { submitCommand, isIngesting } = useCommandIngest()
-
-  const handleSubmit = useCallback(
-    (payload: CommandInputSubmitPayload) => {
-      void submitCommand(payload).catch((error) => {
-        console.error('[command-ingest]', error)
-      })
-    },
-    [submitCommand],
-  )
-
   return (
     <div
       className={cn(
@@ -45,12 +27,6 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
       </div>
 
       <QuickActionCards className="mt-10 sm:mt-12" />
-
-      <CommandInputCard
-        onSubmit={handleSubmit}
-        isSubmitting={isIngesting}
-        className="mt-8 max-w-2xl"
-      />
     </div>
   )
 }

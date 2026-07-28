@@ -25,15 +25,57 @@ export function bboxCenter(bbox: Bbox): { x: number; y: number } {
   return { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 }
 }
 
-export function blockIncludedInRegion(block: BlockRecord & Bbox, region: Bbox, seedBlockId?: string): boolean {
-  if (seedBlockId && block.block_id === seedBlockId) return true
-
+export function blockIncludedInRegion(block: BlockRecord & Bbox, region: Bbox): boolean {
   const blockArea = block.width * block.height
   const overlap = bboxOverlapArea(block, region)
   if (blockArea > 0 && overlap / blockArea >= 0.12) return true
 
   const center = bboxCenter(block)
   return bboxContainsPoint(region, center.x, center.y)
+}
+
+/** Blocks removed or split when the user adjusts a highlight region. */
+export function blockAffectedByRegion(
+  block: BlockRecord & Bbox,
+  region: Bbox,
+  seedBlockId?: string,
+): boolean {
+  if (seedBlockId && block.block_id === seedBlockId) return true
+  return blockIncludedInRegion(block, region)
+}
+
+function verticalOverlapRatio(block: BlockRecord & Bbox, region: Bbox): number {
+  const overlapTop = Math.max(block.y, region.y)
+  const overlapBottom = Math.min(block.y + block.height, region.y + region.height)
+  const overlapHeight = Math.max(0, overlapBottom - overlapTop)
+  return block.height > 0 ? overlapHeight / block.height : 0
+}
+
+/** Fallback when the PDF has no text layer (scanned docs). */
+export function clipBlockTextByRegion(block: BlockRecord & Bbox, region: Bbox): string {
+  const overlapRatio = verticalOverlapRatio(block, region)
+  if (overlapRatio <= 0) return ''
+
+  const overlapTop = Math.max(block.y, region.y)
+  const overlapBottom = Math.min(block.y + block.height, region.y + region.height)
+  const startRatio = (overlapTop - block.y) / block.height
+  const endRatio = (overlapBottom - block.y) / block.height
+  const startChar = Math.floor(block.text.length * startRatio)
+  const endChar = Math.ceil(block.text.length * endRatio)
+  return block.text.slice(startChar, endChar).trim()
+}
+
+export function clipBlockTextOutsideRegion(block: BlockRecord & Bbox, region: Bbox): string {
+  const overlapTop = Math.max(block.y, region.y)
+  const overlapBottom = Math.min(block.y + block.height, region.y + region.height)
+  const overlapHeight = Math.max(0, overlapBottom - overlapTop)
+  if (overlapHeight <= 0) return block.text.trim()
+
+  const beforeRatio = Math.max(0, (overlapTop - block.y) / block.height)
+  const afterRatio = Math.min(1, (overlapBottom - block.y) / block.height)
+  const beforeChars = Math.floor(block.text.length * beforeRatio)
+  const afterChars = Math.ceil(block.text.length * afterRatio)
+  return `${block.text.slice(0, beforeChars)} ${block.text.slice(afterChars)}`.trim()
 }
 
 export function normalizeBbox(bbox: Bbox, minWidth = 8, minHeight = 8): Bbox {

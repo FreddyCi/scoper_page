@@ -58,37 +58,20 @@ Build output is static files in `dist/` — suitable for any static host.
 
 ## Deploy (static hosting)
 
-1. Run `pnpm build`
-2. Upload the **`dist/`** directory to your host (GitHub Pages, Cloudflare Pages, S3 + CloudFront, Netlify, etc.)
-3. Configure **SPA fallback** so unknown routes serve `index.html` (Vite `base: '/'` default)
+See **[docs/DEPLOY.md](docs/DEPLOY.md)** for GitHub Pages, Cloudflare Pages, MIME types, and CI.
 
-### MIME types (required)
+Quick path:
 
-Hosts must serve WASM with a binary MIME type or LiteParse/DuckDB will fail to instantiate:
+```bash
+pnpm build
+pnpm preview:smoke              # local WASM + asset checks
+DEPLOY_URL=https://… pnpm verify:deploy   # post-deploy MIME check
+```
 
-| Extension | Content-Type |
-|-----------|----------------|
-| `.wasm` | `application/wasm` (preferred) or `application/octet-stream` |
-| `.mjs` | `text/javascript` or `application/javascript` |
-| `.js` | `text/javascript` or `application/javascript` |
+GitHub Actions workflow: [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)  
+(Set **Pages → Source: GitHub Actions** and optional `VITE_BASE_PATH` variable for project sites.)
 
-**Cloudflare Pages** and **GitHub Pages** (current defaults) serve `.wasm` correctly for this project.
-
-**Optional headers** (already set in Vite dev/preview via `vite.config.ts`):
-
-- `Cross-Origin-Opener-Policy: same-origin`
-- `Cross-Origin-Embedder-Policy: require-corp`
-
-Enable the same on production if you need cross-origin isolation for WASM threads.
-
-### Deploy checklist
-
-- [ ] `pnpm build` succeeds locally
-- [ ] `pnpm preview:smoke` passes
-- [ ] `/duckdb/duckdb-eh.wasm` returns 200 with WASM MIME on deployed URL
-- [ ] Upload sample PDF from `/sample/` works in the deployed app
-
-Detailed host-specific steps are covered in **BDA-092** (static deploy configuration).
+Cloudflare Pages uses `public/_headers` and `public/_redirects` copied into `dist/`.
 
 ## Architecture (short)
 

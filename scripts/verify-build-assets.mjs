@@ -6,6 +6,9 @@ const assetsDir = join(distDir, 'assets')
 
 const REQUIRED_PUBLIC_PATHS = [
   'index.html',
+  '404.html',
+  '_headers',
+  '_redirects',
   'duckdb/duckdb-eh.wasm',
   'duckdb/duckdb-browser-eh.worker.js',
   'liteparse/liteparse_wasm_bg.wasm',

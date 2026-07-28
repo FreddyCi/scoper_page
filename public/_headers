@@ -1,0 +1,12 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/duckdb/*.wasm
+  Content-Type: application/wasm
+
+/liteparse/*.wasm
+  Content-Type: application/wasm
+
+/assets/*.wasm
+  Content-Type: application/wasm

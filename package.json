@@ -12,10 +12,12 @@
     "copy:samples": "node scripts/generate-sample-pdfs.mjs",
     "copy:assets": "pnpm copy:duckdb && pnpm copy:liteparse && pnpm copy:tesseract && pnpm copy:pdfjs && pnpm copy:samples",
     "dev": "pnpm copy:assets && vite",
-    "build": "pnpm copy:assets && tsc -b && vite build && pnpm build:check && pnpm verify:build",
+    "build": "pnpm copy:assets && tsc -b && vite build && pnpm prepare:hosting && pnpm build:check && pnpm verify:build",
     "build:check": "node scripts/check-bundle-size.mjs",
     "verify:build": "node scripts/verify-build-assets.mjs",
     "preview:smoke": "node scripts/preview-smoke.mjs",
+    "verify:deploy": "node scripts/verify-deploy.mjs",
+    "prepare:hosting": "node scripts/prepare-static-hosting.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "postinstall": "pnpm copy:assets"

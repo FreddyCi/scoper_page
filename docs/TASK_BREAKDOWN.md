@@ -947,16 +947,19 @@ flowchart LR
 ### **ID:** BDA-092
 
 **Title:** Static deploy configuration  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-090  
 **Priority:** Medium  
 **Description:** Document deploy to GitHub Pages / Cloudflare Pages. Verify `.wasm` Content-Type. Optional GitHub Actions workflow (defer if manual deploy OK).  
 **Completed Changes:**
-- 🔄 Deploy docs in README
-- 🔄 Optional CI workflow
+- ✅ `docs/DEPLOY.md` — GitHub Pages, Cloudflare Pages, MIME verification, troubleshooting
+- ✅ `public/_headers` + `public/_redirects` — COOP/COEP + WASM MIME + SPA fallback (Cloudflare)
+- ✅ `prepare-static-hosting.mjs` — `404.html` for GitHub Pages; `verify-deploy.mjs` for live WASM MIME checks
+- ✅ `.github/workflows/deploy-pages.yml` — build + deploy `dist/` via GitHub Actions
+- ✅ `vite.config.ts` — optional `VITE_BASE_PATH` for project-site GitHub Pages URLs
 **Test Strategy:** Deployed URL loads app; WASM fetches 200 with correct MIME.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` + `pnpm preview:smoke` pass; `verify:deploy` validates WASM content-type locally
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §13 M5, Plan §Deploy  
 

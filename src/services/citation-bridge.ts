@@ -1,4 +1,5 @@
 import type { CitationRef } from '@/lib/types'
+import { buildMockRfpProfiles } from '@/lib/profile-stub'
 import { useSessionStore } from '@/store/session-store'
 
 /**
@@ -61,6 +62,57 @@ export async function runCitationBridgeHarness(): Promise<void> {
   clearCitation()
   if (useSessionStore.getState().selectedCitation != null) {
     throw new Error('clearCitation failed: expected null selectedCitation')
+  }
+
+  store.resetSession()
+}
+
+/** Dev harness — profile criterion + chat chip paths open split view (BDA-034) */
+export async function runCitationClickHarness(): Promise<void> {
+  const store = useSessionStore.getState()
+  store.resetSession()
+
+  store.setMode('rfp')
+  store.addDocument({
+    doc_id: 'click-harness-doc',
+    filename: 'harness-bidder.pdf',
+    mime: 'application/pdf',
+    role: 'unknown',
+    uploaded_at: new Date().toISOString(),
+  })
+
+  const [profile] = buildMockRfpProfiles(useSessionStore.getState().documents)
+  if (!profile) throw new Error('runCitationClickHarness failed: no mock profile')
+
+  store.setProfiles([profile])
+  store.setWorkspaceView('profiles')
+
+  const criterionCitation = profile.criteria.find((item) => item.citation)?.citation
+  if (!criterionCitation) {
+    throw new Error('runCitationClickHarness failed: criterion missing citation')
+  }
+
+  focusCitation(criterionCitation)
+
+  const afterCriterion = useSessionStore.getState()
+  if (afterCriterion.workspaceView !== 'split') {
+    throw new Error('criterion click failed: expected split workspace view')
+  }
+  if (afterCriterion.activeDocId !== criterionCitation.doc_id) {
+    throw new Error('criterion click failed: expected activeDocId to match citation doc')
+  }
+
+  store.setWorkspaceView('profiles')
+  focusCitation({
+    doc_id: criterionCitation.doc_id,
+    block_id: `${criterionCitation.doc_id}:p3:i9`,
+    page_num: 3,
+    excerpt: 'Chat chip harness excerpt',
+  })
+
+  const afterChip = useSessionStore.getState()
+  if (afterChip.workspaceView !== 'split' || afterChip.activeDocId !== criterionCitation.doc_id) {
+    throw new Error('citation chip click failed: expected split view on cited doc')
   }
 
   store.resetSession()

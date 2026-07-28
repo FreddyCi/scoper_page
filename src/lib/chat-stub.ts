@@ -119,6 +119,22 @@ export function buildRichAssistantReply(context: ReplyContext): AssistantChatCon
       'I found 12 evaluation criteria across sections 3.1–3.4. Three look like hard pass/fail requirements.',
       'Two bidder responses mention pricing tiers that may need a scored sub-criterion before you finalize the profile.',
     ],
+    citationChips: activeDoc
+      ? [
+          {
+            doc_id: activeDoc.doc_id,
+            block_id: `${activeDoc.doc_id}:p4:i2`,
+            page_num: 4,
+            excerpt: 'CMMI Level 3 or equivalent certification within 90 days of award.',
+          },
+          {
+            doc_id: activeDoc.doc_id,
+            block_id: `${activeDoc.doc_id}:p3:i6`,
+            page_num: 3,
+            excerpt: 'Pricing for eight seats and higher monthly document limits.',
+          },
+        ]
+      : [],
     citations: activeDoc
       ? [
           {

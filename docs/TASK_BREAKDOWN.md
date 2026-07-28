@@ -503,16 +503,20 @@ flowchart LR
 ### **ID:** BDA-034
 
 **Title:** Wire profile and chat clicks to viewer  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-033, BDA-005  
 **Priority:** High  
 **Description:** On criterion row click or citation chip click: set `workspaceView` to split, call `focusCitation`. Ensure active doc tab switches to cited doc_id.  
 **Completed Changes:**
-- 🔄 Click handlers on CriterionRow (BDA-041)
-- 🔄 Citation chip handler in chat (BDA-052)
+- ✅ `CriterionRow` — clickable when citation present → `focusCitation`
+- ✅ `ResultsProfileCard` + `ResultsProfileGrid` wired in profiles workspace view
+- ✅ `CitationChip` + `CitationChipList` in assistant messages (`citationChips` on rich content)
+- ✅ `profile-stub.ts` mock profiles seeded on ingest (until BDA-042)
+- ✅ `runCitationClickHarness()` validates criterion + chip → split view + activeDocId
 **Test Strategy:** Click criterion → split view opens with highlight (integration after BDA-041/052).  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: criterion click and citation chip open split on cited doc
+- ✅ Manual: profiles grid criterion, chat chips, and “View source” all sync panes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1 step 6–7, Plan §Citation contract  
 

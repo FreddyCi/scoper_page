@@ -144,6 +144,8 @@ export type ChatCitationCard = {
 export type AssistantChatContent = {
   headline?: string
   paragraphs: string[]
+  /** Compact inline chips — click opens split view highlight (BDA-034) */
+  citationChips?: CitationRef[]
   citations?: ChatCitationCard[]
   actionsIntro?: string
   actions?: ChatActionProposal[]

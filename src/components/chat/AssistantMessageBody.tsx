@@ -1,6 +1,7 @@
 import { SparklesIcon } from 'lucide-react'
 
 import { ChatActionProposalList } from '@/components/chat/ChatActionProposalRow'
+import { CitationChipList } from '@/components/chat/CitationChip'
 import { ChatCitationCardView } from '@/components/chat/ChatCitationCard'
 import type { ChatMessage } from '@/lib/types'
 
@@ -33,6 +34,8 @@ export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
           </p>
         ))}
       </div>
+
+      {rich.citationChips?.length ? <CitationChipList citations={rich.citationChips} /> : null}
 
       {rich.citations?.length ? <ChatCitationCardView citations={rich.citations} /> : null}
 

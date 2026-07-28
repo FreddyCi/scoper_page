@@ -13,6 +13,7 @@ import { getLiteParseClient } from '@/services/liteparse-client'
 import { parseMarkdownToBlocks } from '@/services/markdown-ingest'
 import { parseDocxToBlocks } from '@/services/docx-ingest'
 import { parseXlsxToBlocks } from '@/services/xlsx-ingest'
+import { importPdfMarkupComments, readScoperExportMetadata } from '@/services/import-pdf-comments'
 import { useSessionStore } from '@/store/session-store'
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
@@ -114,14 +115,18 @@ async function ingestPdf(
 ): Promise<IngestResult> {
   const bytes = new Uint8Array(await file.arrayBuffer())
   cacheDocumentBytes(docId, bytes)
+  const scoperMeta = await readScoperExportMetadata(bytes, file.name)
   const liteparse = await getLiteParseClient()
   const parsed = await liteparse.parsePdf(docId, bytes, { ocrEnabled })
 
-  const role = await resolveDocumentRoleForIngest(
-    docId,
-    useSessionStore.getState().documents,
-    'application/pdf',
-  )
+  const roleFromExport = scoperMeta.role
+  const role =
+    roleFromExport ??
+    (await resolveDocumentRoleForIngest(
+      docId,
+      useSessionStore.getState().documents,
+      'application/pdf',
+    ))
 
   const document: DocumentMeta = {
     doc_id: docId,
@@ -132,6 +137,15 @@ async function ingestPdf(
   }
 
   await persistIngest(document, parsed.blocks)
+
+  if (scoperMeta.isScoperExport && scoperMeta.commentMode !== 'burned-in') {
+    await importPdfMarkupComments({
+      docId,
+      bytes,
+      filename: file.name,
+      blocks: parsed.blocks,
+    })
+  }
 
   return {
     doc_id: docId,

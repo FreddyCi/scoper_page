@@ -12,6 +12,16 @@ export type ViewportHighlightRect = {
   height: number
 }
 
+/** Convert PDF user space bbox back to LiteParse top-left page coordinates. */
+export function pdfUserSpaceToLiteParseBbox(bbox: Bbox, pageHeightPts: number): Bbox {
+  return {
+    x: bbox.x,
+    y: pageHeightPts - bbox.y - bbox.height,
+    width: bbox.width,
+    height: bbox.height,
+  }
+}
+
 /** Convert a top-left page bbox to PDF user space for PDF.js viewport helpers. */
 export function liteParseBboxToPdfUserSpace(bbox: Bbox, pageHeightPts: number): Bbox {
   return {

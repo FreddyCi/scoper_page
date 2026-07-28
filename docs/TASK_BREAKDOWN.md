@@ -884,16 +884,18 @@ flowchart LR
 ### **ID:** BDA-082
 
 **Title:** Block comments UI and persistence  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-033, BDA-020  
 **Priority:** Medium  
 **Description:** Comment popover on selected block in split view. Save to DuckDB comments table. Show comment indicator on blocks with comments.  
 **Completed Changes:**
-- 🔄 CommentPopover component
-- 🔄 Insert/select comments API
+- ✅ `block-comments.ts` — insert/fetch comments + commented block ids via DuckDB `comments` table
+- ✅ `CommentPopover.tsx` — list/add notes on selected extract block in split view
+- ✅ `ExtractedTextPane` — amber comment indicator on blocks with notes; popover when block selected
+- ✅ `runBlockCommentsHarness()` — add comment → re-fetch persists in session DB
 **Test Strategy:** Add comment on block → reload session → comment still listed (same session DB).  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1 step 8, PRD §14 comments checklist  
 

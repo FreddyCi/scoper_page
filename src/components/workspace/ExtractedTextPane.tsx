@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { MessageSquareIcon } from 'lucide-react'
 
+import { CommentPopover } from '@/components/workspace/CommentPopover'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { blockToCitation } from '@/lib/types'
 import { groupBlocksForDisplay } from '@/services/document-blocks'
 import { focusCitation } from '@/services/citation-bridge'
@@ -16,11 +19,13 @@ type ExtractedTextPaneProps = {
 function BlockRow({
   block,
   selected,
+  hasComment,
   focusSeq,
   onSelect,
 }: {
   block: BlockRecord
   selected: boolean
+  hasComment: boolean
   focusSeq: number
   onSelect: () => void
 }) {
@@ -38,11 +43,18 @@ function BlockRow({
       type="button"
       onClick={onSelect}
       className={cn(
-        'border-border hover:bg-muted/60 w-full rounded-lg border px-3 py-2 text-left transition-colors',
+        'border-border hover:bg-muted/60 relative w-full rounded-lg border px-3 py-2 text-left transition-colors',
         selected && 'border-sky-400 bg-sky-50 ring-1 ring-sky-300',
+        hasComment && !selected && 'border-amber-300/80 bg-amber-50/40',
       )}
     >
-      <p className="text-foreground text-sm leading-relaxed">{block.text}</p>
+      {hasComment ? (
+        <MessageSquareIcon
+          className="text-amber-600 absolute top-2 right-2 size-3.5"
+          aria-label="Has comments"
+        />
+      ) : null}
+      <p className="text-foreground pr-5 text-sm leading-relaxed">{block.text}</p>
       {block.section_path ? (
         <p className="text-muted-foreground mt-1 truncate text-xs">{block.section_path}</p>
       ) : null}
@@ -52,12 +64,15 @@ function BlockRow({
 
 export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) {
   const { blocks, loading, error } = useDocumentBlocks(docId)
+  const { blockIds: commentedBlockIds, refresh: refreshCommentedBlockIds } =
+    useCommentedBlockIds(docId)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
 
   const pageGroups = useMemo(() => groupBlocksForDisplay(blocks), [blocks])
   const activeBlockId =
     selectedCitation?.doc_id === docId ? selectedCitation.block_id : null
+  const activeBlock = blocks.find((block) => block.block_id === activeBlockId) ?? null
 
   return (
     <section
@@ -103,6 +118,7 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
                       key={block.block_id}
                       block={block}
                       selected={activeBlockId === block.block_id}
+                      hasComment={commentedBlockIds.has(block.block_id)}
                       focusSeq={citationFocusSeq}
                       onSelect={() => focusCitation(blockToCitation(block))}
                     />
@@ -113,6 +129,15 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
           </div>
         ) : null}
       </div>
+
+      {activeBlock ? (
+        <CommentPopover
+          block={activeBlock}
+          onCommentAdded={() => {
+            void refreshCommentedBlockIds()
+          }}
+        />
+      ) : null}
     </section>
   )
 }

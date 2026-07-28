@@ -18,6 +18,7 @@ import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
+import { runBlockCommentsHarness } from '@/services/block-comments'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runIngestHarness, runMarkdownIngestHarness, runDocxIngestHarness, runXlsxIngestHarness } from '@/services/ingest-router'
@@ -40,6 +41,7 @@ function App() {
         await runEcpEnvironmentHarness()
         runSessionStoreHarness()
         await runDuckdbHarness()
+        await runBlockCommentsHarness()
         await runLiteParseHarness()
         await runOcrHarness()
         await runLiteParseOcrHarness()

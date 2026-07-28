@@ -18,7 +18,7 @@ export function ResultsProfileGrid({
 }: ResultsProfileGridProps) {
   if (profiles.length === 0) {
     return (
-      <div className="text-muted-foreground flex min-h-[16rem] flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 text-center text-sm">
+      <div className="text-muted-foreground flex min-h-[16rem] flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
         No results profiles yet. Upload documents and run analysis to populate qualification cards.
       </div>
     )
@@ -47,20 +47,24 @@ export function ResultsProfileGrid({
         </p>
       </header>
 
-      <div
-        className={cn(
-          'grid min-h-0 flex-1 auto-rows-min gap-4 overflow-y-auto pb-2',
-          'grid-cols-[repeat(auto-fill,minmax(18rem,1fr))]',
-          profiles.length === 1 && 'max-w-lg',
-        )}
-      >
-        {profiles.map((profile) => (
-          <ResultsProfileCard
-            key={profile.profile_id}
-            profile={profile}
-            onCriterionClick={handleCriterionClick}
-          />
-        ))}
+      {/* Narrow: horizontal scroll · lg+: 2-col grid · xl+: 3-col grid */}
+      <div className="scrollbar-none min-h-0 flex-1 overflow-x-auto pb-2 lg:overflow-x-visible lg:overflow-y-auto">
+        <div
+          className={cn(
+            'flex w-max min-w-full gap-4',
+            'lg:grid lg:w-full lg:grid-cols-2 lg:auto-rows-min',
+            'xl:grid-cols-3',
+          )}
+        >
+          {profiles.map((profile) => (
+            <ResultsProfileCard
+              key={profile.profile_id}
+              profile={profile}
+              onCriterionClick={handleCriterionClick}
+              className="w-[19rem] shrink-0 lg:w-auto"
+            />
+          ))}
+        </div>
       </div>
     </div>
   )

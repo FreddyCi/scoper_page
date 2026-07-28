@@ -552,16 +552,19 @@ flowchart LR
 ### **ID:** BDA-041
 
 **Title:** ResultsProfileGrid workspace view  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-040, BDA-010, BDA-005  
 **Priority:** Critical  
 **Description:** Horizontal scroll or 3-column grid of ResultsProfileCard. Shown when `workspaceView === profiles` and mode === rfp. Empty state when no profiles.  
 **Completed Changes:**
-- 🔄 ResultsProfileGrid layout
-- 🔄 Bind to store profiles[]
+- ✅ `ResultsProfileGrid` — horizontal scroll on narrow viewports, 2-col at lg, 3-col at xl
+- ✅ `WorkspaceContent` renders grid when `workspaceView === profiles` && `mode === rfp`
+- ✅ Bound to store via `useRfpProfiles()`; empty dashed-border state when no profiles
+- ✅ `runResultsProfileGridHarness()` validates 3 mock profiles + store/view binding
 **Test Strategy:** Mock 3 profiles render in grid; responsive at narrow widths.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: 3 profiles in store, profiles workspace view, selectVisibleProfiles
+- ✅ Manual: upload docs → profiles grid; narrow width scrolls cards horizontally
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.5, Plan §ResultsProfileGrid  
 

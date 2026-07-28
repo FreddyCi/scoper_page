@@ -400,6 +400,10 @@ export function useVisibleProfiles() {
   return useSessionStore(selectVisibleProfiles)
 }
 
+export function useRfpProfiles() {
+  return useSessionStore((state) => state.profiles)
+}
+
 export function useShowLanding() {
   return useSessionStore(selectShowLanding)
 }

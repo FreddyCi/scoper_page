@@ -8,8 +8,8 @@ import { ResultsProfileGrid } from '@/components/workspace/ResultsProfileGrid'
 import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
-import type { RfpResultsProfile, WorkspaceMode } from '@/lib/types'
-import { useSessionStore, useShowLanding, useVisibleProfiles } from '@/store/session-store'
+import { useSessionStore, useShowLanding, useRfpProfiles } from '@/store/session-store'
+import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
   rfp: 'RFP Analysis — qualify bidders against requirements with cited evidence.',
@@ -24,7 +24,7 @@ export function WorkspaceContent() {
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const documents = useSessionStore((s) => s.documents)
   const selectedCitation = useSessionStore((s) => s.selectedCitation)
-  const profiles = useVisibleProfiles()
+  const profiles = useRfpProfiles()
   const { submitCommand, isIngesting } = useCommandIngest()
 
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId)
@@ -60,7 +60,7 @@ export function WorkspaceContent() {
         </div>
 
         {mode === 'rfp' ? (
-          <ResultsProfileGrid profiles={profiles as RfpResultsProfile[]} className="min-h-0 flex-1" />
+          <ResultsProfileGrid profiles={profiles} className="min-h-0 flex-1" />
         ) : (
           <div className="text-muted-foreground flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-surface text-sm">
             Scope creep profiles grid — BDA-061

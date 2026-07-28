@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
-import { runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
+import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runIngestHarness } from '@/services/ingest-router'
@@ -24,6 +24,7 @@ function App() {
         await runCitationBridgeHarness()
         await runCitationClickHarness()
         runResultsProfileUiHarness()
+        runResultsProfileGridHarness()
       } catch (error) {
         console.error('[dev-harness]', error)
       }

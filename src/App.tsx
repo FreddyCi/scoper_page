@@ -6,6 +6,7 @@ import {
   runDemoExtensionsHarness,
   runEcpEnvironmentHarness,
 } from '@/ecp/environment'
+import { runEcpAgentRunHarness } from '@/ecp/agent-run'
 import { runChatAgentHarness, runChatCitationChipHarness, runFindClauseAgentHarness } from '@/services/chat-agent'
 import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
@@ -42,6 +43,7 @@ function App() {
         await runBuildRfpProfilesHarness()
         await runScoperHarness()
         await runDemoExtensionsHarness()
+        await runEcpAgentRunHarness()
         await runChatAgentHarness()
         await runChatCitationsHarness()
         await runChatCitationChipHarness()

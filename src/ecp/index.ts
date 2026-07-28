@@ -18,6 +18,17 @@ export {
 } from '@/ecp/environment'
 
 export {
+  clearEcpAgentAuditLog,
+  EcpAgentRunDeniedError,
+  getEcpAgentAuditLog,
+  runEcpAgentRunHarness,
+  runEcpAgentTool,
+  type EcpAgentAuditEntry,
+  type EcpAgentRunDenyCode,
+  type RunEcpAgentToolOptions,
+} from '@/ecp/agent-run'
+
+export {
   BITGPU_CAPABILITIES,
   BITGPU_EXTENSION_ID,
 } from '@/ecp/extensions/bitgpu'

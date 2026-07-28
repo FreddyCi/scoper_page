@@ -1,10 +1,11 @@
+import { EcpAgentRunDeniedError, runEcpAgentTool } from '@/ecp/agent-run'
+import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { resolveMentionedDocIds } from '@/lib/chat-mentions'
 import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type { AssistantChatContent, ChatMessage as AppChatMessage, FindClauseResult } from '@/lib/types'
 import type { ChatMessage as ScoperChatMessage } from '@/lib/scoper-protocol'
 import { buildAssistantRichContent } from '@/services/chat-citations'
-import { findClause } from '@/services/find-clause'
 import {
   getScoperClient,
   ScoperWebGpuUnavailableError,
@@ -68,6 +69,22 @@ function finalizeFindClauseTurn(assistantId: string, text: string, findResult: F
   })
 }
 
+function finalizeAgentError(assistantId: string, message: string) {
+  useSessionStore.getState().finalizeAssistantMessage(assistantId, { text: message })
+}
+
+async function invokeFindClauseViaEcp(
+  query: string,
+  docIds: string[],
+  limit: number,
+): Promise<FindClauseResult> {
+  return runEcpAgentTool({
+    capabilityId: DOCUMENT_CAPABILITIES.find_clause,
+    input: { query, docIds, limit },
+    ecpReady: true,
+  }) as Promise<FindClauseResult>
+}
+
 async function ensureScoperReady() {
   const scoper = getScoperClient()
   const env = await scoper.probeEnvironment()
@@ -127,7 +144,16 @@ async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandler
   const docIds = resolveCitationDocIds(prompt)
   applyMentionScope(prompt)
 
-  const findResult = await findClause(prompt, { docIds, limit: 6 })
+  let findResult: FindClauseResult
+  try {
+    findResult = await invokeFindClauseViaEcp(prompt, docIds, 6)
+  } catch (error) {
+    if (error instanceof EcpAgentRunDeniedError) {
+      finalizeAgentError(handlers.assistantId, error.message)
+      return
+    }
+    throw error
+  }
 
   try {
     const summary = await streamFindClauseSummary(prompt, findResult, handlers)
@@ -167,8 +193,20 @@ async function applyStubAssistantReply(assistantId: string, prompt: string) {
   const docIds = resolveCitationDocIds(prompt)
   applyMentionScope(prompt)
 
-  const findResult =
-    docIds.length > 0 ? await findClause(prompt, { docIds, limit: 6 }) : null
+  let findResult: FindClauseResult | null = null
+  if (docIds.length > 0) {
+    try {
+      findResult = await invokeFindClauseViaEcp(prompt, docIds, 6)
+    } catch (error) {
+      if (error instanceof EcpAgentRunDeniedError) {
+        finalizeAgentError(assistantId, error.message)
+        return
+      }
+      if (import.meta.env.DEV) {
+        console.warn('[agent] stub find_clause via ECP failed', error)
+      }
+    }
+  }
 
   if (findResult && findResult.matches.length > 0) {
     finalizeFindClauseTurn(assistantId, findResult.summary, findResult)
@@ -188,7 +226,7 @@ async function applyStubAssistantReply(assistantId: string, prompt: string) {
   })
 }
 
-/** Agent loop — DuckDB retrieve → find_clause → Scoper summary or stub (BDA-053) */
+/** Agent loop — ECP find_clause → Scoper summary or stub (BDA-053/062) */
 export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers): Promise<void> {
   const trimmed = prompt.trim()
   if (!trimmed) return
@@ -202,6 +240,10 @@ export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers):
       await runFindClauseAgentPath(trimmed, handlers)
       return
     } catch (error) {
+      if (error instanceof EcpAgentRunDeniedError) {
+        finalizeAgentError(handlers.assistantId, error.message)
+        return
+      }
       if (import.meta.env.DEV) {
         console.warn('[agent] find_clause path failed', error)
       }

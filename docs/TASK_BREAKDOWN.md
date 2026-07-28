@@ -735,16 +735,17 @@ flowchart LR
 ### **ID:** BDA-062
 
 **Title:** Wire agent loop through ECP  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-061, BDA-053  
 **Priority:** High  
 **Description:** Replace direct agent.ts calls with ECP harness run. Validate tool params before execute; audit deny paths.  
 **Completed Changes:**
-- 🔄 agent.ts uses ECP run API
-- 🔄 Validation errors surfaced in chat
+- ✅ `runEcpAgentTool()` in `src/ecp/agent-run.ts` — frozen-registry gate, `@demo/*` namespace check, JSON-schema param validation, audit log, ECP invoke
+- ✅ `agent.ts` routes `find_clause` through ECP (no direct `findClause()` calls); `EcpAgentRunDeniedError` surfaced in chat
+- ✅ `runEcpAgentRunHarness()` — empty query rejected with audit deny; valid find_clause allow + result
 **Test Strategy:** Invalid tool params rejected with message; valid find_clause executes.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §14 ECP checklist  
 

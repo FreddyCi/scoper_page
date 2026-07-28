@@ -1,6 +1,6 @@
 import { stableDocIdFromFile } from '@/lib/stable-id'
 import type { LiteParseParseResult } from '@/lib/liteparse-protocol'
-import type { DocumentMeta, IngestResult } from '@/lib/types'
+import type { DocumentMeta, IngestResult, BlockRecord } from '@/lib/types'
 import {
   getFileExtension,
   isAcceptedUploadFile,
@@ -10,6 +10,7 @@ import { getDuckdbClient } from '@/services/duckdb-client'
 import { cacheDocumentBytes } from '@/services/document-bytes-cache'
 import { resolveDocumentRoleForIngest } from '@/services/document-roles'
 import { getLiteParseClient } from '@/services/liteparse-client'
+import { parseMarkdownToBlocks } from '@/services/markdown-ingest'
 import { useSessionStore } from '@/store/session-store'
 
 export type IngestOptions = {
@@ -73,9 +74,9 @@ function ocrWasUsed(ocrEnabled: boolean, parsed: LiteParseParseResult): boolean 
   )
 }
 
-async function persistIngest(
+async function persistIngestBlocks(
   document: DocumentMeta,
-  blocks: LiteParseParseResult['blocks'],
+  blocks: BlockRecord[],
 ): Promise<void> {
   const duckdb = await getDuckdbClient()
   await duckdb.insertDocument(document)
@@ -83,6 +84,13 @@ async function persistIngest(
   for (const block of blocks) {
     await duckdb.insertBlock(block)
   }
+}
+
+async function persistIngest(
+  document: DocumentMeta,
+  blocks: LiteParseParseResult['blocks'],
+): Promise<void> {
+  await persistIngestBlocks(document, blocks)
 }
 
 async function ingestPdf(
@@ -119,6 +127,41 @@ async function ingestPdf(
   }
 }
 
+async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  cacheDocumentBytes(docId, bytes)
+
+  const markdown = new TextDecoder('utf-8').decode(bytes)
+  const blocks = parseMarkdownToBlocks(docId, markdown)
+
+  if (blocks.length === 0) {
+    throw new Error(`Markdown file is empty: ${file.name}`)
+  }
+
+  const role = await resolveDocumentRoleForIngest(
+    docId,
+    useSessionStore.getState().documents,
+  )
+
+  const document: DocumentMeta = {
+    doc_id: docId,
+    filename: file.name,
+    mime: 'text/markdown',
+    role,
+    uploaded_at: new Date().toISOString(),
+  }
+
+  await persistIngestBlocks(document, blocks)
+
+  return {
+    doc_id: docId,
+    filename: file.name,
+    mime: document.mime,
+    block_count: blocks.length,
+    ocr_used: false,
+  }
+}
+
 function ingestFormatStub(format: IngestFormat, filename: string): never {
   const labels: Record<Exclude<IngestFormat, 'pdf'>, string> = {
     word: 'Word',
@@ -148,8 +191,9 @@ export async function ingestFile(
   switch (format) {
     case 'pdf':
       return ingestPdf(file, docId, ocrEnabled)
-    case 'word':
     case 'markdown':
+      return ingestMarkdown(file, docId)
+    case 'word':
     case 'excel':
       return ingestFormatStub(format, file.name)
     default: {
@@ -212,5 +256,52 @@ export async function runIngestHarness(): Promise<void> {
   const blockCount = blocks[0]?.count ?? 0
   if (blockCount !== ingested.block_count) {
     throw new Error('Ingest harness: DuckDB block count mismatch')
+  }
+}
+
+/** Dev harness — ingest sample markdown; verify DuckDB blocks with section_path (BDA-081) */
+export async function runMarkdownIngestHarness(): Promise<void> {
+  const markdown = [
+    '# Smoke Test Plan',
+    '',
+    'Validate application behavior under normal conditions.',
+    '',
+    '## When to Perform Smoke Tests',
+    '',
+    '- Regularly to monitor system health',
+    '- After deployments',
+    '',
+    '## Test Types',
+    '',
+    '| Type | Purpose |',
+    '| --- | --- |',
+    '| Software | Validate app behavior |',
+    '| Network | Ensure systems communicate |',
+  ].join('\n')
+
+  const file = new File([markdown], 'harness-sample.md', { type: 'text/markdown' })
+  const ingested = await ingestFile(file)
+
+  if (ingested.block_count < 3) {
+    throw new Error('Markdown ingest harness: expected multiple blocks')
+  }
+
+  const duckdb = await getDuckdbClient()
+  const documents = await duckdb.query<{ doc_id: string }>(
+    'SELECT doc_id FROM documents WHERE doc_id = ?',
+    [ingested.doc_id],
+  )
+  const blocks = await duckdb.query<{ section_path: string | null; text: string }>(
+    'SELECT section_path, text FROM blocks WHERE doc_id = ? ORDER BY block_id',
+    [ingested.doc_id],
+  )
+
+  if (documents.length !== 1) {
+    throw new Error('Markdown ingest harness: expected document row in DuckDB')
+  }
+
+  const withSectionPath = blocks.filter((block) => block.section_path?.includes('Smoke Test Plan'))
+  if (withSectionPath.length === 0) {
+    throw new Error('Markdown ingest harness: expected section_path from headings')
   }
 }

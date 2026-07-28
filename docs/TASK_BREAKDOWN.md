@@ -991,16 +991,19 @@ flowchart LR
 ### **ID:** BDA-101
 
 **Title:** Full v1 PRD deliverables verification  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-072, BDA-062, BDA-081, BDA-082, BDA-100  
 **Priority:** Critical  
 **Description:** Verify full v1 checklist: scope creep mode, all formats, ECP freeze, comments, offline after cache. Sign off against PRD §14 full v1 items.  
 **Completed Changes:**
-- 🔄 Full checklist run
-- 🔄 Gaps filed as follow-up tasks
+- ✅ `docs/QA_V1_SCRIPT.md` — manual v1 checklist (scope creep, formats, comments, ECP, offline)
+- ✅ `docs/QA_V1_RESULTS.md` — full v1 **Pass** with harness mapping + deferrals
+- ✅ `docs/ARCHITECTURE.md` — architecture summary for PRD §14
+- ✅ `scripts/run-qa-v1-automation.mjs` + `pnpm qa:v1` — build + preview smoke with office fixtures
+- ✅ `scripts/generate-sample-office.mjs` — restores `minimal.docx` / `minimal.xlsx` for harness + deploy smoke
 **Test Strategy:** PRD §14 all boxes checked or explicitly deferred with rationale.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Full v1 **Pass** (2026-07-27): automated smoke + dev harness audit; session reload persist deferred per PRD §15 Q3
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §14, Plan §Success criteria  
 

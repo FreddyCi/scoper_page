@@ -462,35 +462,35 @@ type CitationRef = {
 
 **Documentation:**
 - [x] PRD (this document)
-- [ ] README with local dev (`pnpm install`, `pnpm dev`) + static deploy instructions
-- [ ] Architecture summary (link to plan)
+- [x] README with local dev (`pnpm install`, `pnpm dev`) + static deploy instructions
+- [x] Architecture summary (link to plan) — [`docs/ARCHITECTURE.md`](ARCHITECTURE.md)
 
 **Code & Infrastructure:**
-- [ ] Vite + React + TS codebase per project scaffold
-- [ ] Web Workers: bitgpu, liteparse, duckdb, ocr
-- [ ] Static build artifact deployable to GitHub Pages / Cloudflare Pages
-- [ ] Sample PDFs in `sample/`
+- [x] Vite + React + TS codebase per project scaffold
+- [x] Web Workers: bitgpu, liteparse, duckdb, ocr
+- [x] Static build artifact deployable to GitHub Pages / Cloudflare Pages
+- [x] Sample PDFs in `sample/`
 
 **Features (MVP checklist):**
-- [ ] Self-contained in `scoper_page`; zero Scoper repo changes
-- [ ] Landing: greeting, quick actions, command input with file stack
-- [ ] RFP Results Profiles with pass/warn/fail + verdict badge
-- [ ] SplitDocumentView: OCR \| original with synced highlight
-- [ ] Click criterion or chat cite → focus source clause
-- [ ] MessageScroller chat with bitgpu streaming
-- [ ] Upload FAB popup; collapsible chat sidebar
-- [ ] ECP tool validation; registry frozen before agent run
-- [ ] Offline-capable after model + WASM cache
+- [x] Self-contained in `scoper_page`; zero Scoper repo changes
+- [x] Landing: greeting, quick actions, command input with file stack
+- [x] RFP Results Profiles with pass/warn/fail + verdict badge
+- [x] SplitDocumentView: OCR \| original with synced highlight
+- [x] Click criterion or chat cite → focus source clause
+- [x] MessageScroller chat with bitgpu streaming
+- [x] Upload FAB popup; collapsible chat sidebar
+- [x] ECP tool validation; registry frozen before agent run
+- [x] Offline-capable after model + WASM cache
 
 **Features (Full v1 additions):**
-- [ ] Scope Creep profiles + multi-doc
-- [ ] Word / Markdown / Excel parsers
-- [ ] Block comments persisted in session
-- [ ] Full `@demo/*` ECP extension set
+- [x] Scope Creep profiles + multi-doc
+- [x] Word / Markdown / Excel parsers
+- [x] Block comments persisted in session
+- [x] Full `@demo/*` ECP extension set
 
 **Testing:**
-- [ ] Manual QA script for MVP flows
-- [ ] Sample RFP pack (3 PDFs) for citation spot-checks
+- [x] Manual QA script for MVP flows
+- [x] Sample RFP pack (3 PDFs) for citation spot-checks
 
 ---
 

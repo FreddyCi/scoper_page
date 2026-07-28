@@ -43,7 +43,9 @@ See [`sample/README.md`](sample/README.md) for the full corpus (scope creep fixt
 | `pnpm preview` | Serve `dist/` locally (production parity) |
 | `pnpm preview:smoke` | Start preview and verify shell, WASM, sample PDF paths |
 | `pnpm lint` | Run oxlint |
-| `node scripts/generate-sample-pdfs.mjs` | Regenerate RFP demo PDF corpus |
+| `pnpm qa:automated` | MVP build + preview smoke (BDA-100) |
+| `pnpm qa:v1` | Full v1 build + preview smoke incl. office fixtures (BDA-101) |
+| `node scripts/generate-sample-pdfs.mjs` | Regenerate RFP demo PDF + office corpus |
 
 `postinstall` runs `pnpm copy:assets` (DuckDB, LiteParse, Tesseract, PDF.js workers into `public/`).
 
@@ -82,8 +84,10 @@ Cloudflare Pages uses `public/_headers` and `public/_redirects` copied into `dis
 - **Agent:** ECP `@demo/*` extensions for governed tool calls
 
 Full product spec: [`docs/PRD.md`](docs/PRD.md)  
+Architecture: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)  
 Implementation tasks: [`docs/TASK_BREAKDOWN.md`](docs/TASK_BREAKDOWN.md)  
-MVP QA: [`docs/QA_SCRIPT.md`](docs/QA_SCRIPT.md) · [`docs/QA_RESULTS.md`](docs/QA_RESULTS.md)
+MVP QA: [`docs/QA_SCRIPT.md`](docs/QA_SCRIPT.md) · [`docs/QA_RESULTS.md`](docs/QA_RESULTS.md)  
+Full v1 QA: [`docs/QA_V1_SCRIPT.md`](docs/QA_V1_SCRIPT.md) · [`docs/QA_V1_RESULTS.md`](docs/QA_V1_RESULTS.md)
 
 ## Troubleshooting
 

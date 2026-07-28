@@ -11,6 +11,8 @@ const PREVIEW_PATHS = [
   '/sample/rfp-it-services.pdf',
   '/sample/bidder-acme-response.pdf',
   '/sample/minimal.pdf',
+  '/sample/minimal.docx',
+  '/sample/minimal.xlsx',
 ]
 
 async function waitForServer(url, attempts = 30) {

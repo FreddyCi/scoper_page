@@ -120,3 +120,8 @@ for (const doc of CORPUS) {
 }
 
 console.log('[generate-sample-pdfs] corpus ready in sample/ and public/sample/')
+
+await import('./generate-sample-office.mjs').catch((error) => {
+  console.error('[generate-sample-pdfs] office fixture generation failed:', error.message)
+  process.exit(1)
+})

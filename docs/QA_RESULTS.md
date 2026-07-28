@@ -117,7 +117,7 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 1. Run [`QA_SCRIPT.md`](QA_SCRIPT.md) F2–F7 once in Chrome with WebGPU (15 min visual pass).
 2. Optional: `DEPLOY_URL=<pages-url> pnpm verify:deploy` after GitHub Pages deploy.
-3. Full v1 checklist → **BDA-101**.
+3. Full v1 checklist → **BDA-101** — see [`QA_V1_RESULTS.md`](QA_V1_RESULTS.md) (**Pass** 2026-07-27)
 
 ---
 

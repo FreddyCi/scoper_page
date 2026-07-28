@@ -51,18 +51,18 @@ export function WorkspaceContent() {
 
   if (workspaceView === 'profiles') {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-[var(--spacing-panel)] py-4">
-        <div className="text-muted-foreground shrink-0 text-center text-sm">
-          <p>{MODE_COPY[mode]}</p>
-          <p className="text-subtle-foreground mt-1 text-xs">
-            Click a criterion with a source link to open split view with highlight.
-          </p>
+      <div className="flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-4">
+        <div className="mb-4 shrink-0">
+          <h1 className="text-foreground text-base font-semibold tracking-tight">
+            {mode === 'rfp' ? 'RFP Analysis' : 'Scope Creep Analysis'}
+          </h1>
+          <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{MODE_COPY[mode]}</p>
         </div>
 
         {mode === 'rfp' ? (
-          <ResultsProfileGrid profiles={profiles as RfpResultsProfile[]} />
+          <ResultsProfileGrid profiles={profiles as RfpResultsProfile[]} className="min-h-0 flex-1" />
         ) : (
-          <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
+          <div className="text-muted-foreground flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-surface text-sm">
             Scope creep profiles grid — BDA-061
           </div>
         )}

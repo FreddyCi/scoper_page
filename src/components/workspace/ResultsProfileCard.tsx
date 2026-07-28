@@ -1,7 +1,8 @@
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { MapPinIcon } from 'lucide-react'
+
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
-import type { CitationRef, RfpResultsProfile, RfpVerdict } from '@/lib/types'
+import type { CitationRef, CriterionStatus, RfpResultsProfile, RfpVerdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const VERDICT_LABEL: Record<RfpVerdict, string> = {
@@ -10,10 +11,26 @@ const VERDICT_LABEL: Record<RfpVerdict, string> = {
   unlikely: 'Unlikely to qualify',
 }
 
-const VERDICT_VARIANT: Record<RfpVerdict, 'default' | 'secondary' | 'destructive'> = {
-  likely: 'default',
-  might: 'secondary',
-  unlikely: 'destructive',
+const VERDICT_CLASS: Record<RfpVerdict, string> = {
+  likely: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  might: 'border-amber-200 bg-amber-50 text-amber-700',
+  unlikely: 'border-rose-200 bg-rose-50 text-rose-700',
+}
+
+const STATUS_SUMMARY_CLASS: Record<CriterionStatus, string> = {
+  pass: 'bg-emerald-50 text-emerald-700',
+  warn: 'bg-amber-50 text-amber-700',
+  fail: 'bg-rose-50 text-rose-700',
+}
+
+function countByStatus(criteria: RfpResultsProfile['criteria']) {
+  return criteria.reduce(
+    (acc, item) => {
+      acc[item.status] += 1
+      return acc
+    },
+    { pass: 0, warn: 0, fail: 0 } as Record<CriterionStatus, number>,
+  )
 }
 
 type ResultsProfileCardProps = {
@@ -27,22 +44,55 @@ export function ResultsProfileCard({
   onCriterionClick,
   className,
 }: ResultsProfileCardProps) {
+  const statusCounts = countByStatus(profile.criteria)
+
   return (
     <Card
       className={cn(
-        'border-border bg-[#1a1d24] text-slate-100 shadow-panel gap-0 py-0',
+        'border-border bg-surface shadow-panel gap-0 overflow-hidden rounded-xl border py-0',
         className,
       )}
     >
-      <CardHeader className="gap-3 border-b border-white/10 px-4 py-4">
+      <CardHeader className="gap-4 border-b border-border/70 px-4 py-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <CardTitle className="truncate text-base text-white">{profile.subject.name}</CardTitle>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="truncate text-base font-semibold tracking-tight">
+              {profile.subject.name}
+            </CardTitle>
             {profile.subject.role ? (
-              <CardDescription className="text-slate-400">{profile.subject.role}</CardDescription>
+              <p className="text-muted-foreground text-sm">{profile.subject.role}</p>
+            ) : null}
+            {profile.subject.location ? (
+              <p className="text-subtle-foreground flex items-center gap-1 text-xs">
+                <MapPinIcon className="size-3 shrink-0" />
+                {profile.subject.location}
+              </p>
             ) : null}
           </div>
-          <Badge variant={VERDICT_VARIANT[profile.verdict]}>{VERDICT_LABEL[profile.verdict]}</Badge>
+          <span
+            className={cn(
+              'shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase',
+              VERDICT_CLASS[profile.verdict],
+            )}
+          >
+            {VERDICT_LABEL[profile.verdict]}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(['pass', 'warn', 'fail'] as const).map((status) =>
+            statusCounts[status] > 0 ? (
+              <span
+                key={status}
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-[11px] font-medium capitalize',
+                  STATUS_SUMMARY_CLASS[status],
+                )}
+              >
+                {statusCounts[status]} {status}
+              </span>
+            ) : null,
+          )}
         </div>
       </CardHeader>
 
@@ -52,12 +102,13 @@ export function ResultsProfileCard({
             key={criterion.id}
             criterion={criterion}
             onCriterionClick={onCriterionClick}
-            className="border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"
           />
         ))}
-
-        <p className="text-slate-400 pt-2 text-xs leading-relaxed">{profile.summary}</p>
       </CardContent>
+
+      <CardFooter className="border-border/70 bg-workspace-muted/40 border-t px-4 py-3">
+        <p className="text-muted-foreground text-sm leading-relaxed">{profile.summary}</p>
+      </CardFooter>
     </Card>
   )
 }

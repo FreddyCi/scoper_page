@@ -1,4 +1,10 @@
-import { AlertTriangleIcon, CheckCircle2Icon, CircleIcon, XCircleIcon } from 'lucide-react'
+import {
+  AlertTriangleIcon,
+  CheckCircle2Icon,
+  ChevronRightIcon,
+  CircleIcon,
+  XCircleIcon,
+} from 'lucide-react'
 
 import type { CitationRef, CriterionResult, CriterionStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -41,10 +47,11 @@ export function CriterionRow({ criterion, onCriterionClick, className }: Criteri
       disabled={!clickable}
       onClick={handleClick}
       className={cn(
-        'border-border/70 flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left transition-colors',
+        'group flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors',
+        'border-border/70 bg-workspace-muted/50',
         clickable
-          ? 'hover:bg-muted/60 cursor-pointer'
-          : 'cursor-default opacity-80',
+          ? 'hover:border-sky-300 hover:bg-sky-50 cursor-pointer'
+          : 'cursor-default opacity-90',
         className,
       )}
     >
@@ -52,9 +59,14 @@ export function CriterionRow({ criterion, onCriterionClick, className }: Criteri
       <span className="min-w-0 flex-1">
         <span className="text-foreground block text-sm font-medium">{criterion.label}</span>
         {criterion.detail ? (
-          <span className="text-muted-foreground mt-0.5 block text-xs">{criterion.detail}</span>
+          <span className="text-muted-foreground mt-0.5 block text-xs leading-relaxed">
+            {criterion.detail}
+          </span>
         ) : null}
       </span>
+      {clickable ? (
+        <ChevronRightIcon className="text-muted-foreground mt-0.5 size-4 shrink-0 group-hover:text-sky-600" />
+      ) : null}
     </button>
   )
 }

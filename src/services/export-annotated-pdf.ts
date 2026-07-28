@@ -134,46 +134,82 @@ function drawExportBanner(
   })
 }
 
-function drawBurnedInBlockAnnotation(
-  page: PDFPage,
+const BURNED_IN_MARGIN_LEFT = 10
+const BURNED_IN_CONTENT_GAP = 8
+const BURNED_IN_MIN_NOTE_WIDTH = 72
+const BURNED_IN_MAX_NOTE_WIDTH = 168
+const BURNED_IN_NOTE_GAP = 8
+const BURNED_IN_PAGE_BOTTOM = 48
+
+function blockPdfBbox(block: AnnotatedBlockExport['block'], pageHeight: number): Bbox | null {
+  if (!hasBbox(block)) return null
+  return liteParseBboxToPdfUserSpace(
+    { x: block.x, y: block.y, width: block.width, height: block.height },
+    pageHeight,
+  )
+}
+
+function contentLeftEdgeForPage(entries: AnnotatedBlockExport[], pageHeight: number): number {
+  let contentLeft = Number.POSITIVE_INFINITY
+  for (const entry of entries) {
+    const bbox = blockPdfBbox(entry.block, pageHeight)
+    if (bbox) contentLeft = Math.min(contentLeft, bbox.x)
+  }
+  return Number.isFinite(contentLeft) ? contentLeft : 72
+}
+
+function marginNoteWidth(contentLeft: number): number {
+  const available = contentLeft - BURNED_IN_MARGIN_LEFT - BURNED_IN_CONTENT_GAP
+  return Math.max(
+    BURNED_IN_MIN_NOTE_WIDTH,
+    Math.min(BURNED_IN_MAX_NOTE_WIDTH, available),
+  )
+}
+
+type PlacedMarginNote = {
+  bottom: number
+  top: number
+}
+
+function resolveMarginNoteY(
+  preferredY: number,
+  noteHeight: number,
+  placed: PlacedMarginNote[],
   pageHeight: number,
-  entry: AnnotatedBlockExport,
-  font: PDFFont,
-  boldFont: PDFFont,
-  noteIndex: number,
-): void {
-  const { block } = entry
-  const pageWidth = page.getWidth()
-  const noteWidth = Math.min(240, pageWidth - 24)
-  const noteLines = buildCommentBody(entry, font, 8, noteWidth - 12)
-  const lineHeight = 10
-  const notePadding = 6
-  const noteHeight = noteLines.length * lineHeight + notePadding * 2
+): number {
+  let candidate = Math.max(BURNED_IN_PAGE_BOTTOM, preferredY)
 
-  let anchorX = 48
-  let anchorY = pageHeight - 80 - noteIndex * (noteHeight + 12)
-
-  if (hasBbox(block)) {
-    const pdfBbox = liteParseBboxToPdfUserSpace(
-      { x: block.x, y: block.y, width: block.width, height: block.height },
-      pageHeight,
+  for (let attempt = 0; attempt < placed.length + 4; attempt += 1) {
+    const candidateTop = candidate + noteHeight
+    const collision = placed.find(
+      (note) =>
+        !(
+          candidateTop + BURNED_IN_NOTE_GAP < note.bottom ||
+          candidate > note.top + BURNED_IN_NOTE_GAP
+        ),
     )
 
-    page.drawRectangle({
-      x: pdfBbox.x,
-      y: pdfBbox.y,
-      width: pdfBbox.width,
-      height: pdfBbox.height,
-      color: HIGHLIGHT_COLOR,
-      opacity: 0.35,
-      borderColor: HIGHLIGHT_BORDER,
-      borderWidth: 1,
-    })
+    if (!collision) {
+      return Math.min(candidate, pageHeight - noteHeight - 12)
+    }
 
-    anchorX = Math.min(Math.max(12, pdfBbox.x), pageWidth - noteWidth - 12)
-    anchorY = Math.max(48, pdfBbox.y - noteHeight - 8)
+    candidate = collision.bottom - BURNED_IN_NOTE_GAP - noteHeight
   }
 
+  return Math.max(BURNED_IN_PAGE_BOTTOM, preferredY)
+}
+
+function drawMarginNoteBox(
+  page: PDFPage,
+  anchorX: number,
+  anchorY: number,
+  noteWidth: number,
+  noteHeight: number,
+  noteLines: string[],
+  boldFont: PDFFont,
+  lineHeight: number,
+  notePadding: number,
+): void {
   page.drawRectangle({
     x: anchorX,
     y: anchorY,
@@ -194,6 +230,68 @@ function drawBurnedInBlockAnnotation(
     rgb(0.35, 0.22, 0.02),
     lineHeight,
   )
+}
+
+function drawBurnedInPageAnnotations(
+  page: PDFPage,
+  pageHeight: number,
+  entries: AnnotatedBlockExport[],
+  font: PDFFont,
+  boldFont: PDFFont,
+): void {
+  const contentLeft = contentLeftEdgeForPage(entries, pageHeight)
+  const noteWidth = marginNoteWidth(contentLeft)
+  const anchorX = BURNED_IN_MARGIN_LEFT
+  const lineHeight = 10
+  const notePadding = 6
+
+  const sorted = [...entries].sort((left, right) => {
+    const leftBbox = blockPdfBbox(left.block, pageHeight)
+    const rightBbox = blockPdfBbox(right.block, pageHeight)
+    const leftY = leftBbox?.y ?? 0
+    const rightY = rightBbox?.y ?? 0
+    return rightY - leftY
+  })
+
+  const placed: PlacedMarginNote[] = []
+
+  sorted.forEach((entry, index) => {
+    const noteLines = buildCommentBody(entry, font, 8, noteWidth - 12)
+    const noteHeight = noteLines.length * lineHeight + notePadding * 2
+    const pdfBbox = blockPdfBbox(entry.block, pageHeight)
+
+    if (pdfBbox) {
+      page.drawRectangle({
+        x: pdfBbox.x,
+        y: pdfBbox.y,
+        width: pdfBbox.width,
+        height: pdfBbox.height,
+        color: HIGHLIGHT_COLOR,
+        opacity: 0.35,
+        borderColor: HIGHLIGHT_BORDER,
+        borderWidth: 1,
+      })
+    }
+
+    const preferredY = pdfBbox
+      ? pdfBbox.y + (pdfBbox.height - noteHeight) / 2
+      : pageHeight - 96 - index * (noteHeight + BURNED_IN_NOTE_GAP)
+
+    const anchorY = resolveMarginNoteY(preferredY, noteHeight, placed, pageHeight)
+    placed.push({ bottom: anchorY, top: anchorY + noteHeight })
+
+    drawMarginNoteBox(
+      page,
+      anchorX,
+      anchorY,
+      noteWidth,
+      noteHeight,
+      noteLines,
+      boldFont,
+      lineHeight,
+      notePadding,
+    )
+  })
 }
 
 function addMarkupBlockAnnotation(
@@ -280,9 +378,7 @@ export async function exportAnnotatedPdf(
       const page = pages[pageNum - 1]
       const pageHeight = page.getHeight()
 
-      entries.forEach((entry, index) => {
-        drawBurnedInBlockAnnotation(page, pageHeight, entry, font, boldFont, index)
-      })
+      drawBurnedInPageAnnotations(page, pageHeight, entries, font, boldFont)
     }
   } else {
     for (const [pageNum, entries] of notesByPage) {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MessageSquareIcon } from 'lucide-react'
+import { MessageSquareIcon, XIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { useBlockComments } from '@/hooks/use-block-comments'
@@ -122,18 +122,30 @@ export function BlockCommentPopover({
           )}
         >
           <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-foreground text-sm font-semibold">Block comment</h3>
-              {block.page_num != null ? (
-                <span className="bg-sky-100 text-sky-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-                  Page {block.page_num}
-                </span>
-              ) : null}
-              {commentCount > 0 ? (
-                <span className="bg-amber-100 text-amber-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-                  {commentCount} note{commentCount === 1 ? '' : 's'}
-                </span>
-              ) : null}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h3 className="text-foreground text-sm font-semibold">Block comment</h3>
+                {block.page_num != null ? (
+                  <span className="bg-sky-100 text-sky-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                    Page {block.page_num}
+                  </span>
+                ) : null}
+                {commentCount > 0 ? (
+                  <span className="bg-amber-100 text-amber-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                    {commentCount} note{commentCount === 1 ? '' : 's'}
+                  </span>
+                ) : null}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Close comments"
+                className="text-muted-foreground shrink-0"
+                onClick={() => onOpenChange(false)}
+              >
+                <XIcon className="size-4" />
+              </Button>
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
               This note is attached to the highlighted passage in the PDF preview.

@@ -2,7 +2,7 @@
  * Core domain types — PRD §9.5, plan §Citation contract, §RFP Results Profiles, §Scope Creep
  */
 
-/** PDF bbox in page coordinates (LiteParse dpi/72 scale at render time) */
+/** PDF bbox in page coordinates — LiteParse top-left origin, PDF points */
 export type Bbox = {
   x: number
   y: number

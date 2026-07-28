@@ -40,7 +40,7 @@ export async function runCitationBridgeHarness(): Promise<void> {
     block_id: 'cite-harness-doc:p1:i0',
     page_num: 1,
     excerpt: 'Harness citation excerpt',
-    bbox: { x: 72, y: 720, width: 200, height: 24 },
+    bbox: { x: 72, y: 48, width: 200, height: 24 },
   }
 
   focusCitation(citation)

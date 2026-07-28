@@ -28,7 +28,7 @@ function ocrResultsToTextItems(
     items.push({
       text,
       x: x1 * scaleX,
-      y: pdfHeight - y2 * scaleY,
+      y: y1 * scaleY,
       width: (x2 - x1) * scaleX,
       height: (y2 - y1) * scaleY,
       confidence: result.confidence,

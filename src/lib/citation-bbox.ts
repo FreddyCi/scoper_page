@@ -2,7 +2,7 @@ import type { PageViewport } from 'pdfjs-dist'
 
 import type { Bbox, CitationRef } from '@/lib/types'
 
-/** LiteParse block bboxes are PDF user-space points (1/72 inch). */
+/** Stored block bboxes — LiteParse convention: origin top-left, y increases down, PDF points (1/72 in). */
 export const LITEPARSE_BBOX_DPI = 72
 
 export type ViewportHighlightRect = {
@@ -12,16 +12,28 @@ export type ViewportHighlightRect = {
   height: number
 }
 
-/** Map a PDF-user-space bbox to canvas viewport pixels at the current render scale. */
+/** Convert a top-left page bbox to PDF user space for PDF.js viewport helpers. */
+export function liteParseBboxToPdfUserSpace(bbox: Bbox, pageHeightPts: number): Bbox {
+  return {
+    x: bbox.x,
+    y: pageHeightPts - bbox.y - bbox.height,
+    width: bbox.width,
+    height: bbox.height,
+  }
+}
+
+/** Map a stored block bbox to canvas viewport pixels at the current render scale. */
 export function bboxToViewportHighlight(
   bbox: Bbox,
   viewport: PageViewport,
 ): ViewportHighlightRect {
+  const pageHeightPts = viewport.height / viewport.scale
+  const pdfBbox = liteParseBboxToPdfUserSpace(bbox, pageHeightPts)
   const [left, top, right, bottom] = viewport.convertToViewportRectangle([
-    bbox.x,
-    bbox.y,
-    bbox.x + bbox.width,
-    bbox.y + bbox.height,
+    pdfBbox.x,
+    pdfBbox.y,
+    pdfBbox.x + pdfBbox.width,
+    pdfBbox.y + pdfBbox.height,
   ])
 
   return {

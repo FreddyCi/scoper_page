@@ -32,15 +32,23 @@ function SessionNameDropdown() {
   const sessionName = useSessionStore((s) => s.sessionName)
   const setSessionName = useSessionStore((s) => s.setSessionName)
   const [open, setOpen] = useState(false)
+  const [draftName, setDraftName] = useState(sessionName)
   const rootRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (open) setDraftName(sessionName)
+  }, [open, sessionName])
 
   useEffect(() => {
     if (!open) return
 
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false)
+      const target = event.target as Node
+      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) {
+        return
       }
+      setOpen(false)
     }
 
     function onKeyDown(event: KeyboardEvent) {
@@ -54,6 +62,13 @@ function SessionNameDropdown() {
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
+
+  function applyName(name: string) {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    setSessionName(trimmed)
+    setOpen(false)
+  }
 
   return (
     <div ref={rootRef} className="relative shrink-0">
@@ -69,17 +84,40 @@ function SessionNameDropdown() {
       </button>
 
       {open ? (
-        <AnchoredMenuPortal open={open} anchorRef={rootRef} role="listbox" className="min-w-[12rem]">
+        <AnchoredMenuPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          role="listbox"
+          className="min-w-[14rem] p-0"
+        >
+          <form
+            className="border-border border-b p-2"
+            onSubmit={(event) => {
+              event.preventDefault()
+              applyName(draftName)
+            }}
+          >
+            <label className="sr-only" htmlFor="session-name-input">
+              Session name
+            </label>
+            <input
+              id="session-name-input"
+              type="text"
+              value={draftName}
+              onChange={(event) => setDraftName(event.target.value)}
+              className="border-border bg-background text-foreground focus-visible:ring-ring w-full rounded-md border px-2.5 py-1.5 text-sm outline-none focus-visible:ring-2"
+              placeholder="Session name"
+            />
+          </form>
+
           {SESSION_PRESETS.map((name) => (
             <button
               key={name}
               type="button"
               role="option"
               aria-selected={sessionName === name}
-              onClick={() => {
-                setSessionName(name)
-                setOpen(false)
-              }}
+              onClick={() => applyName(name)}
               className={cn(
                 'hover:bg-muted block w-full px-3 py-1.5 text-left text-sm transition-colors',
                 sessionName === name && 'bg-muted font-medium',
@@ -91,6 +129,24 @@ function SessionNameDropdown() {
         </AnchoredMenuPortal>
       ) : null}
     </div>
+  )
+}
+
+function SessionSaveStatus() {
+  const sessionName = useSessionStore((s) => s.sessionName)
+  const documents = useSessionStore((s) => s.documents)
+  const [status, setStatus] = useState<'saved' | 'saving'>('saved')
+
+  useEffect(() => {
+    setStatus('saving')
+    const timer = window.setTimeout(() => setStatus('saved'), 450)
+    return () => window.clearTimeout(timer)
+  }, [sessionName, documents])
+
+  return (
+    <span className="text-subtle-foreground text-xs" aria-live="polite">
+      {status === 'saving' ? 'Saving…' : 'Saved'}
+    </span>
   )
 }
 
@@ -146,7 +202,7 @@ export function WorkspaceHeaderTopRow({
       )}
     >
       <SessionNameDropdown />
-      <span className="text-subtle-foreground text-xs">Saving</span>
+      <SessionSaveStatus />
 
       <div className="ml-auto flex items-center gap-2">
         <WorkspaceModeToggle />

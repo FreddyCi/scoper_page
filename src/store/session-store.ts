@@ -22,6 +22,24 @@ const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
 const COMPANY_CONTEXT_STORAGE_KEY = 'bda-company-context'
 
+const SESSION_NAME_STORAGE_KEY = 'bda-session-name'
+
+function readSessionNamePreference(): string {
+  try {
+    return sessionStorage.getItem(SESSION_NAME_STORAGE_KEY) ?? 'Untitled session'
+  } catch {
+    return 'Untitled session'
+  }
+}
+
+function writeSessionNamePreference(name: string) {
+  try {
+    sessionStorage.setItem(SESSION_NAME_STORAGE_KEY, name)
+  } catch {
+    // sessionStorage unavailable
+  }
+}
+
 function readCompanyContextPreference(): string {
   try {
     return sessionStorage.getItem(COMPANY_CONTEXT_STORAGE_KEY) ?? ''
@@ -164,7 +182,7 @@ export type SessionState = {
 }
 
 const initialState = {
-  sessionName: 'Untitled session',
+  sessionName: readSessionNamePreference(),
   mode: 'rfp' as WorkspaceMode,
   documents: [] as DocumentMeta[],
   profiles: [] as RfpResultsProfile[],
@@ -210,7 +228,10 @@ function resolveActiveDocId(
 export const useSessionStore = create<SessionState>((set, get) => ({
   ...initialState,
 
-  setSessionName: (sessionName) => set({ sessionName }),
+  setSessionName: (sessionName) => {
+    writeSessionNamePreference(sessionName)
+    set({ sessionName })
+  },
 
   setMode: (mode) => set({ mode }),
 

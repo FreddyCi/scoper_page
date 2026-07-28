@@ -147,6 +147,7 @@ export type SessionState = {
   setEvaluationBaselineProfile: (profile: RfpResultsProfile | null) => void
   setEvaluationDocId: (docId: string | null) => void
   setCompanyContext: (context: string) => void
+  clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
@@ -305,6 +306,16 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setCompanyContext: (companyContext) => {
     writeCompanyContextPreference(companyContext)
     set({ companyContext })
+  },
+
+  clearEvaluationSetup: () => {
+    writeCompanyContextPreference('')
+    set({
+      companyContext: '',
+      evaluationDocId: null,
+      evaluationBaselineProfile: null,
+      profiles: [],
+    })
   },
 
   runRfpQualification: async () => {

@@ -162,6 +162,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const baselineProfile = useSessionStore((s) => s.evaluationBaselineProfile)
   const setEvaluationDocId = useSessionStore((s) => s.setEvaluationDocId)
   const setCompanyContext = useSessionStore((s) => s.setCompanyContext)
+  const clearEvaluationSetup = useSessionStore((s) => s.clearEvaluationSetup)
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
 
@@ -180,6 +181,10 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const selectedRequirementDoc = useMemo(
     () => requirementDocs.find((doc) => doc.doc_id === evaluationDocId) ?? null,
     [requirementDocs, evaluationDocId],
+  )
+
+  const hasEvaluationSetup = Boolean(
+    companyContext.trim() || evaluationDocId || baselineProfile,
   )
 
   async function handleBaselineChange(docId: string) {
@@ -205,6 +210,10 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     }
   }
 
+  function handleClearEvaluation() {
+    clearEvaluationSetup()
+  }
+
   function handleCriterionClick(citation: CitationRef) {
     focusCitation(citation)
   }
@@ -218,7 +227,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     >
       <CardHeader className="border-border/70 shrink-0 border-b px-4 py-4">
         <CardTitle>Evaluation setup</CardTitle>
-        <CardDescription>
+        <CardDescription className="text-xs leading-relaxed">
           Describe your organization and pick the requirements document. Bidder uploads are scored
           against that baseline.
         </CardDescription>
@@ -287,15 +296,27 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
             </p>
           </div>
 
-          <Button
-            type="button"
-            size="sm"
-            className="w-full"
-            disabled={!evaluationDocId || running}
-            onClick={() => void handleRunQualification()}
-          >
-            {running ? 'Running qualification…' : 'Run qualification'}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              className="min-w-0 flex-1"
+              disabled={!evaluationDocId || running}
+              onClick={() => void handleRunQualification()}
+            >
+              {running ? 'Running qualification…' : 'Run qualification'}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              disabled={running || !hasEvaluationSetup}
+              onClick={handleClearEvaluation}
+            >
+              Clear
+            </Button>
+          </div>
 
           {evaluationDocId && responseCount === 0 ? (
             <p className="text-muted-foreground rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">

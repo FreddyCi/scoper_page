@@ -18,9 +18,9 @@ export function ResultsProfileGrid({
 }: ResultsProfileGridProps) {
   if (profiles.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
-        <p>No bidder qualification cards yet.</p>
-        <p className="text-muted-foreground max-w-sm text-xs leading-relaxed">
+      <div className="text-muted-foreground flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface px-6 text-center">
+        <p className="text-xs">No bidder qualification cards yet.</p>
+        <p className="max-w-sm text-xs leading-relaxed">
           Set a requirements profile and your organization context on the right, upload bidder
           responses, then run qualification.
         </p>

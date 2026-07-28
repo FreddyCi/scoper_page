@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
 
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
-import { groupBlocksByPage } from '@/services/document-blocks'
 import { blockToCitation } from '@/lib/types'
+import { groupBlocksByPage } from '@/services/document-blocks'
+import { focusCitation } from '@/services/citation-bridge'
 import type { BlockRecord } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -15,10 +16,12 @@ type ExtractedTextPaneProps = {
 function BlockRow({
   block,
   selected,
+  focusSeq,
   onSelect,
 }: {
   block: BlockRecord
   selected: boolean
+  focusSeq: number
   onSelect: () => void
 }) {
   const rowRef = useRef<HTMLButtonElement>(null)
@@ -27,7 +30,7 @@ function BlockRow({
     if (selected) {
       rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
-  }, [selected])
+  }, [selected, focusSeq, block.block_id])
 
   return (
     <button
@@ -50,7 +53,7 @@ function BlockRow({
 export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) {
   const { blocks, loading, error } = useDocumentBlocks(docId)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
-  const selectCitation = useSessionStore((state) => state.selectCitation)
+  const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
 
   const pageGroups = useMemo(() => groupBlocksByPage(blocks), [blocks])
   const activeBlockId =
@@ -100,7 +103,8 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
                       key={block.block_id}
                       block={block}
                       selected={activeBlockId === block.block_id}
-                      onSelect={() => selectCitation(blockToCitation(block))}
+                      focusSeq={citationFocusSeq}
+                      onSelect={() => focusCitation(blockToCitation(block))}
                     />
                   ))}
                 </div>

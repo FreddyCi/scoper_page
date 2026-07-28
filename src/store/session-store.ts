@@ -84,6 +84,7 @@ export type SessionState = {
   profiles: RfpResultsProfile[]
   creepProfiles: ScopeCreepProfile[]
   selectedCitation: CitationRef | null
+  citationFocusSeq: number
   chatCollapsed: boolean
   chatStarted: boolean
   chatMessages: ChatMessage[]
@@ -101,6 +102,7 @@ export type SessionState = {
   setProfiles: (profiles: RfpResultsProfile[]) => void
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
+  bumpCitationFocus: () => void
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
   sendChatPrompt: (text: string) => void
@@ -130,6 +132,7 @@ const initialState = {
   profiles: [] as RfpResultsProfile[],
   creepProfiles: [] as ScopeCreepProfile[],
   selectedCitation: null as CitationRef | null,
+  citationFocusSeq: 0,
   chatCollapsed: readInitialChatCollapsed(),
   chatStarted: readChatStartedPreference(),
   chatMessages: [] as ChatMessage[],
@@ -230,6 +233,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       activeDocId: citation?.doc_id ?? get().activeDocId,
       workspaceView: citation ? 'split' : get().workspaceView,
     }),
+
+  bumpCitationFocus: () =>
+    set((state) => ({
+      citationFocusSeq: state.citationFocusSeq + 1,
+    })),
 
   setChatCollapsed: (chatCollapsed) => {
     writeChatCollapsedPreference(chatCollapsed)

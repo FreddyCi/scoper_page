@@ -1,16 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
-import type { PDFDocumentProxy, PageViewport } from 'pdfjs-dist'
+import type { PDFDocumentProxy } from 'pdfjs-dist'
 
+import { citationViewportHighlight } from '@/lib/citation-bbox'
 import type { CitationRef } from '@/lib/types'
 import { cn } from '@/lib/utils'
-
-type ViewportHighlight = {
-  left: number
-  top: number
-  width: number
-  height: number
-}
 
 type PdfPageCanvasProps = {
   pdf: PDFDocumentProxy
@@ -18,29 +12,6 @@ type PdfPageCanvasProps = {
   scale: number
   citation?: CitationRef | null
   className?: string
-}
-
-function citationHighlight(
-  citation: CitationRef | null | undefined,
-  pageNumber: number,
-  viewport: PageViewport,
-): ViewportHighlight | null {
-  if (!citation?.bbox || citation.page_num !== pageNumber) return null
-
-  const { x, y, width, height } = citation.bbox
-  const [left, top, right, bottom] = viewport.convertToViewportRectangle([
-    x,
-    y,
-    x + width,
-    y + height,
-  ])
-
-  return {
-    left: Math.min(left, right),
-    top: Math.min(top, bottom),
-    width: Math.abs(right - left),
-    height: Math.abs(bottom - top),
-  }
 }
 
 export function PdfPageCanvas({
@@ -53,7 +24,7 @@ export function PdfPageCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [rendering, setRendering] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
-  const [highlight, setHighlight] = useState<ViewportHighlight | null>(null)
+  const [highlight, setHighlight] = useState<ReturnType<typeof citationViewportHighlight>>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
   useEffect(() => {
@@ -76,7 +47,7 @@ export function PdfPageCanvas({
         canvas.width = Math.floor(viewport.width)
         canvas.height = Math.floor(viewport.height)
         setCanvasSize({ width: canvas.width, height: canvas.height })
-        setHighlight(citationHighlight(citation, pageNumber, viewport))
+        setHighlight(citationViewportHighlight(citation, pageNumber, viewport))
 
         return page.render({ canvasContext: context, viewport, canvas }).promise
       })

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { runCitationBridgeHarness } from '@/services/citation-bridge'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runIngestHarness } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
@@ -19,6 +20,7 @@ function App() {
         await runOcrHarness()
         await runLiteParseOcrHarness()
         await runIngestHarness()
+        await runCitationBridgeHarness()
       } catch (error) {
         console.error('[dev-harness]', error)
       }

@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import type { ChatCitationCard } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { useSessionStore } from '@/store/session-store'
+import { focusCitation } from '@/services/citation-bridge'
 
 type ChatCitationCardViewProps = {
   citations: ChatCitationCard[]
@@ -36,7 +36,6 @@ function highlightBody(body: string, highlight: string) {
 }
 
 export function ChatCitationCardView({ citations, className }: ChatCitationCardViewProps) {
-  const selectCitation = useSessionStore((s) => s.selectCitation)
   const [index, setIndex] = useState(0)
 
   if (citations.length === 0) return null
@@ -95,7 +94,7 @@ export function ChatCitationCardView({ citations, className }: ChatCitationCardV
           size="sm"
           variant="secondary"
           className="h-7 rounded-full px-3 text-xs"
-          onClick={() => selectCitation(current.citation)}
+          onClick={() => focusCitation(current.citation)}
         >
           View source
         </Button>

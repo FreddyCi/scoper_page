@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
@@ -52,6 +52,8 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   const isDark = theme === 'dark'
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
+  const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
+  const canvasAnchorRef = useRef<HTMLDivElement>(null)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
     [document.doc_id],
@@ -73,7 +75,12 @@ export function DocumentViewer({
     if (activeCitation?.page_num != null) {
       setPage(activeCitation.page_num)
     }
-  }, [activeCitation?.page_num, activeCitation?.block_id])
+  }, [activeCitation?.page_num, activeCitation?.block_id, citationFocusSeq])
+
+  useEffect(() => {
+    if (!activeCitation || activeCitation.page_num !== currentPage) return
+    canvasAnchorRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [activeCitation, citationFocusSeq, currentPage])
 
   useEffect(() => {
     if (totalPages > 0 && page > totalPages) {
@@ -153,7 +160,7 @@ export function DocumentViewer({
             Loading PDF…
           </div>
         ) : (
-          <div className="mx-auto w-fit">
+          <div ref={canvasAnchorRef} className="mx-auto w-fit">
             <PdfPageCanvas
               pdf={pdf}
               pageNumber={currentPage}

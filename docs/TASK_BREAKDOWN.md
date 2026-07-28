@@ -480,17 +480,21 @@ flowchart LR
 ### **ID:** BDA-033
 
 **Title:** Bbox highlight overlay and focusCitation  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-030, BDA-031, BDA-004  
 **Priority:** Critical  
 **Description:** Draw semi-transparent overlay on PDF canvas from `CitationRef.bbox` (scale dpi/72). `citation-bridge.ts`: `focusCitation(ref)` scrolls text pane to block, scrolls PDF to page, draws highlight. Sync both panes.  
 **Completed Changes:**
-- 🔄 Canvas overlay layer
-- 🔄 focusCitation implementation
-- 🔄 Clear highlight on deselect
+- ✅ `citation-bbox.ts` — PDF user-space bbox → viewport overlay (`LITEPARSE_BBOX_DPI = 72`)
+- ✅ `citation-bridge.ts` — `focusCitation`, `clearCitation`; dev harness
+- ✅ Store `citationFocusSeq` + `bumpCitationFocus()` for re-focus scroll sync
+- ✅ `PdfPageCanvas` semi-transparent bbox overlay; `ExtractedTextPane` scroll-to-block
+- ✅ `DocumentViewer` page jump + canvas scroll on focus; highlight clears on `clearCitation`
+- ✅ Chat “View source” and block clicks route through `focusCitation`
 **Test Strategy:** Call focusCitation with known block → both panes show highlight at correct region.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness validates split view, active doc, selectedCitation, clearCitation
+- ✅ Upload PDF → click block or chat citation → both panes sync highlight
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §9.5, [LiteParse visual citations](https://developers.llamaindex.ai/liteparse/guides/visual-citations/)  
 

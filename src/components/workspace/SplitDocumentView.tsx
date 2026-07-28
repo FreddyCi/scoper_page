@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
@@ -53,8 +53,15 @@ export function SplitDocumentView({
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
+  const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
   const { blocks, loading: blocksLoading } = useDocumentBlocks(document.doc_id)
+
+  useEffect(() => {
+    if (selectedCitation?.doc_id === document.doc_id) {
+      setActiveTab('extract')
+    }
+  }, [selectedCitation?.block_id, citationFocusSeq, document.doc_id, selectedCitation?.doc_id])
 
   const statusLabel = useMemo(() => {
     if (blocksLoading) return 'Loading extracted blocks…'

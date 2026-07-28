@@ -181,8 +181,8 @@ export function PdfPageCanvas({
       : null
 
   return (
-    <div className={cn('relative inline-block max-w-full', className)}>
-      <canvas ref={canvasRef} className="bg-white shadow-panel block h-auto max-w-full" />
+    <div className={cn('relative inline-block w-fit', className)}>
+      <canvas ref={canvasRef} className="bg-white shadow-panel block" />
 
       {canvasLayout && scaledHighlight ? (
         <div

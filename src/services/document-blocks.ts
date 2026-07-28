@@ -74,3 +74,36 @@ export function groupBlocksByPage(blocks: BlockRecord[]): BlocksByPage[] {
     return left.pageNum - right.pageNum
   })
 }
+
+export function groupBlocksBySection(blocks: BlockRecord[]): BlocksByPage[] {
+  const groups = new Map<string, BlocksByPage>()
+
+  for (const block of blocks) {
+    const section = block.section_path?.trim() || 'Document'
+    const existing = groups.get(section)
+
+    if (existing) {
+      existing.blocks.push(block)
+      continue
+    }
+
+    groups.set(section, {
+      pageNum: null,
+      label: section,
+      blocks: [block],
+    })
+  }
+
+  return [...groups.values()]
+}
+
+export function groupBlocksForDisplay(blocks: BlockRecord[]): BlocksByPage[] {
+  const hasSections = blocks.some((block) => block.section_path?.trim())
+  const hasPages = blocks.some((block) => block.page_num != null)
+
+  if (hasSections && !hasPages) {
+    return groupBlocksBySection(blocks)
+  }
+
+  return groupBlocksByPage(blocks)
+}

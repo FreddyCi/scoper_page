@@ -1,4 +1,4 @@
-import { isDocumentRole } from '@/lib/document-roles'
+import { defaultRoleForIngest, isDocumentRole } from '@/lib/document-roles'
 import type { DocumentMeta, DocumentRole } from '@/lib/types'
 import { getDuckdbClient } from '@/services/duckdb-client'
 import { useSessionStore } from '@/store/session-store'
@@ -31,6 +31,7 @@ export async function setDocumentRole(docId: string, role: DocumentRole): Promis
 export async function resolveDocumentRoleForIngest(
   docId: string,
   storeDocuments: DocumentMeta[],
+  mime: string,
 ): Promise<DocumentRole> {
   const fromStore = storeDocuments.find((doc) => doc.doc_id === docId)?.role
   if (fromStore && fromStore !== 'unknown') {
@@ -38,7 +39,11 @@ export async function resolveDocumentRoleForIngest(
   }
 
   const fromDb = await fetchDocumentRole(docId)
-  return fromDb ?? 'unknown'
+  if (fromDb && fromDb !== 'unknown') {
+    return fromDb
+  }
+
+  return defaultRoleForIngest(mime)
 }
 
 /** Dev harness — tag baseline + change; roles persist in store and DuckDB (BDA-070) */

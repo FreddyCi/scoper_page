@@ -3,7 +3,7 @@ import {
   fetchScopeCreepProfiles,
   persistScopeCreepProfile,
 } from '@/services/scope-creep-store'
-import type { BlockRecord, CitationRef, ScopeCreepFlag, ScopeCreepProfile } from '@/lib/types'
+import type { BlockRecord, CitationRef, DocumentMeta, ScopeCreepFlag, ScopeCreepProfile } from '@/lib/types'
 import { blockToCitation } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
 
@@ -247,6 +247,27 @@ function dedupeFlags(flags: ScopeCreepFlag[]): ScopeCreepFlag[] {
   return unique
 }
 
+/** Baseline blocks plus any supporting context documents tagged in the session */
+async function fetchBaselineContextBlocks(
+  baselineDocId: string,
+  documents: DocumentMeta[],
+): Promise<BlockRecord[]> {
+  const baselineBlocks = await fetchDocumentBlocks(baselineDocId)
+  const supportingDocIds = documents
+    .filter((doc) => doc.role === 'supporting')
+    .map((doc) => doc.doc_id)
+
+  if (supportingDocIds.length === 0) {
+    return baselineBlocks
+  }
+
+  const supportingBlocks = await Promise.all(
+    supportingDocIds.map((docId) => fetchDocumentBlocks(docId)),
+  )
+
+  return [...baselineBlocks, ...supportingBlocks.flat()]
+}
+
 function buildProfile(input: CompareScopeInput, flags: ScopeCreepFlag[]): ScopeCreepProfile {
   const profile: ScopeCreepProfile = {
     profile_id: `creep-${input.baselineDocId}-${input.candidateDocId}`,
@@ -273,8 +294,9 @@ function buildProfile(input: CompareScopeInput, flags: ScopeCreepFlag[]): ScopeC
 
 /** Cross-doc scope comparison with rule-based creep heuristics (BDA-072) */
 export async function compareScope(input: CompareScopeInput): Promise<CompareScopeResult> {
+  const documents = useSessionStore.getState().documents
   const [baselineBlocks, candidateBlocks] = await Promise.all([
-    fetchDocumentBlocks(input.baselineDocId),
+    fetchBaselineContextBlocks(input.baselineDocId, documents),
     fetchDocumentBlocks(input.candidateDocId),
   ])
 

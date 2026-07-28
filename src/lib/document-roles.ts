@@ -17,8 +17,16 @@ export const DOCUMENT_ROLE_LABELS: Record<DocumentRole, string> = {
 export const DOCUMENT_ROLE_DESCRIPTIONS: Record<DocumentRole, string> = {
   baseline: 'Original scope / SOW to compare against',
   change_request: 'Addendum or change request to evaluate',
-  supporting: 'Reference material (excluded from comparison)',
+  supporting: 'Reference context (included in search and scope analysis)',
   unknown: 'Role not set — tag before scope analysis',
+}
+
+/** Default role for newly ingested documents when none is stored yet */
+export function defaultRoleForIngest(mime: string): DocumentRole {
+  if (mime === 'text/markdown') {
+    return 'supporting'
+  }
+  return 'unknown'
 }
 
 export function isDocumentRole(value: unknown): value is DocumentRole {

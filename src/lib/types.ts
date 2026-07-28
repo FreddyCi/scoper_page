@@ -191,6 +191,7 @@ export type IngestResult = {
   mime: string
   block_count: number
   ocr_used: boolean
+  role?: DocumentRole
 }
 
 /** Map DuckDB block row → CitationRef (bbox optional for non-PDF) */

@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
+import { compareScope } from '@/services/compare-scope'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -28,11 +29,13 @@ function SplitDocumentViewFooter({
   statusLabel,
   ctaLabel,
   ctaLoading = false,
+  ctaLoadingLabel,
   onCtaClick,
 }: {
   statusLabel: string
   ctaLabel: string
   ctaLoading?: boolean
+  ctaLoadingLabel?: string
   onCtaClick: () => void
 }) {
   return (
@@ -41,7 +44,7 @@ function SplitDocumentViewFooter({
         {statusLabel}
       </span>
       <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>
-        {ctaLoading ? 'Qualifying…' : ctaLabel}
+        {ctaLoading ? (ctaLoadingLabel ?? 'Working…') : ctaLabel}
       </Button>
     </footer>
   )
@@ -54,6 +57,7 @@ export function SplitDocumentView({
 }: SplitDocumentViewProps) {
   const [activeTab, setActiveTab] = useState<SplitPaneTab>('extract')
   const [buildingProfiles, setBuildingProfiles] = useState(false)
+  const [comparingScope, setComparingScope] = useState(false)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
   const documents = useSessionStore((state) => state.documents)
@@ -85,8 +89,29 @@ export function SplitDocumentView({
   }, [blocks.length, blocksLoading, document.doc_id, document.filename, selectedCitation])
 
   function handleCtaClick() {
-    if (mode !== 'rfp') {
-      console.info('[split-document-view] scope compare CTA stub', { docId: document.doc_id })
+    if (mode === 'scope_creep') {
+      const baseline = documents.find((doc) => doc.role === 'baseline')
+      const change = documents.find((doc) => doc.role === 'change_request')
+
+      if (!baseline || !change) {
+        console.warn('[split-document-view] scope compare requires baseline + change_request roles')
+        return
+      }
+
+      setComparingScope(true)
+      void compareScope({
+        baselineDocId: baseline.doc_id,
+        candidateDocId: change.doc_id,
+      })
+        .then(() => {
+          setWorkspaceView('profiles')
+        })
+        .catch((error) => {
+          console.error('[split-document-view] compareScope failed', error)
+        })
+        .finally(() => {
+          setComparingScope(false)
+        })
       return
     }
 
@@ -194,7 +219,8 @@ export function SplitDocumentView({
       <SplitDocumentViewFooter
         statusLabel={statusLabel}
         ctaLabel={MODE_CTA[mode]}
-        ctaLoading={buildingProfiles}
+        ctaLoading={buildingProfiles || comparingScope}
+        ctaLoadingLabel={comparingScope ? 'Comparing…' : 'Qualifying…'}
         onCtaClick={handleCtaClick}
       />
     </div>

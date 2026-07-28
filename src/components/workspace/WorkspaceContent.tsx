@@ -15,7 +15,7 @@ import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
   rfp: 'RFP Analysis — qualify bidders against requirements with cited evidence.',
-  scope_creep: 'Scope Creep — compare baseline vs change documents for drift flags.',
+  scope_creep: 'Scope Creep — compare baseline vs change; markdown uploads add supporting context.',
 }
 
 /** Routes workspace body by session view */

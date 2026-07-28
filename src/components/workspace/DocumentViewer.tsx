@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
+import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
 import { useSessionStore } from '@/store/session-store'
@@ -94,12 +95,16 @@ export function DocumentViewer({
     onPageChange?.(resolved)
   }
 
+  if (document.mime === 'text/markdown') {
+    return <MarkdownDocumentViewer document={document} className={className} />
+  }
+
   if (document.mime !== 'application/pdf') {
     return (
       <ViewerState
         className={className}
         title="Preview unavailable"
-        message={`${document.filename} is not a PDF. Document preview supports PDF only in this MVP.`}
+        message={`${document.filename} is not a PDF. Document preview supports PDF and Markdown in this MVP.`}
       />
     )
   }

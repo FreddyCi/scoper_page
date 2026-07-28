@@ -171,7 +171,7 @@ export function UploadPopup({
               ) : null}
             </div>
             <p className="text-muted-foreground mt-0.5 text-xs">
-              PDF, Word, Markdown, or Excel
+              PDF, Word, Markdown (.md), or Excel — Markdown uploads as supporting context
             </p>
           </div>
           <Button

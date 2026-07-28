@@ -39,8 +39,8 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
           What would you like to do?
         </h1>
         <p className="text-muted-foreground mt-3 max-w-md text-sm leading-relaxed">
-          Upload procurement documents and analyse them locally — no server upload
-          of file content.
+          Upload procurement documents and markdown context notes — parsed locally, never sent to a
+          server.
         </p>
       </div>
 

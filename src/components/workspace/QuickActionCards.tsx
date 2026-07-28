@@ -31,7 +31,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     id: 'scope-creep',
     label: 'Check scope creep',
-    description: 'Compare baseline vs change docs',
+    description: 'Compare baseline vs change; add .md context',
     icon: GitCompareArrowsIcon,
     mode: 'scope_creep',
     openUpload: true,

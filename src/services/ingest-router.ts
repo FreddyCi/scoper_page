@@ -106,6 +106,7 @@ async function ingestPdf(
   const role = await resolveDocumentRoleForIngest(
     docId,
     useSessionStore.getState().documents,
+    'application/pdf',
   )
 
   const document: DocumentMeta = {
@@ -124,6 +125,7 @@ async function ingestPdf(
     mime: document.mime,
     block_count: parsed.blocks.length,
     ocr_used: ocrWasUsed(ocrEnabled, parsed),
+    role: document.role,
   }
 }
 
@@ -141,6 +143,7 @@ async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> 
   const role = await resolveDocumentRoleForIngest(
     docId,
     useSessionStore.getState().documents,
+    'text/markdown',
   )
 
   const document: DocumentMeta = {
@@ -159,6 +162,7 @@ async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> 
     mime: document.mime,
     block_count: blocks.length,
     ocr_used: false,
+    role: document.role,
   }
 }
 
@@ -281,6 +285,10 @@ export async function runMarkdownIngestHarness(): Promise<void> {
 
   const file = new File([markdown], 'harness-sample.md', { type: 'text/markdown' })
   const ingested = await ingestFile(file)
+
+  if (ingested.role !== 'supporting') {
+    throw new Error('Markdown ingest harness: expected supporting role for new markdown upload')
+  }
 
   if (ingested.block_count < 3) {
     throw new Error('Markdown ingest harness: expected multiple blocks')

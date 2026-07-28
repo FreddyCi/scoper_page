@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { blockToCitation } from '@/lib/types'
-import { groupBlocksByPage } from '@/services/document-blocks'
+import { groupBlocksForDisplay } from '@/services/document-blocks'
 import { focusCitation } from '@/services/citation-bridge'
 import type { BlockRecord } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -55,7 +55,7 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
 
-  const pageGroups = useMemo(() => groupBlocksByPage(blocks), [blocks])
+  const pageGroups = useMemo(() => groupBlocksForDisplay(blocks), [blocks])
   const activeBlockId =
     selectedCitation?.doc_id === docId ? selectedCitation.block_id : null
 

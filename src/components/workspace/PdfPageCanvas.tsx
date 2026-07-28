@@ -14,6 +14,27 @@ type PdfPageCanvasProps = {
   className?: string
 }
 
+type CanvasLayout = {
+  width: number
+  height: number
+  scaleX: number
+  scaleY: number
+}
+
+function readCanvasLayout(canvas: HTMLCanvasElement): CanvasLayout | null {
+  if (canvas.width <= 0 || canvas.height <= 0) return null
+
+  const { width, height } = canvas.getBoundingClientRect()
+  if (width <= 0 || height <= 0) return null
+
+  return {
+    width,
+    height,
+    scaleX: width / canvas.width,
+    scaleY: height / canvas.height,
+  }
+}
+
 export function PdfPageCanvas({
   pdf,
   pageNumber,
@@ -25,7 +46,7 @@ export function PdfPageCanvas({
   const [rendering, setRendering] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<ReturnType<typeof citationViewportHighlight>>(null)
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  const [canvasLayout, setCanvasLayout] = useState<CanvasLayout | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -46,10 +67,14 @@ export function PdfPageCanvas({
 
         canvas.width = Math.floor(viewport.width)
         canvas.height = Math.floor(viewport.height)
-        setCanvasSize({ width: canvas.width, height: canvas.height })
         setHighlight(citationViewportHighlight(citation, pageNumber, viewport))
+        setCanvasLayout(readCanvasLayout(canvas))
 
-        return page.render({ canvasContext: context, viewport, canvas }).promise
+        return page.render({ canvasContext: context, viewport, canvas }).promise.then(() => {
+          if (!cancelled) {
+            setCanvasLayout(readCanvasLayout(canvas))
+          }
+        })
       })
       .catch((error) => {
         if (!cancelled) {
@@ -65,26 +90,54 @@ export function PdfPageCanvas({
     }
   }, [pdf, pageNumber, scale, citation])
 
-  return (
-    <div className={cn('relative inline-block', className)}>
-      <canvas ref={canvasRef} className="bg-white shadow-panel block max-w-full" />
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
 
-      {canvasSize.width > 0 && canvasSize.height > 0 ? (
+    function syncLayout() {
+      const node = canvasRef.current
+      if (!node) return
+      setCanvasLayout(readCanvasLayout(node))
+    }
+
+    syncLayout()
+
+    const observer = new ResizeObserver(syncLayout)
+    observer.observe(canvas)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [pdf, pageNumber, scale, citation])
+
+  const scaledHighlight =
+    highlight && canvasLayout
+      ? {
+          left: highlight.left * canvasLayout.scaleX,
+          top: highlight.top * canvasLayout.scaleY,
+          width: highlight.width * canvasLayout.scaleX,
+          height: highlight.height * canvasLayout.scaleY,
+        }
+      : null
+
+  return (
+    <div className={cn('relative inline-block max-w-full', className)}>
+      <canvas ref={canvasRef} className="bg-white shadow-panel block h-auto max-w-full" />
+
+      {canvasLayout && scaledHighlight ? (
         <div
           className="pointer-events-none absolute inset-0"
-          style={{ width: canvasSize.width, height: canvasSize.height }}
+          style={{ width: canvasLayout.width, height: canvasLayout.height }}
         >
-          {highlight ? (
-            <div
-              className="absolute rounded-sm border-2 border-sky-500 bg-sky-400/25"
-              style={{
-                left: highlight.left,
-                top: highlight.top,
-                width: highlight.width,
-                height: highlight.height,
-              }}
-            />
-          ) : null}
+          <div
+            className="absolute rounded-sm border-2 border-sky-500 bg-sky-400/25"
+            style={{
+              left: scaledHighlight.left,
+              top: scaledHighlight.top,
+              width: scaledHighlight.width,
+              height: scaledHighlight.height,
+            }}
+          />
         </div>
       ) : null}
 

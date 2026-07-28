@@ -1,4 +1,5 @@
 import type { LiteParsePageResult, LiteParseParseResult, LiteParseTextItem } from '@/lib/liteparse-protocol'
+import { mergeTextItemsIntoBlocks } from '@/lib/text-item-merge'
 import type { BlockRecord } from '@/lib/types'
 
 type RawTextItem = {
@@ -35,7 +36,11 @@ function normalizeTextItem(item: RawTextItem): LiteParseTextItem | null {
   }
 }
 
-function textItemsToBlocks(docId: string, pageNum: number, textItems: LiteParseTextItem[]): BlockRecord[] {
+export function textItemsToBlocks(
+  docId: string,
+  pageNum: number,
+  textItems: LiteParseTextItem[],
+): BlockRecord[] {
   return textItems.map((item, index) => ({
     block_id: `${docId}:p${pageNum}:i${index}`,
     doc_id: docId,
@@ -48,15 +53,27 @@ function textItemsToBlocks(docId: string, pageNum: number, textItems: LiteParseT
   }))
 }
 
+export function buildParseResultFromPages(
+  docId: string,
+  pages: LiteParsePageResult[],
+  text: string,
+): LiteParseParseResult {
+  const blocks = pages.flatMap((page) => textItemsToBlocks(docId, page.pageNum, page.textItems))
+
+  return { pages, blocks, text }
+}
+
 export function normalizeLiteParseResult(
   docId: string,
   rawPages: RawPage[],
   text: string,
 ): LiteParseParseResult {
   const pages: LiteParsePageResult[] = rawPages.map((page) => {
-    const textItems = page.textItems
-      .map(normalizeTextItem)
-      .filter((item): item is LiteParseTextItem => item !== null)
+    const textItems = mergeTextItemsIntoBlocks(
+      page.textItems
+        .map(normalizeTextItem)
+        .filter((item): item is LiteParseTextItem => item !== null),
+    )
 
     return {
       pageNum: page.pageNum,
@@ -66,7 +83,12 @@ export function normalizeLiteParseResult(
     }
   })
 
-  const blocks = pages.flatMap((page) => textItemsToBlocks(docId, page.pageNum, page.textItems))
-
-  return { pages, blocks, text }
+  return buildParseResultFromPages(
+    docId,
+    pages,
+    text ||
+      pages
+        .flatMap((page) => page.textItems.map((item) => item.text))
+        .join('\n'),
+  )
 }

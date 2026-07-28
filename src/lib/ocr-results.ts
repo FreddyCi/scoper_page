@@ -36,16 +36,21 @@ export function mapTesseractPageToOcrResults(page: TesseractPage): OcrRecognitio
   for (const block of page.blocks ?? []) {
     for (const paragraph of block.paragraphs ?? []) {
       for (const line of paragraph.lines ?? []) {
-        for (const word of line.words ?? []) {
-          const text = word.text.trim()
-          if (!text) continue
+        const words = (line.words ?? []).filter((word) => word.text.trim())
+        if (words.length === 0) continue
 
-          results.push({
-            text,
-            bbox: [word.bbox.x0, word.bbox.y0, word.bbox.x1, word.bbox.y1],
-            confidence: word.confidence / 100,
-          })
-        }
+        const x0 = Math.min(...words.map((word) => word.bbox.x0))
+        const y0 = Math.min(...words.map((word) => word.bbox.y0))
+        const x1 = Math.max(...words.map((word) => word.bbox.x1))
+        const y1 = Math.max(...words.map((word) => word.bbox.y1))
+        const confidence =
+          words.reduce((sum, word) => sum + word.confidence, 0) / words.length
+
+        results.push({
+          text: words.map((word) => word.text.trim()).join(' '),
+          bbox: [x0, y0, x1, y1],
+          confidence: confidence / 100,
+        })
       }
     }
   }

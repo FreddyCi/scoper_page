@@ -4,6 +4,7 @@ import type {
   LiteParseWorkerRequest,
   LiteParseWorkerResponse,
 } from '@/lib/liteparse-protocol'
+import { buildParseResultFromPages } from '@/lib/liteparse-normalize'
 import { pageNumbersNeedingOcr } from '@/services/liteparse-main'
 import { parsePdfWithOcrFallback } from '@/services/liteparse-ocr-fallback'
 
@@ -158,22 +159,7 @@ function mergeParseResults(
     .flatMap((page) => page.textItems.map((item) => item.text))
     .join('\n')
 
-  return {
-    pages: mergedPages,
-    blocks: mergedPages.flatMap((page) =>
-      page.textItems.map((item, index) => ({
-        block_id: `${docId}:p${page.pageNum}:i${index}`,
-        doc_id: docId,
-        page_num: page.pageNum,
-        text: item.text,
-        x: item.x,
-        y: item.y,
-        width: item.width,
-        height: item.height,
-      })),
-    ),
-    text,
-  }
+  return buildParseResultFromPages(docId, mergedPages, text)
 }
 
 /** Dev harness — parse sample PDF; verify pages and textItems with bbox (BDA-021) */

@@ -22,24 +22,6 @@ const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
 const COMPANY_CONTEXT_STORAGE_KEY = 'bda-company-context'
 
-const SESSION_NAME_STORAGE_KEY = 'bda-session-name'
-
-function readSessionNamePreference(): string {
-  try {
-    return sessionStorage.getItem(SESSION_NAME_STORAGE_KEY) ?? 'Untitled session'
-  } catch {
-    return 'Untitled session'
-  }
-}
-
-function writeSessionNamePreference(name: string) {
-  try {
-    sessionStorage.setItem(SESSION_NAME_STORAGE_KEY, name)
-  } catch {
-    // sessionStorage unavailable
-  }
-}
-
 function readCompanyContextPreference(): string {
   try {
     return sessionStorage.getItem(COMPANY_CONTEXT_STORAGE_KEY) ?? ''
@@ -117,7 +99,6 @@ function mapChatActions(
 export type ChatModelStatus = 'idle' | 'loading' | 'ready' | 'generating' | 'unavailable'
 
 export type SessionState = {
-  sessionName: string
   mode: WorkspaceMode
   documents: DocumentMeta[]
   profiles: RfpResultsProfile[]
@@ -137,7 +118,6 @@ export type SessionState = {
   uploadPopupOpen: boolean
   ocrEnabled: boolean
 
-  setSessionName: (name: string) => void
   setMode: (mode: WorkspaceMode) => void
   setDocuments: (documents: DocumentMeta[]) => void
   addDocument: (document: DocumentMeta) => void
@@ -179,13 +159,10 @@ export type SessionState = {
   setUploadPopupOpen: (open: boolean) => void
   setOcrEnabled: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
-  clearSession: () => void
-  startNewSession: () => void
   resetSession: () => void
 }
 
 const initialState = {
-  sessionName: readSessionNamePreference(),
   mode: 'rfp' as WorkspaceMode,
   documents: [] as DocumentMeta[],
   profiles: [] as RfpResultsProfile[],
@@ -230,11 +207,6 @@ function resolveActiveDocId(
 
 export const useSessionStore = create<SessionState>((set, get) => ({
   ...initialState,
-
-  setSessionName: (sessionName) => {
-    writeSessionNamePreference(sessionName)
-    set({ sessionName })
-  },
 
   setMode: (mode) => set({ mode }),
 
@@ -509,42 +481,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatGenerating: false,
       chatModelStatus: 'idle',
     })
-  },
-
-  clearSession: () => {
-    const { sessionName, companyContext, ocrEnabled } = get()
-    clearDocumentBytesCache()
-    writeChatStartedPreference(false)
-    writeChatCollapsedPreference(true)
-    getScoperClient().resetConversation()
-    set({
-      mode: 'rfp',
-      documents: [],
-      profiles: [],
-      evaluationBaselineProfile: null,
-      evaluationDocId: null,
-      creepProfiles: [],
-      selectedCitation: null,
-      citationFocusSeq: 0,
-      workspaceView: 'landing',
-      activeDocId: null,
-      uploadPopupOpen: false,
-      chatStarted: false,
-      chatCollapsed: true,
-      chatMessages: [],
-      chatGenerating: false,
-      chatModelStatus: 'idle',
-      sessionName,
-      companyContext,
-      ocrEnabled,
-    })
-  },
-
-  startNewSession: () => {
-    writeSessionNamePreference('Untitled session')
-    writeCompanyContextPreference('')
-    get().clearSession()
-    set({ sessionName: 'Untitled session', companyContext: '' })
   },
 }))
 

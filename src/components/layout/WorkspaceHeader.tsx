@@ -1,25 +1,12 @@
-import { useEffect, useState } from 'react'
 import {
-  ChevronDownIcon,
   ClipboardCheckIcon,
   FileTextIcon,
   GitCompareArrowsIcon,
   MessageCircleMoreIcon,
-  PlusIcon,
-  Trash2Icon,
 } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   shellChatColumnClasses,
@@ -44,93 +31,6 @@ function ScoperLogoMark({ className }: { className?: string }) {
       height={28}
       className={cn('size-7 shrink-0', className)}
     />
-  )
-}
-
-function SessionNameDropdown() {
-  const sessionName = useSessionStore((s) => s.sessionName)
-  const setSessionName = useSessionStore((s) => s.setSessionName)
-  const startNewSession = useSessionStore((s) => s.startNewSession)
-  const clearSession = useSessionStore((s) => s.clearSession)
-  const [open, setOpen] = useState(false)
-  const [draftName, setDraftName] = useState(sessionName)
-
-  useEffect(() => {
-    if (open) setDraftName(sessionName)
-  }, [open, sessionName])
-
-  function applyName(name: string) {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    setSessionName(trimmed)
-    setOpen(false)
-  }
-
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[10.5rem] items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
-          />
-        }
-      >
-        <span className="truncate">{sessionName}</span>
-        <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="start" className="w-[12rem] p-0">
-        <form
-          className="border-border border-b px-2 py-1.5"
-          onPointerDown={(event) => event.preventDefault()}
-          onSubmit={(event) => {
-            event.preventDefault()
-            applyName(draftName)
-          }}
-        >
-          <Label
-            htmlFor="session-name-input"
-            className="text-subtle-foreground mb-1 block px-1 text-[10px] font-medium tracking-wide uppercase"
-          >
-            Rename
-          </Label>
-          <Input
-            id="session-name-input"
-            type="text"
-            value={draftName}
-            onChange={(event) => setDraftName(event.target.value)}
-            className="bg-muted/50 h-7 border-0 px-2 text-xs shadow-none focus-visible:ring-1"
-            placeholder="Session name"
-          />
-        </form>
-
-        <div className="p-1">
-          <DropdownMenuItem
-            className="text-xs"
-            onClick={() => {
-              startNewSession()
-              setOpen(false)
-            }}
-          >
-            <PlusIcon />
-            New session
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            className="text-xs"
-            onClick={() => {
-              clearSession()
-              setOpen(false)
-            }}
-          >
-            <Trash2Icon />
-            Clear session
-          </DropdownMenuItem>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
   )
 }
 
@@ -162,7 +62,7 @@ function WorkspaceModeToggle() {
   )
 }
 
-/** Top header row — session controls and mode toggle */
+/** Top header row — logo and mode toggle */
 export function WorkspaceHeaderTopRow({
   chatCollapsed,
   className,
@@ -180,7 +80,6 @@ export function WorkspaceHeaderTopRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <ScoperLogoMark />
-        <SessionNameDropdown />
       </div>
 
       <div className="ml-auto flex items-center gap-2">

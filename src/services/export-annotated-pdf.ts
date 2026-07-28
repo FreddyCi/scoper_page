@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
 import { beginBlobSave } from '@/lib/download-blob'
+import { addHighlightAnnotation, addTextNoteAnnotation } from '@/lib/pdf-export-annotations'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
 import type { Bbox, DocumentMeta } from '@/lib/types'
 import {
@@ -10,6 +11,8 @@ import {
   type AnnotatedBlockExport,
 } from '@/services/block-comments'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
+
+export type ExportCommentMode = 'markup' | 'burned-in'
 
 const HIGHLIGHT_COLOR = rgb(0.98, 0.75, 0.14)
 const HIGHLIGHT_BORDER = rgb(0.85, 0.55, 0.05)
@@ -27,6 +30,14 @@ function hasBbox(block: AnnotatedBlockExport['block']): block is AnnotatedBlockE
     block.width > 0 &&
     block.height > 0
   )
+}
+
+function formatAnnotationContents(entry: AnnotatedBlockExport): string {
+  return entry.comments
+    .map((comment, index) =>
+      entry.comments.length > 1 ? `${index + 1}. ${comment.text}` : comment.text,
+    )
+    .join('\n')
 }
 
 function wrapText(text: string, maxWidth: number, font: PDFFont, fontSize: number): string[] {
@@ -123,7 +134,7 @@ function drawExportBanner(
   })
 }
 
-function drawBlockAnnotation(
+function drawBurnedInBlockAnnotation(
   page: PDFPage,
   pageHeight: number,
   entry: AnnotatedBlockExport,
@@ -185,15 +196,47 @@ function drawBlockAnnotation(
   )
 }
 
-function annotatedExportFilename(filename: string): string {
+function addMarkupBlockAnnotation(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  pageHeight: number,
+  entry: AnnotatedBlockExport,
+  noteIndex: number,
+): void {
+  const { block } = entry
+  const contents = formatAnnotationContents(entry)
+
+  if (hasBbox(block)) {
+    const pdfBbox = liteParseBboxToPdfUserSpace(
+      { x: block.x, y: block.y, width: block.width, height: block.height },
+      pageHeight,
+    )
+    addHighlightAnnotation(pdfDoc, page, pdfBbox, contents)
+    return
+  }
+
+  addTextNoteAnnotation(pdfDoc, page, 48, pageHeight - 72 - noteIndex * 28, contents)
+}
+
+function annotatedExportFilename(filename: string, mode: ExportCommentMode): string {
   const base = filename.replace(/\.pdf$/i, '')
-  return `${base}-scoper-export.pdf`
+  const suffix = mode === 'markup' ? 'scoper-markup' : 'scoper-export'
+  return `${base}-${suffix}.pdf`
 }
 
 export { annotatedExportFilename }
 
-/** Build a PDF copy with role metadata, highlights, and review notes burned in. */
-export async function exportAnnotatedPdf(document: DocumentMeta): Promise<Uint8Array> {
+export type ExportAnnotatedPdfOptions = {
+  commentMode?: ExportCommentMode
+}
+
+/** Build a PDF copy with role metadata and review notes. */
+export async function exportAnnotatedPdf(
+  document: DocumentMeta,
+  options: ExportAnnotatedPdfOptions = {},
+): Promise<Uint8Array> {
+  const commentMode = options.commentMode ?? 'markup'
+
   if (document.mime !== 'application/pdf') {
     throw new Error('Annotated export is available for PDF documents only.')
   }
@@ -205,16 +248,18 @@ export async function exportAnnotatedPdf(document: DocumentMeta): Promise<Uint8A
 
   const annotatedBlocks = await fetchAnnotatedBlocksForExport(document.doc_id)
   const pdfDoc = await PDFDocument.load(bytes.slice(), { ignoreEncryption: true })
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const pages = pdfDoc.getPages()
 
   pdfDoc.setTitle(document.filename)
-  pdfDoc.setSubject(`Scoper export · ${DOCUMENT_ROLE_LABELS[document.role]}`)
-  pdfDoc.setKeywords([`role:${document.role}`, 'scoper-export'])
+  pdfDoc.setSubject(
+    `Scoper export · ${DOCUMENT_ROLE_LABELS[document.role]} · ${commentMode === 'markup' ? 'toggleable markup' : 'burned-in notes'}`,
+  )
+  pdfDoc.setKeywords([`role:${document.role}`, 'scoper-export', `comment-mode:${commentMode}`])
   pdfDoc.setProducer('Scoper')
 
-  if (pages.length > 0) {
+  if (commentMode === 'burned-in' && pages.length > 0) {
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
     drawExportBanner(pages[0], document, annotatedBlocks.length, font, boldFont)
   }
 
@@ -226,28 +271,47 @@ export async function exportAnnotatedPdf(document: DocumentMeta): Promise<Uint8A
     notesByPage.set(pageNum, bucket)
   }
 
-  for (const [pageNum, entries] of notesByPage) {
-    if (pageNum < 1 || pageNum > pages.length) continue
-    const page = pages[pageNum - 1]
-    const pageHeight = page.getHeight()
+  if (commentMode === 'burned-in') {
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    entries.forEach((entry, index) => {
-      drawBlockAnnotation(page, pageHeight, entry, font, boldFont, index)
-    })
+    for (const [pageNum, entries] of notesByPage) {
+      if (pageNum < 1 || pageNum > pages.length) continue
+      const page = pages[pageNum - 1]
+      const pageHeight = page.getHeight()
+
+      entries.forEach((entry, index) => {
+        drawBurnedInBlockAnnotation(page, pageHeight, entry, font, boldFont, index)
+      })
+    }
+  } else {
+    for (const [pageNum, entries] of notesByPage) {
+      if (pageNum < 1 || pageNum > pages.length) continue
+      const page = pages[pageNum - 1]
+      const pageHeight = page.getHeight()
+
+      entries.forEach((entry, index) => {
+        addMarkupBlockAnnotation(pdfDoc, page, pageHeight, entry, index)
+      })
+    }
   }
 
   return pdfDoc.save()
 }
 
-export async function downloadAnnotatedPdf(document: DocumentMeta): Promise<void> {
-  const filename = annotatedExportFilename(document.filename)
+export async function downloadAnnotatedPdf(
+  document: DocumentMeta,
+  options: ExportAnnotatedPdfOptions = {},
+): Promise<void> {
+  const commentMode = options.commentMode ?? 'markup'
+  const filename = annotatedExportFilename(document.filename, commentMode)
   const writeBlob = await beginBlobSave({
     filename,
     mime: 'application/pdf',
     extension: '.pdf',
   })
 
-  const pdfBytes = await exportAnnotatedPdf(document)
+  const pdfBytes = await exportAnnotatedPdf(document, { commentMode })
   const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
   await writeBlob(blob)
 }
@@ -276,13 +340,16 @@ export async function runAnnotatedPdfExportHarness(): Promise<void> {
 
   await insertBlockComment(firstBlock.block_id, 'Export harness review note.')
 
-  const pdfBytes = await exportAnnotatedPdf({
-    doc_id: ingested.doc_id,
-    filename: ingested.filename,
-    mime: ingested.mime,
-    role: 'baseline',
-    uploaded_at: new Date().toISOString(),
-  })
+  const pdfBytes = await exportAnnotatedPdf(
+    {
+      doc_id: ingested.doc_id,
+      filename: ingested.filename,
+      mime: ingested.mime,
+      role: 'baseline',
+      uploaded_at: new Date().toISOString(),
+    },
+    { commentMode: 'markup' },
+  )
 
   if (pdfBytes.byteLength < 100) {
     throw new Error('runAnnotatedPdfExportHarness failed: exported PDF too small')

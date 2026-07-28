@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -54,7 +55,7 @@ function ExtractViewHelpButton() {
         <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
           <li>Click a block to highlight the matching passage in the PDF preview.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
-          <li>Use Export PDF to download a copy with your role tag and review notes.</li>
+          <li>Use Export PDF for toggleable markup (hide/show in your PDF viewer) or burned-in notes.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
             {' '}
@@ -88,7 +89,7 @@ function SplitDocumentViewFooter({
   exportLabel?: string
   exportLoading?: boolean
   exportDisabled?: boolean
-  onExportClick?: () => void
+  onExportClick?: (mode: 'markup' | 'burned-in') => void
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
@@ -104,16 +105,36 @@ function SplitDocumentViewFooter({
       </span>
       <div className="flex items-center gap-2">
         {onExportClick ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onExportClick}
-            disabled={exportDisabled || exportLoading}
-          >
-            <DownloadIcon className="size-3.5" />
-            {exportLoading ? 'Exporting…' : exportLabel}
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={exportDisabled || exportLoading}
+              render={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={exportDisabled || exportLoading}
+                />
+              }
+            >
+              <DownloadIcon className="size-3.5" />
+              {exportLoading ? 'Exporting…' : exportLabel}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => onExportClick('markup')}>
+                Toggleable markup
+                <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
+                  Highlights and notes you can hide in Preview or Acrobat
+                </span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExportClick('burned-in')}>
+                Burned-in notes
+                <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
+                  Always-visible yellow boxes on the page
+                </span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
         <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>
           {ctaLoading ? (ctaLoadingLabel ?? 'Working…') : ctaLabel}
@@ -179,7 +200,7 @@ export function SplitDocumentView({
         ? `Role: ${DOCUMENT_ROLE_LABELS[document.role]}`
         : null
 
-  function handleExportPdf() {
+  function handleExportPdf(commentMode: 'markup' | 'burned-in' = 'markup') {
     if (!canExportPdf || exportingPdf) return
 
     setExportError(null)
@@ -187,14 +208,16 @@ export function SplitDocumentView({
 
     void (async () => {
       try {
-        const filename = `${document.filename.replace(/\.pdf$/i, '')}-scoper-export.pdf`
+        const { annotatedExportFilename, exportAnnotatedPdf } = await import(
+          '@/services/export-annotated-pdf'
+        )
+        const filename = annotatedExportFilename(document.filename, commentMode)
         const writeBlob = await beginBlobSave({
           filename,
           mime: 'application/pdf',
           extension: '.pdf',
         })
-        const { exportAnnotatedPdf } = await import('@/services/export-annotated-pdf')
-        const pdfBytes = await exportAnnotatedPdf(document)
+        const pdfBytes = await exportAnnotatedPdf(document, { commentMode })
         const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
         await writeBlob(blob)
       } catch (error) {

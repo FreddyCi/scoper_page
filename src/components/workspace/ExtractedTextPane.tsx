@@ -28,7 +28,7 @@ function BlockGroupLabel({ label }: { label: string }) {
       className={cn(
         'sticky top-0 z-10 text-xs font-semibold tracking-wide uppercase',
         isPage
-          ? 'bg-muted text-muted-foreground mb-1 rounded-md px-2 py-1'
+          ? 'border-sky-100/80 bg-sky-50/90 text-sky-800/80 mb-1 rounded-md border px-2.5 py-1'
           : 'text-muted-foreground bg-surface/95 supports-[backdrop-filter]:bg-surface/80 px-1 py-1 backdrop-blur-sm',
       )}
     >

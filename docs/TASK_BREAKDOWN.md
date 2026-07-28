@@ -864,16 +864,18 @@ flowchart LR
 ### **ID:** BDA-081
 
 **Title:** Markdown and Excel parsers  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-023  
 **Priority:** Medium  
 **Description:** `markdown.ts`: split by headings. `xlsx.ts`: SheetJS → cell-range blocks. Wire into router.  
 **Completed Changes:**
-- 🔄 markdown + xlsx modules
-- 🔄 Router branches
+- ✅ `markdown-ingest.ts` — heading split → `section_path` + paragraph blocks (wired earlier)
+- ✅ `xlsx-ingest.ts` — SheetJS row blocks with `{sheet} › {cell-range}` section_path
+- ✅ `ingest-router.ts` — `ingestExcel` branch for `.xlsx`/`.xls`; markdown branch complete
+- ✅ `public/sample/minimal.xlsx` + `runMarkdownIngestHarness()` / `runXlsxIngestHarness()`
 **Test Strategy:** Upload .md and .xlsx samples → blocks ingested.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harnesses pass; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §2.2 secondary goals  
 

@@ -12,9 +12,12 @@ import { resolveDocumentRoleForIngest } from '@/services/document-roles'
 import { getLiteParseClient } from '@/services/liteparse-client'
 import { parseMarkdownToBlocks } from '@/services/markdown-ingest'
 import { parseDocxToBlocks } from '@/services/docx-ingest'
+import { parseXlsxToBlocks } from '@/services/xlsx-ingest'
 import { useSessionStore } from '@/store/session-store'
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+const XLS_MIME = 'application/vnd.ms-excel'
 
 export type IngestOptions = {
   ocrEnabled?: boolean
@@ -212,16 +215,41 @@ async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
   }
 }
 
-function ingestFormatStub(format: IngestFormat, filename: string): never {
-  const labels: Record<Exclude<IngestFormat, 'pdf' | 'markdown' | 'word'>, string> = {
-    excel: 'Excel',
+async function ingestExcel(file: File, docId: string): Promise<IngestResult> {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  cacheDocumentBytes(docId, bytes)
+
+  const arrayBuffer = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  )
+  const blocks = parseXlsxToBlocks(docId, arrayBuffer)
+  const mime = resolveMime(file)
+
+  const role = await resolveDocumentRoleForIngest(
+    docId,
+    useSessionStore.getState().documents,
+    mime === XLS_MIME ? XLS_MIME : XLSX_MIME,
+  )
+
+  const document: DocumentMeta = {
+    doc_id: docId,
+    filename: file.name,
+    mime: mime === XLS_MIME || mime === XLSX_MIME ? mime : XLSX_MIME,
+    role,
+    uploaded_at: new Date().toISOString(),
   }
 
-  if (format === 'pdf' || format === 'markdown' || format === 'word') {
-    throw new Error(`Unexpected stub for ${format} (${filename})`)
-  }
+  await persistIngestBlocks(document, blocks)
 
-  throw new Error(`${labels[format]} ingest not implemented (Phase 10)`)
+  return {
+    doc_id: docId,
+    filename: file.name,
+    mime: document.mime,
+    block_count: blocks.length,
+    ocr_used: false,
+    role: document.role,
+  }
 }
 
 export async function ingestFile(
@@ -244,7 +272,7 @@ export async function ingestFile(
     case 'word':
       return ingestDocx(file, docId)
     case 'excel':
-      return ingestFormatStub(format, file.name)
+      return ingestExcel(file, docId)
     default: {
       const exhaustive: never = format
       throw new Error(`Unsupported ingest format: ${String(exhaustive)}`)
@@ -396,5 +424,44 @@ export async function runDocxIngestHarness(): Promise<void> {
   const nestedSection = blocks.find((block) => block.section_path?.includes('Deliverables'))
   if (!nestedSection) {
     throw new Error('Docx ingest harness: expected nested heading section_path')
+  }
+}
+
+/** Dev harness — ingest sample .xlsx; verify DuckDB blocks with sheet cell-range paths (BDA-081) */
+export async function runXlsxIngestHarness(): Promise<void> {
+  const response = await fetch('/sample/minimal.xlsx')
+  if (!response.ok) {
+    throw new Error(`Xlsx ingest harness: failed to load sample xlsx (${response.status})`)
+  }
+
+  const blob = await response.blob()
+  const file = new File([blob], 'harness-sample.xlsx', { type: XLSX_MIME })
+  const ingested = await ingestFile(file)
+
+  if (ingested.block_count < 2) {
+    throw new Error('Xlsx ingest harness: expected multiple row blocks')
+  }
+
+  const duckdb = await getDuckdbClient()
+  const documents = await duckdb.query<{ doc_id: string }>(
+    'SELECT doc_id FROM documents WHERE doc_id = ?',
+    [ingested.doc_id],
+  )
+  const blocks = await duckdb.query<{ section_path: string | null; text: string }>(
+    'SELECT section_path, text FROM blocks WHERE doc_id = ? ORDER BY block_id',
+    [ingested.doc_id],
+  )
+
+  if (documents.length !== 1) {
+    throw new Error('Xlsx ingest harness: expected document row in DuckDB')
+  }
+
+  const sheetBlocks = blocks.filter((block) => block.section_path?.includes('RFP Checklist'))
+  if (sheetBlocks.length === 0) {
+    throw new Error('Xlsx ingest harness: expected section_path with sheet name')
+  }
+
+  if (!blocks.some((block) => block.text.includes('CMMI Level 3'))) {
+    throw new Error('Xlsx ingest harness: expected row text from sample spreadsheet')
   }
 }

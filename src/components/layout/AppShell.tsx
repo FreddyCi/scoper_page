@@ -43,7 +43,7 @@ export function AppShell({ children }: AppShellProps) {
               shellPanelMinWidthClass,
             )}
           >
-            <div className="relative z-30 shrink-0">
+            <div className="relative shrink-0">
               <WebGpuBanner />
               <div className="border-border flex border-b">
                 <WorkspaceHeaderTopRow chatCollapsed={chatCollapsed} />

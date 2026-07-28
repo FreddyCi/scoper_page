@@ -29,7 +29,15 @@ const CRITERION_RULES: CriterionRule[] = [
     id: 'certification',
     label: 'Certification requirement',
     detail: 'CMMI, ISO, or equivalent certification language',
-    keywords: [/cmmi/i, /certification/i, /certified/i, /accredited/i],
+    keywords: [
+      /cmmi/i,
+      /certification/i,
+      /certified/i,
+      /accredited/i,
+      /qualification/i,
+      /compliance/i,
+      /standard/i,
+    ],
     statusWhenFound: 'pass',
     statusWhenMissing: 'fail',
   },
@@ -37,7 +45,17 @@ const CRITERION_RULES: CriterionRule[] = [
     id: 'pricing',
     label: 'Pricing or commercial terms',
     detail: 'Pricing tiers, seats, or subscription language',
-    keywords: [/pricing/i, /price/i, /subscription/i, /per seat/i, /license/i],
+    keywords: [
+      /pricing/i,
+      /price/i,
+      /subscription/i,
+      /per seat/i,
+      /license/i,
+      /cost/i,
+      /fee/i,
+      /commercial/i,
+      /payment/i,
+    ],
     statusWhenFound: 'warn',
     statusWhenMissing: 'fail',
   },
@@ -45,38 +63,83 @@ const CRITERION_RULES: CriterionRule[] = [
     id: 'insurance',
     label: 'Insurance minimums',
     detail: 'General liability or insurance coverage',
-    keywords: [/insurance/i, /liability/i, /indemnif/i, /coverage/i],
+    keywords: [
+      /insurance/i,
+      /liability/i,
+      /indemnif/i,
+      /coverage/i,
+      /bond/i,
+      /warrant/i,
+    ],
     statusWhenFound: 'pass',
     statusWhenMissing: 'warn',
   },
 ]
 
 function findMatchingBlock(blocks: BlockRecord[], keywords: RegExp[]): BlockRecord | null {
+  let best: BlockRecord | null = null
+  let bestScore = 0
+
   for (const block of blocks) {
-    if (keywords.some((pattern) => pattern.test(block.text))) {
-      return block
+    const score = keywords.reduce(
+      (total, pattern) => total + (pattern.test(block.text) ? 1 : 0),
+      0,
+    )
+    if (score > bestScore) {
+      best = block
+      bestScore = score
     }
   }
-  return null
+
+  return bestScore > 0 ? best : null
+}
+
+/** Spread fallback anchors across pages when keyword rules miss (e.g. sample PDFs). */
+function selectFallbackBlocks(blocks: BlockRecord[], count: number): BlockRecord[] {
+  if (blocks.length === 0 || count === 0) return []
+
+  const sorted = [...blocks].sort((left, right) => {
+    const pageLeft = left.page_num ?? Number.MAX_SAFE_INTEGER
+    const pageRight = right.page_num ?? Number.MAX_SAFE_INTEGER
+    if (pageLeft !== pageRight) return pageLeft - pageRight
+    return left.block_id.localeCompare(right.block_id)
+  })
+
+  if (sorted.length <= count) return sorted
+
+  const picks: BlockRecord[] = []
+  const step = (sorted.length - 1) / Math.max(count - 1, 1)
+
+  for (let index = 0; index < count; index += 1) {
+    picks.push(sorted[Math.round(index * step)]!)
+  }
+
+  return picks
 }
 
 function buildCriterionFromRule(
   docId: string,
   rule: CriterionRule,
   blocks: BlockRecord[],
+  fallbackBlock?: BlockRecord,
 ): CriterionResult {
   const match = findMatchingBlock(blocks, rule.keywords)
+  const linkedBlock = match ?? fallbackBlock
   const status = match ? rule.statusWhenFound : rule.statusWhenMissing
 
   const criterion: CriterionResult = {
     id: `${docId}-${rule.id}`,
     label: rule.label,
     status,
-    detail: rule.detail,
+    detail: match
+      ? rule.detail
+      : linkedBlock
+        ? `${rule.detail} · Jump to extracted text for manual review`
+        : rule.detail,
   }
 
-  if (match) {
-    criterion.citation = blockToCitation(match)
+  if (linkedBlock) {
+    criterion.citation = blockToCitation(linkedBlock)
   }
 
   return criterion
@@ -118,7 +181,10 @@ export function buildProfileFromBlocks(
   docIndex: number,
 ): RfpResultsProfile {
   const isSourceDoc = docIndex === 0
-  const criteria = CRITERION_RULES.map((rule) => buildCriterionFromRule(doc.doc_id, rule, blocks))
+  const fallbacks = selectFallbackBlocks(blocks, CRITERION_RULES.length)
+  const criteria = CRITERION_RULES.map((rule, index) =>
+    buildCriterionFromRule(doc.doc_id, rule, blocks, fallbacks[index]),
+  )
 
   return {
     profile_id: `profile-${doc.doc_id}`,
@@ -188,6 +254,11 @@ export async function runBuildRfpProfilesHarness(): Promise<void> {
   const profile = profiles[0]
   if (!profile || profile.criteria.length === 0) {
     throw new Error('buildRfpProfiles harness: expected criteria on profile')
+  }
+
+  const citedCriteria = profile.criteria.filter((item) => item.citation)
+  if (ingested.block_count > 0 && citedCriteria.length === 0) {
+    throw new Error('buildRfpProfiles harness: expected criteria citations when blocks exist')
   }
 
   const storedCount = await countRfpProfilesInDuckdb()

@@ -8,6 +8,7 @@ import { ResultsProfileGrid } from '@/components/workspace/ResultsProfileGrid'
 import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
+import { useRelinkRfpProfilesOnView } from '@/hooks/use-relink-rfp-profiles'
 import { useSessionStore, useShowLanding, useRfpProfiles } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
@@ -26,6 +27,8 @@ export function WorkspaceContent() {
   const selectedCitation = useSessionStore((s) => s.selectedCitation)
   const profiles = useRfpProfiles()
   const { submitCommand, isIngesting } = useCommandIngest()
+
+  useRelinkRfpProfilesOnView(workspaceView === 'profiles' && mode === 'rfp')
 
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId)
 

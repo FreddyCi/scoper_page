@@ -118,7 +118,7 @@ export function BlockCommentPopover({
             'border-border bg-surface shadow-elevated z-30 flex flex-col gap-3 rounded-lg border p-3',
             showTrigger
               ? 'absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))]'
-              : 'absolute top-14 right-3 left-3',
+              : 'absolute top-3 right-3 left-3',
           )}
         >
           <div className="min-w-0 space-y-2">

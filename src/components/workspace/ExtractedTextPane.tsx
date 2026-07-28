@@ -141,15 +141,6 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
         }}
       />
 
-      <header className="border-border/70 flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
-        <div className="min-w-0">
-          <h2 className="text-foreground text-sm font-semibold">Extracted text</h2>
-          <p className="text-muted-foreground text-xs">
-            {loading ? 'Loading blocks…' : `${blocks.length} blocks`}
-          </p>
-        </div>
-      </header>
-
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         {loading ? (
           <p className="text-muted-foreground py-8 text-center text-sm">Loading extracted text…</p>

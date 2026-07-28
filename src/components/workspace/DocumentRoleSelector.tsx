@@ -4,6 +4,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -82,12 +83,14 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
         onClick={(event) => event.stopPropagation()}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <DropdownMenuLabel className="px-3 py-2 font-normal">
-          <p className="text-foreground text-xs font-semibold">Document role</p>
-          <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug font-normal">
-            Tags how this file is used in RFP qualification and scope creep analysis.
-          </p>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="px-3 py-2 font-normal">
+            <p className="text-foreground text-xs font-semibold">Document role</p>
+            <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug font-normal">
+              Tags how this file is used in RFP qualification and scope creep analysis.
+            </p>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup value={role} onValueChange={(value) => void handleSelect(value as DocumentRole)}>
           {DOCUMENT_ROLES.map((option) => (

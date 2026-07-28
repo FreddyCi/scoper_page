@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { InfoIcon } from 'lucide-react'
+import { DownloadIcon, InfoIcon } from 'lucide-react'
 
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
@@ -14,6 +14,8 @@ import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
 import { compareScope } from '@/services/compare-scope'
+import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
+import { beginBlobSave } from '@/lib/download-blob'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -52,6 +54,7 @@ function ExtractViewHelpButton() {
         <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
           <li>Click a block to highlight the matching passage in the PDF preview.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
+          <li>Use Export PDF to download a copy with your role tag and review notes.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
             {' '}
@@ -66,25 +69,56 @@ function ExtractViewHelpButton() {
 
 function SplitDocumentViewFooter({
   statusLabel,
+  exportError = null,
   ctaLabel,
   ctaLoading = false,
   ctaLoadingLabel,
   onCtaClick,
+  exportLabel = 'Export PDF',
+  exportLoading = false,
+  exportDisabled = false,
+  onExportClick,
 }: {
   statusLabel: string
+  exportError?: string | null
   ctaLabel: string
   ctaLoading?: boolean
   ctaLoadingLabel?: string
   onCtaClick: () => void
+  exportLabel?: string
+  exportLoading?: boolean
+  exportDisabled?: boolean
+  onExportClick?: () => void
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
-      <span className="bg-muted text-muted-foreground rounded-pill inline-flex items-center px-3 py-1 text-xs font-medium">
-        {statusLabel}
+      <span
+        className={cn(
+          'rounded-pill inline-flex items-center px-3 py-1 text-xs font-medium',
+          exportError
+            ? 'bg-destructive/10 text-destructive'
+            : 'bg-muted text-muted-foreground',
+        )}
+      >
+        {exportError ?? statusLabel}
       </span>
-      <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>
-        {ctaLoading ? (ctaLoadingLabel ?? 'Working…') : ctaLabel}
-      </Button>
+      <div className="flex items-center gap-2">
+        {onExportClick ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onExportClick}
+            disabled={exportDisabled || exportLoading}
+          >
+            <DownloadIcon className="size-3.5" />
+            {exportLoading ? 'Exporting…' : exportLabel}
+          </Button>
+        ) : null}
+        <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>
+          {ctaLoading ? (ctaLoadingLabel ?? 'Working…') : ctaLabel}
+        </Button>
+      </div>
     </footer>
   )
 }
@@ -97,6 +131,8 @@ export function SplitDocumentView({
   const [activeTab, setActiveTab] = useState<SplitPaneTab>('extract')
   const [buildingProfiles, setBuildingProfiles] = useState(false)
   const [comparingScope, setComparingScope] = useState(false)
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
   const documents = useSessionStore((state) => state.documents)
@@ -111,6 +147,12 @@ export function SplitDocumentView({
       setActiveTab('extract')
     }
   }, [selectedCitation?.block_id, citationFocusSeq, document.doc_id, selectedCitation?.doc_id])
+
+  useEffect(() => {
+    if (document.mime === 'application/pdf') {
+      void import('@/services/export-annotated-pdf')
+    }
+  }, [document.mime])
 
   const statusLabel = useMemo(() => {
     if (blocksLoading) return 'Loading extracted blocks…'
@@ -128,6 +170,44 @@ export function SplitDocumentView({
 
     return `${blockCountLabel} · ${document.filename}`
   }, [blocks.length, blocksLoading, commentedBlockIds, document.doc_id, document.filename, selectedCitation])
+
+  const canExportPdf = document.mime === 'application/pdf'
+  const exportStatusHint =
+    commentedBlockIds.size > 0
+      ? `${commentedBlockIds.size} review note${commentedBlockIds.size === 1 ? '' : 's'}`
+      : document.role !== 'unknown'
+        ? `Role: ${DOCUMENT_ROLE_LABELS[document.role]}`
+        : null
+
+  function handleExportPdf() {
+    if (!canExportPdf || exportingPdf) return
+
+    setExportError(null)
+    setExportingPdf(true)
+
+    void (async () => {
+      try {
+        const filename = `${document.filename.replace(/\.pdf$/i, '')}-scoper-export.pdf`
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'application/pdf',
+          extension: '.pdf',
+        })
+        const { exportAnnotatedPdf } = await import('@/services/export-annotated-pdf')
+        const pdfBytes = await exportAnnotatedPdf(document)
+        const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
+        await writeBlob(blob)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'Export failed'
+        setExportError(message)
+        console.error('[split-document-view] export failed', error)
+      } finally {
+        setExportingPdf(false)
+      }
+    })()
+  }
 
   function handleCtaClick() {
     if (mode === 'scope_creep') {
@@ -248,10 +328,15 @@ export function SplitDocumentView({
 
       <SplitDocumentViewFooter
         statusLabel={statusLabel}
+        exportError={exportError}
         ctaLabel={MODE_CTA[mode]}
         ctaLoading={buildingProfiles || comparingScope}
         ctaLoadingLabel={comparingScope ? 'Comparing…' : 'Qualifying…'}
         onCtaClick={handleCtaClick}
+        exportLabel={exportStatusHint ? `Export PDF (${exportStatusHint})` : 'Export PDF'}
+        exportLoading={exportingPdf}
+        exportDisabled={!canExportPdf}
+        onExportClick={canExportPdf ? handleExportPdf : undefined}
       />
     </div>
   )

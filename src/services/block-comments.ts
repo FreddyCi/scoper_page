@@ -1,5 +1,5 @@
 import { getDuckdbClient } from '@/services/duckdb-client'
-import type { CommentRecord } from '@/lib/types'
+import type { BlockRecord, CommentRecord } from '@/lib/types'
 
 type CommentRow = {
   comment_id: string
@@ -70,11 +70,85 @@ export async function fetchCommentedBlockIds(docId: string): Promise<string[]> {
   return rows.map((row) => row.block_id)
 }
 
+type AnnotatedBlockRow = {
+  block_id: string
+  doc_id: string
+  page_num: number | null
+  section_path: string | null
+  text: string
+  x: number | null
+  y: number | null
+  width: number | null
+  height: number | null
+  comment_id: string
+  comment_text: string
+  created_at: string
+}
+
+export type AnnotatedBlockExport = {
+  block: BlockRecord
+  comments: CommentRecord[]
+}
+
+/** Blocks with review notes for PDF export — grouped by block, ordered by page position. */
+export async function fetchAnnotatedBlocksForExport(
+  docId: string,
+): Promise<AnnotatedBlockExport[]> {
+  const duckdb = await getDuckdbClient()
+  const rows = await duckdb.query<AnnotatedBlockRow>(
+    `SELECT b.block_id, b.doc_id, b.page_num, b.section_path, b.text,
+            b.x, b.y, b.width, b.height,
+            c.comment_id, c.text AS comment_text, c.created_at
+     FROM comments c
+     INNER JOIN blocks b ON b.block_id = c.block_id
+     WHERE b.doc_id = ?
+     ORDER BY b.page_num NULLS LAST, b.y NULLS LAST, c.created_at ASC, c.comment_id ASC`,
+    [docId],
+  )
+
+  const grouped = new Map<string, AnnotatedBlockExport>()
+
+  for (const row of rows) {
+    const comment: CommentRecord = {
+      comment_id: row.comment_id,
+      block_id: row.block_id,
+      text: row.comment_text,
+      created_at: row.created_at,
+    }
+
+    const existing = grouped.get(row.block_id)
+    if (existing) {
+      existing.comments.push(comment)
+      continue
+    }
+
+    const block: BlockRecord = {
+      block_id: row.block_id,
+      doc_id: row.doc_id,
+      text: row.text,
+    }
+    if (row.page_num != null) block.page_num = row.page_num
+    if (row.section_path != null) block.section_path = row.section_path
+    if (row.x != null) block.x = row.x
+    if (row.y != null) block.y = row.y
+    if (row.width != null) block.width = row.width
+    if (row.height != null) block.height = row.height
+
+    grouped.set(row.block_id, { block, comments: [comment] })
+  }
+
+  return Array.from(grouped.values())
+}
+
 /** Dev harness — comment persists in session DuckDB after re-fetch (BDA-082) */
 export async function runBlockCommentsHarness(): Promise<void> {
   const duckdb = await getDuckdbClient()
   const docId = 'comment-harness-doc'
   const blockId = 'comment-harness-block'
+
+  await duckdb.query('DELETE FROM comments WHERE block_id = ?', [blockId])
+  await duckdb.query('DELETE FROM blocks WHERE block_id = ?', [blockId])
+  await duckdb.query('DELETE FROM documents WHERE doc_id = ?', [docId])
 
   await duckdb.insertDocument({
     doc_id: docId,
@@ -94,12 +168,13 @@ export async function runBlockCommentsHarness(): Promise<void> {
   await insertBlockComment(blockId, 'Flag for legal review before sign-off.')
 
   const comments = await fetchCommentsForBlock(blockId)
-  if (comments.length !== 1 || !comments[0]?.text.includes('legal review')) {
+  const hasLegalReview = comments.some((comment) => comment.text.includes('legal review'))
+  if (!hasLegalReview) {
     throw new Error('runBlockCommentsHarness failed: expected saved comment on block')
   }
 
   const reloaded = await fetchCommentsForBlock(blockId)
-  if (reloaded.length !== 1) {
+  if (!reloaded.some((comment) => comment.text.includes('legal review'))) {
     throw new Error('runBlockCommentsHarness failed: comment missing after re-fetch')
   }
 

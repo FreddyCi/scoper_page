@@ -121,54 +121,49 @@ export function createDuckdbClient(): DuckdbClient {
 export async function getDuckdbClient(): Promise<DuckdbClient> {
   if (!singletonClient) {
     singletonClient = createDuckdbClient()
-    await singletonClient.init()
   }
+  await singletonClient.init()
   return singletonClient
 }
 
 /** Dev harness — INSERT document + block; SELECT verifies rows (BDA-020) */
 export async function runDuckdbHarness(): Promise<void> {
-  const client = createDuckdbClient()
+  const client = await getDuckdbClient()
 
-  try {
-    await client.init()
-    const pong = await client.ping()
-    if (pong !== 'pong') {
-      throw new Error('DuckDB worker ping failed')
-    }
+  const pong = await client.ping()
+  if (pong !== 'pong') {
+    throw new Error('DuckDB worker ping failed')
+  }
 
-    await client.insertDocument({
-      doc_id: 'harness-doc',
-      filename: 'harness.pdf',
-      mime: 'application/pdf',
-      role: 'unknown',
-      uploaded_at: new Date().toISOString(),
-    })
+  await client.insertDocument({
+    doc_id: 'harness-doc',
+    filename: 'harness.pdf',
+    mime: 'application/pdf',
+    role: 'unknown',
+    uploaded_at: new Date().toISOString(),
+  })
 
-    await client.insertBlock({
-      block_id: 'harness-block',
-      doc_id: 'harness-doc',
-      page_num: 1,
-      text: 'Harness clause text',
-      x: 10,
-      y: 20,
-      width: 100,
-      height: 12,
-    })
+  await client.insertBlock({
+    block_id: 'harness-block',
+    doc_id: 'harness-doc',
+    page_num: 1,
+    text: 'Harness clause text',
+    x: 10,
+    y: 20,
+    width: 100,
+    height: 12,
+  })
 
-    const documents = await client.query<{ doc_id: string }>(
-      'SELECT doc_id FROM documents WHERE doc_id = ?',
-      ['harness-doc'],
-    )
-    const blocks = await client.query<{ block_id: string }>(
-      'SELECT block_id FROM blocks WHERE block_id = ?',
-      ['harness-block'],
-    )
+  const documents = await client.query<{ doc_id: string }>(
+    'SELECT doc_id FROM documents WHERE doc_id = ?',
+    ['harness-doc'],
+  )
+  const blocks = await client.query<{ block_id: string }>(
+    'SELECT block_id FROM blocks WHERE block_id = ?',
+    ['harness-block'],
+  )
 
-    if (documents.length !== 1 || blocks.length !== 1) {
-      throw new Error('DuckDB harness SELECT failed')
-    }
-  } finally {
-    await client.terminate()
+  if (documents.length !== 1 || blocks.length !== 1) {
+    throw new Error('DuckDB harness SELECT failed')
   }
 }

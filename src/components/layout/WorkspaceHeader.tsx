@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ChevronDownIcon,
   ClipboardCheckIcon,
@@ -8,8 +8,16 @@ import {
 } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
-import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   shellChatColumnClasses,
@@ -48,35 +56,10 @@ function SessionNameDropdown() {
   const setSessionName = useSessionStore((s) => s.setSessionName)
   const [open, setOpen] = useState(false)
   const [draftName, setDraftName] = useState(sessionName)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (open) setDraftName(sessionName)
   }, [open, sessionName])
-
-  useEffect(() => {
-    if (!open) return
-
-    function onPointerDown(event: MouseEvent) {
-      const target = event.target as Node
-      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) {
-        return
-      }
-      setOpen(false)
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
 
   function applyName(name: string) {
     const trimmed = name.trim()
@@ -86,67 +69,57 @@ function SessionNameDropdown() {
   }
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[10.5rem] items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            className="rounded-pill border-border bg-surface text-foreground hover:bg-surface/80 inline-flex max-w-[10.5rem] items-center gap-1.5 border px-2.5 py-1 text-xs font-medium transition-colors"
+          />
+        }
       >
         <span className="truncate">{sessionName}</span>
         <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
-      </button>
+      </DropdownMenuTrigger>
 
-      {open ? (
-        <AnchoredMenuPortal
-          open={open}
-          anchorRef={rootRef}
-          panelRef={panelRef}
-          role="listbox"
-          className="w-[10.5rem] p-0"
+      <DropdownMenuContent align="start" className="w-[10.5rem] p-0">
+        <form
+          className="border-border border-b px-2 py-1.5"
+          onPointerDown={(event) => event.preventDefault()}
+          onSubmit={(event) => {
+            event.preventDefault()
+            applyName(draftName)
+          }}
         >
-          <form
-            className="border-border border-b px-2 py-1.5"
-            onSubmit={(event) => {
-              event.preventDefault()
-              applyName(draftName)
-            }}
+          <Label
+            htmlFor="session-name-input"
+            className="text-subtle-foreground mb-1 block px-1 text-[10px] font-medium tracking-wide uppercase"
           >
-            <label
-              htmlFor="session-name-input"
-              className="text-subtle-foreground mb-1 block px-1 text-[10px] font-medium tracking-wide uppercase"
-            >
-              Rename
-            </label>
-            <input
-              id="session-name-input"
-              type="text"
-              value={draftName}
-              onChange={(event) => setDraftName(event.target.value)}
-              className="bg-muted/50 text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border-0 px-2 py-1 text-xs outline-none focus-visible:ring-1"
-              placeholder="Session name"
-            />
-          </form>
+            Rename
+          </Label>
+          <Input
+            id="session-name-input"
+            type="text"
+            value={draftName}
+            onChange={(event) => setDraftName(event.target.value)}
+            className="bg-muted/50 h-7 border-0 px-2 text-xs shadow-none focus-visible:ring-1"
+            placeholder="Session name"
+          />
+        </form>
 
+        <DropdownMenuGroup className="p-1">
           {SESSION_PRESETS.map((name) => (
-            <button
+            <DropdownMenuItem
               key={name}
-              type="button"
-              role="option"
-              aria-selected={sessionName === name}
+              className={cn('text-xs', sessionName === name && 'bg-muted font-medium')}
               onClick={() => applyName(name)}
-              className={cn(
-                'hover:bg-muted block w-full px-2.5 py-1.5 text-left text-xs transition-colors',
-                sessionName === name && 'bg-muted font-medium',
-              )}
             >
               {name}
-            </button>
+            </DropdownMenuItem>
           ))}
-        </AnchoredMenuPortal>
-      ) : null}
-    </div>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 

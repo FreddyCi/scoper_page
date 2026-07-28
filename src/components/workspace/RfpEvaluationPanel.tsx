@@ -10,8 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import type { DocumentMeta } from '@/lib/types'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
@@ -45,9 +54,6 @@ const CONTEXT_GUIDE = [
   'Deal-breakers — terms that should fail a bidder outright',
   'Weighting — what matters most if trade-offs appear',
 ] as const
-
-const fieldSelectClass =
-  'border-border bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border px-2.5 text-sm transition-colors outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50'
 
 function appendContextSnippet(current: string, snippet: string): string {
   const trimmed = current.trim()
@@ -171,6 +177,11 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     [baselineProfile],
   )
 
+  const selectedRequirementDoc = useMemo(
+    () => requirementDocs.find((doc) => doc.doc_id === evaluationDocId) ?? null,
+    [requirementDocs, evaluationDocId],
+  )
+
   async function handleBaselineChange(docId: string) {
     setEvaluationDocId(docId || null)
     if (docId) {
@@ -247,19 +258,28 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                 </Button>
               </div>
             ) : (
-              <select
-                id="evaluation-doc"
-                value={evaluationDocId ?? ''}
-                onChange={(event) => void handleBaselineChange(event.target.value)}
-                className={fieldSelectClass}
+              <Combobox
+                items={requirementDocs}
+                itemToStringValue={(doc: DocumentMeta) => doc.filename}
+                value={selectedRequirementDoc}
+                onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
               >
-                <option value="">Select requirements document…</option>
-                {requirementDocs.map((doc) => (
-                  <option key={doc.doc_id} value={doc.doc_id}>
-                    {doc.filename}
-                  </option>
-                ))}
-              </select>
+                <ComboboxInput
+                  id="evaluation-doc"
+                  placeholder="Select requirements document…"
+                  className="w-full"
+                />
+                <ComboboxContent>
+                  <ComboboxEmpty>No documents found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(doc: DocumentMeta) => (
+                      <ComboboxItem key={doc.doc_id} value={doc}>
+                        {doc.filename}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             )}
             <p className="text-muted-foreground text-xs leading-relaxed">
               This document defines what bidders must meet. It won&apos;t appear as a qualification

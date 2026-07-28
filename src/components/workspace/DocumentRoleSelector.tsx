@@ -1,7 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
 
-import { AnchoredMenuPortal } from '@/components/ui/anchored-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
   DOCUMENT_ROLE_LABELS,
@@ -28,31 +36,6 @@ const ROLE_VALUE_CLASS: Record<DocumentRole, string> = {
 export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSelectorProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!open) return
-
-    function onPointerDown(event: MouseEvent) {
-      const target = event.target as Node
-      if (rootRef.current?.contains(target) || panelRef.current?.contains(target)) {
-        return
-      }
-      setOpen(false)
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('mousedown', onPointerDown)
-    document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown)
-      document.removeEventListener('keydown', onKeyDown)
-    }
-  }, [open])
 
   async function handleSelect(nextRole: DocumentRole) {
     if (nextRole === role || pending) {
@@ -72,64 +55,56 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
   }
 
   return (
-    <div ref={rootRef} className={cn('relative shrink-0', className)}>
-      <button
-        type="button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
         disabled={pending}
-        onMouseDown={(event) => event.stopPropagation()}
-        onClick={(event) => {
-          event.stopPropagation()
-          setOpen((value) => !value)
-        }}
-        className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+        className={cn('relative shrink-0', className)}
+        render={
+          <button
+            type="button"
+            aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
+            onMouseDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          />
+        }
       >
         <span className="text-muted-foreground tracking-wide uppercase">Role</span>
         <span className={cn('tracking-wide uppercase', ROLE_VALUE_CLASS[role])}>
           {DOCUMENT_ROLE_LABELS[role]}
         </span>
         <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-70" />
-      </button>
+      </DropdownMenuTrigger>
 
-      {open ? (
-        <AnchoredMenuPortal
-          open={open}
-          anchorRef={rootRef}
-          panelRef={panelRef}
-          role="listbox"
-          aria-label="Select document role"
-          className="min-w-[15rem]"
-        >
-          <div className="border-border/70 border-b px-3 py-2">
-            <p className="text-foreground text-xs font-semibold">Document role</p>
-            <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug">
-              Tags how this file is used in RFP qualification and scope creep analysis.
-            </p>
-          </div>
+      <DropdownMenuContent
+        align="start"
+        className="min-w-[15rem]"
+        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <DropdownMenuLabel className="px-3 py-2 font-normal">
+          <p className="text-foreground text-xs font-semibold">Document role</p>
+          <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug font-normal">
+            Tags how this file is used in RFP qualification and scope creep analysis.
+          </p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={role} onValueChange={(value) => void handleSelect(value as DocumentRole)}>
           {DOCUMENT_ROLES.map((option) => (
-            <button
+            <DropdownMenuRadioItem
               key={option}
-              type="button"
-              role="option"
-              aria-selected={role === option}
+              value={option}
               disabled={pending}
-              onMouseDown={(event) => event.stopPropagation()}
-              onClick={() => void handleSelect(option)}
-              className={cn(
-                'hover:bg-muted block w-full px-3 py-1.5 text-left transition-colors',
-                role === option && 'bg-muted',
-              )}
+              className="items-start py-1.5 pl-3"
             >
               <span className="text-xs font-medium">{DOCUMENT_ROLE_LABELS[option]}</span>
-              <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug">
+              <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
                 {DOCUMENT_ROLE_DESCRIPTIONS[option]}
               </span>
-            </button>
+            </DropdownMenuRadioItem>
           ))}
-        </AnchoredMenuPortal>
-      ) : null}
-    </div>
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

@@ -6,6 +6,7 @@ import {
 } from '@/components/workspace/CommandInputCard'
 import { CreepProfileGrid } from '@/components/workspace/CreepProfileGrid'
 import { ResultsProfileGrid } from '@/components/workspace/ResultsProfileGrid'
+import { RfpEvaluationPanel } from '@/components/workspace/RfpEvaluationPanel'
 import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
@@ -65,7 +66,10 @@ export function WorkspaceContent() {
         </div>
 
         {mode === 'rfp' ? (
-          <ResultsProfileGrid profiles={profiles} className="min-h-0 flex-1" />
+          <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
+            <ResultsProfileGrid profiles={profiles} className="min-w-0 flex-1" />
+            <RfpEvaluationPanel className="w-full shrink-0 lg:w-[22rem] xl:w-[24rem]" />
+          </div>
         ) : (
           <CreepProfileGrid
             profiles={creepProfiles}

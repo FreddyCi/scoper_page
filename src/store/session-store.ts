@@ -14,11 +14,29 @@ import type {
   WorkspaceView,
 } from '@/lib/types'
 import { runChatAgentTurn } from '@/services/chat-agent'
+import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getScoperClient } from '@/services/scoper-client'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
+const COMPANY_CONTEXT_STORAGE_KEY = 'bda-company-context'
+
+function readCompanyContextPreference(): string {
+  try {
+    return sessionStorage.getItem(COMPANY_CONTEXT_STORAGE_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function writeCompanyContextPreference(value: string) {
+  try {
+    sessionStorage.setItem(COMPANY_CONTEXT_STORAGE_KEY, value)
+  } catch {
+    // sessionStorage unavailable
+  }
+}
 
 function readChatStartedPreference(): boolean {
   try {
@@ -85,6 +103,9 @@ export type SessionState = {
   mode: WorkspaceMode
   documents: DocumentMeta[]
   profiles: RfpResultsProfile[]
+  evaluationBaselineProfile: RfpResultsProfile | null
+  evaluationDocId: string | null
+  companyContext: string
   creepProfiles: ScopeCreepProfile[]
   selectedCitation: CitationRef | null
   citationFocusSeq: number
@@ -105,6 +126,10 @@ export type SessionState = {
   removeDocument: (docId: string) => void
   updateDocumentRole: (docId: string, role: DocumentRole) => void
   setProfiles: (profiles: RfpResultsProfile[]) => void
+  setEvaluationBaselineProfile: (profile: RfpResultsProfile | null) => void
+  setEvaluationDocId: (docId: string | null) => void
+  setCompanyContext: (context: string) => void
+  runRfpQualification: () => Promise<void>
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
   bumpCitationFocus: () => void
@@ -143,6 +168,9 @@ const initialState = {
   mode: 'rfp' as WorkspaceMode,
   documents: [] as DocumentMeta[],
   profiles: [] as RfpResultsProfile[],
+  evaluationBaselineProfile: null as RfpResultsProfile | null,
+  evaluationDocId: null as string | null,
+  companyContext: readCompanyContextPreference(),
   creepProfiles: [] as ScopeCreepProfile[],
   selectedCitation: null as CitationRef | null,
   citationFocusSeq: 0,
@@ -212,6 +240,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       removeDocumentBytes(docId)
       const documents = state.documents.filter((doc) => doc.doc_id !== docId)
       const profiles = state.profiles.filter((p) => p.source_doc_id !== docId)
+      const evaluationBaselineProfile =
+        state.evaluationBaselineProfile?.source_doc_id === docId
+          ? null
+          : state.evaluationBaselineProfile
+      const evaluationDocId = state.evaluationDocId === docId ? null : state.evaluationDocId
       const creepProfiles = state.creepProfiles.filter(
         (p) => p.baseline_doc_id !== docId && p.candidate_doc_id !== docId,
       )
@@ -221,6 +254,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return {
         documents,
         profiles,
+        evaluationBaselineProfile,
+        evaluationDocId,
         creepProfiles,
         selectedCitation,
         activeDocId: resolveActiveDocId(
@@ -239,6 +274,39 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     })),
 
   setProfiles: (profiles) => set({ profiles }),
+
+  setEvaluationBaselineProfile: (evaluationBaselineProfile) => set({ evaluationBaselineProfile }),
+
+  setEvaluationDocId: (evaluationDocId) => set({ evaluationDocId }),
+
+  setCompanyContext: (companyContext) => {
+    writeCompanyContextPreference(companyContext)
+    set({ companyContext })
+  },
+
+  runRfpQualification: async () => {
+    const { documents, evaluationDocId, companyContext } = get()
+    if (documents.length === 0) return
+
+    const resolvedEvaluationDocId =
+      evaluationDocId ??
+      documents.find((doc) => doc.role === 'baseline')?.doc_id ??
+      null
+
+    if (!resolvedEvaluationDocId) return
+
+    const result = await buildRfpProfiles(documents, {
+      evaluationDocId: resolvedEvaluationDocId,
+      companyContext,
+    })
+
+    set({
+      evaluationDocId: resolvedEvaluationDocId,
+      evaluationBaselineProfile: result.baselineProfile,
+      profiles: result.responseProfiles,
+      workspaceView: 'profiles',
+    })
+  },
 
   setCreepProfiles: (creepProfiles) => set({ creepProfiles }),
 

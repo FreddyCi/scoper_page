@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 
 import { ingestFiles } from '@/services/ingest-router'
-import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import { compareScope } from '@/services/compare-scope'
 import type { IngestResult } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
@@ -24,9 +23,8 @@ export function useIngestPipeline() {
         commitIngestResults(results)
 
         const { mode, documents } = useSessionStore.getState()
-        if (mode === 'rfp' && documents.length > 0) {
-          const profiles = await buildRfpProfiles(documents)
-          useSessionStore.getState().setProfiles(profiles)
+        if (mode === 'rfp' && documents.length > 0 && useSessionStore.getState().evaluationDocId) {
+          await useSessionStore.getState().runRfpQualification()
         }
 
         if (mode === 'scope_creep') {

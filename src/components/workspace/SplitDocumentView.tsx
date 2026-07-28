@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
-import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import { compareScope } from '@/services/compare-scope'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -61,7 +60,6 @@ export function SplitDocumentView({
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
   const documents = useSessionStore((state) => state.documents)
-  const setProfiles = useSessionStore((state) => state.setProfiles)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
@@ -116,13 +114,14 @@ export function SplitDocumentView({
     }
 
     setBuildingProfiles(true)
-    void buildRfpProfiles(documents)
-      .then((profiles) => {
-        setProfiles(profiles)
+    void useSessionStore
+      .getState()
+      .runRfpQualification()
+      .then(() => {
         setWorkspaceView('profiles')
       })
       .catch((error) => {
-        console.error('[split-document-view] buildRfpProfiles failed', error)
+        console.error('[split-document-view] runRfpQualification failed', error)
       })
       .finally(() => {
         setBuildingProfiles(false)

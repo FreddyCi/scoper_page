@@ -175,15 +175,107 @@ function summaryForProfile(
   return `Response for ${doc.filename.replace(/\.[^.]+$/, '')} references ${citedCount} requirement area${citedCount === 1 ? '' : 's'} in extracted text; no hard failures detected by rule scan.`
 }
 
+export type BuildRfpProfilesOptions = {
+  /** Requirements / RFP document to evaluate responses against */
+  evaluationDocId?: string | null
+  /** Buyer organization context — industry, risk posture, mandatory terms */
+  companyContext?: string
+}
+
+export type RfpQualificationResult = {
+  baselineProfile: RfpResultsProfile | null
+  responseProfiles: RfpResultsProfile[]
+}
+
+function appendCompanyContext(summary: string, companyContext: string): string {
+  const trimmed = companyContext.trim()
+  if (!trimmed) return summary
+  return `${summary} Buyer context: ${trimmed}`
+}
+
+function resolveEvaluationDocId(
+  documents: DocumentMeta[],
+  evaluationDocId?: string | null,
+): string | null {
+  if (evaluationDocId && documents.some((doc) => doc.doc_id === evaluationDocId)) {
+    return evaluationDocId
+  }
+
+  const baselineRole = documents.find((doc) => doc.role === 'baseline')
+  if (baselineRole) return baselineRole.doc_id
+
+  return null
+}
+
+function buildResponseCriterionFromRule(
+  docId: string,
+  rule: CriterionRule,
+  responseBlocks: BlockRecord[],
+  baselineBlocks: BlockRecord[],
+  companyContext: string,
+  fallbackBlock?: BlockRecord,
+): CriterionResult {
+  const responseMatch = findMatchingBlock(responseBlocks, rule.keywords)
+  const baselineMatch = findMatchingBlock(baselineBlocks, rule.keywords)
+  const contextRequires = companyContext.trim().length > 0 &&
+    rule.keywords.some((pattern) => pattern.test(companyContext))
+
+  let status: CriterionStatus
+  if (responseMatch) {
+    status = rule.statusWhenFound
+  } else if (baselineMatch || contextRequires) {
+    status = rule.statusWhenMissing
+  } else {
+    status = 'warn'
+  }
+
+  const linkedBlock = responseMatch ?? fallbackBlock
+  const criterion: CriterionResult = {
+    id: `${docId}-${rule.id}`,
+    label: rule.label,
+    status,
+    detail: responseMatch
+      ? rule.detail
+      : baselineMatch
+        ? `${rule.detail} · Required in RFP baseline — review response evidence`
+        : linkedBlock
+          ? `${rule.detail} · Jump to extracted text for manual review`
+          : rule.detail,
+  }
+
+  if (linkedBlock) {
+    criterion.citation = blockToCitation(linkedBlock)
+  }
+
+  return criterion
+}
+
 export function buildProfileFromBlocks(
   doc: DocumentMeta,
   blocks: BlockRecord[],
-  docIndex: number,
+  options: { isSourceDoc?: boolean; baselineBlocks?: BlockRecord[]; companyContext?: string } = {},
 ): RfpResultsProfile {
-  const isSourceDoc = docIndex === 0
+  const isSourceDoc = options.isSourceDoc ?? false
   const fallbacks = selectFallbackBlocks(blocks, CRITERION_RULES.length)
+  const companyContext = options.companyContext ?? ''
+  const baselineBlocks = options.baselineBlocks ?? blocks
+
   const criteria = CRITERION_RULES.map((rule, index) =>
-    buildCriterionFromRule(doc.doc_id, rule, blocks, fallbacks[index]),
+    isSourceDoc
+      ? buildCriterionFromRule(doc.doc_id, rule, blocks, fallbacks[index])
+      : buildResponseCriterionFromRule(
+          doc.doc_id,
+          rule,
+          blocks,
+          baselineBlocks,
+          companyContext,
+          fallbacks[index],
+        ),
+  )
+
+  const summary = appendCompanyContext(
+    summaryForProfile(doc, criteria, isSourceDoc),
+    isSourceDoc ? '' : companyContext,
   )
 
   return {
@@ -192,10 +284,10 @@ export function buildProfileFromBlocks(
     verdict: verdictFromCriteria(criteria, isSourceDoc),
     subject: {
       name: doc.filename.replace(/\.[^.]+$/, ''),
-      role: isSourceDoc ? 'RFP source' : 'Bidder response',
+      role: isSourceDoc ? 'RFP requirements' : 'Bidder response',
     },
     criteria,
-    summary: summaryForProfile(doc, criteria, isSourceDoc),
+    summary,
   }
 }
 
@@ -205,24 +297,69 @@ export function buildProfileFromBlocks(
  */
 export async function buildRfpProfiles(
   documents: DocumentMeta[],
-): Promise<RfpResultsProfile[]> {
-  if (documents.length === 0) return []
-
-  const profiles: RfpResultsProfile[] = []
-
-  for (const [index, doc] of documents.entries()) {
-    const blocks = await fetchDocumentBlocks(doc.doc_id)
-    profiles.push(buildProfileFromBlocks(doc, blocks, index))
+  options: BuildRfpProfilesOptions = {},
+): Promise<RfpQualificationResult> {
+  if (documents.length === 0) {
+    return { baselineProfile: null, responseProfiles: [] }
   }
 
-  await persistRfpProfiles(profiles)
-  return profiles
+  const companyContext = options.companyContext ?? ''
+  const evaluationDocId = resolveEvaluationDocId(documents, options.evaluationDocId)
+  const responseDocs = documents.filter(
+    (doc) => doc.doc_id !== evaluationDocId && doc.role !== 'supporting',
+  )
+
+  let baselineProfile: RfpResultsProfile | null = null
+  let baselineBlocks: BlockRecord[] = []
+
+  if (evaluationDocId) {
+    const baselineDoc = documents.find((doc) => doc.doc_id === evaluationDocId)
+    if (baselineDoc) {
+      baselineBlocks = await fetchDocumentBlocks(baselineDoc.doc_id)
+      baselineProfile = buildProfileFromBlocks(baselineDoc, baselineBlocks, {
+        isSourceDoc: true,
+      })
+    }
+  }
+
+  const responseProfiles: RfpResultsProfile[] = []
+
+  for (const doc of responseDocs) {
+    const blocks = await fetchDocumentBlocks(doc.doc_id)
+    responseProfiles.push(
+      buildProfileFromBlocks(doc, blocks, {
+        isSourceDoc: false,
+        baselineBlocks,
+        companyContext,
+      }),
+    )
+  }
+
+  const allProfiles = [
+    ...(baselineProfile ? [baselineProfile] : []),
+    ...responseProfiles,
+  ]
+  await persistRfpProfiles(allProfiles)
+
+  return { baselineProfile, responseProfiles }
+}
+
+/** @deprecated Prefer buildRfpProfiles — returns response profiles only for ECP callers */
+export async function buildRfpProfilesLegacy(
+  documents: DocumentMeta[],
+  options?: BuildRfpProfilesOptions,
+): Promise<RfpResultsProfile[]> {
+  const result = await buildRfpProfiles(documents, options)
+  return result.baselineProfile
+    ? [result.baselineProfile, ...result.responseProfiles]
+    : result.responseProfiles
 }
 
 export async function buildRfpProfilesForDocuments(
   documents: DocumentMeta[],
+  options?: BuildRfpProfilesOptions,
 ): Promise<RfpResultsProfile[]> {
-  await buildRfpProfiles(documents)
+  await buildRfpProfiles(documents, options)
   return fetchRfpProfilesFromDuckdb()
 }
 
@@ -245,13 +382,13 @@ export async function runBuildRfpProfilesHarness(): Promise<void> {
     uploaded_at: new Date().toISOString(),
   }
 
-  const profiles = await buildRfpProfiles([document])
+  const profiles = await buildRfpProfiles([document], { evaluationDocId: document.doc_id })
 
-  if (profiles.length < 1) {
+  if (!profiles.baselineProfile) {
     throw new Error('buildRfpProfiles harness: expected at least one profile')
   }
 
-  const profile = profiles[0]
+  const profile = profiles.baselineProfile
   if (!profile || profile.criteria.length === 0) {
     throw new Error('buildRfpProfiles harness: expected criteria on profile')
   }

@@ -18,8 +18,12 @@ export function ResultsProfileGrid({
 }: ResultsProfileGridProps) {
   if (profiles.length === 0) {
     return (
-      <div className="text-muted-foreground flex min-h-[16rem] flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
-        No results profiles yet. Upload documents and run analysis to populate qualification cards.
+      <div className="text-muted-foreground flex min-h-[16rem] flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
+        <p>No bidder qualification cards yet.</p>
+        <p className="text-muted-foreground max-w-sm text-xs leading-relaxed">
+          Set a requirements profile and your organization context on the right, upload bidder
+          responses, then run qualification.
+        </p>
       </div>
     )
   }

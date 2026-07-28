@@ -16,7 +16,10 @@ function profilesNeedCitationRelink(profiles: RfpResultsProfile[]): boolean {
 export function useRelinkRfpProfilesOnView(active: boolean) {
   const documents = useSessionStore((state) => state.documents)
   const profiles = useSessionStore((state) => state.profiles)
+  const evaluationDocId = useSessionStore((state) => state.evaluationDocId)
+  const companyContext = useSessionStore((state) => state.companyContext)
   const setProfiles = useSessionStore((state) => state.setProfiles)
+  const setEvaluationBaselineProfile = useSessionStore((state) => state.setEvaluationBaselineProfile)
   const attemptedRef = useRef(false)
 
   useEffect(() => {
@@ -29,10 +32,11 @@ export function useRelinkRfpProfilesOnView(active: boolean) {
       const blocks = await fetchDocumentBlocks(documents[0]!.doc_id)
       if (blocks.length === 0) return
 
-      const rebuilt = await buildRfpProfiles(documents)
-      setProfiles(rebuilt)
+      const rebuilt = await buildRfpProfiles(documents, { evaluationDocId, companyContext })
+      setProfiles(rebuilt.responseProfiles)
+      setEvaluationBaselineProfile(rebuilt.baselineProfile)
     })().catch((error) => {
       console.error('[rfp-profiles] citation relink failed', error)
     })
-  }, [active, documents, profiles, setProfiles])
+  }, [active, companyContext, documents, evaluationDocId, profiles, setEvaluationBaselineProfile, setProfiles])
 }

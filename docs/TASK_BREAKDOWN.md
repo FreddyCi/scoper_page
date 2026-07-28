@@ -439,16 +439,18 @@ flowchart LR
 ### **ID:** BDA-031
 
 **Title:** ExtractedTextPane block list  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-023, BDA-005  
 **Priority:** Critical  
 **Description:** `ExtractedTextPane.tsx`: list blocks for active doc from DuckDB or store cache; scrollable; click block selects citation; highlight selected block.  
 **Completed Changes:**
-- 🔄 Block list UI grouped by page
-- 🔄 Selection state synced with store
+- ✅ `ExtractedTextPane.tsx` — blocks grouped by page, scrollable list, selected row highlight
+- ✅ `document-blocks.ts` + `use-document-blocks.ts` — fetch blocks from DuckDB, group by page
+- ✅ Block click calls `selectCitation(blockToCitation(block))`; scrolls selected row into view
+- ✅ Wired in `WorkspaceContent` split view beside `DocumentViewer`
 **Test Strategy:** Blocks match parsed text; click selects block_id.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Upload PDF → split view shows grouped blocks; click row sets `selectedCitation` and highlights PDF
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.4, Plan §SplitDocumentView  
 

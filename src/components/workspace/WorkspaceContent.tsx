@@ -5,6 +5,7 @@ import {
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
+import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { useSessionStore, useShowLanding } from '@/store/session-store'
@@ -90,14 +91,14 @@ export function WorkspaceContent() {
               Viewing{' '}
               <span className="text-foreground font-medium">{activeDoc.filename}</span>
             </p>
-            <DocumentViewer
-              document={activeDoc}
-              initialPage={initialPage}
-              className="min-h-0 flex-1"
-            />
-            <p className="text-subtle-foreground shrink-0 text-xs">
-              Extracted text pane — BDA-031 · Split layout — BDA-032
-            </p>
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+              <ExtractedTextPane docId={activeDoc.doc_id} className="min-h-[20rem]" />
+              <DocumentViewer
+                document={activeDoc}
+                initialPage={initialPage}
+                className="min-h-[20rem]"
+              />
+            </div>
           </>
         ) : (
           <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">

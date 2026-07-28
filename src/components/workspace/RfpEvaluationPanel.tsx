@@ -1,15 +1,20 @@
 import { useMemo, useState } from 'react'
-import {
-  Building2Icon,
-  ClipboardListIcon,
-  LightbulbIcon,
-  PlayIcon,
-  SparklesIcon,
-} from 'lucide-react'
 
+import { AiSupportLoadingCard } from '@/components/ui/ai-support-loading-card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
+import { draftCompanyContext } from '@/lib/draft-company-context'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { setDocumentRole } from '@/services/document-roles'
@@ -41,6 +46,9 @@ const CONTEXT_GUIDE = [
   'Weighting — what matters most if trade-offs appear',
 ] as const
 
+const fieldSelectClass =
+  'border-border bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 h-8 w-full rounded-lg border px-2.5 text-sm transition-colors outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50'
+
 function appendContextSnippet(current: string, snippet: string): string {
   const trimmed = current.trim()
   if (!trimmed) return snippet
@@ -57,75 +65,86 @@ function CompanyContextAssistant({
   onApply: (value: string) => void
   focusAreas: string[]
 }) {
+  const [generating, setGenerating] = useState(false)
+
+  async function handleGenerate() {
+    setGenerating(true)
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 2200))
+      onApply(draftCompanyContext(focusAreas))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  if (generating) {
+    return <AiSupportLoadingCard label="Generating" buttonLabel="Generate buyer profile" />
+  }
+
   return (
-    <div className="border-border/70 bg-workspace/60 space-y-3 rounded-lg border p-3">
-      <div className="flex items-start gap-2">
-        <SparklesIcon className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
-        <div className="min-w-0 space-y-1">
-          <p className="text-foreground text-xs font-medium">How to fill this in</p>
-          <p className="text-muted-foreground text-[11px] leading-relaxed">
-            Plain-language buyer notes steer qualification. Mention keywords like{' '}
-            <span className="text-foreground">CMMI</span>,{' '}
-            <span className="text-foreground">insurance</span>, or{' '}
-            <span className="text-foreground">fixed-fee</span> to treat matching RFP clauses as
-            mandatory.
-          </p>
+    <Card size="sm" className="bg-muted/30 ring-foreground/10 gap-3 py-3">
+      <CardHeader className="gap-1 px-3 pb-0">
+        <CardTitle className="text-sm">Buyer profile helper</CardTitle>
+        <CardDescription className="text-xs leading-relaxed">
+          Plain-language notes steer qualification. Mention terms like CMMI, insurance, or
+          fixed-fee to treat matching RFP clauses as mandatory.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3 px-3">
+        <ul className="text-muted-foreground list-disc space-y-1 pl-4 text-xs leading-relaxed">
+          {CONTEXT_GUIDE.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+
+        <div className="flex flex-wrap gap-1.5">
+          {CONTEXT_SNIPPETS.map((snippet) => (
+            <Button
+              key={snippet}
+              type="button"
+              variant="outline"
+              size="xs"
+              className="h-auto whitespace-normal px-2 py-1 text-left"
+              onClick={() => onApply(appendContextSnippet(companyContext, snippet))}
+            >
+              {snippet}
+            </Button>
+          ))}
         </div>
-      </div>
 
-      <ul className="text-muted-foreground space-y-1 pl-5 text-[11px] leading-snug">
-        {CONTEXT_GUIDE.map((item) => (
-          <li key={item} className="list-disc">
-            {item}
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex flex-wrap gap-1.5">
-        {CONTEXT_SNIPPETS.map((snippet) => (
-          <button
-            key={snippet}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button type="button" size="sm" className="sm:flex-1" onClick={() => void handleGenerate()}>
+            Generate buyer profile
+          </Button>
+          <Button
             type="button"
-            onClick={() => onApply(appendContextSnippet(companyContext, snippet))}
-            className="border-border bg-surface text-foreground hover:bg-muted rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors"
+            size="sm"
+            variant="outline"
+            className="sm:flex-1"
+            onClick={() => onApply(CONTEXT_STARTER)}
           >
-            + {snippet}
-          </button>
-        ))}
-      </div>
-
-      <Button
-        type="button"
-        size="xs"
-        variant="outline"
-        className="w-full"
-        onClick={() => onApply(CONTEXT_STARTER)}
-      >
-        <LightbulbIcon className="size-3" />
-        {companyContext.trim() ? 'Replace with starter template' : 'Insert starter template'}
-      </Button>
-
-      {focusAreas.length > 0 ? (
-        <div className="border-border/60 border-t pt-2">
-          <p className="text-muted-foreground mb-1.5 text-[10px] font-medium tracking-wide uppercase">
-            Detected in requirements doc
-          </p>
-          <div className="flex flex-wrap gap-1">
-            {focusAreas.map((area) => (
-              <span
-                key={area}
-                className="bg-surface text-muted-foreground rounded-md px-1.5 py-0.5 text-[10px]"
-              >
-                {area}
-              </span>
-            ))}
-          </div>
-          <p className="text-muted-foreground mt-1.5 text-[10px] leading-snug">
-            Add stricter buyer rules above if your bar is higher than the RFP minimum.
-          </p>
+            {companyContext.trim() ? 'Use starter template' : 'Insert starter template'}
+          </Button>
         </div>
-      ) : null}
-    </div>
+
+        {focusAreas.length > 0 ? (
+          <div className="border-border/70 space-y-2 border-t pt-3">
+            <p className="text-muted-foreground text-xs font-medium">Detected in requirements doc</p>
+            <div className="flex flex-wrap gap-1.5">
+              {focusAreas.map((area) => (
+                <Badge key={area} variant="secondary">
+                  {area}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Add stricter buyer rules above if your bar is higher than the RFP minimum.
+            </p>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -180,54 +199,46 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   }
 
   return (
-    <aside
+    <Card
       className={cn(
-        'border-border bg-surface flex h-full min-h-0 flex-col overflow-hidden rounded-xl border shadow-panel',
+        'border-border bg-surface shadow-panel flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-xl border py-0 ring-0',
         className,
       )}
     >
-      <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto p-4">
-        <div className="flex flex-col gap-4">
-          <header className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Building2Icon className="text-muted-foreground size-4" />
-              <h2 className="text-foreground text-sm font-semibold">Evaluation setup</h2>
-            </div>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              Describe your organization and pick the requirements document. Bidder uploads are scored
-              against that baseline.
-            </p>
-          </header>
+      <CardHeader className="border-border/70 shrink-0 border-b px-4 py-4">
+        <CardTitle>Evaluation setup</CardTitle>
+        <CardDescription>
+          Describe your organization and pick the requirements document. Bidder uploads are scored
+          against that baseline.
+        </CardDescription>
+      </CardHeader>
 
-          <section className="space-y-2">
-            <label className="text-foreground block text-xs font-medium" htmlFor="company-context">
-              Your organization
-            </label>
-            <textarea
+      <CardContent className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex flex-col gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="company-context">Your organization</Label>
+            <Textarea
               id="company-context"
               value={companyContext}
               onChange={(event) => setCompanyContext(event.target.value)}
               rows={4}
               placeholder="e.g. Enterprise IT buyer · requires CMMI L3 · $2M liability minimum · fixed-fee pricing preferred"
-              className="border-border bg-workspace text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm leading-relaxed outline-none focus-visible:ring-3"
             />
             <CompanyContextAssistant
               companyContext={companyContext}
               onApply={setCompanyContext}
               focusAreas={focusAreas}
             />
-          </section>
+          </div>
 
-          <section className="space-y-2">
-            <label className="text-foreground block text-xs font-medium" htmlFor="evaluation-doc">
-              Requirements profile (RFP / SOW)
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="evaluation-doc">Requirements profile (RFP / SOW)</Label>
             {requirementDocs.length === 0 ? (
               <div className="border-border bg-muted/30 rounded-lg border border-dashed px-3 py-4 text-center">
-                <p className="text-muted-foreground text-xs">Upload an RFP or requirements doc first.</p>
+                <p className="text-muted-foreground text-sm">Upload an RFP or requirements doc first.</p>
                 <Button
                   type="button"
-                  size="xs"
+                  size="sm"
                   variant="outline"
                   className="mt-2"
                   onClick={() => setUploadPopupOpen(true)}
@@ -240,7 +251,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                 id="evaluation-doc"
                 value={evaluationDocId ?? ''}
                 onChange={(event) => void handleBaselineChange(event.target.value)}
-                className="border-border bg-workspace text-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
+                className={fieldSelectClass}
               >
                 <option value="">Select requirements document…</option>
                 {requirementDocs.map((doc) => (
@@ -250,10 +261,11 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                 ))}
               </select>
             )}
-            <p className="text-muted-foreground text-[11px] leading-snug">
-              This document defines what bidders must meet. It won&apos;t appear as a qualification card.
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              This document defines what bidders must meet. It won&apos;t appear as a qualification
+              card.
             </p>
-          </section>
+          </div>
 
           <Button
             type="button"
@@ -262,7 +274,6 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
             disabled={!evaluationDocId || running}
             onClick={() => void handleRunQualification()}
           >
-            <PlayIcon className="size-3.5" />
             {running ? 'Running qualification…' : 'Run qualification'}
           </Button>
 
@@ -272,13 +283,19 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
             </p>
           ) : null}
 
-          {baselineProfile ? (
-            <section className="border-border/70 space-y-2 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <ClipboardListIcon className="text-muted-foreground size-3.5" />
-                <h3 className="text-foreground text-xs font-semibold">Requirements extracted</h3>
+          {running ? (
+            <AiSupportLoadingCard
+              label="Qualifying"
+              buttonLabel="Running qualification"
+            />
+          ) : null}
+
+          {baselineProfile && !running ? (
+            <section className="border-border/70 space-y-3 border-t pt-4">
+              <div className="space-y-1">
+                <h3 className="text-sm font-medium">Requirements extracted</h3>
+                <p className="text-muted-foreground text-xs leading-relaxed">{baselineProfile.summary}</p>
               </div>
-              <p className="text-muted-foreground text-[11px] leading-relaxed">{baselineProfile.summary}</p>
               <div className="space-y-2">
                 {baselineProfile.criteria.map((criterion) => (
                   <CriterionRow
@@ -292,7 +309,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
             </section>
           ) : null}
         </div>
-      </div>
-    </aside>
+      </CardContent>
+    </Card>
   )
 }

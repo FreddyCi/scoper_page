@@ -18,6 +18,11 @@ import {
 } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from '@/components/ui/progress'
 import type { PendingUpload } from '@/hooks/use-upload-queue'
 import {
   UPLOAD_ACCEPT_STRING,
@@ -31,6 +36,7 @@ type UploadPopupProps = {
   open: boolean
   items: PendingUpload[]
   isSubmitting: boolean
+  uploadProgress: number
   onOpenChange: (open: boolean) => void
   onAddFiles: (files: FileList | File[]) => void
   onRemoveFile: (id: string) => void
@@ -112,6 +118,7 @@ export function UploadPopup({
   open,
   items,
   isSubmitting,
+  uploadProgress,
   onOpenChange,
   onAddFiles,
   onRemoveFile,
@@ -272,9 +279,17 @@ export function UploadPopup({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-foreground text-sm font-medium">Queued files</p>
                   <p className="text-muted-foreground text-xs">
-                    {items.length} {items.length === 1 ? 'file' : 'files'} ready
+                    {isSubmitting
+                      ? `${uploadProgress}%`
+                      : `${items.length} ${items.length === 1 ? 'file' : 'files'} ready`}
                   </p>
                 </div>
+                {isSubmitting ? (
+                  <Progress value={uploadProgress} className="w-full">
+                    <ProgressLabel>Upload progress</ProgressLabel>
+                    <ProgressValue />
+                  </Progress>
+                ) : null}
                 <div className="border-border/70 bg-workspace/40 max-h-52 space-y-2 overflow-y-auto rounded-xl border p-3">
                   {items.map((item) => (
                     <UploadFileRow

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import { ingestFiles } from '@/services/ingest-router'
+import { ingestFiles, type IngestProgress } from '@/services/ingest-router'
 import { compareScope } from '@/services/compare-scope'
 import type { IngestResult } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
@@ -15,9 +15,15 @@ export function useIngestPipeline() {
   const commitIngestResults = useSessionStore((s) => s.commitIngestResults)
 
   const enqueueFiles = useCallback(
-    async (files: File[]): Promise<IngestPipelineResult> => {
+    async (
+      files: File[],
+      callbacks?: { onProgress?: (progress: IngestProgress) => void },
+    ): Promise<IngestPipelineResult> => {
       const ocrEnabled = useSessionStore.getState().ocrEnabled
-      const { results, errors } = await ingestFiles(files, { ocrEnabled })
+      const { results, errors } = await ingestFiles(files, {
+        ocrEnabled,
+        onProgress: callbacks?.onProgress,
+      })
 
       if (results.length > 0) {
         commitIngestResults(results)

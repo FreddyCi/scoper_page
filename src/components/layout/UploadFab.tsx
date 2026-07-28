@@ -19,6 +19,7 @@ export function UploadFab({ className }: UploadFabProps) {
     items,
     count,
     isSubmitting,
+    uploadProgress,
     addFiles,
     removeFile,
     clearQueue,
@@ -43,6 +44,7 @@ export function UploadFab({ className }: UploadFabProps) {
         open={open}
         items={items}
         isSubmitting={isSubmitting}
+        uploadProgress={uploadProgress}
         onOpenChange={handleOpenChange}
         onAddFiles={addFiles}
         onRemoveFile={removeFile}

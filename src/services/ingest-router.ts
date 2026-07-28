@@ -21,6 +21,14 @@ const XLS_MIME = 'application/vnd.ms-excel'
 
 export type IngestOptions = {
   ocrEnabled?: boolean
+  onProgress?: (progress: IngestProgress) => void
+}
+
+export type IngestProgress = {
+  completed: number
+  total: number
+  percent: number
+  currentFilename: string
 }
 
 export type IngestFileError = {
@@ -286,8 +294,17 @@ export async function ingestFiles(
 ): Promise<IngestBatchResult> {
   const results: IngestResult[] = []
   const errors: IngestFileError[] = []
+  const total = files.length
 
-  for (const file of files) {
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index]
+    options.onProgress?.({
+      completed: index,
+      total,
+      percent: total === 0 ? 0 : Math.round((index / total) * 100),
+      currentFilename: file.name,
+    })
+
     try {
       results.push(await ingestFile(file, options))
     } catch (error) {
@@ -296,6 +313,13 @@ export async function ingestFiles(
         error: error instanceof Error ? error.message : String(error),
       })
     }
+
+    options.onProgress?.({
+      completed: index + 1,
+      total,
+      percent: total === 0 ? 100 : Math.round(((index + 1) / total) * 100),
+      currentFilename: file.name,
+    })
   }
 
   return { results, errors }

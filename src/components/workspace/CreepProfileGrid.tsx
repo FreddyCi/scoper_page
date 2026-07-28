@@ -47,7 +47,7 @@ export function CreepProfileGrid({
 
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
-      <header className="flex shrink-0 items-center justify-between gap-3">
+      <header className="flex shrink-0 flex-col gap-1">
         <div className="flex items-center gap-2">
           <GitCompareArrowsIcon className="text-muted-foreground size-4" />
           <h2 className="text-foreground text-sm font-semibold">Scope creep profiles</h2>
@@ -55,7 +55,7 @@ export function CreepProfileGrid({
             {displayProfiles.length}
           </span>
         </div>
-        <p className="text-subtle-foreground hidden text-xs sm:block">
+        <p className="text-muted-foreground text-xs">
           Click a flag to open split view with evidence highlight
         </p>
       </header>

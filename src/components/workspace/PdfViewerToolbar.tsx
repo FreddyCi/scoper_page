@@ -16,6 +16,8 @@ type PdfViewerToolbarProps = {
   onPageChange: (page: number) => void
   onScaleChange: (scale: number) => void
   theme?: 'light' | 'dark'
+  hint?: string | null
+  hintTone?: 'muted' | 'error'
   className?: string
 }
 
@@ -32,6 +34,8 @@ export function PdfViewerToolbar({
   onPageChange,
   onScaleChange,
   theme = 'light',
+  hint = null,
+  hintTone = 'muted',
   className,
 }: PdfViewerToolbarProps) {
   const currentPage = clampPage(page, totalPages)
@@ -40,13 +44,12 @@ export function PdfViewerToolbar({
   return (
     <div
       className={cn(
-        'flex flex-wrap items-center gap-2 border-b px-3 py-2',
-        isDark
-          ? 'border-zinc-700 bg-zinc-900 text-zinc-100'
-          : 'border-border bg-surface',
+        'border-b',
+        isDark ? 'border-zinc-700 bg-zinc-900 text-zinc-100' : 'border-border bg-surface',
         className,
       )}
     >
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2">
       <p
         className={cn(
           'mr-auto min-w-0 truncate text-sm font-medium',
@@ -136,6 +139,24 @@ export function PdfViewerToolbar({
           <ZoomInIcon className="size-4" />
         </Button>
       </div>
+      </div>
+
+      {hint ? (
+        <p
+          className={cn(
+            'border-t px-3 py-1.5 text-xs',
+            hintTone === 'error'
+              ? isDark
+                ? 'border-zinc-700 text-red-300'
+                : 'border-border text-destructive'
+              : isDark
+                ? 'border-zinc-700 text-zinc-400'
+                : 'border-border text-muted-foreground',
+          )}
+        >
+          {hint}
+        </p>
+      ) : null}
     </div>
   )
 }

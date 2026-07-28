@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { fetchDocumentBlocks } from '@/services/document-blocks'
 import type { BlockRecord } from '@/lib/types'
@@ -8,7 +8,7 @@ export function useDocumentBlocks(docId: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  useEffect(() => {
+  const refresh = useCallback(async () => {
     if (!docId) {
       setBlocks([])
       setError(null)
@@ -16,28 +16,34 @@ export function useDocumentBlocks(docId: string | null) {
       return
     }
 
-    let cancelled = false
     setLoading(true)
     setError(null)
 
-    void fetchDocumentBlocks(docId)
-      .then((rows) => {
-        if (!cancelled) setBlocks(rows)
-      })
-      .catch((loadError) => {
-        if (!cancelled) {
-          setBlocks([])
-          setError(loadError instanceof Error ? loadError : new Error(String(loadError)))
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
+    try {
+      const rows = await fetchDocumentBlocks(docId)
+      setBlocks(rows)
+    } catch (loadError) {
+      setBlocks([])
+      setError(loadError instanceof Error ? loadError : new Error(String(loadError)))
+    } finally {
+      setLoading(false)
     }
   }, [docId])
 
-  return { blocks, loading, error }
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
+
+  useEffect(() => {
+    function handleBlocksChanged(event: Event) {
+      const detail = (event as CustomEvent<{ docId?: string }>).detail
+      if (detail?.docId && detail.docId !== docId) return
+      void refresh()
+    }
+
+    window.addEventListener('scoper:blocks-changed', handleBlocksChanged)
+    return () => window.removeEventListener('scoper:blocks-changed', handleBlocksChanged)
+  }, [docId, refresh])
+
+  return { blocks, loading, error, refresh }
 }

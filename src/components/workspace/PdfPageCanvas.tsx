@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
+import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
-import { citationViewportHighlight } from '@/lib/citation-bbox'
-import type { CitationRef } from '@/lib/types'
+import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
+import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
+import type { Bbox, CitationRef } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 type PdfPageCanvasProps = {
@@ -12,6 +13,9 @@ type PdfPageCanvasProps = {
   scale: number
   citation?: CitationRef | null
   hasBlockComment?: boolean
+  editable?: boolean
+  adjusting?: boolean
+  onRegionCommit?: (bbox: Bbox) => void | Promise<void>
   className?: string
 }
 
@@ -42,6 +46,9 @@ export function PdfPageCanvas({
   scale,
   citation,
   hasBlockComment = false,
+  editable = false,
+  adjusting = false,
+  onRegionCommit,
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -49,7 +56,24 @@ export function PdfPageCanvas({
   const [rendering, setRendering] = useState(false)
   const [renderError, setRenderError] = useState<string | null>(null)
   const [highlight, setHighlight] = useState<ReturnType<typeof citationViewportHighlight>>(null)
+  const [viewport, setViewport] = useState<PageViewport | null>(null)
   const [canvasLayout, setCanvasLayout] = useState<CanvasLayout | null>(null)
+
+  const handleHighlightCommit = useCallback(
+    async (cssRect: { left: number; top: number; width: number; height: number }) => {
+      if (!viewport || !canvasLayout || !onRegionCommit) return
+
+      const viewportRect = {
+        left: cssRect.left / canvasLayout.scaleX,
+        top: cssRect.top / canvasLayout.scaleY,
+        width: cssRect.width / canvasLayout.scaleX,
+        height: cssRect.height / canvasLayout.scaleY,
+      }
+      const bbox = viewportRectToLiteParseBbox(viewportRect, viewport)
+      await onRegionCommit(bbox)
+    },
+    [canvasLayout, onRegionCommit, viewport],
+  )
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -67,6 +91,7 @@ export function PdfPageCanvas({
         if (cancelled) return
 
         const viewport = page.getViewport({ scale })
+        setViewport(viewport)
         const context = canvas.getContext('2d')
         if (!context) throw new Error('Canvas 2D context unavailable')
 
@@ -110,6 +135,7 @@ export function PdfPageCanvas({
       .then((page) => {
         if (cancelled) return
         const viewport = page.getViewport({ scale })
+        setViewport(viewport)
         setHighlight(citationViewportHighlight(citation, pageNumber, viewport))
       })
       .catch((error) => {
@@ -160,23 +186,34 @@ export function PdfPageCanvas({
 
       {canvasLayout && scaledHighlight ? (
         <div
-          className="pointer-events-none absolute inset-0"
+          className="absolute inset-0"
           style={{ width: canvasLayout.width, height: canvasLayout.height }}
         >
-          <div
-            className={cn(
-              'absolute rounded-sm border-2 bg-sky-400/25',
-              hasBlockComment
-                ? 'border-amber-500 ring-2 ring-amber-400/70'
-                : 'border-sky-500',
-            )}
-            style={{
-              left: scaledHighlight.left,
-              top: scaledHighlight.top,
-              width: scaledHighlight.width,
-              height: scaledHighlight.height,
-            }}
-          />
+          {editable ? (
+            <PdfHighlightEditor
+              rect={scaledHighlight}
+              boundsWidth={canvasLayout.width}
+              boundsHeight={canvasLayout.height}
+              hasBlockComment={hasBlockComment}
+              disabled={adjusting}
+              onCommit={handleHighlightCommit}
+            />
+          ) : (
+            <div
+              className={cn(
+                'pointer-events-none absolute rounded-sm border-2 bg-sky-400/25',
+                hasBlockComment
+                  ? 'border-amber-500 ring-2 ring-amber-400/70'
+                  : 'border-sky-500',
+              )}
+              style={{
+                left: scaledHighlight.left,
+                top: scaledHighlight.top,
+                width: scaledHighlight.width,
+                height: scaledHighlight.height,
+              }}
+            />
+          )}
         </div>
       ) : null}
 

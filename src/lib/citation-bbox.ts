@@ -63,6 +63,23 @@ export function citationViewportHighlight(
   return bboxToViewportHighlight(citation.bbox, viewport)
 }
 
+/** Map viewport pixel rect back to stored LiteParse bbox coordinates. */
+export function viewportRectToLiteParseBbox(
+  rect: ViewportHighlightRect,
+  viewport: PageViewport,
+): Bbox {
+  const pageHeightPts = viewport.height / viewport.scale
+  const [x1, y1] = viewport.convertToPdfPoint(rect.left, rect.top)
+  const [x2, y2] = viewport.convertToPdfPoint(rect.left + rect.width, rect.top + rect.height)
+  const pdfBbox = {
+    x: Math.min(x1, x2),
+    y: Math.min(y1, y2),
+    width: Math.abs(x2 - x1),
+    height: Math.abs(y2 - y1),
+  }
+  return pdfUserSpaceToLiteParseBbox(pdfBbox, pageHeightPts)
+}
+
 /** Render scale matching a target DPI relative to PDF points (72 dpi). */
 export function pdfRenderScaleForDpi(dpi = LITEPARSE_BBOX_DPI): number {
   return dpi / 72

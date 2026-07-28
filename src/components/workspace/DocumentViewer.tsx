@@ -5,7 +5,11 @@ import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
+import type { Bbox } from '@/lib/types'
+import { blockToCitation } from '@/lib/types'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
+import { redefineBlockRegion } from '@/services/block-adjust'
+import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 import type { DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -63,6 +67,8 @@ export function DocumentViewer({
   const { pdf, loading, error } = usePdfDocument(pdfBytes)
   const [page, setPage] = useState(initialPage)
   const [scale, setScale] = useState(1.25)
+  const [adjustingRegion, setAdjustingRegion] = useState(false)
+  const [adjustError, setAdjustError] = useState<string | null>(null)
 
   const totalPages = pdf?.numPages ?? 0
   const activeCitation =
@@ -102,6 +108,35 @@ export function DocumentViewer({
     setPage(resolved)
     onPageChange?.(resolved)
   }
+
+  async function handleRegionAdjust(bbox: Bbox) {
+    if (!activeCitation?.block_id) return
+
+    setAdjustError(null)
+    setAdjustingRegion(true)
+    try {
+      const newBlock = await redefineBlockRegion({
+        docId: document.doc_id,
+        pageNum: currentPage,
+        bbox,
+        seedBlockId: activeCitation.block_id,
+      })
+      focusCitation(blockToCitation(newBlock))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to adjust block region'
+      setAdjustError(message)
+      console.error('[document-viewer] block region adjust failed', error)
+    } finally {
+      setAdjustingRegion(false)
+    }
+  }
+
+  const canAdjustRegion = Boolean(
+    activeCitation?.bbox &&
+      activeCitation.page_num === currentPage &&
+      !loading &&
+      pdf,
+  )
 
   if (document.mime === 'text/markdown') {
     return <MarkdownDocumentViewer document={document} className={className} />
@@ -153,6 +188,15 @@ export function DocumentViewer({
         totalPages={totalPages}
         scale={scale}
         theme={theme}
+        hint={
+          adjustError ??
+          (canAdjustRegion
+            ? adjustingRegion
+              ? 'Updating block region…'
+              : 'Drag the highlight to adjust the extract block'
+            : null)
+        }
+        hintTone={adjustError ? 'error' : 'muted'}
         onPageChange={updatePage}
         onScaleChange={setScale}
       />
@@ -180,6 +224,9 @@ export function DocumentViewer({
               scale={scale}
               citation={activeCitation}
               hasBlockComment={activeCitationHasComment}
+              editable={canAdjustRegion}
+              adjusting={adjustingRegion}
+              onRegionCommit={handleRegionAdjust}
             />
           </div>
         )}

@@ -58,6 +58,7 @@ function ExtractViewHelpButton() {
         <p className="text-foreground text-sm font-semibold">Extract &amp; comments</p>
         <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
           <li>Click a block to highlight the matching passage in the PDF preview.</li>
+          <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
           <li>Use Export PDF for toggleable markup (hide/show in your PDF viewer) or burned-in notes.</li>
           <li>

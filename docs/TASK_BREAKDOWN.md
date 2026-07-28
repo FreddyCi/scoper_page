@@ -715,17 +715,18 @@ flowchart LR
 ### **ID:** BDA-061
 
 **Title:** Implement @demo star extensions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-060, BDA-050, BDA-021, BDA-020  
 **Priority:** High  
 **Description:** Extensions: `@demo/bitgpu`, `@demo/liteparse`, `@demo/duckdb`, `@demo/document` with capabilities listed in plan. Document extension composes parse, search, build_rfp_profiles, find_clause, compare_scope, flag_creep.  
 **Completed Changes:**
-- 🔄 ecp/extensions/*.ts
-- 🔄 Register at boot
-- 🔄 Capability handlers delegate to services
+- ✅ `src/ecp/extensions/*.ts` — `@demo/bitgpu` (ping, probe, status), `@demo/liteparse` (ping, parse), `@demo/duckdb` (ping, query, insertDocument, insertBlock), `@demo/document` (parse, search, find_clause, build_rfp_profiles, compare_scope, flag_creep stubs)
+- ✅ `registerDemoExtensions()` at ECP boot; `invokeEcpCapability()` + `listCapabilities()` on registry / `window.ECP`
+- ✅ Capability handlers delegate to `scoper-client`, `liteparse-client`, `duckdb-client`, ingest/search/find-clause/profile services
+- ✅ `runDemoExtensionsHarness()` — pings, find_clause ECP vs direct parity, compare_scope stub smoke
 **Test Strategy:** Agent tool call routed through ECP → same result as direct service call.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §ECP + bitgpu extensions table  
 

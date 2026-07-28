@@ -5,8 +5,28 @@ import {
   RegistryRegistrationDeniedError,
   ScoperEcpRegistry,
   type BrowserEcpGlobal,
-  type EcpExtensionDefinition,
 } from '@/ecp/browser-registry'
+import {
+  BITGPU_CAPABILITIES,
+  BITGPU_EXTENSION_ID,
+} from '@/ecp/extensions/bitgpu'
+import {
+  DOCUMENT_CAPABILITIES,
+  DOCUMENT_EXTENSION_ID,
+} from '@/ecp/extensions/document'
+import {
+  DUCKDB_CAPABILITIES,
+  DUCKDB_EXTENSION_ID,
+} from '@/ecp/extensions/duckdb'
+import {
+  LITEPARSE_CAPABILITIES,
+  LITEPARSE_EXTENSION_ID,
+} from '@/ecp/extensions/liteparse'
+import { registerDemoExtensions } from '@/ecp/register-extensions'
+import type { DemoExtensionDefinition } from '@/ecp/types'
+import type { FindClauseResult } from '@/lib/types'
+import { findClause } from '@/services/find-clause'
+import { ingestFile } from '@/services/ingest-router'
 
 export const SCOPER_ECP_ENV_ID = '@demo/scoper-browser'
 export const SCOPER_ECP_GLOBAL_NAME = 'ECP'
@@ -36,13 +56,14 @@ function createOperationalEcp(nextRegistry: ScoperEcpRegistry): BrowserOperation
   }
 }
 
-/** Initialize ECP-compatible browser registry and expose `window.ECP` (BDA-060) */
+/** Initialize ECP-compatible browser registry, register @demo extensions, expose `window.ECP` (BDA-060/061) */
 export async function initScoperEcpEnvironment(): Promise<BrowserOperationalEcp> {
   if (operationalEcp) return operationalEcp
   if (initPromise) return initPromise
 
   initPromise = Promise.resolve().then(() => {
     registry = new ScoperEcpRegistry({ policy: REGISTRY_CONTROL_POLICY })
+    registerDemoExtensions(registry)
     operationalEcp = createOperationalEcp(registry)
     return operationalEcp
   })
@@ -56,6 +77,15 @@ export function getScoperEcp(): BrowserOperationalEcp | null {
 
 export function getScoperEcpRegistry(): ScoperEcpRegistry | null {
   return registry
+}
+
+/** Invoke a registered capability by id (e.g. `@demo/document.find_clause`) */
+export async function invokeEcpCapability(
+  capabilityId: string,
+  input: unknown = {},
+): Promise<unknown> {
+  const ecp = await initScoperEcpEnvironment()
+  return ecp.invokeCapability(capabilityId, input)
 }
 
 /** Freeze extension registry before the first agent run */
@@ -74,8 +104,60 @@ export function isScoperEcpRegistryFrozen(): boolean {
   return registry?.isFrozen() ?? false
 }
 
-function harnessStubExtension(suffix: string): EcpExtensionDefinition {
-  return { id: `@demo/${suffix}` }
+function harnessStubExtension(suffix: string): DemoExtensionDefinition {
+  return {
+    id: `@demo/${suffix}`,
+    capabilities: {
+      ping: async () => 'ok',
+    },
+  }
+}
+
+const REQUIRED_DEMO_CAPABILITIES = [
+  BITGPU_CAPABILITIES.ping,
+  BITGPU_CAPABILITIES.probe,
+  BITGPU_CAPABILITIES.status,
+  LITEPARSE_CAPABILITIES.ping,
+  LITEPARSE_CAPABILITIES.parse,
+  DUCKDB_CAPABILITIES.ping,
+  DUCKDB_CAPABILITIES.query,
+  DUCKDB_CAPABILITIES.insertDocument,
+  DUCKDB_CAPABILITIES.insertBlock,
+  DOCUMENT_CAPABILITIES.parse,
+  DOCUMENT_CAPABILITIES.search,
+  DOCUMENT_CAPABILITIES.find_clause,
+  DOCUMENT_CAPABILITIES.build_rfp_profiles,
+  DOCUMENT_CAPABILITIES.compare_scope,
+  DOCUMENT_CAPABILITIES.flag_creep,
+] as const
+
+const REQUIRED_DEMO_EXTENSIONS = [
+  BITGPU_EXTENSION_ID,
+  LITEPARSE_EXTENSION_ID,
+  DUCKDB_EXTENSION_ID,
+  DOCUMENT_EXTENSION_ID,
+] as const
+
+function assertFindClauseParity(
+  direct: FindClauseResult,
+  viaEcp: FindClauseResult,
+): void {
+  if (direct.summary !== viaEcp.summary) {
+    throw new Error('runDemoExtensionsHarness failed: find_clause summary mismatch')
+  }
+
+  if (direct.matches.length !== viaEcp.matches.length) {
+    throw new Error('runDemoExtensionsHarness failed: find_clause match count mismatch')
+  }
+
+  for (let index = 0; index < direct.matches.length; index += 1) {
+    const left = direct.matches[index]
+    const right = viaEcp.matches[index]
+
+    if (left.citation.block_id !== right.citation.block_id) {
+      throw new Error('runDemoExtensionsHarness failed: find_clause citation block_id mismatch')
+    }
+  }
 }
 
 /** Dev harness — ECP init, namespace policy, registry freeze (BDA-060) */
@@ -90,10 +172,21 @@ export async function runEcpEnvironmentHarness(): Promise<void> {
     throw new Error('runEcpEnvironmentHarness failed: registry should not start frozen')
   }
 
+  for (const extensionId of REQUIRED_DEMO_EXTENSIONS) {
+    const registered = ecp
+      .getRegistry()
+      .listExtensions()
+      .some((extension) => extension.id === extensionId)
+
+    if (!registered) {
+      throw new Error(`runEcpEnvironmentHarness failed: missing extension ${extensionId}`)
+    }
+  }
+
   await ecp.registerExtension(harnessStubExtension('harness-allowed'))
 
   try {
-    await ecp.registerExtension({ id: '@unsafe/denied' })
+    await ecp.registerExtension({ id: '@unsafe/denied', capabilities: {} })
     throw new Error('runEcpEnvironmentHarness failed: expected denied @unsafe extension')
   } catch (error) {
     if (!(error instanceof RegistryRegistrationDeniedError)) {
@@ -121,10 +214,71 @@ export async function runEcpEnvironmentHarness(): Promise<void> {
   registry = null
 }
 
+/** Dev harness — @demo extensions registered; ECP invoke matches direct service calls (BDA-061) */
+export async function runDemoExtensionsHarness(): Promise<void> {
+  operationalEcp = null
+  initPromise = null
+  registry = null
+
+  const ecp = await initScoperEcpEnvironment()
+  const registered = new Set(ecp.listCapabilities())
+
+  for (const capabilityId of REQUIRED_DEMO_CAPABILITIES) {
+    if (!registered.has(capabilityId)) {
+      throw new Error(`runDemoExtensionsHarness failed: missing capability ${capabilityId}`)
+    }
+  }
+
+  const bitgpuPing = await ecp.invokeCapability(BITGPU_CAPABILITIES.ping)
+  if (typeof bitgpuPing !== 'string' || !bitgpuPing.trim()) {
+    throw new Error('runDemoExtensionsHarness failed: @demo/bitgpu.ping returned empty response')
+  }
+
+  const liteparsePing = await ecp.invokeCapability(LITEPARSE_CAPABILITIES.ping)
+  if (typeof liteparsePing !== 'string' || !liteparsePing.trim()) {
+    throw new Error('runDemoExtensionsHarness failed: @demo/liteparse.ping returned empty response')
+  }
+
+  const duckdbPing = await ecp.invokeCapability(DUCKDB_CAPABILITIES.ping)
+  if (typeof duckdbPing !== 'string' || !duckdbPing.trim()) {
+    throw new Error('runDemoExtensionsHarness failed: @demo/duckdb.ping returned empty response')
+  }
+
+  const response = await fetch('/sample/minimal.pdf')
+  if (!response.ok) {
+    throw new Error(`runDemoExtensionsHarness failed: sample PDF (${response.status})`)
+  }
+
+  const blob = await response.blob()
+  const ingested = await ingestFile(new File([blob], 'minimal.pdf', { type: 'application/pdf' }), {
+    ocrEnabled: false,
+  })
+
+  const query = 'find indemnification'
+  const direct = await findClause(query, { docIds: [ingested.doc_id], limit: 3 })
+  const viaEcp = (await ecp.invokeCapability(DOCUMENT_CAPABILITIES.find_clause, {
+    query,
+    docIds: [ingested.doc_id],
+    limit: 3,
+  })) as FindClauseResult
+
+  assertFindClauseParity(direct, viaEcp)
+
+  const compareScope = (await ecp.invokeCapability(DOCUMENT_CAPABILITIES.compare_scope, {
+    baselineDocId: ingested.doc_id,
+    candidateDocId: ingested.doc_id,
+  })) as { summary?: string }
+
+  if (!compareScope.summary?.includes('compare_scope stub')) {
+    throw new Error('runDemoExtensionsHarness failed: compare_scope stub summary missing')
+  }
+}
+
 export {
   RegistryFrozenError,
   RegistryRegistrationDeniedError,
   createBrowserEcpGlobal,
   type BrowserEcpGlobal,
-  type EcpExtensionDefinition,
+  type DemoExtensionDefinition,
 }
+

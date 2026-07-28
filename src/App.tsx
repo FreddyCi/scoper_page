@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
-import { initScoperEcpEnvironment, runEcpEnvironmentHarness } from '@/ecp/environment'
+import {
+  initScoperEcpEnvironment,
+  runDemoExtensionsHarness,
+  runEcpEnvironmentHarness,
+} from '@/ecp/environment'
 import { runChatAgentHarness, runChatCitationChipHarness, runFindClauseAgentHarness } from '@/services/chat-agent'
 import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
@@ -37,6 +41,7 @@ function App() {
         await runIngestHarness()
         await runBuildRfpProfilesHarness()
         await runScoperHarness()
+        await runDemoExtensionsHarness()
         await runChatAgentHarness()
         await runChatCitationsHarness()
         await runChatCitationChipHarness()

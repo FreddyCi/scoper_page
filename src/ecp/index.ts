@@ -6,11 +6,37 @@ export {
   getScoperEcp,
   getScoperEcpRegistry,
   initScoperEcpEnvironment,
+  invokeEcpCapability,
   isScoperEcpRegistryFrozen,
+  runDemoExtensionsHarness,
   runEcpEnvironmentHarness,
   RegistryFrozenError,
   RegistryRegistrationDeniedError,
   type BrowserEcpGlobal,
   type BrowserOperationalEcp,
-  type EcpExtensionDefinition,
+  type DemoExtensionDefinition,
 } from '@/ecp/environment'
+
+export {
+  BITGPU_CAPABILITIES,
+  BITGPU_EXTENSION_ID,
+} from '@/ecp/extensions/bitgpu'
+export {
+  DOCUMENT_CAPABILITIES,
+  DOCUMENT_EXTENSION_ID,
+} from '@/ecp/extensions/document'
+export {
+  DUCKDB_CAPABILITIES,
+  DUCKDB_EXTENSION_ID,
+} from '@/ecp/extensions/duckdb'
+export {
+  LITEPARSE_CAPABILITIES,
+  LITEPARSE_EXTENSION_ID,
+} from '@/ecp/extensions/liteparse'
+export { registerDemoExtensions, DEMO_EXTENSIONS } from '@/ecp/register-extensions'
+export {
+  capabilityId,
+  parseCapabilityId,
+  EcpCapabilityNotFoundError,
+  type EcpCapabilityHandler,
+} from '@/ecp/types'

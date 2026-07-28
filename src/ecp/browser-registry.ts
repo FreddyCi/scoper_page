@@ -2,6 +2,8 @@ import {
   evaluateRegistryRegistration,
   type RegistryControlConfig,
 } from '@/ecp/registry-control'
+import type { DemoExtensionDefinition } from '@/ecp/types'
+import { EcpCapabilityNotFoundError, parseCapabilityId } from '@/ecp/types'
 
 export class RegistryFrozenError extends Error {
   readonly code = 'REGISTRY_FROZEN' as const
@@ -24,23 +26,19 @@ export class RegistryRegistrationDeniedError extends Error {
   }
 }
 
-export type EcpExtensionDefinition = {
-  id: string
-}
-
 type ScoperEcpRegistryOptions = {
   policy: RegistryControlConfig
 }
 
-/** In-browser extension registry with freeze + namespace policy (BDA-060) */
+/** In-browser extension registry with freeze, policy, and capability invoke (BDA-060/061) */
 export class ScoperEcpRegistry {
   private frozen = false
   private freezeReason: string | undefined
-  private readonly extensions = new Map<string, EcpExtensionDefinition>()
+  private readonly extensions = new Map<string, DemoExtensionDefinition>()
 
   constructor(private readonly options: ScoperEcpRegistryOptions) {}
 
-  registerExtension(definition: EcpExtensionDefinition): void {
+  registerExtension(definition: DemoExtensionDefinition): void {
     if (this.frozen) {
       throw new RegistryFrozenError(this.freezeReason)
     }
@@ -62,20 +60,48 @@ export class ScoperEcpRegistry {
     return this.frozen
   }
 
-  listExtensions(): EcpExtensionDefinition[] {
+  listExtensions(): DemoExtensionDefinition[] {
     return [...this.extensions.values()]
+  }
+
+  listCapabilities(): string[] {
+    const ids: string[] = []
+
+    for (const extension of this.extensions.values()) {
+      for (const name of Object.keys(extension.capabilities)) {
+        ids.push(`${extension.id}.${name}`)
+      }
+    }
+
+    return ids.sort()
+  }
+
+  async invokeCapability(capabilityId: string, input: unknown = {}): Promise<unknown> {
+    const { extensionId, name } = parseCapabilityId(capabilityId)
+    const extension = this.extensions.get(extensionId)
+
+    if (!extension) {
+      throw new EcpCapabilityNotFoundError(capabilityId)
+    }
+
+    const handler = extension.capabilities[name]
+    if (!handler) {
+      throw new EcpCapabilityNotFoundError(capabilityId)
+    }
+
+    return handler(input)
   }
 }
 
 export type BrowserEcpGlobal = {
-  registerExtension: (definition: EcpExtensionDefinition) => Promise<void>
+  registerExtension: (definition: DemoExtensionDefinition) => Promise<void>
   freezeRegistry: (reason?: string) => void
   isRegistryFrozen: () => boolean
+  invokeCapability: (capabilityId: string, input?: unknown) => Promise<unknown>
+  listCapabilities: () => string[]
 }
 
-export function createBrowserEcpGlobal(
-  registry: ScoperEcpRegistry,
-): BrowserEcpGlobal {
+export function createBrowserEcpGlobal(registry: ScoperEcpRegistry): BrowserEcpGlobal {
   return {
     async registerExtension(definition) {
       registry.registerExtension(definition)
@@ -85,6 +111,12 @@ export function createBrowserEcpGlobal(
     },
     isRegistryFrozen() {
       return registry.isFrozen()
+    },
+    async invokeCapability(capabilityId, input) {
+      return registry.invokeCapability(capabilityId, input)
+    },
+    listCapabilities() {
+      return registry.listCapabilities()
     },
   }
 }

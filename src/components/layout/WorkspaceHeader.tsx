@@ -31,6 +31,18 @@ const SESSION_PRESETS = [
   'Scope creep check',
 ]
 
+function ScoperLogoMark({ className }: { className?: string }) {
+  return (
+    <img
+      src="/scoper-logo.svg"
+      alt="Scoper"
+      width={28}
+      height={28}
+      className={cn('size-7 shrink-0', className)}
+    />
+  )
+}
+
 function SessionNameDropdown() {
   const sessionName = useSessionStore((s) => s.sessionName)
   const setSessionName = useSessionStore((s) => s.setSessionName)
@@ -182,7 +194,10 @@ export function WorkspaceHeaderTopRow({
         className,
       )}
     >
-      <SessionNameDropdown />
+      <div className="flex min-w-0 items-center gap-2.5">
+        <ScoperLogoMark />
+        <SessionNameDropdown />
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
         <WorkspaceModeToggle />

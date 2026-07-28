@@ -77,7 +77,7 @@ export function AppShell({ children }: AppShellProps) {
                   {children ?? <WorkspaceContent />}
                 </div>
 
-                <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] py-3 text-xs">
+                <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] pt-0 pb-3 text-xs">
                   <UploadFab />
                   <span>Workspace</span>
                 </footer>

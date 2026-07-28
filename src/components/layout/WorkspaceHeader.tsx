@@ -153,12 +153,14 @@ export function WorkspaceHeaderTopRow({
 
         {chatCollapsed ? (
           <Button
-            size="icon-lg"
+            type="button"
+            size="icon"
             variant="secondary"
+            className="shadow-elevated border-border bg-surface size-10 rounded-full border"
             aria-label="Open chat"
             onClick={toggleChatCollapsed}
           >
-            <MessageCircleMoreIcon />
+            <MessageCircleMoreIcon className="size-4" />
           </Button>
         ) : null}
       </div>

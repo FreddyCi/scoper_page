@@ -21,7 +21,13 @@ import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/ci
 import { runBlockCommentsHarness } from '@/services/block-comments'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
-import { runIngestHarness, runMarkdownIngestHarness, runDocxIngestHarness, runXlsxIngestHarness } from '@/services/ingest-router'
+import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
+import {
+  runIngestHarness,
+  runMarkdownIngestHarness,
+  runDocxIngestHarness,
+  runXlsxIngestHarness,
+} from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
 import { runOcrHarness } from '@/services/ocr-client'
 import { runSessionStoreHarness } from '@/store/session-store'
@@ -49,6 +55,7 @@ function App() {
         await runMarkdownIngestHarness()
         await runDocxIngestHarness()
         await runXlsxIngestHarness()
+        await runImportPdfCommentsHarness()
         await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()

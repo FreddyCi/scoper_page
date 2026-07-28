@@ -30,6 +30,17 @@ export function useCommentedBlockIds(docId: string | null) {
     void refresh()
   }, [refresh])
 
+  useEffect(() => {
+    function handleCommentsImported(event: Event) {
+      const detail = (event as CustomEvent<{ docId?: string }>).detail
+      if (detail?.docId && detail.docId !== docId) return
+      void refresh()
+    }
+
+    window.addEventListener('scoper:comments-imported', handleCommentsImported)
+    return () => window.removeEventListener('scoper:comments-imported', handleCommentsImported)
+  }, [docId, refresh])
+
   return { blockIds, loading, refresh }
 }
 

@@ -2,16 +2,31 @@ import { isDocumentRole } from '@/lib/document-roles'
 import { pdfUserSpaceToLiteParseBbox } from '@/lib/citation-bbox'
 import { loadPdfDocument } from '@/lib/pdfjs-viewer'
 import type { Bbox, BlockRecord, DocumentRole } from '@/lib/types'
+import { fetchDocumentBlocks } from '@/services/document-blocks'
 import { insertBlockComment } from '@/services/block-comments'
 import { persistDocumentRole } from '@/services/document-roles'
 
 type PdfRect = [number, number, number, number]
 
+type PdfJsAnnotation = {
+  subtype?: string
+  contents?: string
+  contentsObj?: { str?: string }
+  title?: string
+  titleObj?: { str?: string }
+  rect?: PdfRect | number[]
+  quadPoints?: number[]
+  overlaidText?: string
+  textContent?: string[]
+}
+
 type ImportedPdfAnnotation = {
   pageNum: number
   subtype: string
   contents: string
-  rect: PdfRect
+  overlaidText: string
+  rect: PdfRect | null
+  quadPoints: number[] | null
   title?: string
 }
 
@@ -56,6 +71,30 @@ function blockHasBbox(block: BlockRecord): block is BlockRecord & Bbox {
   )
 }
 
+function normalizeMatchText(value: string): string {
+  return value.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+function readAnnotationContents(annotation: PdfJsAnnotation): string {
+  if (typeof annotation.contents === 'string' && annotation.contents.trim()) {
+    return annotation.contents.trim()
+  }
+  if (typeof annotation.contentsObj?.str === 'string' && annotation.contentsObj.str.trim()) {
+    return annotation.contentsObj.str.trim()
+  }
+  if (Array.isArray(annotation.textContent) && annotation.textContent.length > 0) {
+    return annotation.textContent.join('').trim()
+  }
+  return ''
+}
+
+function readAnnotationTitle(annotation: PdfJsAnnotation): string | undefined {
+  if (typeof annotation.title === 'string' && annotation.title.trim()) {
+    return annotation.title.trim()
+  }
+  return annotation.titleObj?.str?.trim()
+}
+
 function parseCommentTexts(contents: string): string[] {
   const trimmed = contents.trim()
   if (!trimmed) return []
@@ -94,6 +133,38 @@ function looksLikeScoperExportFilename(filename: string): boolean {
   return /-scoper-(markup|export)\.pdf$/i.test(filename)
 }
 
+function bboxFromAnnotationGeometry(
+  annotation: ImportedPdfAnnotation,
+  pageHeight: number,
+): Bbox | null {
+  if (annotation.quadPoints && annotation.quadPoints.length >= 8) {
+    const xs = [
+      annotation.quadPoints[0],
+      annotation.quadPoints[2],
+      annotation.quadPoints[4],
+      annotation.quadPoints[6],
+    ]
+    const ys = [
+      annotation.quadPoints[1],
+      annotation.quadPoints[3],
+      annotation.quadPoints[5],
+      annotation.quadPoints[7],
+    ]
+    return pdfUserSpaceToLiteParseBbox(
+      {
+        x: Math.min(...xs),
+        y: Math.min(...ys),
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - Math.min(...ys),
+      },
+      pageHeight,
+    )
+  }
+
+  if (!annotation.rect) return null
+  return pdfUserSpaceToLiteParseBbox(rectToPdfBbox(annotation.rect), pageHeight)
+}
+
 /** Read Scoper export metadata embedded during annotated PDF export. */
 export async function readScoperExportMetadata(
   bytes: Uint8Array,
@@ -122,23 +193,29 @@ async function extractMarkupAnnotations(
 
   for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
     const page = await pdf.getPage(pageNum)
-    const pageAnnotations = await page.getAnnotations()
+    const pageAnnotations = (await page.getAnnotations()) as PdfJsAnnotation[]
 
     for (const annotation of pageAnnotations) {
-      const subtype = annotation.subtype ?? ''
-      if (subtype !== 'Highlight' && subtype !== 'Text') continue
+      const subtype = (annotation.subtype ?? '').toLowerCase()
+      if (subtype !== 'highlight' && subtype !== 'text') continue
 
-      const contents = typeof annotation.contents === 'string' ? annotation.contents.trim() : ''
-      const title = typeof annotation.title === 'string' ? annotation.title : undefined
+      const contents = readAnnotationContents(annotation)
+      const title = readAnnotationTitle(annotation)
       if (!contents && title !== 'Scoper') continue
 
-      if (!Array.isArray(annotation.rect) || annotation.rect.length !== 4) continue
+      const rect =
+        Array.isArray(annotation.rect) && annotation.rect.length === 4
+          ? (annotation.rect as PdfRect)
+          : null
 
       annotations.push({
         pageNum,
         subtype,
         contents,
-        rect: annotation.rect as PdfRect,
+        overlaidText:
+          typeof annotation.overlaidText === 'string' ? annotation.overlaidText.trim() : '',
+        rect,
+        quadPoints: Array.isArray(annotation.quadPoints) ? annotation.quadPoints : null,
         title,
       })
     }
@@ -184,7 +261,54 @@ function findBestMatchingBlock(
     }
   }
 
-  return nearest
+  return nearestDistance <= 240 ? nearest : null
+}
+
+function findBlockByOverlaidText(
+  blocks: BlockRecord[],
+  pageNum: number,
+  overlaidText: string,
+): BlockRecord | null {
+  const needle = normalizeMatchText(overlaidText)
+  if (needle.length < 2) return null
+
+  let best: BlockRecord | null = null
+  let bestScore = 0
+
+  for (const block of blocks) {
+    if (block.page_num !== pageNum) continue
+    const haystack = normalizeMatchText(block.text)
+    if (!haystack) continue
+
+    if (haystack.includes(needle) || needle.includes(haystack)) {
+      const score = Math.min(haystack.length, needle.length)
+      if (score > bestScore) {
+        bestScore = score
+        best = block
+      }
+    }
+  }
+
+  return best
+}
+
+function resolveBlockForAnnotation(
+  blocks: BlockRecord[],
+  annotation: ImportedPdfAnnotation,
+  pageHeight: number,
+): BlockRecord | null {
+  const targetBbox = bboxFromAnnotationGeometry(annotation, pageHeight)
+  if (targetBbox) {
+    const byBbox = findBestMatchingBlock(blocks, annotation.pageNum, targetBbox)
+    if (byBbox) return byBbox
+  }
+
+  if (annotation.overlaidText) {
+    const byText = findBlockByOverlaidText(blocks, annotation.pageNum, annotation.overlaidText)
+    if (byText) return byText
+  }
+
+  return null
 }
 
 /** Restore review notes from a Scoper markup PDF into DuckDB block comments. */
@@ -192,7 +316,7 @@ export async function importPdfMarkupComments(options: {
   docId: string
   bytes: Uint8Array
   filename: string
-  blocks: BlockRecord[]
+  blocks?: BlockRecord[]
 }): Promise<ImportPdfCommentsResult> {
   const metadata = await readScoperExportMetadata(options.bytes, options.filename)
   if (!metadata.isScoperExport) {
@@ -213,6 +337,7 @@ export async function importPdfMarkupComments(options: {
     }
   }
 
+  const blocks = options.blocks ?? (await fetchDocumentBlocks(options.docId))
   const pdf = await loadPdfDocument(options.bytes)
   const annotations = await extractMarkupAnnotations(pdf)
 
@@ -229,8 +354,7 @@ export async function importPdfMarkupComments(options: {
 
     const page = await pdf.getPage(annotation.pageNum)
     const pageHeight = page.getViewport({ scale: 1 }).height
-    const liteParseBbox = pdfUserSpaceToLiteParseBbox(rectToPdfBbox(annotation.rect), pageHeight)
-    const block = findBestMatchingBlock(options.blocks, annotation.pageNum, liteParseBbox)
+    const block = resolveBlockForAnnotation(blocks, annotation, pageHeight)
 
     if (!block) {
       skippedAnnotations += 1
@@ -249,6 +373,24 @@ export async function importPdfMarkupComments(options: {
     await persistDocumentRole(options.docId, metadata.role)
   }
 
+  if (import.meta.env.DEV) {
+    console.debug('[import-pdf-comments]', {
+      filename: options.filename,
+      annotations: annotations.length,
+      importedCount,
+      matchedBlocks: matchedBlockIds.size,
+      skippedAnnotations,
+    })
+  }
+
+  if (importedCount > 0) {
+    window.dispatchEvent(
+      new CustomEvent('scoper:comments-imported', {
+        detail: { docId: options.docId },
+      }),
+    )
+  }
+
   return {
     importedCount,
     matchedBlocks: matchedBlockIds.size,
@@ -260,7 +402,6 @@ export async function importPdfMarkupComments(options: {
 /** Dev harness — export markup PDF, re-ingest, and verify comments round-trip. */
 export async function runImportPdfCommentsHarness(): Promise<void> {
   const { exportAnnotatedPdf } = await import('@/services/export-annotated-pdf')
-  const { fetchDocumentBlocks } = await import('@/services/document-blocks')
   const { fetchCommentsForBlock, insertBlockComment } = await import('@/services/block-comments')
   const { ingestFile } = await import('@/services/ingest-router')
 
@@ -296,14 +437,17 @@ export async function runImportPdfCommentsHarness(): Promise<void> {
   })
   const reingested = await ingestFile(exportedFile, { ocrEnabled: false })
   const reloadedBlocks = await fetchDocumentBlocks(reingested.doc_id)
-  const commentedBlock = reloadedBlocks.find((block) => block.page_num === firstBlock.page_num)
 
-  if (!commentedBlock) {
-    throw new Error('runImportPdfCommentsHarness failed: expected blocks after re-ingest')
+  let restored = false
+  for (const block of reloadedBlocks) {
+    const comments = await fetchCommentsForBlock(block.block_id)
+    if (comments.some((comment) => comment.text.includes('Round-trip review note.'))) {
+      restored = true
+      break
+    }
   }
 
-  const comments = await fetchCommentsForBlock(commentedBlock.block_id)
-  if (!comments.some((comment) => comment.text.includes('Round-trip review note'))) {
+  if (!restored) {
     throw new Error('runImportPdfCommentsHarness failed: imported comment not restored')
   }
 

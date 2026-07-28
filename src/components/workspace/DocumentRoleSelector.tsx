@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
   DOCUMENT_ROLE_LABELS,
@@ -79,31 +80,36 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
 
       <DropdownMenuContent
         align="start"
-        className="min-w-[15rem]"
+        sideOffset={6}
+        className="w-72 p-0"
         onClick={(event) => event.stopPropagation()}
         onMouseDown={(event) => event.stopPropagation()}
       >
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-3 py-2 font-normal">
-            <p className="text-foreground text-xs font-semibold">Document role</p>
-            <p className="text-muted-foreground mt-0.5 text-[10px] leading-snug font-normal">
-              Tags how this file is used in RFP qualification and scope creep analysis.
-            </p>
+          <DropdownMenuLabel className="px-0 py-0 font-normal">
+            <MenuOptionHeader
+              title="Document role"
+              description="Tags how this file is used in RFP qualification and scope creep analysis."
+            />
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup value={role} onValueChange={(value) => void handleSelect(value as DocumentRole)}>
+        <DropdownMenuRadioGroup
+          value={role}
+          onValueChange={(value) => void handleSelect(value as DocumentRole)}
+          className="p-1"
+        >
           {DOCUMENT_ROLES.map((option) => (
             <DropdownMenuRadioItem
               key={option}
               value={option}
               disabled={pending}
-              className="items-start py-1.5 pl-3"
+              className="items-start rounded-md py-2.5 pr-9 pl-3 [&_[data-slot=dropdown-menu-radio-item-indicator]]:top-2.5"
             >
-              <span className="text-xs font-medium">{DOCUMENT_ROLE_LABELS[option]}</span>
-              <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
-                {DOCUMENT_ROLE_DESCRIPTIONS[option]}
-              </span>
+              <MenuOptionContent
+                title={DOCUMENT_ROLE_LABELS[option]}
+                description={DOCUMENT_ROLE_DESCRIPTIONS[option]}
+              />
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

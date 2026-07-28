@@ -7,9 +7,13 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
@@ -120,19 +124,36 @@ function SplitDocumentViewFooter({
               <DownloadIcon className="size-3.5" />
               {exportLoading ? 'Exporting…' : exportLabel}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => onExportClick('markup')}>
-                Toggleable markup
-                <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
-                  Highlights and notes you can hide in Preview or Acrobat
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onExportClick('burned-in')}>
-                Burned-in notes
-                <span className="text-muted-foreground mt-0.5 block text-[10px] leading-snug font-normal">
-                  Always-visible yellow boxes on the page
-                </span>
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-72 p-0">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="px-0 py-0 font-normal">
+                  <MenuOptionHeader
+                    title="Export PDF"
+                    description="Choose how review notes and highlights appear in the exported file."
+                  />
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <div className="p-1">
+                <DropdownMenuItem
+                  className="items-start rounded-md px-3 py-2.5"
+                  onClick={() => onExportClick('markup')}
+                >
+                  <MenuOptionContent
+                    title="Toggleable markup"
+                    description="Highlights and notes you can hide in Preview or Acrobat. Best for re-importing comments."
+                  />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="items-start rounded-md px-3 py-2.5"
+                  onClick={() => onExportClick('burned-in')}
+                >
+                  <MenuOptionContent
+                    title="Burned-in notes"
+                    description="Always-visible yellow boxes on the page for sharing outside PDF viewers."
+                  />
+                </DropdownMenuItem>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}

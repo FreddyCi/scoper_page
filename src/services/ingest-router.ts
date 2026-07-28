@@ -139,11 +139,12 @@ async function ingestPdf(
   await persistIngest(document, parsed.blocks)
 
   if (scoperMeta.isScoperExport && scoperMeta.commentMode !== 'burned-in') {
+    const { fetchDocumentBlocks } = await import('@/services/document-blocks')
     await importPdfMarkupComments({
       docId,
       bytes,
       filename: file.name,
-      blocks: parsed.blocks,
+      blocks: await fetchDocumentBlocks(docId),
     })
   }
 

@@ -623,17 +623,20 @@ flowchart LR
 ### **ID:** BDA-051
 
 **Title:** MessageScroller chat transcript integration  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-011, BDA-003, BDA-050  
 **Priority:** Critical  
 **Description:** Wire ChatSidebar: MessageScrollerProvider with autoScroll, scrollAnchor on user messages, defaultScrollPosition last-anchor. Map chat turns to MessageScrollerItem. Stream assistant tokens into growing message.  
 **Completed Changes:**
-- 🔄 Chat message state in store or local hook
-- 🔄 Streaming append to assistant message
-- 🔄 MessageScrollerButton jump-to-latest
+- ✅ `chat-agent.ts` — `runChatAgentTurn` orchestrates Scoper stream or rich stub fallback
+- ✅ Session store — `beginChatTurn`, `appendAssistantText`, `finalizeAssistantMessage`, `chatGenerating`, `chatModelStatus`
+- ✅ `ChatTranscript` — MessageScrollerProvider (autoScroll, last-anchor), user scroll anchors, jump-to-latest button
+- ✅ `AssistantMessageBody` — streaming cursor + token append UI
+- ✅ `ChatComposer` — disabled while generating / model loading
+- ✅ `runChatAgentHarness()` in dev harness chain
 **Test Strategy:** Send message → user row anchors; assistant streams without scroll jump when at live edge.  
 **Test Results:**
-- 🔄 Pending
+- ✅ `pnpm build` passes; dev harness covers stub reply path (WebGPU optional)
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.7, PRD §8.3 chat stream metric  
 

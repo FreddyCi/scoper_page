@@ -15,12 +15,15 @@ type ChatComposerProps = {
   className?: string
 }
 
-/** Composer shell — wired to bitgpu in BDA-052 */
+/** Composer shell — sends prompts through Scoper chat agent (BDA-051) */
 export function ChatComposer({ className }: ChatComposerProps) {
   const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
+  const chatGenerating = useSessionStore((s) => s.chatGenerating)
+  const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
   const [draft, setDraft] = useState('')
 
-  const canSend = draft.trim().length > 0
+  const canSend = draft.trim().length > 0 && !chatGenerating
+  const isBusy = chatGenerating || chatModelStatus === 'loading'
 
   function handleSend() {
     if (!canSend) return
@@ -51,7 +54,10 @@ export function ChatComposer({ className }: ChatComposerProps) {
               handleSend()
             }
           }}
-          placeholder="Ask the agent… / for skills, @ for context"
+          placeholder={
+            isBusy ? 'Agent is responding…' : 'Ask the agent… / for skills, @ for context'
+          }
+          disabled={isBusy}
           className="text-foreground placeholder:text-subtle-foreground min-h-[5rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
         />
       </div>

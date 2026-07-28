@@ -12,6 +12,15 @@ type AssistantMessageBodyProps = {
 export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
   const rich = message.rich
 
+  if (message.streaming) {
+    return (
+      <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
+        {message.text || 'Thinking…'}
+        <span className="bg-foreground/70 ml-0.5 inline-block h-4 w-0.5 animate-pulse align-[-2px]" />
+      </p>
+    )
+  }
+
   if (!rich) {
     return <p className="text-foreground text-sm leading-relaxed">{message.text}</p>
   }

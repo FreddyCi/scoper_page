@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { runChatAgentHarness } from '@/services/chat-agent'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
@@ -25,6 +26,7 @@ function App() {
         await runIngestHarness()
         await runBuildRfpProfilesHarness()
         await runScoperHarness()
+        await runChatAgentHarness()
         await runCitationBridgeHarness()
         await runCitationClickHarness()
         runResultsProfileUiHarness()

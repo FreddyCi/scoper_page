@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 
-import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type {
   ChatActionProposal,
   ChatActionStatus,
@@ -14,7 +13,9 @@ import type {
   WorkspaceMode,
   WorkspaceView,
 } from '@/lib/types'
+import { runChatAgentTurn } from '@/services/chat-agent'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
+import { getScoperClient } from '@/services/scoper-client'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
@@ -77,6 +78,8 @@ function mapChatActions(
   })
 }
 
+export type ChatModelStatus = 'idle' | 'loading' | 'ready' | 'generating' | 'unavailable'
+
 export type SessionState = {
   sessionName: string
   mode: WorkspaceMode
@@ -88,6 +91,8 @@ export type SessionState = {
   chatCollapsed: boolean
   chatStarted: boolean
   chatMessages: ChatMessage[]
+  chatGenerating: boolean
+  chatModelStatus: ChatModelStatus
   workspaceView: WorkspaceView
   activeDocId: string | null
   uploadPopupOpen: boolean
@@ -106,6 +111,14 @@ export type SessionState = {
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
   sendChatPrompt: (text: string) => void
+  beginChatTurn: (text: string) => { userMessage: ChatMessage; assistantMessage: ChatMessage }
+  appendAssistantText: (messageId: string, delta: string) => void
+  finalizeAssistantMessage: (
+    messageId: string,
+    patch: Pick<ChatMessage, 'text' | 'rich'>,
+  ) => void
+  setChatGenerating: (generating: boolean) => void
+  setChatModelStatus: (status: ChatModelStatus) => void
   updateChatAction: (
     messageId: string,
     actionId: string,
@@ -136,6 +149,8 @@ const initialState = {
   chatCollapsed: readInitialChatCollapsed(),
   chatStarted: readChatStartedPreference(),
   chatMessages: [] as ChatMessage[],
+  chatGenerating: false,
+  chatModelStatus: 'idle' as ChatModelStatus,
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
   uploadPopupOpen: false,
@@ -252,28 +267,26 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }),
 
   sendChatPrompt: (text) => {
-    const trimmed = text.trim()
-    if (!trimmed) return
+    void runChatAgentTurn(text)
+  },
 
+  beginChatTurn: (text) => {
+    const trimmed = text.trim()
     const state = get()
     const isFirstPrompt = !state.chatStarted
+
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       text: trimmed,
       created_at: new Date().toISOString(),
     }
-    const rich = buildRichAssistantReply({
-      prompt: trimmed,
-      mode: state.mode,
-      documents: state.documents,
-      activeDocId: state.activeDocId,
-    })
+
     const assistantMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'assistant',
-      text: rich.paragraphs[0] ?? 'Ready to help with your documents.',
-      rich,
+      text: '',
+      streaming: true,
       created_at: new Date().toISOString(),
     }
 
@@ -285,9 +298,33 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({
       chatStarted: true,
       chatCollapsed: isFirstPrompt ? false : state.chatCollapsed,
+      chatGenerating: true,
+      chatModelStatus: state.chatModelStatus === 'unavailable' ? 'unavailable' : 'generating',
       chatMessages: [...state.chatMessages, userMessage, assistantMessage],
     })
+
+    return { userMessage, assistantMessage }
   },
+
+  appendAssistantText: (messageId, delta) =>
+    set((state) => ({
+      chatMessages: state.chatMessages.map((message) =>
+        message.id === messageId ? { ...message, text: message.text + delta } : message,
+      ),
+    })),
+
+  finalizeAssistantMessage: (messageId, patch) =>
+    set((state) => ({
+      chatMessages: state.chatMessages.map((message) =>
+        message.id === messageId
+          ? { ...message, ...patch, streaming: false }
+          : message,
+      ),
+    })),
+
+  setChatGenerating: (chatGenerating) => set({ chatGenerating }),
+
+  setChatModelStatus: (chatModelStatus) => set({ chatModelStatus }),
 
   updateChatAction: (messageId, actionId, patch) =>
     set((state) => ({
@@ -308,10 +345,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   clearChat: () => {
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
+    getScoperClient().resetConversation()
     set({
       chatStarted: false,
       chatCollapsed: true,
       chatMessages: [],
+      chatGenerating: false,
+      chatModelStatus: 'idle',
     })
   },
 
@@ -357,11 +397,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     clearDocumentBytesCache()
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
+    getScoperClient().resetConversation()
     set({
       ...initialState,
       chatStarted: false,
       chatCollapsed: true,
       chatMessages: [],
+      chatGenerating: false,
+      chatModelStatus: 'idle',
     })
   },
 }))
@@ -484,16 +527,6 @@ export function runSessionStoreHarness(): void {
   store.toggleChatCollapsed()
   if (useSessionStore.getState().chatCollapsed === beforeToggle) {
     throw new Error('toggleChatCollapsed failed')
-  }
-
-  store.sendChatPrompt('Harness smoke test')
-  const afterChat = useSessionStore.getState()
-  if (
-    !afterChat.chatStarted ||
-    afterChat.chatCollapsed ||
-    afterChat.chatMessages.length < 2
-  ) {
-    throw new Error('sendChatPrompt failed')
   }
 
   store.clearChat()

@@ -156,6 +156,8 @@ export type ChatMessage = {
   role: ChatMessageRole
   text: string
   rich?: AssistantChatContent
+  /** True while Scoper tokens are streaming into this assistant turn */
+  streaming?: boolean
   created_at: string
 }
 

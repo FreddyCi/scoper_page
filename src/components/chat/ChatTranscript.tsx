@@ -12,11 +12,22 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
+import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
-/** MessageScroller transcript region — replaced by bitgpu chat in BDA-051 */
+const MODEL_STATUS_COPY = {
+  idle: null,
+  loading: 'Loading Bonsai 1.7B…',
+  ready: null,
+  generating: 'Generating…',
+  unavailable: 'On-device model unavailable — using demo replies',
+} as const
+
+/** MessageScroller transcript with Scoper streaming assistant turns (BDA-051) */
 export function ChatTranscript() {
   const chatMessages = useSessionStore((s) => s.chatMessages)
+  const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
+  const statusLabel = MODEL_STATUS_COPY[chatModelStatus]
 
   if (chatMessages.length === 0) {
     return (
@@ -27,45 +38,52 @@ export function ChatTranscript() {
   }
 
   return (
-    <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
-      <MessageScroller className="min-h-0 flex-1">
-        <MessageScrollerViewport>
-          <MessageScrollerContent className="gap-4 px-1">
-            {chatMessages.map((item) => {
-              const isUser = item.role === 'user'
+    <div className="flex min-h-0 flex-1 flex-col gap-2">
+      {statusLabel ? (
+        <p className="text-muted-foreground shrink-0 px-1 text-xs">{statusLabel}</p>
+      ) : null}
 
-              return (
-                <MessageScrollerItem
-                  key={item.id}
-                  messageId={item.id}
-                  scrollAnchor={isUser}
-                >
-                  <MessageGroup>
-                    <Message align={isUser ? 'end' : 'start'}>
-                      <MessageContent>
-                        <div
-                          className={
-                            isUser
-                              ? 'bg-muted text-foreground max-w-[92%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed'
-                              : 'text-foreground w-full max-w-none space-y-1'
-                          }
-                        >
-                          {isUser ? (
-                            item.text
-                          ) : (
-                            <AssistantMessageBody message={item} />
-                          )}
-                        </div>
-                      </MessageContent>
-                    </Message>
-                  </MessageGroup>
-                </MessageScrollerItem>
-              )
-            })}
-          </MessageScrollerContent>
-        </MessageScrollerViewport>
-        <MessageScrollerButton direction="end" />
-      </MessageScroller>
-    </MessageScrollerProvider>
+      <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
+        <MessageScroller className="min-h-0 flex-1">
+          <MessageScrollerViewport>
+            <MessageScrollerContent className="gap-4 px-1">
+              {chatMessages.map((item) => {
+                const isUser = item.role === 'user'
+
+                return (
+                  <MessageScrollerItem
+                    key={item.id}
+                    messageId={item.id}
+                    scrollAnchor={isUser}
+                    className={cn(item.streaming && 'scroll-mt-4')}
+                  >
+                    <MessageGroup>
+                      <Message align={isUser ? 'end' : 'start'}>
+                        <MessageContent>
+                          <div
+                            className={
+                              isUser
+                                ? 'bg-muted text-foreground max-w-[92%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed'
+                                : 'text-foreground w-full max-w-none space-y-1'
+                            }
+                          >
+                            {isUser ? (
+                              item.text
+                            ) : (
+                              <AssistantMessageBody message={item} />
+                            )}
+                          </div>
+                        </MessageContent>
+                      </Message>
+                    </MessageGroup>
+                  </MessageScrollerItem>
+                )
+              })}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton direction="end" />
+        </MessageScroller>
+      </MessageScrollerProvider>
+    </div>
   )
 }

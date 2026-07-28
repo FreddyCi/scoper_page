@@ -1,5 +1,7 @@
 import { useCallback } from 'react'
+import { ArrowLeftIcon } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -31,6 +33,7 @@ export function WorkspaceContent() {
   const mode = useSessionStore((s) => s.mode)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const documents = useSessionStore((s) => s.documents)
+  const setWorkspaceView = useSessionStore((s) => s.setWorkspaceView)
   const selectedCitation = useSessionStore((s) => s.selectedCitation)
   const profiles = useRfpProfiles()
   const creepProfiles = useCreepProfiles()
@@ -64,10 +67,27 @@ export function WorkspaceContent() {
     return (
       <div className="flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-4">
         <div className="mb-4 shrink-0">
-          <h1 className="text-foreground text-base font-semibold tracking-tight">
-            {mode === 'rfp' ? 'RFP Analysis' : 'Scope Creep Analysis'}
-          </h1>
-          <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{MODE_COPY[mode]}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-foreground text-base font-semibold tracking-tight">
+                {mode === 'rfp' ? 'RFP Analysis' : 'Scope Creep Analysis'}
+              </h1>
+              <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{MODE_COPY[mode]}</p>
+            </div>
+
+            {documents.length > 0 ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => setWorkspaceView('split')}
+              >
+                <ArrowLeftIcon className="size-3.5" />
+                Document view
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         {mode === 'rfp' ? (

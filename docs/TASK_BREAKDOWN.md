@@ -816,16 +816,18 @@ flowchart LR
 ### **ID:** BDA-073
 
 **Title:** Scope creep History tab markers  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-072, BDA-051  
 **Priority:** Medium  
 **Description:** Render scope flags as MessageScroller markers (group chat pattern) in History tab. Click marker → focusCitation on evidence doc.  
 **Completed Changes:**
-- 🔄 History tab content
-- 🔄 MessageScrollerItem scrollAnchor on markers
+- ✅ shadcn `Marker` component (`src/components/ui/marker.tsx`)
+- ✅ `ChatHistoryMarkers` — separator + bordered flag markers in History tab MessageScroller
+- ✅ Click flag marker → `focusCitation()` opens split view on evidence doc
+- ✅ `runChatHistoryMarkersHarness()` — mock creep profiles, marker anchor, citation focus
 **Test Strategy:** After creep analysis, History shows markers; click navigates viewer.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §MessageScroller group chat  
 

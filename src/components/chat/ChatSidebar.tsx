@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 
 import { ChatComposer } from '@/components/chat/ChatComposer'
+import { ChatHistoryMarkers } from '@/components/chat/ChatHistoryMarkers'
 import { ChatTranscript } from '@/components/chat/ChatTranscript'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -100,11 +101,9 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
 
       <TabsContent
         value="history"
-        className="text-muted-foreground mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-3 text-sm"
+        className="mt-0 flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-3"
       >
-        <p className="m-auto max-w-xs text-center">
-          Scope creep markers and past runs will appear here — BDA-073.
-        </p>
+        <ChatHistoryMarkers />
       </TabsContent>
 
       <footer className="shrink-0 px-[var(--spacing-panel)] pb-[var(--spacing-panel)] pt-1">

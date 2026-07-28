@@ -4,12 +4,13 @@ import {
   CommandInputCard,
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
+import { CreepProfileGrid } from '@/components/workspace/CreepProfileGrid'
 import { ResultsProfileGrid } from '@/components/workspace/ResultsProfileGrid'
 import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { useRelinkRfpProfilesOnView } from '@/hooks/use-relink-rfp-profiles'
-import { useSessionStore, useShowLanding, useRfpProfiles } from '@/store/session-store'
+import { useSessionStore, useShowLanding, useRfpProfiles, useCreepProfiles } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
@@ -26,6 +27,7 @@ export function WorkspaceContent() {
   const documents = useSessionStore((s) => s.documents)
   const selectedCitation = useSessionStore((s) => s.selectedCitation)
   const profiles = useRfpProfiles()
+  const creepProfiles = useCreepProfiles()
   const { submitCommand, isIngesting } = useCommandIngest()
 
   useRelinkRfpProfilesOnView(workspaceView === 'profiles' && mode === 'rfp')
@@ -65,9 +67,11 @@ export function WorkspaceContent() {
         {mode === 'rfp' ? (
           <ResultsProfileGrid profiles={profiles} className="min-h-0 flex-1" />
         ) : (
-          <div className="text-muted-foreground flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-surface text-sm">
-            Scope creep profiles grid — BDA-061
-          </div>
+          <CreepProfileGrid
+            profiles={creepProfiles}
+            documents={documents}
+            className="min-h-0 flex-1"
+          />
         )}
       </div>
     )

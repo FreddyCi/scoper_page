@@ -3,6 +3,7 @@ import { SparklesIcon } from 'lucide-react'
 import { ChatActionProposalList } from '@/components/chat/ChatActionProposalRow'
 import { CitationChipList } from '@/components/chat/CitationChip'
 import { ChatCitationCardView } from '@/components/chat/ChatCitationCard'
+import { ChatMarkdown } from '@/components/chat/ChatMarkdown'
 import type { ChatMessage } from '@/lib/types'
 
 type AssistantMessageBodyProps = {
@@ -14,18 +15,13 @@ export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
   const citationChips = rich?.citationChips ?? []
 
   if (message.streaming) {
-    return (
-      <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
-        {message.text || 'Thinking…'}
-        <span className="bg-foreground/70 ml-0.5 inline-block h-4 w-0.5 animate-pulse align-[-2px]" />
-      </p>
-    )
+    return <ChatMarkdown content={message.text} streaming />
   }
 
   if (!rich) {
     return (
       <div className="space-y-3">
-        <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+        <ChatMarkdown content={message.text} />
         {citationChips.length > 0 ? <CitationChipList citations={citationChips} /> : null}
       </div>
     )
@@ -43,10 +39,8 @@ export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
       ) : null}
 
       <div className="space-y-3">
-        {rich.paragraphs.map((paragraph) => (
-          <p key={paragraph} className="text-foreground text-sm leading-relaxed">
-            {paragraph}
-          </p>
+        {rich.paragraphs.map((paragraph, index) => (
+          <ChatMarkdown key={`${message.id}-p-${index}`} content={paragraph} />
         ))}
       </div>
 

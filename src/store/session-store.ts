@@ -445,6 +445,10 @@ export function useRfpProfiles() {
   return useSessionStore((state) => state.profiles)
 }
 
+export function useCreepProfiles() {
+  return useSessionStore((state) => state.creepProfiles)
+}
+
 export function useShowLanding() {
   return useSessionStore(selectShowLanding)
 }

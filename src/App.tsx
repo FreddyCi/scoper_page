@@ -14,6 +14,7 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runScoperHarness } from '@/services/scoper-client'
+import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runDocumentRoleHarness } from '@/services/document-roles'
@@ -58,6 +59,8 @@ function App() {
         await runCitationClickHarness()
         runResultsProfileUiHarness()
         runResultsProfileGridHarness()
+        runCreepProfileUiHarness()
+        runCreepProfileGridHarness()
       } catch (error) {
         console.error('[dev-harness]', error)
       }

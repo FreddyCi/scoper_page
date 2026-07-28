@@ -779,16 +779,18 @@ flowchart LR
 ### **ID:** BDA-071
 
 **Title:** CreepProfileGrid and flag cards  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-040, BDA-004, BDA-070  
 **Priority:** High  
 **Description:** `CreepProfileGrid.tsx` + cards showing verdict (aligned/possible_creep/creep), flags with severity, summary. Same card pattern as RFP profiles.  
 **Completed Changes:**
-- 🔄 ScopeCreepProfile UI components
-- 🔄 Grid layout in workspace
+- ✅ `CreepProfileCard` + `CreepFlagRow` — verdict badge, severity chips, clickable evidence flags
+- ✅ `CreepProfileGrid` — responsive grid in workspace profiles view (scope_creep mode)
+- ✅ Wired in `WorkspaceContent`; dev mock preview when baseline + change docs tagged
+- ✅ `runCreepProfileUiHarness()` + `runCreepProfileGridHarness()`
 **Test Strategy:** Mock creep profile renders flags with severity badges.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness passes; `pnpm build` passes
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §5.6, Plan §Scope Creep Profiles  
 

@@ -17,6 +17,7 @@
     "verify:build": "node scripts/verify-build-assets.mjs",
     "preview:smoke": "node scripts/preview-smoke.mjs",
     "verify:deploy": "node scripts/verify-deploy.mjs",
+    "qa:automated": "node scripts/run-qa-automation.mjs",
     "prepare:hosting": "node scripts/prepare-static-hosting.mjs",
     "lint": "oxlint",
     "preview": "vite preview",

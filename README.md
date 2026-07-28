@@ -82,7 +82,8 @@ Cloudflare Pages uses `public/_headers` and `public/_redirects` copied into `dis
 - **Agent:** ECP `@demo/*` extensions for governed tool calls
 
 Full product spec: [`docs/PRD.md`](docs/PRD.md)  
-Implementation tasks: [`docs/TASK_BREAKDOWN.md`](docs/TASK_BREAKDOWN.md)
+Implementation tasks: [`docs/TASK_BREAKDOWN.md`](docs/TASK_BREAKDOWN.md)  
+MVP QA: [`docs/QA_SCRIPT.md`](docs/QA_SCRIPT.md) · [`docs/QA_RESULTS.md`](docs/QA_RESULTS.md)
 
 ## Troubleshooting
 

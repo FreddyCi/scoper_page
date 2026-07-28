@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { MessageSquareIcon } from 'lucide-react'
 
-import { CommentPopover } from '@/components/workspace/CommentPopover'
+import { BlockCommentPopover } from '@/components/workspace/CommentPopover'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { blockToCitation } from '@/lib/types'
@@ -81,13 +81,19 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
         className,
       )}
     >
-      <header className="border-border/70 flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
+      <header className="border-border/70 relative flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2.5">
         <div>
           <h2 className="text-foreground text-sm font-semibold">Extracted text</h2>
           <p className="text-muted-foreground text-xs">
             {loading ? 'Loading blocks…' : `${blocks.length} blocks`}
           </p>
         </div>
+        <BlockCommentPopover
+          block={activeBlock}
+          onCommentAdded={() => {
+            void refreshCommentedBlockIds()
+          }}
+        />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
@@ -129,15 +135,6 @@ export function ExtractedTextPane({ docId, className }: ExtractedTextPaneProps) 
           </div>
         ) : null}
       </div>
-
-      {activeBlock ? (
-        <CommentPopover
-          block={activeBlock}
-          onCommentAdded={() => {
-            void refreshCommentedBlockIds()
-          }}
-        />
-      ) : null}
     </section>
   )
 }

@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { DocumentMeta } from '@/lib/types'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
@@ -48,19 +49,38 @@ const CONTEXT_SNIPPETS = [
   'Local presence / on-site support required',
 ] as const
 
+const SNIPPET_SEPARATOR = ' · '
+
+function getSelectedSnippets(context: string): string[] {
+  return CONTEXT_SNIPPETS.filter((snippet) => context.includes(snippet))
+}
+
+function splitCompanyContext(context: string): { freeform: string; snippets: string[] } {
+  let freeform = context
+  for (const snippet of CONTEXT_SNIPPETS) {
+    freeform = freeform.split(snippet).join('')
+  }
+
+  freeform = freeform
+    .split(SNIPPET_SEPARATOR)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(SNIPPET_SEPARATOR)
+    .trim()
+
+  return { freeform, snippets: getSelectedSnippets(context) }
+}
+
+function buildCompanyContext(freeform: string, snippets: string[]): string {
+  return [freeform.trim(), ...snippets].filter(Boolean).join(SNIPPET_SEPARATOR)
+}
+
 const CONTEXT_GUIDE = [
   'Who you are — buyer org, sector, and risk posture',
   'Non-negotiables — certs, insurance, security, pricing model',
   'Deal-breakers — terms that should fail a bidder outright',
   'Weighting — what matters most if trade-offs appear',
 ] as const
-
-function appendContextSnippet(current: string, snippet: string): string {
-  const trimmed = current.trim()
-  if (!trimmed) return snippet
-  if (trimmed.includes(snippet)) return trimmed
-  return `${trimmed} · ${snippet}`
-}
 
 function CompanyContextAssistant({
   companyContext,
@@ -72,6 +92,7 @@ function CompanyContextAssistant({
   focusAreas: string[]
 }) {
   const [generating, setGenerating] = useState(false)
+  const selectedSnippets = getSelectedSnippets(companyContext)
 
   async function handleGenerate() {
     setGenerating(true)
@@ -104,20 +125,28 @@ function CompanyContextAssistant({
           ))}
         </ul>
 
-        <div className="flex flex-wrap gap-1.5">
+        <ToggleGroup
+          multiple
+          variant="outline"
+          size="sm"
+          spacing={2}
+          className="flex w-full flex-wrap"
+          value={selectedSnippets}
+          onValueChange={(values) => {
+            const { freeform } = splitCompanyContext(companyContext)
+            onApply(buildCompanyContext(freeform, values))
+          }}
+        >
           {CONTEXT_SNIPPETS.map((snippet) => (
-            <Button
+            <ToggleGroupItem
               key={snippet}
-              type="button"
-              variant="outline"
-              size="xs"
-              className="h-auto whitespace-normal px-2 py-1 text-left"
-              onClick={() => onApply(appendContextSnippet(companyContext, snippet))}
+              value={snippet}
+              className="h-auto min-h-7 whitespace-normal px-2 py-1 text-left text-xs aria-pressed:font-semibold data-[state=on]:font-semibold"
             >
               {snippet}
-            </Button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button type="button" size="sm" className="sm:flex-1" onClick={() => void handleGenerate()}>

@@ -8,6 +8,8 @@ const PREVIEW_PATHS = [
   '/duckdb/duckdb-browser-eh.worker.js',
   '/liteparse/liteparse_wasm_bg.wasm',
   '/pdfjs/pdf.worker.min.mjs',
+  '/sample/rfp-it-services.pdf',
+  '/sample/bidder-acme-response.pdf',
   '/sample/minimal.pdf',
 ]
 

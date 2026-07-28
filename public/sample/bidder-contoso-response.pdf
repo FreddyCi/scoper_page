@@ -1,0 +1,41 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 763 >>
+stream
+BT /F1 11 Tf 56 740 Td (Contoso Ltd — Technical Proposal) Tj ET
+BT /F1 11 Tf 56 724 Td () Tj ET
+BT /F1 11 Tf 56 714 Td (Company: Contoso Ltd.) Tj ET
+BT /F1 11 Tf 56 698 Td (Contact: Sam Rivera, Sales Director) Tj ET
+BT /F1 11 Tf 56 682 Td () Tj ET
+BT /F1 11 Tf 56 672 Td (Certifications: Internal quality program; CMMI assessment scheduled next quarter.) Tj ET
+BT /F1 11 Tf 56 656 Td (Insurance: General liability policy renewal pending — current certificate attached separately.) Tj ET
+BT /F1 11 Tf 56 640 Td (Pricing: Time and materials estimate with optional 15% annual uplift for expanded scope.) Tj ET
+BT /F1 11 Tf 56 624 Td () Tj ET
+BT /F1 11 Tf 56 614 Td (Legal: Standard limitation of liability applies; indemnification subject to negotiation.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001054 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1124
+%%EOF

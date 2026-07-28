@@ -1,0 +1,46 @@
+# Sample document corpus
+
+Redacted, synthetic procurement documents for local demo and QA. **Not real contracts** — text is fabricated for parser, RFP profile, and citation testing.
+
+Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm build` so the app can fetch them at `/sample/...`.
+
+## RFP pack (upload together for qualification demo)
+
+| File | Role | Use in app |
+|------|------|------------|
+| [`rfp-it-services.pdf`](rfp-it-services.pdf) | Issuer RFP | Upload first — requirements source |
+| [`bidder-acme-response.pdf`](bidder-acme-response.pdf) | Bidder A | Strong match (CMMI, insurance, fixed fee) |
+| [`bidder-contoso-response.pdf`](bidder-contoso-response.pdf) | Bidder B | Weaker match (gaps on cert, insurance, pricing) |
+
+### Suggested workflow
+
+1. Start dev server: `pnpm dev`
+2. Choose **Analyse RFP** on the landing page
+3. Upload all three PDFs from `public/sample/` (or drag from this folder after generation)
+4. Open **Profiles** — compare Acme vs Contoso verdicts and criterion rows
+5. Click a criterion or ask in chat: `find indemnification`
+
+## Scope creep pack
+
+| File | Role |
+|------|------|
+| `public/sample/minimal.pdf` | Minimal parse smoke test |
+| `public/sample/minimal.docx`, `minimal.xlsx` | Word / Excel ingest demos |
+| Markdown context | Upload any `.md` file — auto-tagged **Supporting** |
+
+Tag PDFs **Baseline** and **Change** in the doc tab dropdown, add a `.md` context file, then run **Compare scope**.
+
+## OCR / scan fixtures
+
+| File | Purpose |
+|------|---------|
+| `public/sample/scanned.pdf` | OCR ingest path |
+| `public/sample/ocr-test.png` | Tesseract harness image |
+
+## Regenerate PDFs
+
+```bash
+node scripts/generate-sample-pdfs.mjs
+```
+
+This rewrites both `sample/` and `public/sample/` for the three RFP pack PDFs.

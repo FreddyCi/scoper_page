@@ -1,0 +1,42 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 800 >>
+stream
+BT /F1 11 Tf 56 740 Td (Acme Systems — Proposal Response) Tj ET
+BT /F1 11 Tf 56 724 Td () Tj ET
+BT /F1 11 Tf 56 714 Td (Company: Acme Systems Inc.) Tj ET
+BT /F1 11 Tf 56 698 Td (Contact: Jordan Lee, Proposal Manager) Tj ET
+BT /F1 11 Tf 56 682 Td () Tj ET
+BT /F1 11 Tf 56 672 Td (Certifications: CMMI Level 3 appraised; ISO 27001 accredited.) Tj ET
+BT /F1 11 Tf 56 656 Td (Insurance: Commercial general liability coverage of $2M per occurrence.) Tj ET
+BT /F1 11 Tf 56 640 Td (Pricing: Fixed-fee subscription at $48,000 per year for three years.) Tj ET
+BT /F1 11 Tf 56 624 Td () Tj ET
+BT /F1 11 Tf 56 614 Td (Indemnification: Acme agrees to indemnify Client per Section 3 of the RFP.) Tj ET
+BT /F1 11 Tf 56 598 Td (We accept termination for convenience with ninety \(90\) days written notice.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001091 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1161
+%%EOF

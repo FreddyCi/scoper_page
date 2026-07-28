@@ -928,16 +928,17 @@ flowchart LR
 ### **ID:** BDA-091
 
 **Title:** README and sample PDF corpus  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-090  
 **Priority:** High  
 **Description:** README: prerequisites (WebGPU Chrome, pnpm via Corepack), `pnpm install` / `pnpm dev` / `pnpm build`, deploy static host, MIME notes. Add `sample/` with 1 RFP + 2 bidder PDF placeholders or redacted samples.  
 **Completed Changes:**
-- 🔄 README.md
-- 🔄 sample/ directory
+- ✅ Expanded `README.md` — prerequisites, scripts, static deploy, WASM MIME checklist, troubleshooting
+- ✅ `sample/` corpus + `sample/README.md` — `rfp-it-services.pdf`, `bidder-acme-response.pdf`, `bidder-contoso-response.pdf`
+- ✅ `scripts/generate-sample-pdfs.mjs` — copies corpus to `public/sample/` via `pnpm copy:samples`
 **Test Strategy:** New developer follows README → dev server runs in <15 min.  
 **Test Results:**
-- 🔄 Pending
+- ✅ README documents full quick-start path; sample PDFs generated and served at `/sample/*.pdf`
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §14, PRD §12.2 assumptions  
 

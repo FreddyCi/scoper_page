@@ -1,0 +1,44 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 927 >>
+stream
+BT /F1 11 Tf 56 740 Td (REQUEST FOR PROPOSAL — IT Services Platform) Tj ET
+BT /F1 11 Tf 56 724 Td () Tj ET
+BT /F1 11 Tf 56 714 Td (1. Scope) Tj ET
+BT /F1 11 Tf 56 698 Td (Vendor shall provide cloud migration and managed support services.) Tj ET
+BT /F1 11 Tf 56 682 Td () Tj ET
+BT /F1 11 Tf 56 672 Td (2. Mandatory requirements) Tj ET
+BT /F1 11 Tf 56 656 Td (Bidder must hold CMMI Level 3 certification or equivalent.) Tj ET
+BT /F1 11 Tf 56 640 Td (Bidder shall maintain commercial general liability insurance of at least $2M.) Tj ET
+BT /F1 11 Tf 56 624 Td (Pricing must be submitted as a fixed-fee schedule with no hidden uplifts.) Tj ET
+BT /F1 11 Tf 56 608 Td () Tj ET
+BT /F1 11 Tf 56 598 Td (3. Legal) Tj ET
+BT /F1 11 Tf 56 582 Td (Contractor shall indemnify the client against third-party IP claims.) Tj ET
+BT /F1 11 Tf 56 566 Td (Proposal must include termination for convenience within ninety \(90\) days notice.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001218 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1288
+%%EOF

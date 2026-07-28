@@ -645,17 +645,20 @@ flowchart LR
 ### **ID:** BDA-052
 
 **Title:** ChatComposer and citation chips  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-051, BDA-033  
 **Priority:** Critical  
 **Description:** Composer: "Ask the agent…", send, optional @ mention doc names. Render citation chips on assistant messages from `CitationRef[]`; click → focusCitation.  
 **Completed Changes:**
-- 🔄 ChatComposer component
-- 🔄 CitationChip subcomponent
-- 🔄 Wire to bitgpu send + agent response parsing
+- ✅ `ChatComposer` — @ document mention menu with keyboard navigation
+- ✅ `chat-mentions.ts` — parse/insert @ mentions and resolve doc scope
+- ✅ `chat-citations.ts` — keyword block search attaches `CitationRef[]` after Scoper/stub replies
+- ✅ `chat-agent.ts` — enriches assistant turns with parsed citation chips; `@` sets active doc
+- ✅ `CitationChip` + `AssistantMessageBody` — chips render on assistant messages; click → `focusCitation`
+- ✅ `runChatCitationsHarness` + `runChatCitationChipHarness` in dev chain
 **Test Strategy:** Assistant message with cite chip → click opens split view highlight.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Dev harness: ingested PDF → chat reply with chips → chip click opens split view
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §6.1, Plan §Chat sidebar  
 

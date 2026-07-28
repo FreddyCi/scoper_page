@@ -11,6 +11,7 @@ type AssistantMessageBodyProps = {
 
 export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
   const rich = message.rich
+  const citationChips = rich?.citationChips ?? []
 
   if (message.streaming) {
     return (
@@ -22,7 +23,12 @@ export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
   }
 
   if (!rich) {
-    return <p className="text-foreground text-sm leading-relaxed">{message.text}</p>
+    return (
+      <div className="space-y-3">
+        <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+        {citationChips.length > 0 ? <CitationChipList citations={citationChips} /> : null}
+      </div>
+    )
   }
 
   return (
@@ -44,7 +50,7 @@ export function AssistantMessageBody({ message }: AssistantMessageBodyProps) {
         ))}
       </div>
 
-      {rich.citationChips?.length ? <CitationChipList citations={rich.citationChips} /> : null}
+      {citationChips.length > 0 ? <CitationChipList citations={citationChips} /> : null}
 
       {rich.citations?.length ? <ChatCitationCardView citations={rich.citations} /> : null}
 

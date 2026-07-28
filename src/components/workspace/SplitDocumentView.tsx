@@ -141,26 +141,11 @@ export function SplitDocumentView({
         onValueChange={(value) => setActiveTab(value as SplitPaneTab)}
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
-        <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2">
-          <TabsList variant="line" className="h-auto bg-transparent p-0">
-            <TabsTrigger
-              value="extract"
-              className="-mb-px rounded-none border-b-2 border-transparent px-2 py-2 data-active:border-foreground data-active:after:opacity-0"
-            >
-              Extract
-            </TabsTrigger>
-            <TabsTrigger
-              value="original"
-              className="-mb-px rounded-none border-b-2 border-transparent px-2 py-2 data-active:border-foreground data-active:after:opacity-0"
-            >
-              Original
-            </TabsTrigger>
-            <TabsTrigger
-              value="profiles"
-              className="-mb-px rounded-none border-b-2 border-transparent px-2 py-2 data-active:border-foreground data-active:after:opacity-0"
-            >
-              Profiles
-            </TabsTrigger>
+        <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
+          <TabsList variant="segmented">
+            <TabsTrigger value="extract">Extract</TabsTrigger>
+            <TabsTrigger value="original">Original</TabsTrigger>
+            <TabsTrigger value="profiles">Profiles</TabsTrigger>
           </TabsList>
 
           <p className="text-muted-foreground hidden truncate text-xs sm:block">

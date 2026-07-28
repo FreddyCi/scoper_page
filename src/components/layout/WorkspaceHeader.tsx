@@ -100,23 +100,31 @@ function WorkspaceModeToggle() {
 
   return (
     <div
-      className="border-border bg-surface flex items-center rounded-lg border p-0.5"
+      className="bg-muted inline-flex items-center gap-0.5 rounded-full p-1"
       role="group"
       aria-label="Workspace mode"
     >
-      {MODE_OPTIONS.map((option) => (
-        <Button
-          key={option.value}
-          size="xs"
-          variant={mode === option.value ? 'default' : 'ghost'}
-          className="rounded-md px-2 sm:px-2.5"
-          onClick={() => setMode(option.value)}
-          aria-pressed={mode === option.value}
-        >
-          <span className="sm:hidden">{option.short}</span>
-          <span className="hidden sm:inline">{option.label}</span>
-        </Button>
-      ))}
+      {MODE_OPTIONS.map((option) => {
+        const isActive = mode === option.value
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setMode(option.value)}
+            aria-pressed={isActive}
+            className={cn(
+              'inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-all sm:px-3',
+              isActive
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <span className="sm:hidden">{option.short}</span>
+            <span className="hidden sm:inline">{option.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

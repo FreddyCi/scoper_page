@@ -23,8 +23,7 @@ type ChatSidebarProps = {
   className?: string
 }
 
-const chatTabTriggerClass =
-  '-mb-px gap-1.5 rounded-none border-0 border-b-2 border-transparent bg-transparent px-2.5 py-2 text-sm shadow-none data-active:border-foreground data-active:bg-transparent data-active:text-foreground data-active:shadow-none data-active:after:opacity-0'
+const chatTabTriggerClass = 'gap-1.5 sm:px-3'
 
 function ChatSidebarHeaderControls() {
   const sessionName = useSessionStore((s) => s.sessionName)
@@ -33,7 +32,7 @@ function ChatSidebarHeaderControls() {
 
   return (
     <>
-      <TabsList variant="line" className="h-auto shrink-0 gap-0 bg-transparent p-0">
+      <TabsList variant="segmented">
         <TabsTrigger value="agent" className={chatTabTriggerClass}>
           <SparklesIcon className="size-3.5" />
           Agent

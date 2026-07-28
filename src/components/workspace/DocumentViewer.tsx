@@ -12,6 +12,7 @@ type DocumentViewerProps = {
   document: DocumentMeta
   initialPage?: number
   onPageChange?: (page: number) => void
+  theme?: 'light' | 'dark'
   className?: string
 }
 
@@ -46,8 +47,10 @@ export function DocumentViewer({
   document,
   initialPage = 1,
   onPageChange,
+  theme = 'light',
   className,
 }: DocumentViewerProps) {
+  const isDark = theme === 'dark'
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
@@ -117,7 +120,10 @@ export function DocumentViewer({
   return (
     <div
       className={cn(
-        'border-border bg-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border',
+        'flex min-h-0 flex-1 flex-col overflow-hidden',
+        isDark
+          ? 'border-zinc-700 bg-zinc-900'
+          : 'border-border bg-surface rounded-panel border',
         className,
       )}
     >
@@ -126,13 +132,24 @@ export function DocumentViewer({
         page={currentPage}
         totalPages={totalPages}
         scale={scale}
+        theme={theme}
         onPageChange={updatePage}
         onScaleChange={setScale}
       />
 
-      <div className="bg-workspace min-h-0 flex-1 overflow-auto p-4">
+      <div
+        className={cn(
+          'min-h-0 flex-1 overflow-auto p-4',
+          isDark ? 'bg-zinc-950' : 'bg-workspace',
+        )}
+      >
         {loading || !pdf ? (
-          <div className="text-muted-foreground flex h-full min-h-[16rem] items-center justify-center text-sm">
+          <div
+            className={cn(
+              'flex h-full min-h-[16rem] items-center justify-center text-sm',
+              isDark ? 'text-zinc-400' : 'text-muted-foreground',
+            )}
+          >
             Loading PDF…
           </div>
         ) : (

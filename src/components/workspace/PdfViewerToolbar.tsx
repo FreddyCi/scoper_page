@@ -15,6 +15,7 @@ type PdfViewerToolbarProps = {
   scale: number
   onPageChange: (page: number) => void
   onScaleChange: (scale: number) => void
+  theme?: 'light' | 'dark'
   className?: string
 }
 
@@ -30,18 +31,30 @@ export function PdfViewerToolbar({
   scale,
   onPageChange,
   onScaleChange,
+  theme = 'light',
   className,
 }: PdfViewerToolbarProps) {
   const currentPage = clampPage(page, totalPages)
+  const isDark = theme === 'dark'
 
   return (
     <div
       className={cn(
-        'border-border bg-surface flex flex-wrap items-center gap-2 border-b px-3 py-2',
+        'flex flex-wrap items-center gap-2 border-b px-3 py-2',
+        isDark
+          ? 'border-zinc-700 bg-zinc-900 text-zinc-100'
+          : 'border-border bg-surface',
         className,
       )}
     >
-      <p className="text-foreground mr-auto min-w-0 truncate text-sm font-medium">{filename}</p>
+      <p
+        className={cn(
+          'mr-auto min-w-0 truncate text-sm font-medium',
+          isDark ? 'text-zinc-100' : 'text-foreground',
+        )}
+      >
+        {filename}
+      </p>
 
       <div className="flex items-center gap-1">
         <Button
@@ -55,7 +68,12 @@ export function PdfViewerToolbar({
           <ChevronLeftIcon className="size-4" />
         </Button>
 
-        <label className="text-muted-foreground flex items-center gap-1 text-xs">
+        <label
+          className={cn(
+            'flex items-center gap-1 text-xs',
+            isDark ? 'text-zinc-400' : 'text-muted-foreground',
+          )}
+        >
           <span className="sr-only">Page number</span>
           <input
             type="number"
@@ -66,7 +84,12 @@ export function PdfViewerToolbar({
               const next = Number.parseInt(event.target.value, 10)
               if (Number.isFinite(next)) onPageChange(next)
             }}
-            className="border-border bg-background text-foreground w-12 rounded-md border px-1.5 py-1 text-center text-xs tabular-nums"
+            className={cn(
+              'w-12 rounded-md border px-1.5 py-1 text-center text-xs tabular-nums',
+              isDark
+                ? 'border-zinc-600 bg-zinc-800 text-zinc-100'
+                : 'border-border bg-background text-foreground',
+            )}
           />
           <span>/ {Math.max(totalPages, 1)}</span>
         </label>
@@ -94,7 +117,12 @@ export function PdfViewerToolbar({
         >
           <ZoomOutIcon className="size-4" />
         </Button>
-        <span className="text-muted-foreground w-12 text-center text-xs tabular-nums">
+        <span
+          className={cn(
+            'w-12 text-center text-xs tabular-nums',
+            isDark ? 'text-zinc-400' : 'text-muted-foreground',
+          )}
+        >
           {Math.round(scale * 100)}%
         </span>
         <Button

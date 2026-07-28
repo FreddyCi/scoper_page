@@ -459,17 +459,19 @@ flowchart LR
 ### **ID:** BDA-032
 
 **Title:** SplitDocumentView layout  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-030, BDA-031  
 **Priority:** Critical  
 **Description:** Two-column split: light left (ExtractedTextPane) | dark right (DocumentViewer) per [`Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png). Optional tabs Extract | Original | Profiles. Status footer pill + CTA stub.  
 **Completed Changes:**
-- 🔄 SplitDocumentView container
-- 🔄 Resizable or 50/50 split
-- 🔄 Footer status component
+- ✅ `SplitDocumentView.tsx` — light extract pane | dark PDF pane, draggable resize divider
+- ✅ Tabs: Extract (split), Original (PDF only), Profiles (stub → profiles view)
+- ✅ Footer status pill (block count + selection) and mode-aware CTA stub
+- ✅ `use-split-pane-ratio.ts`; `DocumentViewer` / toolbar `theme="dark"` for original pane
+- ✅ Wired from `WorkspaceContent` when `workspaceView === 'split'`
 **Test Strategy:** Both panes visible; switches to split view from store.  
 **Test Results:**
-- 🔄 Pending
+- ✅ Split view shows both panes; resize handle adjusts ratio; tabs switch content; footer pill updates on block selection
 **Assigned:** Unassigned  
 **Context/Artifacts:** PRD §10.2, Plan §Split preview pattern  
 

@@ -5,7 +5,7 @@ import {
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
-import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
+import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { useSessionStore, useShowLanding } from '@/store/session-store'
@@ -84,22 +84,9 @@ export function WorkspaceContent() {
 
   if (workspaceView === 'split') {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-[var(--spacing-panel)] py-4">
+      <div className="flex min-h-0 flex-1 flex-col px-[var(--spacing-panel)] py-4">
         {activeDoc ? (
-          <>
-            <p className="text-muted-foreground shrink-0 text-sm">
-              Viewing{' '}
-              <span className="text-foreground font-medium">{activeDoc.filename}</span>
-            </p>
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
-              <ExtractedTextPane docId={activeDoc.doc_id} className="min-h-[20rem]" />
-              <DocumentViewer
-                document={activeDoc}
-                initialPage={initialPage}
-                className="min-h-[20rem]"
-              />
-            </div>
-          </>
+          <SplitDocumentView document={activeDoc} initialPage={initialPage} className="min-h-0 flex-1" />
         ) : (
           <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
             Select a document tab to preview.

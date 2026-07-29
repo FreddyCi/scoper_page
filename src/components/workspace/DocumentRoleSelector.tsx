@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
   DOCUMENT_ROLE_LABELS,
@@ -58,25 +59,35 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        disabled={pending}
-        className={cn('relative shrink-0', className)}
-        render={
-          <button
-            type="button"
-            aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
-            onMouseDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-            className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          />
-        }
-      >
-        <span className="text-muted-foreground tracking-wide uppercase">Role</span>
-        <span className={cn('tracking-wide uppercase', ROLE_VALUE_CLASS[role])}>
-          {DOCUMENT_ROLE_LABELS[role]}
-        </span>
-        <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-70" />
-      </DropdownMenuTrigger>
+      <Tooltip disabled={open}>
+        <TooltipTrigger
+          delay={300}
+          render={
+            <DropdownMenuTrigger
+              disabled={pending}
+              className={cn('relative shrink-0', className)}
+              render={
+                <button
+                  type="button"
+                  aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                />
+              }
+            >
+              <span className="text-muted-foreground tracking-wide uppercase">Role</span>
+              <span className={cn('tracking-wide uppercase', ROLE_VALUE_CLASS[role])}>
+                {DOCUMENT_ROLE_LABELS[role]}
+              </span>
+              <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-70" />
+            </DropdownMenuTrigger>
+          }
+        />
+        <TooltipContent side="bottom" align="start" className="max-w-[14rem] font-normal">
+          {DOCUMENT_ROLE_DESCRIPTIONS[role]}
+        </TooltipContent>
+      </Tooltip>
 
       <DropdownMenuContent
         align="start"

@@ -15,6 +15,8 @@ import {
   WorkspaceHeaderTopRow,
 } from '@/components/layout/WorkspaceHeader'
 import { WorkspaceContent } from '@/components/workspace/WorkspaceContent'
+import { Button } from '@/components/ui/button'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -28,6 +30,10 @@ type AppShellProps = {
  */
 export function AppShell({ children }: AppShellProps) {
   const chatCollapsed = useSessionStore((s) => s.chatCollapsed)
+  const resetSession = useSessionStore((s) => s.resetSession)
+  const hasSessionContent = useSessionStore(
+    (s) => s.documents.length > 0 || s.chatMessages.length > 0,
+  )
 
   const chatColumnClass = cn(
     shellChatColumnTransitionClass,
@@ -35,7 +41,8 @@ export function AppShell({ children }: AppShellProps) {
   )
 
   return (
-    <div className="bg-canvas min-h-svh p-[var(--spacing-shell)]">
+    <TooltipProvider delay={250}>
+      <div className="bg-canvas min-h-svh p-[var(--spacing-shell)]">
       <div className="shell-scroll-x mx-auto w-full max-w-[100rem]">
         <ChatSidebarTabs>
           <div
@@ -81,7 +88,16 @@ export function AppShell({ children }: AppShellProps) {
 
                   <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] pt-0 pb-3 text-xs">
                     <UploadFab />
-                    <span>Workspace</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={!hasSessionContent}
+                      className="text-subtle-foreground hover:text-foreground h-7 px-2 text-xs font-normal"
+                      onClick={() => resetSession()}
+                    >
+                      Clear workspace
+                    </Button>
                   </footer>
                 </UploadQueueProvider>
               </section>
@@ -96,6 +112,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </ChatSidebarTabs>
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   )
 }

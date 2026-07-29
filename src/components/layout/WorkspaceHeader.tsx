@@ -8,6 +8,7 @@ import {
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   shellChatColumnClasses,
   shellWorkspaceColumnClass,
@@ -52,16 +53,25 @@ function WorkspaceModeToggle() {
           <span className="sm:hidden">RFP</span>
           <span className="hidden sm:inline">RFP Analysis</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="scope_creep"
-          disabled
-          title="Coming soon"
-          className={MODE_TAB_TRIGGER_CLASS}
-        >
-          <GitCompareArrowsIcon className="size-3.5" />
-          <span className="sm:hidden">Creep</span>
-          <span className="hidden sm:inline">Scope Creep</span>
-        </TabsTrigger>
+        <Tooltip>
+          <TooltipTrigger
+            delay={0}
+            render={
+              <span className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+                <TabsTrigger
+                  value="scope_creep"
+                  disabled
+                  className={cn(MODE_TAB_TRIGGER_CLASS, 'pointer-events-none')}
+                >
+                  <GitCompareArrowsIcon className="size-3.5" />
+                  <span className="sm:hidden">Creep</span>
+                  <span className="hidden sm:inline">Scope Creep</span>
+                </TabsTrigger>
+              </span>
+            }
+          />
+          <TooltipContent side="bottom">Coming soon</TooltipContent>
+        </Tooltip>
       </TabsList>
     </Tabs>
   )

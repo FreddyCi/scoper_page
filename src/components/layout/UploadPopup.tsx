@@ -30,6 +30,11 @@ import {
   getFileExtension,
   isAcceptedUploadFile,
 } from '@/lib/upload-accept'
+import {
+  UPLOAD_MODAL_DESCRIPTION,
+  UPLOAD_MODAL_FOOTER_NOTE,
+  UPLOAD_SUGGESTIONS,
+} from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 
 type UploadPopupProps = {
@@ -46,12 +51,7 @@ type UploadPopupProps = {
   className?: string
 }
 
-const SUPPORTED_FORMATS = [
-  { label: 'PDF', detail: 'RFPs, scans, bidder responses' },
-  { label: 'Word', detail: '.doc / .docx proposals' },
-  { label: 'Markdown', detail: 'Supporting context notes' },
-  { label: 'Excel', detail: 'Pricing and line-item sheets' },
-] as const
+const SUPPORTED_FORMATS = UPLOAD_SUGGESTIONS
 
 function fileIconForName(filename: string) {
   const extension = getFileExtension(filename)
@@ -191,8 +191,7 @@ export function UploadPopup({
                 ) : null}
               </div>
               <p className="text-muted-foreground mt-1.5 max-w-lg text-sm leading-relaxed">
-                Add procurement files to this session. Everything is parsed locally in your
-                browser — nothing is sent to a server.
+                {UPLOAD_MODAL_DESCRIPTION}
               </p>
             </div>
             <Button
@@ -255,15 +254,25 @@ export function UploadPopup({
                 Select one or more files — you can add more before uploading
               </p>
 
-              <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {SUPPORTED_FORMATS.map((format) => (
                   <div
-                    key={format.label}
-                    className="border-border/70 bg-surface/80 rounded-xl border px-3 py-2.5 text-left"
+                    key={format.id}
+                    className={cn(
+                      'border-border/70 bg-surface/80 rounded-xl border px-3 py-2.5 text-left',
+                      format.disabled && 'opacity-50',
+                    )}
                   >
-                    <p className="text-foreground text-xs font-semibold">{format.label}</p>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-foreground text-xs font-semibold">{format.label}</p>
+                      {format.disabled ? (
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[9px] uppercase">
+                          Soon
+                        </Badge>
+                      ) : null}
+                    </div>
                     <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
-                      {format.detail}
+                      {format.description}
                     </p>
                   </div>
                 ))}
@@ -315,7 +324,7 @@ export function UploadPopup({
 
           <div className="border-border flex items-center justify-between gap-3 border-t px-6 py-4">
             <p className="text-muted-foreground hidden text-xs sm:block">
-              Markdown files are stored as supporting context for scope analysis.
+              {UPLOAD_MODAL_FOOTER_NOTE}
             </p>
             <div className="ml-auto flex items-center gap-2">
               <Button

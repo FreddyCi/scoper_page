@@ -16,6 +16,10 @@ import type {
 } from '@/lib/types'
 import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
+import {
+  contextAttachmentsForDocuments,
+  mergeContextAttachments,
+} from '@/lib/chat-context'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getScoperClient } from '@/services/scoper-client'
 
@@ -267,6 +271,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           state.activeDocId === docId ? null : state.activeDocId,
         ),
         workspaceView: documents.length === 0 ? 'landing' : state.workspaceView,
+        chatContextAttachments: state.chatContextAttachments.filter(
+          (item) => item.docId !== docId,
+        ),
       }
     }),
 
@@ -464,6 +471,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
       const hadDocuments = state.documents.length > 0
       let documents = [...state.documents]
+      const ingestedDocuments: DocumentMeta[] = []
 
       for (const result of results) {
         const existing = documents.find((doc) => doc.doc_id === result.doc_id)
@@ -474,6 +482,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           role: result.role ?? existing?.role ?? 'unknown',
           uploaded_at: existing?.uploaded_at ?? new Date().toISOString(),
         }
+        ingestedDocuments.push(document)
         const index = documents.findIndex((doc) => doc.doc_id === document.doc_id)
         if (index >= 0) {
           documents[index] = document
@@ -482,10 +491,23 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         }
       }
 
+      const addedContextAttachments = contextAttachmentsForDocuments(ingestedDocuments)
+      const chatContextAttachments =
+        addedContextAttachments.length > 0
+          ? mergeContextAttachments(state.chatContextAttachments, addedContextAttachments)
+          : state.chatContextAttachments
+      const addedContext = addedContextAttachments.length > 0
+
+      if (addedContext && state.chatCollapsed) {
+        writeChatCollapsedPreference(false)
+      }
+
       return {
         documents,
         activeDocId: results[0]?.doc_id ?? state.activeDocId,
         workspaceView: workspaceViewAfterIngest(state.mode, state.workspaceView, hadDocuments),
+        chatContextAttachments,
+        chatCollapsed: addedContext ? false : state.chatCollapsed,
       }
     }),
 

@@ -15,7 +15,6 @@ import {
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import {
-  appendMarkdownContextAttachments,
   extractMarkdownFiles,
   ingestMarkdownFilesForChat,
 } from '@/services/chat-markdown-drop'
@@ -127,8 +126,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
     setDropError(null)
     setIngestingMarkdown(true)
     try {
-      const nextAttachments = await ingestMarkdownFilesForChat(files)
-      setChatContextAttachments(appendMarkdownContextAttachments(attachments, nextAttachments))
+      await ingestMarkdownFilesForChat(files)
     } catch (error) {
       setDropError(error instanceof Error ? error.message : 'Failed to add markdown context')
     } finally {

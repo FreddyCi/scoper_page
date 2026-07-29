@@ -6,34 +6,9 @@ import {
   featureCardTitleClass,
 } from '@/components/workspace/feature-card-styles'
 import { Badge } from '@/components/ui/badge'
+import { UPLOAD_SUGGESTIONS } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
-
-type QuickAction = {
-  id: string
-  label: string
-  description: string
-  disabled?: boolean
-}
-
-const QUICK_ACTIONS: QuickAction[] = [
-  {
-    id: 'analyse-rfp',
-    label: 'Analyse RFP',
-    description: 'Upload RFPs and bidder responses — PDF, Word, Excel, and more',
-  },
-  {
-    id: 'scope-creep',
-    label: 'Check scope creep',
-    description: 'Compare baseline scope against change requests',
-    disabled: true,
-  },
-  {
-    id: 'upload-context',
-    label: 'Upload context',
-    description: 'Add markdown notes and supporting context — not RFP documents',
-  },
-]
 
 export function QuickActionCards({ className }: { className?: string }) {
   const setMode = useSessionStore((s) => s.setMode)
@@ -51,7 +26,7 @@ export function QuickActionCards({ className }: { className?: string }) {
         className,
       )}
     >
-      {QUICK_ACTIONS.map((action, index) => {
+      {UPLOAD_SUGGESTIONS.map((action, index) => {
         const disabled = action.disabled ?? false
 
         return (

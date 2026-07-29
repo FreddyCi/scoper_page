@@ -30,7 +30,6 @@ import {
 import type { ChatContextAttachment, CitationRef, DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import {
-  appendMarkdownContextAttachments,
   ingestMarkdownFilesForChat,
 } from '@/services/chat-markdown-drop'
 
@@ -130,8 +129,7 @@ export function ChatContextAttachmentControls({
 
     onMarkdownIngestChange?.(true)
     try {
-      const nextAttachments = await ingestMarkdownFilesForChat([...files])
-      onAttachmentsChange(appendMarkdownContextAttachments(attachments, nextAttachments))
+      await ingestMarkdownFilesForChat([...files])
     } finally {
       onMarkdownIngestChange?.(false)
     }

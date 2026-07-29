@@ -1,6 +1,10 @@
 import { docMentionLabel } from '@/lib/chat-mentions'
 import type { ChatContextAttachment, CitationRef, DocumentMeta } from '@/lib/types'
 
+export function isContextDocument(doc: Pick<DocumentMeta, 'role' | 'mime'>): boolean {
+  return doc.role === 'supporting' || doc.mime === 'text/markdown'
+}
+
 export function createDocumentContextAttachment(doc: DocumentMeta): ChatContextAttachment {
   return {
     id: `doc:${doc.doc_id}`,
@@ -41,6 +45,10 @@ export function mergeContextAttachments(
   }
 
   return merged
+}
+
+export function contextAttachmentsForDocuments(documents: DocumentMeta[]): ChatContextAttachment[] {
+  return documents.filter(isContextDocument).map(createDocumentContextAttachment)
 }
 
 export function resolveContextDocIds(

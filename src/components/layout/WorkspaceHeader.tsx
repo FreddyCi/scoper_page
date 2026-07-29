@@ -52,7 +52,12 @@ function WorkspaceModeToggle() {
           <span className="sm:hidden">RFP</span>
           <span className="hidden sm:inline">RFP Analysis</span>
         </TabsTrigger>
-        <TabsTrigger value="scope_creep" className={MODE_TAB_TRIGGER_CLASS}>
+        <TabsTrigger
+          value="scope_creep"
+          disabled
+          title="Coming soon"
+          className={MODE_TAB_TRIGGER_CLASS}
+        >
           <GitCompareArrowsIcon className="size-3.5" />
           <span className="sm:hidden">Creep</span>
           <span className="hidden sm:inline">Scope Creep</span>

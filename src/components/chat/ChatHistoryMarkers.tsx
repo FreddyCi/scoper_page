@@ -1,6 +1,6 @@
 import { Fragment, useMemo, type ReactNode } from 'react'
 
-import { CreepFlagRow } from '@/components/workspace/CreepFlagRow'
+import { CreepFlagRow, DEFAULT_SUMMARY_MAX_CHARS } from '@/components/workspace/CreepFlagRow'
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -85,7 +85,11 @@ export function ChatHistoryMarkers() {
                     messageId={entry.id}
                     scrollAnchor={entry.scrollAnchor}
                   >
-                    <CreepFlagRow flag={entry.flag} />
+                    <CreepFlagRow
+                      flag={entry.flag}
+                      summaryMaxChars={DEFAULT_SUMMARY_MAX_CHARS}
+                      summaryClassName="text-xs leading-relaxed"
+                    />
                   </MessageScrollerItem>
                 ))}
               </Fragment>

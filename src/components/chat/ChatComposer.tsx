@@ -1,13 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import {
-  ArrowUpIcon,
-  ChevronDownIcon,
-  FileTextIcon,
-  MicIcon,
-  PaperclipIcon,
-  SparklesIcon,
-} from 'lucide-react'
+import { ArrowUpIcon, ChevronDownIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 
+import {
+  ChatContextAttachmentControls,
+  ChatContextAttachmentPreview,
+} from '@/components/chat/ChatContextAttachments'
 import { Button } from '@/components/ui/button'
 import {
   docMentionLabel,
@@ -15,6 +12,7 @@ import {
   findActiveMentionQuery,
   insertDocMention,
 } from '@/lib/chat-mentions'
+import type { ChatContextAttachment } from '@/lib/types'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
@@ -23,15 +21,18 @@ type ChatComposerProps = {
   className?: string
 }
 
-/** Composer with @ document mentions and Scoper send (BDA-052) */
+/** Composer with @ document mentions, PDF context attachments, and Scoper send (BDA-052) */
 export function ChatComposer({ className }: ChatComposerProps) {
   const documents = useSessionStore((s) => s.documents)
+  const activeDocId = useSessionStore((s) => s.activeDocId)
+  const selectedCitation = useSessionStore((s) => s.selectedCitation)
   const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
   const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
   const [draft, setDraft] = useState('')
   const [cursor, setCursor] = useState(0)
   const [mentionHighlight, setMentionHighlight] = useState(0)
+  const [attachments, setAttachments] = useState<ChatContextAttachment[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const canSend = draft.trim().length > 0 && !chatGenerating
@@ -69,10 +70,11 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
   function handleSend() {
     if (!canSend) return
-    sendChatPrompt(draft)
+    sendChatPrompt(draft, attachments)
     setDraft('')
     setCursor(0)
     setMentionHighlight(0)
+    setAttachments([])
   }
 
   return (
@@ -82,6 +84,15 @@ export function ChatComposer({ className }: ChatComposerProps) {
         className,
       )}
     >
+      {attachments.length > 0 ? (
+        <div className="border-border/70 border-b px-3 py-2">
+          <ChatContextAttachmentPreview
+            attachments={attachments}
+            onRemove={(id) => setAttachments((current) => current.filter((item) => item.id !== id))}
+          />
+        </div>
+      ) : null}
+
       <div className="relative px-3 pt-2.5 pb-1.5">
         <label className="sr-only" htmlFor="chat-composer-input">
           Ask the agent
@@ -172,7 +183,9 @@ export function ChatComposer({ className }: ChatComposerProps) {
             }
           }}
           placeholder={
-            isBusy ? 'Agent is responding…' : 'Ask the agent… / for skills, @ for context'
+            isBusy
+              ? 'Agent is responding…'
+              : 'Ask the agent… / for skills, @ for context, attach PDF passages'
           }
           disabled={isBusy}
           className="text-foreground placeholder:text-subtle-foreground min-h-[3.25rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
@@ -202,38 +215,26 @@ export function ChatComposer({ className }: ChatComposerProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
+          <ChatContextAttachmentControls
+            documents={documents}
+            activeDocId={activeDocId}
+            selectedCitation={selectedCitation}
+            attachments={attachments}
+            onAttachmentsChange={setAttachments}
+            disabled={isBusy}
+          />
+
           <Button
             type="button"
             size="icon-xs"
-            variant="ghost"
-            className="text-muted-foreground hover:text-foreground rounded-full"
-            aria-label="Attach files"
+            variant="default"
+            className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
+            aria-label="Send message"
+            disabled={!canSend}
+            onClick={handleSend}
           >
-            <PaperclipIcon className="size-3.5" />
+            <ArrowUpIcon className="size-3.5" />
           </Button>
-
-          {canSend ? (
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="default"
-              className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
-              aria-label="Send message"
-              onClick={handleSend}
-            >
-              <ArrowUpIcon className="size-3.5" />
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="default"
-              className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
-              aria-label="Voice input"
-            >
-              <MicIcon className="size-3.5" />
-            </Button>
-          )}
         </div>
       </div>
     </div>

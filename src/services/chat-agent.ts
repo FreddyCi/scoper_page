@@ -1,18 +1,23 @@
+import type { ChatContextAttachment } from '@/lib/types'
 import { runAgentTurn } from '@/services/agent'
 import { focusCitation } from '@/services/citation-bridge'
 import { ingestFile } from '@/services/ingest-router'
 import { useSessionStore } from '@/store/session-store'
 
 /** Run one chat turn through the document agent loop (BDA-051/053) */
-export async function runChatAgentTurn(prompt: string): Promise<void> {
+export async function runChatAgentTurn(
+  prompt: string,
+  contextAttachments: ChatContextAttachment[] = [],
+): Promise<void> {
   const trimmed = prompt.trim()
   if (!trimmed) return
 
-  const { assistantMessage } = useSessionStore.getState().beginChatTurn(trimmed)
+  const { assistantMessage } = useSessionStore.getState().beginChatTurn(trimmed, contextAttachments)
 
   try {
     await runAgentTurn(trimmed, {
       assistantId: assistantMessage.id,
+      contextAttachments,
       onStreamDelta: (delta) => {
         useSessionStore.getState().appendAssistantText(assistantMessage.id, delta)
       },

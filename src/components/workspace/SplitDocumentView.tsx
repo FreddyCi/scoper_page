@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { DownloadIcon, InfoIcon } from 'lucide-react'
 
 import { CommentNavigator } from '@/components/workspace/CommentNavigator'
@@ -64,10 +64,7 @@ function ExtractViewHelpButton() {
           <li>Click a block to highlight the matching passage in the PDF preview.</li>
           <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
-          <li>
-            When review notes exist, use the note navigator in the header to step through each{' '}
-            <span className="font-mono">comment_id</span>.
-          </li>
+          <li>When review notes exist, use the footer navigator to step through each note.</li>
           <li>Use Export PDF for toggleable markup (hide/show in your PDF viewer) or burned-in notes.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
@@ -83,6 +80,7 @@ function ExtractViewHelpButton() {
 
 function SplitDocumentViewFooter({
   statusLabel,
+  commentNavigator = null,
   exportError = null,
   ctaLabel,
   ctaLoading = false,
@@ -94,6 +92,7 @@ function SplitDocumentViewFooter({
   onExportClick,
 }: {
   statusLabel: string
+  commentNavigator?: ReactNode
   exportError?: string | null
   ctaLabel: string
   ctaLoading?: boolean
@@ -106,16 +105,19 @@ function SplitDocumentViewFooter({
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
-      <span
-        className={cn(
-          'rounded-pill inline-flex items-center px-3 py-1 text-xs font-medium',
-          exportError
-            ? 'bg-destructive/10 text-destructive'
-            : 'bg-muted text-muted-foreground',
-        )}
-      >
-        {exportError ?? statusLabel}
-      </span>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <span
+          className={cn(
+            'rounded-pill inline-flex items-center px-3 py-1 text-xs font-medium',
+            exportError
+              ? 'bg-destructive/10 text-destructive'
+              : 'bg-muted text-muted-foreground',
+          )}
+        >
+          {exportError ?? statusLabel}
+        </span>
+        {commentNavigator}
+      </div>
       <div className="flex items-center gap-2">
         {onExportClick ? (
           <DropdownMenu>
@@ -256,13 +258,11 @@ export function SplitDocumentView({
       selectedCitation?.doc_id === document.doc_id &&
       selectedCitation.page_num != null
     ) {
-      const hasComment = commentedBlockIds.has(selectedCitation.block_id)
-      const commentLabel = hasComment ? ' · Review note attached' : ''
-      return `${blockCountLabel} · Page ${selectedCitation.page_num} selected${commentLabel}`
+      return `${blockCountLabel} · Page ${selectedCitation.page_num} selected`
     }
 
     return `${blockCountLabel} · ${document.filename}`
-  }, [blocks.length, blocksLoading, commentedBlockIds, document.doc_id, document.filename, selectedCitation])
+  }, [blocks.length, blocksLoading, document.doc_id, document.filename, selectedCitation])
 
   const canExportPdf = document.mime === 'application/pdf'
   const exportStatusHint =
@@ -368,14 +368,6 @@ export function SplitDocumentView({
             <ExtractViewHelpButton />
           </div>
 
-          <CommentNavigator
-            entries={documentComments}
-            activeIndex={commentNavIndex}
-            loading={documentCommentsLoading}
-            onIndexChange={navigateToComment}
-            className="mx-auto"
-          />
-
           <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
             {document.filename}
           </p>
@@ -436,6 +428,16 @@ export function SplitDocumentView({
 
       <SplitDocumentViewFooter
         statusLabel={statusLabel}
+        commentNavigator={
+          documentCommentsLoading || documentComments.length > 0 ? (
+            <CommentNavigator
+              entries={documentComments}
+              activeIndex={commentNavIndex}
+              loading={documentCommentsLoading}
+              onIndexChange={navigateToComment}
+            />
+          ) : null
+        }
         exportError={exportError}
         ctaLabel={MODE_CTA[mode]}
         ctaLoading={buildingProfiles || comparingScope}

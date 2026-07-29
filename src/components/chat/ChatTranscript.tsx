@@ -1,4 +1,5 @@
 import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
+import { ChatContextAttachmentPreview } from '@/components/chat/ChatContextAttachments'
 import {
   Message,
   MessageContent,
@@ -69,7 +70,12 @@ export function ChatTranscript() {
                             }
                           >
                             {isUser ? (
-                              item.text
+                              <div className="space-y-2">
+                                {item.contextAttachments?.length ? (
+                                  <ChatContextAttachmentPreview attachments={item.contextAttachments} />
+                                ) : null}
+                                <p>{item.text}</p>
+                              </div>
                             ) : (
                               <AssistantMessageBody message={item} />
                             )}

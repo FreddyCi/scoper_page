@@ -122,6 +122,20 @@ export type ChatActionStatus = 'pending' | 'editing' | 'approved' | 'dismissed'
 
 export type ChatActionKind = 'draft' | 'update' | 'analyze'
 
+export type ChatContextAttachmentKind = 'document' | 'block'
+
+/** PDF / passage context attached to a chat turn */
+export type ChatContextAttachment = {
+  id: string
+  kind: ChatContextAttachmentKind
+  docId: string
+  blockId?: string
+  label: string
+  description?: string
+  excerpt?: string
+  pageNum?: number
+}
+
 /** Agent-suggested task row with live-edit + approve/dismiss controls */
 export type ChatActionProposal = {
   id: string
@@ -156,6 +170,7 @@ export type ChatMessage = {
   role: ChatMessageRole
   text: string
   rich?: AssistantChatContent
+  contextAttachments?: ChatContextAttachment[]
   /** True while Scoper tokens are streaming into this assistant turn */
   streaming?: boolean
   created_at: string

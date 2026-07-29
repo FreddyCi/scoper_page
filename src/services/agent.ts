@@ -1,9 +1,15 @@
 import { EcpAgentRunDeniedError, runEcpAgentTool } from '@/ecp/agent-run'
 import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
+import { buildAgentPrompt, resolveContextDocIds } from '@/lib/chat-context'
 import { resolveMentionedDocIds } from '@/lib/chat-mentions'
 import { buildRichAssistantReply } from '@/lib/chat-stub'
-import type { AssistantChatContent, ChatMessage as AppChatMessage, FindClauseResult } from '@/lib/types'
+import type {
+  AssistantChatContent,
+  ChatContextAttachment,
+  ChatMessage as AppChatMessage,
+  FindClauseResult,
+} from '@/lib/types'
 import type { ChatMessage as ScoperChatMessage } from '@/lib/scoper-protocol'
 import { buildAssistantRichContent } from '@/services/chat-citations'
 import {
@@ -14,38 +20,47 @@ import { useSessionStore } from '@/store/session-store'
 
 type AgentTurnHandlers = {
   assistantId: string
+  contextAttachments?: ChatContextAttachment[]
   onStreamDelta?: (delta: string) => void
 }
 
 function toScoperMessages(messages: AppChatMessage[]): ScoperChatMessage[] {
   return messages
     .filter((message) => message.role === 'user' || message.role === 'assistant')
-    .map((message) => ({
-      role: message.role,
-      content: message.text.trim(),
-    }))
+    .map((message) => {
+      const content =
+        message.role === 'user' && message.contextAttachments?.length
+          ? buildAgentPrompt(message.text.trim(), message.contextAttachments)
+          : message.text.trim()
+
+      return {
+        role: message.role,
+        content,
+      }
+    })
     .filter((message) => message.content.length > 0)
 }
 
-function resolveCitationDocIds(prompt: string): string[] {
+function resolveCitationDocIds(
+  prompt: string,
+  contextAttachments: ChatContextAttachment[] = [],
+): string[] {
   const state = useSessionStore.getState()
   const mentionedDocIds = resolveMentionedDocIds(prompt, state.documents)
+  const fallbackDocIds =
+    mentionedDocIds.length > 0
+      ? mentionedDocIds
+      : state.activeDocId
+        ? [state.activeDocId]
+        : state.documents.map((doc) => doc.doc_id)
 
-  if (mentionedDocIds.length > 0) {
-    return mentionedDocIds
-  }
-
-  if (state.activeDocId) {
-    return [state.activeDocId]
-  }
-
-  return state.documents.map((doc) => doc.doc_id)
+  return resolveContextDocIds(contextAttachments, fallbackDocIds)
 }
 
-function applyMentionScope(prompt: string) {
-  const mentionedDocIds = resolveMentionedDocIds(prompt, useSessionStore.getState().documents)
-  if (mentionedDocIds[0]) {
-    useSessionStore.getState().setActiveDocId(mentionedDocIds[0])
+function applyMentionScope(prompt: string, contextAttachments: ChatContextAttachment[] = []) {
+  const docIds = resolveCitationDocIds(prompt, contextAttachments)
+  if (docIds[0]) {
+    useSessionStore.getState().setActiveDocId(docIds[0])
   }
 }
 
@@ -141,12 +156,14 @@ async function streamFindClauseSummary(
 }
 
 async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandlers) {
-  const docIds = resolveCitationDocIds(prompt)
-  applyMentionScope(prompt)
+  const attachments = handlers.contextAttachments ?? []
+  const enrichedPrompt = buildAgentPrompt(prompt, attachments)
+  const docIds = resolveCitationDocIds(prompt, attachments)
+  applyMentionScope(prompt, attachments)
 
   let findResult: FindClauseResult
   try {
-    findResult = await invokeFindClauseViaEcp(prompt, docIds, 6)
+    findResult = await invokeFindClauseViaEcp(enrichedPrompt, docIds, 6)
   } catch (error) {
     if (error instanceof EcpAgentRunDeniedError) {
       finalizeAgentError(handlers.assistantId, error.message)
@@ -156,7 +173,7 @@ async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandler
   }
 
   try {
-    const summary = await streamFindClauseSummary(prompt, findResult, handlers)
+    const summary = await streamFindClauseSummary(enrichedPrompt, findResult, handlers)
     finalizeFindClauseTurn(handlers.assistantId, summary, findResult)
     return
   } catch (error) {
@@ -188,15 +205,20 @@ async function runGenericScoperTurn(
   })
 }
 
-async function applyStubAssistantReply(assistantId: string, prompt: string) {
+async function applyStubAssistantReply(
+  assistantId: string,
+  prompt: string,
+  contextAttachments: ChatContextAttachment[] = [],
+) {
   const state = useSessionStore.getState()
-  const docIds = resolveCitationDocIds(prompt)
-  applyMentionScope(prompt)
+  const docIds = resolveCitationDocIds(prompt, contextAttachments)
+  applyMentionScope(prompt, contextAttachments)
+  const enrichedPrompt = buildAgentPrompt(prompt, contextAttachments)
 
   let findResult: FindClauseResult | null = null
   if (docIds.length > 0) {
     try {
-      findResult = await invokeFindClauseViaEcp(prompt, docIds, 6)
+      findResult = await invokeFindClauseViaEcp(enrichedPrompt, docIds, 6)
     } catch (error) {
       if (error instanceof EcpAgentRunDeniedError) {
         finalizeAgentError(assistantId, error.message)
@@ -233,7 +255,8 @@ export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers):
 
   await ensureScoperEcpReadyBeforeAgentRun()
 
-  const docIds = resolveCitationDocIds(trimmed)
+  const attachments = handlers.contextAttachments ?? []
+  const docIds = resolveCitationDocIds(trimmed, attachments)
 
   if (docIds.length > 0) {
     try {
@@ -257,7 +280,7 @@ export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers):
     if (import.meta.env.DEV) {
       console.warn('[agent] falling back to stub reply', error)
     }
-    await applyStubAssistantReply(handlers.assistantId, trimmed)
+    await applyStubAssistantReply(handlers.assistantId, trimmed, attachments)
     useSessionStore.getState().setChatModelStatus(
       error instanceof ScoperWebGpuUnavailableError ? 'unavailable' : 'ready',
     )

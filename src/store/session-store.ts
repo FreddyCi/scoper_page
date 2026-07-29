@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import type {
   ChatActionProposal,
   ChatActionStatus,
+  ChatContextAttachment,
   CitationRef,
   ChatMessage,
   DocumentMeta,
@@ -134,8 +135,11 @@ export type SessionState = {
   bumpCitationFocus: () => void
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
-  sendChatPrompt: (text: string) => void
-  beginChatTurn: (text: string) => { userMessage: ChatMessage; assistantMessage: ChatMessage }
+  sendChatPrompt: (text: string, contextAttachments?: ChatContextAttachment[]) => void
+  beginChatTurn: (
+    text: string,
+    contextAttachments?: ChatContextAttachment[],
+  ) => { userMessage: ChatMessage; assistantMessage: ChatMessage }
   appendAssistantText: (messageId: string, delta: string) => void
   finalizeAssistantMessage: (
     messageId: string,
@@ -340,11 +344,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { chatCollapsed }
     }),
 
-  sendChatPrompt: (text) => {
-    void runChatAgentTurn(text)
+  sendChatPrompt: (text, contextAttachments = []) => {
+    void runChatAgentTurn(text, contextAttachments)
   },
 
-  beginChatTurn: (text) => {
+  beginChatTurn: (text, contextAttachments = []) => {
     const trimmed = text.trim()
     const state = get()
     const isFirstPrompt = !state.chatStarted
@@ -353,6 +357,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       id: crypto.randomUUID(),
       role: 'user',
       text: trimmed,
+      contextAttachments: contextAttachments.length > 0 ? contextAttachments : undefined,
       created_at: new Date().toISOString(),
     }
 

@@ -56,7 +56,7 @@ export function ResultsProfileCard({
       <CardHeader className="gap-4 border-b border-border/70 px-4 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
-            <CardTitle className="truncate text-base font-semibold tracking-tight">
+            <CardTitle className="text-base leading-snug font-semibold tracking-tight break-words">
               {profile.subject.name}
             </CardTitle>
             {profile.subject.role ? (

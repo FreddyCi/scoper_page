@@ -95,13 +95,13 @@ export function WorkspaceContent() {
             orientation="horizontal"
             className="border-border min-h-0 flex-1 rounded-xl border"
           >
-            <ResizablePanel defaultSize="50%" minSize="25%" className="min-h-0 min-w-0 p-4">
+            <ResizablePanel defaultSize="52%" minSize="30%" className="min-h-0 min-w-0 p-4">
               <ResultsProfileGrid profiles={profiles} className="h-full min-h-0" />
             </ResizablePanel>
 
             <ResizableHandle withHandle />
 
-            <ResizablePanel defaultSize="50%" minSize="25%" className="min-h-0 min-w-0 p-4">
+            <ResizablePanel defaultSize="48%" minSize="28%" className="min-h-0 min-w-0 p-4">
               <RfpEvaluationPanel className="h-full min-h-0" />
             </ResizablePanel>
           </ResizablePanelGroup>

@@ -159,20 +159,14 @@ export function ResultsProfileGrid({
         </p>
       </header>
 
-      <div className="scrollbar-none min-h-0 flex-1 overflow-x-auto pb-2 lg:overflow-x-visible lg:overflow-y-auto">
-        <div
-          className={cn(
-            'flex w-max min-w-full gap-4',
-            'lg:grid lg:w-full lg:grid-cols-2 lg:auto-rows-min',
-            'xl:grid-cols-3',
-          )}
-        >
+      <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-2">
+        <div className="flex flex-col gap-4">
           {profiles.map((profile) => (
             <ResultsProfileCard
               key={profile.profile_id}
               profile={profile}
               onCriterionClick={handleCriterionClick}
-              className="w-[19rem] shrink-0 lg:w-auto"
+              className="w-full min-w-0"
             />
           ))}
         </div>

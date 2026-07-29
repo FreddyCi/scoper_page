@@ -40,6 +40,14 @@ export function isMarkdownFile(file: File): boolean {
   return file.type === 'text/markdown' || extension === 'md' || extension === 'markdown'
 }
 
+export function isRfpUploadFile(file: File): boolean {
+  return isAcceptedUploadFile(file) && !isMarkdownFile(file)
+}
+
+export function isContextUploadFile(file: File): boolean {
+  return isMarkdownFile(file)
+}
+
 export function mimeFromFilename(filename: string): string {
   const extension = getFileExtension(filename)
   if (extension && extension in EXTENSION_MIME) {

@@ -193,7 +193,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const setCompanyContext = useSessionStore((s) => s.setCompanyContext)
   const clearEvaluationSetup = useSessionStore((s) => s.clearEvaluationSetup)
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
-  const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
+  const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
 
   const [running, setRunning] = useState(false)
 
@@ -290,7 +290,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                   size="sm"
                   variant="outline"
                   className="mt-2"
-                  onClick={() => setUploadPopupOpen(true)}
+                  onClick={() => openUploadPopup('rfp')}
                 >
                   Upload document
                 </Button>

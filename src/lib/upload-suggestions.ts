@@ -1,3 +1,5 @@
+export type UploadIntent = 'rfp' | 'context'
+
 export type UploadSuggestion = {
   id: string
   label: string
@@ -24,8 +26,41 @@ export const UPLOAD_SUGGESTIONS: UploadSuggestion[] = [
   },
 ]
 
-export const UPLOAD_MODAL_DESCRIPTION =
-  'Add RFP packages, bidder responses, or supporting context. Parsed locally in your browser — nothing is sent to a server.'
+export type UploadIntentCopy = {
+  title: string
+  description: string
+  dropTitle: string
+  dropHint: string
+  footerNote: string
+  highlight: UploadSuggestion
+  accept: string
+}
 
-export const UPLOAD_MODAL_FOOTER_NOTE =
-  'Markdown uploads are stored as supporting context. RFP and bidder files stay in document view.'
+export const UPLOAD_INTENT_COPY: Record<UploadIntent, UploadIntentCopy> = {
+  rfp: {
+    title: 'Upload RFP',
+    description:
+      'Add RFP packages and bidder responses for document review. Parsed locally in your browser — nothing is sent to a server.',
+    dropTitle: 'Drop RFP files here or click to browse',
+    dropHint: 'PDF, Word, and Excel — select one or more files before uploading',
+    footerNote: 'RFP and bidder files open in document view for review and analysis.',
+    highlight: UPLOAD_SUGGESTIONS[0]!,
+    accept: '.pdf,.doc,.docx,.xls,.xlsx',
+  },
+  context: {
+    title: 'Upload context',
+    description:
+      'Add markdown notes and supporting context for the agent. Parsed locally in your browser — nothing is sent to a server.',
+    dropTitle: 'Drop markdown files here or click to browse',
+    dropHint: '.md and .markdown — context is added to chat automatically',
+    footerNote: 'Context uploads appear as tags in chat and stay attached until you remove them.',
+    highlight: UPLOAD_SUGGESTIONS[2]!,
+    accept: '.md,.markdown,text/markdown',
+  },
+}
+
+export function uploadIntentFromSuggestionId(id: string): UploadIntent | null {
+  if (id === 'upload-context') return 'context'
+  if (id === 'analyse-rfp') return 'rfp'
+  return null
+}

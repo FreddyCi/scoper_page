@@ -20,6 +20,7 @@ import {
   contextAttachmentsForDocuments,
   mergeContextAttachments,
 } from '@/lib/chat-context'
+import type { UploadIntent } from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getScoperClient } from '@/services/scoper-client'
 
@@ -122,6 +123,7 @@ export type SessionState = {
   workspaceView: WorkspaceView
   activeDocId: string | null
   uploadPopupOpen: boolean
+  uploadIntent: UploadIntent
   ocrEnabled: boolean
 
   setMode: (mode: WorkspaceMode) => void
@@ -168,6 +170,7 @@ export type SessionState = {
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
+  openUploadPopup: (intent: UploadIntent) => void
   setOcrEnabled: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
   resetSession: () => void
@@ -192,6 +195,7 @@ const initialState = {
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
   uploadPopupOpen: false,
+  uploadIntent: 'rfp' as UploadIntent,
   ocrEnabled: true,
 }
 
@@ -462,6 +466,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setActiveDocId: (activeDocId) => set({ activeDocId }),
 
   setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
+
+  openUploadPopup: (uploadIntent) => set({ uploadPopupOpen: true, uploadIntent }),
 
   setOcrEnabled: (ocrEnabled) => set({ ocrEnabled }),
 

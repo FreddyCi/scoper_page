@@ -19,6 +19,7 @@ export function useUploadQueueContext(): UploadQueueContextValue {
 /** Keeps upload popup mounted so landing cards and footer FAB can open it. */
 export function UploadQueueProvider({ children }: { children: ReactNode }) {
   const open = useSessionStore((s) => s.uploadPopupOpen)
+  const uploadIntent = useSessionStore((s) => s.uploadIntent)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
   const queue = useUploadQueue()
   const { isSubmitting, clearQueue, items, uploadProgress, progressPhase, addFiles, removeFile, submitUpload } =
@@ -41,6 +42,7 @@ export function UploadQueueProvider({ children }: { children: ReactNode }) {
       {children}
       <UploadPopup
         open={open}
+        intent={uploadIntent}
         items={items}
         isSubmitting={isSubmitting}
         uploadProgress={uploadProgress}

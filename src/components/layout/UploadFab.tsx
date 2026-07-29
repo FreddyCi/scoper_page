@@ -13,6 +13,7 @@ type UploadFabProps = {
 export function UploadFab({ className }: UploadFabProps) {
   const open = useSessionStore((s) => s.uploadPopupOpen)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
+  const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
   const { count } = useUploadQueueContext()
 
   return (
@@ -24,7 +25,7 @@ export function UploadFab({ className }: UploadFabProps) {
         className="shadow-elevated border-border bg-surface relative size-10 rounded-full border"
         aria-label="Upload documents"
         aria-expanded={open}
-        onClick={() => setUploadPopupOpen(!open)}
+        onClick={() => (open ? setUploadPopupOpen(false) : openUploadPopup('rfp'))}
       >
         <UploadIcon className="size-4" />
         {count > 0 ? (

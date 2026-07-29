@@ -6,18 +6,13 @@ import {
   featureCardTitleClass,
 } from '@/components/workspace/feature-card-styles'
 import { Badge } from '@/components/ui/badge'
-import { UPLOAD_SUGGESTIONS } from '@/lib/upload-suggestions'
+import { UPLOAD_SUGGESTIONS, uploadIntentFromSuggestionId } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
 export function QuickActionCards({ className }: { className?: string }) {
   const setMode = useSessionStore((s) => s.setMode)
-  const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
-
-  function openUpload() {
-    setMode('rfp')
-    setUploadPopupOpen(true)
-  }
+  const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
 
   return (
     <div
@@ -28,6 +23,7 @@ export function QuickActionCards({ className }: { className?: string }) {
     >
       {UPLOAD_SUGGESTIONS.map((action, index) => {
         const disabled = action.disabled ?? false
+        const intent = uploadIntentFromSuggestionId(action.id)
 
         return (
           <button
@@ -36,7 +32,9 @@ export function QuickActionCards({ className }: { className?: string }) {
             disabled={disabled}
             aria-disabled={disabled}
             onClick={() => {
-              if (!disabled) openUpload()
+              if (disabled || !intent) return
+              setMode('rfp')
+              openUploadPopup(intent)
             }}
             className={cn(
               'group text-left',

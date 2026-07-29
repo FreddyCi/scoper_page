@@ -25,20 +25,17 @@ import {
 } from '@/components/ui/progress'
 import type { PendingUpload } from '@/hooks/use-upload-queue'
 import {
-  UPLOAD_ACCEPT_STRING,
   formatUploadFileSize,
   getFileExtension,
-  isAcceptedUploadFile,
+  isContextUploadFile,
+  isRfpUploadFile,
 } from '@/lib/upload-accept'
-import {
-  UPLOAD_MODAL_DESCRIPTION,
-  UPLOAD_MODAL_FOOTER_NOTE,
-  UPLOAD_SUGGESTIONS,
-} from '@/lib/upload-suggestions'
+import { UPLOAD_INTENT_COPY, type UploadIntent } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 
 type UploadPopupProps = {
   open: boolean
+  intent: UploadIntent
   items: PendingUpload[]
   isSubmitting: boolean
   uploadProgress: number
@@ -51,7 +48,10 @@ type UploadPopupProps = {
   className?: string
 }
 
-const SUPPORTED_FORMATS = UPLOAD_SUGGESTIONS
+
+function acceptFileForIntent(file: File, intent: UploadIntent): boolean {
+  return intent === 'context' ? isContextUploadFile(file) : isRfpUploadFile(file)
+}
 
 function fileIconForName(filename: string) {
   const extension = getFileExtension(filename)
@@ -123,6 +123,7 @@ function UploadFileRow({
 
 export function UploadPopup({
   open,
+  intent,
   items,
   isSubmitting,
   uploadProgress,
@@ -136,13 +137,14 @@ export function UploadPopup({
 }: UploadPopupProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const copy = UPLOAD_INTENT_COPY[intent]
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
-      const accepted = Array.from(files).filter(isAcceptedUploadFile)
+      const accepted = Array.from(files).filter((file) => acceptFileForIntent(file, intent))
       if (accepted.length > 0) onAddFiles(accepted)
     },
-    [onAddFiles],
+    [intent, onAddFiles],
   )
 
   const handleClose = useCallback(() => {
@@ -184,14 +186,14 @@ export function UploadPopup({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 id="upload-popup-title" className="text-lg font-semibold tracking-tight">
-                  Upload documents
+                  {copy.title}
                 </h2>
                 {items.length > 0 ? (
                   <Badge variant="secondary">{items.length} files</Badge>
                 ) : null}
               </div>
               <p className="text-muted-foreground mt-1.5 max-w-lg text-sm leading-relaxed">
-                {UPLOAD_MODAL_DESCRIPTION}
+                {copy.description}
               </p>
             </div>
             <Button
@@ -248,41 +250,22 @@ export function UploadPopup({
                 <UploadCloudIcon className="size-7" />
               </div>
               <p className="text-foreground mt-5 text-base font-semibold">
-                Drop files here or click to browse
+                {copy.dropTitle}
               </p>
-              <p className="text-muted-foreground mt-2 text-sm">
-                Select one or more files — you can add more before uploading
-              </p>
+              <p className="text-muted-foreground mt-2 text-sm">{copy.dropHint}</p>
 
-              <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {SUPPORTED_FORMATS.map((format) => (
-                  <div
-                    key={format.id}
-                    className={cn(
-                      'border-border/70 bg-surface/80 rounded-xl border px-3 py-2.5 text-left',
-                      format.disabled && 'opacity-50',
-                    )}
-                  >
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="text-foreground text-xs font-semibold">{format.label}</p>
-                      {format.disabled ? (
-                        <Badge variant="secondary" className="px-1.5 py-0 text-[9px] uppercase">
-                          Soon
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
-                      {format.description}
-                    </p>
-                  </div>
-                ))}
+              <div className="border-border/70 bg-surface/80 mx-auto mt-6 max-w-md rounded-xl border px-4 py-3 text-left">
+                <p className="text-foreground text-xs font-semibold">{copy.highlight.label}</p>
+                <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
+                  {copy.highlight.description}
+                </p>
               </div>
 
               <input
                 ref={inputRef}
                 type="file"
                 multiple
-                accept={UPLOAD_ACCEPT_STRING}
+                accept={copy.accept}
                 className="sr-only"
                 onChange={(event) => {
                   if (event.target.files) handleFiles(event.target.files)
@@ -323,9 +306,7 @@ export function UploadPopup({
           </div>
 
           <div className="border-border flex items-center justify-between gap-3 border-t px-6 py-4">
-            <p className="text-muted-foreground hidden text-xs sm:block">
-              {UPLOAD_MODAL_FOOTER_NOTE}
-            </p>
+            <p className="text-muted-foreground hidden text-xs sm:block">{copy.footerNote}</p>
             <div className="ml-auto flex items-center gap-2">
               <Button
                 type="button"

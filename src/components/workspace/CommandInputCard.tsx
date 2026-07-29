@@ -254,7 +254,7 @@ export function CommandInputCard({
 }: CommandInputCardProps) {
   const mode = useSessionStore((s) => s.mode)
   const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
-  const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
+  const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
   const [prompt, setPrompt] = useState('')
   const [attachments, setAttachments] = useState<CommandAttachment[]>([])
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -367,7 +367,7 @@ export function CommandInputCard({
           <button
             type="button"
             className="text-muted-foreground hover:text-foreground px-1 text-xs font-medium transition-colors"
-            onClick={() => setUploadPopupOpen(true)}
+            onClick={() => openUploadPopup('rfp')}
           >
             Upload
           </button>

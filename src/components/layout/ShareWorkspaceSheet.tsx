@@ -1,17 +1,26 @@
-import { useRef, useState } from 'react'
-import { Link2Icon, Share2Icon, UploadIcon } from 'lucide-react'
+import { useRef, useState, type ReactNode } from 'react'
+import {
+  DownloadIcon,
+  Link2Icon,
+  LockIcon,
+  Share2Icon,
+  UploadIcon,
+  XIcon,
+} from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
+import { cn } from '@/lib/utils'
 import {
   copyShareLink,
   downloadSharePackFile,
@@ -22,6 +31,33 @@ import { useSessionStore } from '@/store/session-store'
 
 type ShareWorkspaceSheetProps = {
   disabled?: boolean
+}
+
+function ShareSectionCard({
+  accent,
+  children,
+  className,
+}: {
+  accent: 'sky' | 'violet'
+  children: ReactNode
+  className?: string
+}) {
+  const accentClass =
+    accent === 'sky'
+      ? 'border-sky-200/80 bg-surface from-sky-50/70'
+      : 'border-violet-200/80 bg-surface from-violet-50/60'
+
+  return (
+    <section
+      className={cn(
+        'shadow-panel rounded-2xl border bg-gradient-to-br to-transparent p-4',
+        accentClass,
+        className,
+      )}
+    >
+      {children}
+    </section>
+  )
 }
 
 export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetProps) {
@@ -52,7 +88,7 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
     try {
       const summary = await exportEncryptedSharePack()
       const link = await copyShareLink(summary)
-      setStatus(`Share link copied. Opens Scoper and loads workspace in this browser. ${link}`)
+      setStatus(`Share link copied — opens Scoper and loads in the browser. ${link}`)
     } catch (error) {
       setStatus(error instanceof Error ? error.message : 'Copy link failed')
     } finally {
@@ -86,15 +122,15 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger
+    <Drawer open={open} onOpenChange={setOpen} swipeDirection="right">
+      <DrawerTrigger
         render={
           <Button
             type="button"
             variant="ghost"
             size="sm"
             disabled={disabled}
-            className="text-subtle-foreground hover:text-foreground h-7 px-2 text-xs font-normal"
+            className="text-subtle-foreground hover:text-foreground h-7 rounded-full px-2.5 text-xs font-normal"
           >
             <Share2Icon className="size-3.5" />
             Share
@@ -102,81 +138,134 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
         }
       />
 
-      <SheetContent side="right" className="w-full sm:max-w-md">
-        <SheetHeader>
-          <SheetTitle>Share workspace</SheetTitle>
-          <SheetDescription>
-            Export an encrypted DuckDB snapshot, source documents, and session settings. Recipients
-            open a Scoper link or import the `.scoper-share` file in their browser.
-          </SheetDescription>
-        </SheetHeader>
+      <DrawerContent
+        className={cn(
+          'border-border bg-workspace text-foreground shadow-elevated',
+          '[--drawer-inset:var(--spacing-shell)] [--drawer-bleed-background:var(--color-workspace)]',
+          'data-[swipe-direction=right]:rounded-l-[1.75rem] data-[swipe-direction=right]:border-l',
+          'data-[swipe-direction=right]:sm:[--drawer-content-width:26rem]',
+        )}
+      >
+        <DrawerHeader className="relative gap-3 px-5 pt-5 pb-2">
+          <DrawerClose
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="absolute top-4 right-4 rounded-full"
+              />
+            }
+          >
+            <XIcon />
+            <span className="sr-only">Close</span>
+          </DrawerClose>
 
-        <div className="flex flex-col gap-4 px-4 pb-4">
-          <section className="space-y-2">
-            <h3 className="text-sm font-medium">Export</h3>
-            <p className="text-muted-foreground text-xs">
-              Chat history is not included. Document bytes must still be in memory from upload.
-            </p>
+          <div className="flex items-start gap-3 pr-10">
+            <div className="border-sky-200/80 bg-surface shadow-panel flex size-11 shrink-0 items-center justify-center rounded-2xl border">
+              <img src="/scoper-logo.svg" alt="" width={24} height={24} className="size-6" />
+            </div>
+            <div className="min-w-0 space-y-1">
+              <DrawerTitle className="text-lg tracking-tight">Share workspace</DrawerTitle>
+              <DrawerDescription className="text-muted-foreground text-xs leading-relaxed">
+                Encrypted Local DB snapshot, source documents, and session settings — loaded entirely
+                in the browser.
+              </DrawerDescription>
+            </div>
+          </div>
+
+          <div className="border-sky-200/70 bg-sky-50/70 text-sky-950 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium">
+            <LockIcon className="size-3" />
+            End-to-end encrypted
+          </div>
+        </DrawerHeader>
+
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-3 pb-5">
+          <ShareSectionCard accent="sky">
+            <div className="mb-3 space-y-1">
+              <h3 className="text-sky-950 text-sm font-semibold">Export</h3>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Chat history is not included. Document bytes must still be in memory from upload.
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"
                 disabled={busy || !hasDocuments}
+                className="rounded-full bg-sky-950 text-white hover:bg-sky-900"
                 onClick={() => void handleExportAndDownload()}
               >
-                <UploadIcon className="size-3.5" />
+                <DownloadIcon className="size-3.5" />
                 Download pack
               </Button>
               <Button
                 type="button"
                 size="sm"
-                variant="secondary"
+                variant="outline"
                 disabled={busy || !hasDocuments}
+                className="border-sky-200 bg-white/80 text-sky-950 hover:bg-sky-50 rounded-full"
                 onClick={() => void handleCopyLink()}
               >
                 <Link2Icon className="size-3.5" />
                 Copy link
               </Button>
             </div>
-          </section>
+          </ShareSectionCard>
 
-          <section className="space-y-2">
-            <h3 className="text-sm font-medium">Import</h3>
-            <div className="space-y-2">
-              <Label htmlFor="share-import-key">Share key</Label>
-              <Input
-                id="share-import-key"
-                value={importKey}
-                onChange={(event) => setImportKey(event.target.value)}
-                placeholder="Base64 key from #share=id,key"
-                autoComplete="off"
-              />
+          <ShareSectionCard accent="violet">
+            <div className="mb-3 space-y-1">
+              <h3 className="text-violet-950 text-sm font-semibold">Import</h3>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Paste the key from a share link, then choose the `.scoper-share` file.
+              </p>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".scoper-share,application/octet-stream"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0]
-                event.target.value = ''
-                if (file) void handleImportFile(file)
-              }}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Import `.scoper-share` file
-            </Button>
-          </section>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="share-import-key" className="text-violet-950 text-xs font-medium">
+                  Share key
+                </Label>
+                <Input
+                  id="share-import-key"
+                  value={importKey}
+                  onChange={(event) => setImportKey(event.target.value)}
+                  placeholder="Base64 key from #share=id,key"
+                  autoComplete="off"
+                  className="border-violet-200/80 bg-white/90 rounded-xl"
+                />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".scoper-share,application/octet-stream"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  event.target.value = ''
+                  if (file) void handleImportFile(file)
+                }}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                className="border-violet-200 bg-white/80 text-violet-950 hover:bg-violet-50 w-full rounded-full"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadIcon className="size-3.5" />
+                Import `.scoper-share` file
+              </Button>
+            </div>
+          </ShareSectionCard>
 
-          {status ? <p className="text-muted-foreground text-xs">{status}</p> : null}
+          {status ? (
+            <p className="border-border/80 bg-surface text-muted-foreground rounded-2xl border px-3 py-2.5 text-xs leading-relaxed">
+              {status}
+            </p>
+          ) : null}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DrawerContent>
+    </Drawer>
   )
 }

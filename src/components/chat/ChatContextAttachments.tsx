@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -107,56 +108,61 @@ export function ChatContextAttachmentControls({
       />
 
       <DropdownMenuContent align="end" side="top" className="w-72">
-        <DropdownMenuLabel>Add context</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Add context</DropdownMenuLabel>
 
-        {canAttachSelection && selectedDoc && selectedCitation ? (
-          <DropdownMenuItem
-            className="items-start py-2.5"
-            onClick={() => addAttachment(createBlockContextAttachment(selectedDoc, selectedCitation))}
-          >
-            <MenuOptionContent
-              title="Selected passage"
-              description={
-                selectedCitation.page_num != null
-                  ? `Page ${selectedCitation.page_num} highlight from ${selectedDoc.filename}`
-                  : `Highlighted passage from ${selectedDoc.filename}`
-              }
-            />
-          </DropdownMenuItem>
-        ) : null}
+          {canAttachSelection && selectedDoc && selectedCitation ? (
+            <DropdownMenuItem
+              className="items-start py-2.5"
+              onClick={() => addAttachment(createBlockContextAttachment(selectedDoc, selectedCitation))}
+            >
+              <MenuOptionContent
+                title="Selected passage"
+                description={
+                  selectedCitation.page_num != null
+                    ? `Page ${selectedCitation.page_num} highlight from ${selectedDoc.filename}`
+                    : `Highlighted passage from ${selectedDoc.filename}`
+                }
+              />
+            </DropdownMenuItem>
+          ) : null}
 
-        {canAttachActiveDoc && activeDoc ? (
-          <DropdownMenuItem
-            className="items-start py-2.5"
-            onClick={() => addAttachment(createDocumentContextAttachment(activeDoc))}
-          >
-            <MenuOptionContent
-              title={activeDoc.filename}
-              description="Use the full active PDF as chat context"
-            />
-          </DropdownMenuItem>
-        ) : null}
+          {canAttachActiveDoc && activeDoc ? (
+            <DropdownMenuItem
+              className="items-start py-2.5"
+              onClick={() => addAttachment(createDocumentContextAttachment(activeDoc))}
+            >
+              <MenuOptionContent
+                title={activeDoc.filename}
+                description="Use the full active PDF as chat context"
+              />
+            </DropdownMenuItem>
+          ) : null}
+
+          {pdfDocuments.length === 0 ? (
+            <DropdownMenuItem disabled>No PDF documents in this session</DropdownMenuItem>
+          ) : null}
+        </DropdownMenuGroup>
 
         {pdfDocuments.length > 0 ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-muted-foreground text-[11px] font-medium">
-              Session documents
-            </DropdownMenuLabel>
-            {pdfDocuments.map((doc) => (
-              <DropdownMenuItem
-                key={doc.doc_id}
-                className="items-start py-2.5"
-                onClick={() => addAttachment(createDocumentContextAttachment(doc))}
-              >
-                <MenuOptionContent title={doc.filename} description="Attach full document" />
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-muted-foreground text-[11px] font-medium">
+                Session documents
+              </DropdownMenuLabel>
+              {pdfDocuments.map((doc) => (
+                <DropdownMenuItem
+                  key={doc.doc_id}
+                  className="items-start py-2.5"
+                  onClick={() => addAttachment(createDocumentContextAttachment(doc))}
+                >
+                  <MenuOptionContent title={doc.filename} description="Attach full document" />
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuGroup>
           </>
-        ) : (
-          <DropdownMenuItem disabled>No PDF documents in this session</DropdownMenuItem>
-        )}
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )

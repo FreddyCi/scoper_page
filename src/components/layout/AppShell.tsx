@@ -82,18 +82,20 @@ export function AppShell({ children }: AppShellProps) {
                 )}
               >
                 <UploadQueueProvider>
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-14">
                     {children ?? <WorkspaceContent />}
                   </div>
 
-                  <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] pt-0 pb-3 text-xs">
-                    <UploadFab />
+                  <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-between bg-transparent px-[var(--spacing-panel)] pt-0 pb-3 text-xs text-subtle-foreground">
+                    <div className="pointer-events-auto">
+                      <UploadFab />
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       disabled={!hasSessionContent}
-                      className="text-subtle-foreground hover:text-foreground h-7 px-2 text-xs font-normal"
+                      className="text-subtle-foreground hover:text-foreground pointer-events-auto h-7 px-2 text-xs font-normal"
                       onClick={() => resetSession()}
                     >
                       Clear workspace

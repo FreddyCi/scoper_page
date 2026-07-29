@@ -58,15 +58,39 @@ export function resolveContextDocIds(
   const ids: string[] = []
   const seen = new Set<string>()
 
-  for (const attachment of attachments) {
-    if (seen.has(attachment.docId)) continue
-    seen.add(attachment.docId)
-    ids.push(attachment.docId)
+  function add(docId: string | null | undefined) {
+    if (!docId || seen.has(docId)) return
+    seen.add(docId)
+    ids.push(docId)
   }
 
-  if (ids.length > 0) return ids
+  for (const docId of fallbackDocIds) add(docId)
+  for (const attachment of attachments) add(attachment.docId)
 
-  return fallbackDocIds
+  return ids
+}
+
+/** Doc IDs the agent should search — session scope plus pinned chat context */
+export function resolveAgentSearchDocIds(
+  attachments: ChatContextAttachment[],
+  options: {
+    mentionedDocIds: string[]
+    sessionDocuments: DocumentMeta[]
+    evaluationDocId: string | null
+    activeDocId: string | null
+  },
+): string[] {
+  const scopeIds: string[] = []
+
+  if (options.mentionedDocIds.length > 0) {
+    scopeIds.push(...options.mentionedDocIds)
+  } else {
+    if (options.evaluationDocId) scopeIds.push(options.evaluationDocId)
+    if (options.activeDocId) scopeIds.push(options.activeDocId)
+    scopeIds.push(...options.sessionDocuments.map((doc) => doc.doc_id))
+  }
+
+  return resolveContextDocIds(attachments, scopeIds)
 }
 
 export function buildPromptContextBlock(attachments: ChatContextAttachment[]): string {

@@ -1,7 +1,7 @@
 import { EcpAgentRunDeniedError, runEcpAgentTool } from '@/ecp/agent-run'
 import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
-import { buildAgentPrompt, resolveContextDocIds } from '@/lib/chat-context'
+import { buildAgentPrompt, resolveAgentSearchDocIds } from '@/lib/chat-context'
 import { resolveMentionedDocIds } from '@/lib/chat-mentions'
 import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type {
@@ -57,14 +57,13 @@ function resolveCitationDocIds(
 ): string[] {
   const state = useSessionStore.getState()
   const mentionedDocIds = resolveMentionedDocIds(prompt, state.documents)
-  const fallbackDocIds =
-    mentionedDocIds.length > 0
-      ? mentionedDocIds
-      : state.activeDocId
-        ? [state.activeDocId]
-        : state.documents.map((doc) => doc.doc_id)
 
-  return resolveContextDocIds(contextAttachments, fallbackDocIds)
+  return resolveAgentSearchDocIds(contextAttachments, {
+    mentionedDocIds,
+    sessionDocuments: state.documents,
+    evaluationDocId: state.evaluationDocId,
+    activeDocId: state.activeDocId,
+  })
 }
 
 function applyMentionScope(prompt: string, contextAttachments: ChatContextAttachment[] = []) {

@@ -264,15 +264,19 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
 
       <CardContent className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="flex flex-col gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="company-context">Your organization</Label>
-            <Textarea
-              id="company-context"
-              value={companyContext}
-              onChange={(event) => setCompanyContext(event.target.value)}
-              rows={4}
-              placeholder="e.g. Enterprise IT buyer · requires CMMI L3 · $2M liability minimum · fixed-fee pricing preferred"
-            />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="company-context" className="leading-snug">
+                Your organization
+              </Label>
+              <Textarea
+                id="company-context"
+                value={companyContext}
+                onChange={(event) => setCompanyContext(event.target.value)}
+                rows={4}
+                placeholder="e.g. Enterprise IT buyer · requires CMMI L3 · $2M liability minimum · fixed-fee pricing preferred"
+              />
+            </div>
             <CompanyContextAssistant
               companyContext={companyContext}
               onApply={setCompanyContext}
@@ -280,45 +284,49 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="evaluation-doc">Requirements profile (RFP / SOW)</Label>
-            {requirementDocs.length === 0 ? (
-              <div className="border-border bg-muted/30 rounded-lg border border-dashed px-3 py-4 text-center">
-                <p className="text-muted-foreground text-sm">Upload an RFP or requirements doc first.</p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="mt-2"
-                  onClick={() => openUploadPopup('rfp')}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="evaluation-doc" className="leading-snug">
+                Requirements profile (RFP / SOW)
+              </Label>
+              {requirementDocs.length === 0 ? (
+                <div className="border-border bg-muted/30 rounded-lg border border-dashed px-3 py-4 text-center">
+                  <p className="text-muted-foreground text-sm">Upload an RFP or requirements doc first.</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => openUploadPopup('rfp')}
+                  >
+                    Upload document
+                  </Button>
+                </div>
+              ) : (
+                <Combobox
+                  items={requirementDocs}
+                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
+                  value={selectedRequirementDoc}
+                  onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
                 >
-                  Upload document
-                </Button>
-              </div>
-            ) : (
-              <Combobox
-                items={requirementDocs}
-                itemToStringValue={(doc: DocumentMeta) => doc.filename}
-                value={selectedRequirementDoc}
-                onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
-              >
-                <ComboboxInput
-                  id="evaluation-doc"
-                  placeholder="Select requirements document…"
-                  className="w-full"
-                />
-                <ComboboxContent>
-                  <ComboboxEmpty>No documents found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(doc: DocumentMeta) => (
-                      <ComboboxItem key={doc.doc_id} value={doc}>
-                        {doc.filename}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            )}
+                  <ComboboxInput
+                    id="evaluation-doc"
+                    placeholder="Select requirements document…"
+                    className="w-full"
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No documents found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(doc: DocumentMeta) => (
+                        <ComboboxItem key={doc.doc_id} value={doc}>
+                          {doc.filename}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
+            </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
               This document defines what bidders must meet. It won&apos;t appear as a qualification
               card.

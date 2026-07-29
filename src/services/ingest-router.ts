@@ -228,7 +228,8 @@ async function ingestMarkdown(
   cacheDocumentBytes(docId, bytes)
 
   reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing markdown')
-  const markdown = new TextDecoder('utf-8').decode(bytes)
+  const { stripYamlFrontMatter } = await import('@/lib/assemble-pdf-markdown')
+  const markdown = stripYamlFrontMatter(new TextDecoder('utf-8').decode(bytes))
   const blocks = parseMarkdownToBlocks(docId, markdown)
 
   if (blocks.length === 0) {

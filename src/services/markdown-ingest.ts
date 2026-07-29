@@ -71,7 +71,6 @@ export function parseMarkdownToBlocks(docId: string, markdown: string): BlockRec
       blocks.push({
         block_id: `${docId}:md-${sectionIndex}-${paragraphIndex}`,
         doc_id: docId,
-        page_num: sectionIndex + 1,
         section_path: section.sectionPath || undefined,
         text,
       })

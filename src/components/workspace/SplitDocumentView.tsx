@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { DownloadIcon, InfoIcon } from 'lucide-react'
 
+import { AnnotatedMarkdownView } from '@/components/workspace/AnnotatedMarkdownView'
 import { CommentNavigator } from '@/components/workspace/CommentNavigator'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
+import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { Button } from '@/components/ui/button'
 import {
   BrandDropdownContent,
@@ -33,7 +35,7 @@ import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
-type SplitPaneTab = 'extract' | 'original' | 'profiles'
+type SplitPaneTab = 'read' | 'preview' | 'extract' | 'original' | 'profiles'
 
 type SplitDocumentViewProps = {
   document: DocumentMeta
@@ -46,7 +48,7 @@ const MODE_CTA: Record<WorkspaceMode, string> = {
   scope_creep: 'Compare scope',
 }
 
-function ExtractViewHelpButton() {
+function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -55,7 +57,7 @@ function ExtractViewHelpButton() {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label="Extract view help"
+            aria-label={isMarkdown ? 'Read view help' : 'Extract view help'}
             className="text-muted-foreground"
           />
         }
@@ -63,20 +65,46 @@ function ExtractViewHelpButton() {
         <InfoIcon className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-72 p-3">
-        <p className="text-foreground text-sm font-semibold">Extract &amp; comments</p>
-        <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
-          <li>Click a block to highlight the matching passage in the PDF preview.</li>
-          <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
-          <li>Use the comment icon on a block row to attach a review note.</li>
-          <li>When review notes exist, use the footer navigator to step through each note.</li>
-          <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
-          <li>
-            <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
-            {' '}
-            <span className="text-amber-800 font-medium">Amber ring</span> = block with a review
-            note.
-          </li>
-        </ul>
+        {isMarkdown ? (
+          <>
+            <p className="text-foreground text-sm font-semibold">Markdown views</p>
+            <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
+              <li>
+                <span className="text-foreground font-medium">Read</span> — annotated paragraphs for
+                citations and review notes.
+              </li>
+              <li>
+                <span className="text-foreground font-medium">Preview</span> — full rendered markdown
+                with tables, lists, and document structure.
+              </li>
+              <li>Click a passage in Read to select it for chat citations.</li>
+              <li>Use the comment icon on a paragraph to attach a review note.</li>
+              <li>
+                <span className="text-violet-800 font-medium">Violet highlight</span> = selected
+                passage.{' '}
+                <span className="text-amber-800 font-medium">Amber ring</span> = paragraph with a
+                review note.
+              </li>
+            </ul>
+          </>
+        ) : (
+          <>
+            <p className="text-foreground text-sm font-semibold">Extract &amp; comments</p>
+            <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
+              <li>Click a block to highlight the matching passage in the PDF preview.</li>
+              <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
+              <li>Use the comment icon on a block row to attach a review note.</li>
+              <li>When review notes exist, use the footer navigator to step through each note.</li>
+              <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
+              <li>
+                <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
+                {' '}
+                <span className="text-amber-800 font-medium">Amber ring</span> = block with a review
+                note.
+              </li>
+            </ul>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -249,7 +277,9 @@ export function SplitDocumentView({
   initialPage = 1,
   className,
 }: SplitDocumentViewProps) {
-  const [activeTab, setActiveTab] = useState<SplitPaneTab>('extract')
+  const isMarkdown = document.mime === 'text/markdown'
+  const defaultTab: SplitPaneTab = isMarkdown ? 'read' : 'extract'
+  const [activeTab, setActiveTab] = useState<SplitPaneTab>(defaultTab)
   const [buildingProfiles, setBuildingProfiles] = useState(false)
   const [comparingScope, setComparingScope] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
@@ -308,10 +338,20 @@ export function SplitDocumentView({
   }
 
   useEffect(() => {
+    setActiveTab(isMarkdown ? 'read' : 'extract')
+  }, [document.doc_id, isMarkdown])
+
+  useEffect(() => {
     if (selectedCitation?.doc_id === document.doc_id) {
-      setActiveTab('extract')
+      setActiveTab(isMarkdown ? 'read' : 'extract')
     }
-  }, [selectedCitation?.block_id, citationFocusSeq, document.doc_id, selectedCitation?.doc_id])
+  }, [
+    selectedCitation?.block_id,
+    citationFocusSeq,
+    document.doc_id,
+    selectedCitation?.doc_id,
+    isMarkdown,
+  ])
 
   useEffect(() => {
     if (document.mime === 'application/pdf') {
@@ -324,15 +364,27 @@ export function SplitDocumentView({
 
     const blockCountLabel = `${blocks.length} block${blocks.length === 1 ? '' : 's'}`
 
-    if (
-      selectedCitation?.doc_id === document.doc_id &&
-      selectedCitation.page_num != null
-    ) {
-      return `${blockCountLabel} · Page ${selectedCitation.page_num} selected`
+    if (selectedCitation?.doc_id === document.doc_id) {
+      const selectedBlock = blocks.find((block) => block.block_id === selectedCitation.block_id)
+
+      if (isMarkdown) {
+        if (selectedBlock?.section_path?.trim()) {
+          return `${blockCountLabel} · ${selectedBlock.section_path} selected`
+        }
+        return `${blockCountLabel} · Passage selected`
+      }
+
+      if (selectedCitation.page_num != null) {
+        return `${blockCountLabel} · Page ${selectedCitation.page_num} selected`
+      }
+
+      if (selectedBlock?.section_path) {
+        return `${blockCountLabel} · ${selectedBlock.section_path} selected`
+      }
     }
 
     return `${blockCountLabel} · ${document.filename}`
-  }, [blocks.length, blocksLoading, document.doc_id, document.filename, selectedCitation])
+  }, [blocks, blocks.length, blocksLoading, document.doc_id, document.filename, isMarkdown, selectedCitation])
 
   const canExportPdf = document.mime === 'application/pdf'
   const exportStatusHint =
@@ -487,17 +539,43 @@ export function SplitDocumentView({
         <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <TabsList variant="segmented">
-              <TabsTrigger value="extract">Extract</TabsTrigger>
-              <TabsTrigger value="original">Original</TabsTrigger>
+              {isMarkdown ? (
+                <>
+                  <TabsTrigger value="read">Read</TabsTrigger>
+                  <TabsTrigger value="preview">Preview</TabsTrigger>
+                </>
+              ) : (
+                <>
+                  <TabsTrigger value="extract">Extract</TabsTrigger>
+                  <TabsTrigger value="original">Original</TabsTrigger>
+                </>
+              )}
               <TabsTrigger value="profiles">Profiles</TabsTrigger>
             </TabsList>
-            <ExtractViewHelpButton />
+            <ExtractViewHelpButton isMarkdown={isMarkdown} />
           </div>
 
           <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
             {document.filename}
           </p>
         </div>
+
+        <TabsContent value="read" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+          <AnnotatedMarkdownView
+            document={document}
+            className="h-full min-h-0 rounded-none border-0 shadow-none"
+            pendingCommentFocus={pendingCommentFocus}
+            onPendingCommentFocusHandled={() => setPendingCommentFocus(null)}
+          />
+        </TabsContent>
+
+        <TabsContent value="preview" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+          <MarkdownDocumentViewer
+            document={document}
+            variant="preview"
+            className="h-full min-h-0 rounded-none border-0 shadow-none"
+          />
+        </TabsContent>
 
         <TabsContent value="extract" className="mt-0 flex min-h-0 flex-1 flex-col">
           <div ref={containerRef} className="flex min-h-0 flex-1 overflow-hidden">

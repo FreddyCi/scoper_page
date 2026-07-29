@@ -120,6 +120,46 @@ export function groupBlocksBySection(blocks: BlockRecord[]): BlocksByPage[] {
   return [...groups.values()]
 }
 
+function isPdfPageSectionLabel(label: string): boolean {
+  return /^page \d+$/i.test(label.trim())
+}
+
+/** Read view for markdown — section headings only, never PDF-style page groups. */
+export function groupBlocksForMarkdownRead(blocks: BlockRecord[]): BlocksByPage[] {
+  if (blocks.length === 0) return []
+
+  const hasMeaningfulSections = blocks.some(
+    (block) => block.section_path?.trim() && !isPdfPageSectionLabel(block.section_path),
+  )
+
+  if (!hasMeaningfulSections) {
+    return [
+      {
+        pageNum: null,
+        label: 'Document',
+        blocks: sortBlocksReadingOrder([...blocks]),
+      },
+    ]
+  }
+
+  const groups = groupBlocksBySection(blocks).map((group) =>
+    isPdfPageSectionLabel(group.label) ? { ...group, label: 'Document' } : group,
+  )
+
+  const merged = new Map<string, BlocksByPage>()
+  for (const group of groups) {
+    const existing = merged.get(group.label)
+    if (existing) {
+      existing.blocks.push(...group.blocks)
+      existing.blocks = sortBlocksReadingOrder(existing.blocks)
+      continue
+    }
+    merged.set(group.label, { ...group, blocks: [...group.blocks] })
+  }
+
+  return [...merged.values()]
+}
+
 export function groupBlocksForDisplay(blocks: BlockRecord[]): BlocksByPage[] {
   const hasSections = blocks.some((block) => block.section_path?.trim())
   const hasPages = blocks.some((block) => block.page_num != null)

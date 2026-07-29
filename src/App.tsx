@@ -31,6 +31,7 @@ import {
 } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
 import { runOcrHarness } from '@/services/ocr-client'
+import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { runSessionStoreHarness } from '@/store/session-store'
 
@@ -54,6 +55,7 @@ function App() {
         await runOcrHarness()
         await runLiteParseOcrHarness()
         await runIngestHarness()
+        await runExportPdfMarkdownHarness()
         await runSharePackHarness()
         await runMarkdownIngestHarness()
         await runDocxIngestHarness()

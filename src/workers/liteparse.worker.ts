@@ -4,6 +4,7 @@ import init, { LiteParse } from '@llamaindex/liteparse-wasm'
 
 import { normalizeLiteParseResult } from '@/lib/liteparse-normalize'
 import type {
+  LiteParseMarkdownResult,
   LiteParseParseResult,
   LiteParseWorkerMessage,
   LiteParseWorkerResponse,
@@ -31,6 +32,53 @@ async function ensureParser() {
   })()
 
   return initPromise
+}
+
+async function parsePdfMarkdown(
+  bytes: Uint8Array,
+  targetPages?: string,
+): Promise<LiteParseMarkdownResult> {
+  await ensureParser()
+
+  const scopedParser = new LiteParse({
+    ocrEnabled: false,
+    outputFormat: 'markdown',
+    extractAnnotations: true,
+    extractFormFields: true,
+    ...(targetPages !== undefined ? { targetPages } : {}),
+  })
+
+  try {
+    const result = await scopedParser.parse(bytes)
+    const annotations = result.pages.flatMap((page) =>
+      (page.annotations ?? []).map((annotation) => ({
+        pageNum: page.pageNum,
+        subtype: annotation.subtype,
+        ...(annotation.contents ? { contents: annotation.contents } : {}),
+        ...(annotation.title ? { title: annotation.title } : {}),
+      })),
+    )
+    const formFields = result.pages.flatMap((page) =>
+      (page.formFields ?? []).map((field) => ({
+        page: field.page,
+        type: field.type,
+        ...(field.name ? { name: field.name } : {}),
+        ...(field.value ? { value: field.value } : {}),
+      })),
+    )
+
+    return {
+      markdown: result.text,
+      pages: result.pages.map((page) => ({
+        pageNum: page.pageNum,
+        markdown: page.markdown || page.text,
+      })),
+      annotations,
+      formFields,
+    }
+  } finally {
+    scopedParser.free()
+  }
 }
 
 async function parsePdf(
@@ -85,6 +133,12 @@ self.onmessage = async (event: MessageEvent<LiteParseWorkerMessage>) => {
           event.data.bytes,
           event.data.targetPages,
         )
+        postResponse({ id, ok: true, result: parsed })
+        return
+      }
+
+      case 'parseMarkdown': {
+        const parsed = await parsePdfMarkdown(event.data.bytes, event.data.targetPages)
         postResponse({ id, ok: true, result: parsed })
         return
       }

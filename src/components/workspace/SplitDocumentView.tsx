@@ -65,7 +65,7 @@ function ExtractViewHelpButton() {
           <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
           <li>When review notes exist, use the footer navigator to step through each note.</li>
-          <li>Use Export PDF for toggleable markup (hide/show in your PDF viewer) or burned-in notes.</li>
+          <li>Use Export for PDF markup or a LiteParse markdown file with PDF context.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
             {' '}
@@ -90,6 +90,8 @@ function SplitDocumentViewFooter({
   exportLoading = false,
   exportDisabled = false,
   onExportClick,
+  markdownExportLoading = false,
+  onExportMarkdownClick,
 }: {
   statusLabel: string
   commentNavigator?: ReactNode
@@ -102,6 +104,8 @@ function SplitDocumentViewFooter({
   exportLoading?: boolean
   exportDisabled?: boolean
   onExportClick?: (mode: 'markup' | 'burned-in') => void
+  markdownExportLoading?: boolean
+  onExportMarkdownClick?: () => void
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
@@ -119,52 +123,87 @@ function SplitDocumentViewFooter({
         {commentNavigator}
       </div>
       <div className="flex items-center gap-2">
-        {onExportClick ? (
+        {onExportClick || onExportMarkdownClick ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              disabled={exportDisabled || exportLoading}
+              disabled={exportDisabled || exportLoading || markdownExportLoading}
               render={
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  disabled={exportDisabled || exportLoading}
+                  disabled={exportDisabled || exportLoading || markdownExportLoading}
                 />
               }
             >
               <DownloadIcon className="size-3.5" />
-              {exportLoading ? 'Exporting…' : exportLabel}
+              {exportLoading || markdownExportLoading
+                ? 'Exporting…'
+                : onExportClick && onExportMarkdownClick
+                  ? 'Export'
+                  : onExportMarkdownClick
+                    ? 'Export Markdown'
+                    : exportLabel}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-72 p-0">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="px-0 py-0 font-normal">
-                  <MenuOptionHeader
-                    title="Export PDF"
-                    description="Choose how review notes and highlights appear in the exported file."
-                  />
-                </DropdownMenuLabel>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <div className="p-1">
-                <DropdownMenuItem
-                  className="items-start rounded-md px-3 py-2.5"
-                  onClick={() => onExportClick('markup')}
-                >
-                  <MenuOptionContent
-                    title="Toggleable markup"
-                    description="Highlights and notes you can hide in Preview or Acrobat. Best for re-importing comments."
-                  />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="items-start rounded-md px-3 py-2.5"
-                  onClick={() => onExportClick('burned-in')}
-                >
-                  <MenuOptionContent
-                    title="Burned-in notes"
-                    description="Always-visible yellow boxes on the page for sharing outside PDF viewers."
-                  />
-                </DropdownMenuItem>
-              </div>
+              {onExportMarkdownClick ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="px-0 py-0 font-normal">
+                      <MenuOptionHeader
+                        title="Export Markdown"
+                        description="LiteParse WASM — structured text, PDF annotations, form fields, and Scoper review notes."
+                      />
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <div className="p-1">
+                    <DropdownMenuItem
+                      className="items-start rounded-md px-3 py-2.5"
+                      onClick={onExportMarkdownClick}
+                    >
+                      <MenuOptionContent
+                        title="Download .md"
+                        description="Browser-only conversion like the LiteParse demo — no server upload."
+                      />
+                    </DropdownMenuItem>
+                  </div>
+                  {onExportClick ? <DropdownMenuSeparator /> : null}
+                </>
+              ) : null}
+              {onExportClick ? (
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="px-0 py-0 font-normal">
+                      <MenuOptionHeader
+                        title="Export PDF"
+                        description="Choose how review notes and highlights appear in the exported file."
+                      />
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <div className="p-1">
+                    <DropdownMenuItem
+                      className="items-start rounded-md px-3 py-2.5"
+                      onClick={() => onExportClick('markup')}
+                    >
+                      <MenuOptionContent
+                        title="Toggleable markup"
+                        description="Highlights and notes you can hide in Preview or Acrobat. Best for re-importing comments."
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="items-start rounded-md px-3 py-2.5"
+                      onClick={() => onExportClick('burned-in')}
+                    >
+                      <MenuOptionContent
+                        title="Burned-in notes"
+                        description="Always-visible yellow boxes on the page for sharing outside PDF viewers."
+                      />
+                    </DropdownMenuItem>
+                  </div>
+                </>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
@@ -185,6 +224,7 @@ export function SplitDocumentView({
   const [buildingProfiles, setBuildingProfiles] = useState(false)
   const [comparingScope, setComparingScope] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
+  const [exportingMarkdown, setExportingMarkdown] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [commentNavIndex, setCommentNavIndex] = useState(0)
   const [pendingCommentFocus, setPendingCommentFocus] = useState<{
@@ -272,6 +312,8 @@ export function SplitDocumentView({
         ? `Role: ${DOCUMENT_ROLE_LABELS[document.role]}`
         : null
 
+  const ocrEnabled = useSessionStore((state) => state.ocrEnabled)
+
   function handleExportPdf(commentMode: 'markup' | 'burned-in' = 'markup') {
     if (!canExportPdf || exportingPdf) return
 
@@ -300,6 +342,37 @@ export function SplitDocumentView({
         console.error('[split-document-view] export failed', error)
       } finally {
         setExportingPdf(false)
+      }
+    })()
+  }
+
+  function handleExportMarkdown() {
+    if (!canExportPdf || exportingMarkdown) return
+
+    setExportError(null)
+    setExportingMarkdown(true)
+
+    void (async () => {
+      try {
+        const { exportPdfMarkdownBlob } = await import('@/services/export-pdf-markdown')
+        const { blob, filename } = await exportPdfMarkdownBlob(document, {
+          ocrEnabled,
+          includeScoperComments: true,
+        })
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'text/markdown',
+          extension: '.md',
+        })
+        await writeBlob(blob)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'Markdown export failed'
+        setExportError(message)
+        console.error('[split-document-view] markdown export failed', error)
+      } finally {
+        setExportingMarkdown(false)
       }
     })()
   }
@@ -447,6 +520,8 @@ export function SplitDocumentView({
         exportLoading={exportingPdf}
         exportDisabled={!canExportPdf}
         onExportClick={canExportPdf ? handleExportPdf : undefined}
+        markdownExportLoading={exportingMarkdown}
+        onExportMarkdownClick={canExportPdf ? handleExportMarkdown : undefined}
       />
     </div>
   )

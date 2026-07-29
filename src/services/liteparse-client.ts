@@ -1,4 +1,5 @@
 import type {
+  LiteParseMarkdownResult,
   LiteParsePageResult,
   LiteParseParseResult,
   LiteParseProgress,
@@ -8,6 +9,7 @@ import type {
 } from '@/lib/liteparse-protocol'
 import { buildParseResultFromPages } from '@/lib/liteparse-normalize'
 import { countPdfPages } from '@/lib/pdf-page-render'
+import type { BlockRecord } from '@/lib/types'
 import { pageNumbersNeedingOcr } from '@/services/liteparse-main'
 import { parsePdfWithOcrFallback } from '@/services/liteparse-ocr-fallback'
 
@@ -123,6 +125,104 @@ export class LiteParseClient {
     }
 
     return mergeParseResults(docId, parsed, ocrParsed)
+  }
+
+  async parsePdfToMarkdown(
+    bytes: Uint8Array,
+    options?: { onProgress?: (progress: LiteParseProgress) => void },
+  ): Promise<LiteParseMarkdownResult> {
+    await this.init()
+
+    if (options?.onProgress) {
+      return this.parsePdfMarkdownWithProgress(bytes, options.onProgress)
+    }
+
+    return this.send<LiteParseMarkdownResult>({
+      type: 'parseMarkdown',
+      bytes,
+    })
+  }
+
+  /** Markdown parse plus optional OCR block fallback for scanned pages. */
+  async parsePdfToMarkdownWithOcrFallback(
+    docId: string,
+    bytes: Uint8Array,
+    options?: { ocrEnabled?: boolean; onProgress?: (progress: LiteParseProgress) => void },
+  ): Promise<{ markdown: LiteParseMarkdownResult; ocrBlocks: BlockRecord[] | null }> {
+    const markdown = await this.parsePdfToMarkdown(bytes, options)
+
+    const ocrPages = options?.ocrEnabled
+      ? await pageNumbersNeedingOcr(bytes).catch(() => [])
+      : []
+
+    const needsOcr =
+      options?.ocrEnabled === true &&
+      (markdown.markdown.trim().length === 0 || ocrPages.length > 0)
+
+    if (!needsOcr) {
+      return { markdown, ocrBlocks: null }
+    }
+
+    const parsed = await this.parsePdf(docId, bytes, options)
+    return { markdown, ocrBlocks: parsed.blocks }
+  }
+
+  private async parsePdfMarkdownWithProgress(
+    bytes: Uint8Array,
+    onProgress: (progress: LiteParseProgress) => void,
+    batchSize = 5,
+  ): Promise<LiteParseMarkdownResult> {
+    const totalPages = await countPdfPages(bytes)
+
+    if (totalPages <= 1) {
+      onProgress({ completedPages: 0, totalPages: 1, percent: 0 })
+      const parsed = await this.send<LiteParseMarkdownResult>({
+        type: 'parseMarkdown',
+        bytes,
+      })
+      onProgress({ completedPages: 1, totalPages: 1, percent: 100 })
+      return parsed
+    }
+
+    const merged: LiteParseMarkdownResult = {
+      markdown: '',
+      pages: [],
+      annotations: [],
+      formFields: [],
+    }
+
+    for (let start = 1; start <= totalPages; start += batchSize) {
+      const end = Math.min(start + batchSize - 1, totalPages)
+      const targetPages = start === end ? String(start) : `${start}-${end}`
+
+      onProgress({
+        completedPages: start - 1,
+        totalPages,
+        percent: Math.round(((start - 1) / totalPages) * 100),
+      })
+
+      const batch = await this.send<LiteParseMarkdownResult>({
+        type: 'parseMarkdown',
+        bytes,
+        targetPages,
+      })
+
+      merged.pages.push(...batch.pages)
+      merged.annotations.push(...batch.annotations)
+      merged.formFields.push(...batch.formFields)
+      merged.markdown = merged.markdown
+        ? `${merged.markdown}\n\n${batch.markdown}`.trim()
+        : batch.markdown
+
+      onProgress({
+        completedPages: end,
+        totalPages,
+        percent: Math.round((end / totalPages) * 100),
+      })
+    }
+
+    merged.pages.sort((left, right) => left.pageNum - right.pageNum)
+    return merged
   }
 
   private async parsePdfWithProgress(

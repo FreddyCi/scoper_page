@@ -40,6 +40,32 @@ export type LiteParseWorkerRequest =
       ocrEnabled?: boolean
       targetPages?: string
     }
+  | {
+      type: 'parseMarkdown'
+      bytes: Uint8Array
+      targetPages?: string
+    }
+
+export type LiteParseMarkdownAnnotation = {
+  pageNum: number
+  subtype: string
+  contents?: string
+  title?: string
+}
+
+export type LiteParseMarkdownFormField = {
+  page: number
+  type: string
+  name?: string
+  value?: string
+}
+
+export type LiteParseMarkdownResult = {
+  markdown: string
+  pages: Array<{ pageNum: number; markdown: string }>
+  annotations: LiteParseMarkdownAnnotation[]
+  formFields: LiteParseMarkdownFormField[]
+}
 
 export type LiteParseWorkerSuccess = {
   ok: true

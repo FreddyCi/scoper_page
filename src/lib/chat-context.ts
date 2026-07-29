@@ -7,7 +7,7 @@ export function createDocumentContextAttachment(doc: DocumentMeta): ChatContextA
     kind: 'document',
     docId: doc.doc_id,
     label: doc.filename,
-    description: 'Full document',
+    description: doc.mime === 'text/markdown' ? 'Markdown context' : 'Full document',
   }
 }
 
@@ -73,11 +73,12 @@ export function buildPromptContextBlock(attachments: ChatContextAttachment[]): s
     const docStub = {
       doc_id: attachment.docId,
       filename: attachment.label,
-      mime: 'application/pdf',
+      mime: attachment.description === 'Markdown context' ? 'text/markdown' : 'application/pdf',
       role: 'unknown' as const,
       uploaded_at: '',
     }
-    return `Document: ${attachment.label} (@${docMentionLabel(docStub)})`
+    const prefix = attachment.description === 'Markdown context' ? 'Markdown context' : 'Document'
+    return `${prefix}: ${attachment.label} (@${docMentionLabel(docStub)})`
   })
 
   return ['Attached context:', ...sections].join('\n\n')

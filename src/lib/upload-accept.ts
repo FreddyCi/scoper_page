@@ -35,6 +35,11 @@ export function isAcceptedUploadFile(file: File): boolean {
   )
 }
 
+export function isMarkdownFile(file: File): boolean {
+  const extension = getFileExtension(file.name)
+  return file.type === 'text/markdown' || extension === 'md' || extension === 'markdown'
+}
+
 export function mimeFromFilename(filename: string): string {
   const extension = getFileExtension(filename)
   if (extension && extension in EXTENSION_MIME) {

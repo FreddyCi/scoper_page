@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { FileTextIcon, HighlighterIcon, PaperclipIcon, XIcon } from 'lucide-react'
 
 import {
@@ -28,6 +29,10 @@ import {
 } from '@/lib/chat-context'
 import type { ChatContextAttachment, CitationRef, DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import {
+  appendMarkdownContextAttachments,
+  ingestMarkdownFilesForChat,
+} from '@/services/chat-markdown-drop'
 
 type ChatContextAttachmentControlsProps = {
   documents: DocumentMeta[]
@@ -36,6 +41,7 @@ type ChatContextAttachmentControlsProps = {
   attachments: ChatContextAttachment[]
   onAttachmentsChange: (attachments: ChatContextAttachment[]) => void
   disabled?: boolean
+  onMarkdownIngestChange?: (loading: boolean) => void
 }
 
 function ContextAttachmentChip({
@@ -74,7 +80,9 @@ export function ChatContextAttachmentControls({
   attachments,
   onAttachmentsChange,
   disabled = false,
+  onMarkdownIngestChange,
 }: ChatContextAttachmentControlsProps) {
+  const markdownInputRef = useRef<HTMLInputElement>(null)
   const activeDoc = documents.find((doc) => doc.doc_id === activeDocId) ?? null
   const selectedDoc =
     selectedCitation != null
@@ -86,26 +94,54 @@ export function ChatContextAttachmentControls({
   }
 
   const pdfDocuments = documents.filter((doc) => doc.mime === 'application/pdf')
-  const canAttachSelection = Boolean(selectedDoc && selectedCitation)
+  const contextDocuments = documents.filter(
+    (doc) => doc.mime === 'application/pdf' || doc.mime === 'text/markdown',
+  )
+  const canAttachSelection = Boolean(selectedDoc && selectedCitation && selectedDoc.mime === 'application/pdf')
   const canAttachActiveDoc = Boolean(activeDoc)
 
+  async function handleMarkdownFiles(files: FileList | File[] | null) {
+    if (!files || files.length === 0) return
+
+    onMarkdownIngestChange?.(true)
+    try {
+      const nextAttachments = await ingestMarkdownFilesForChat([...files])
+      onAttachmentsChange(appendMarkdownContextAttachments(attachments, nextAttachments))
+    } finally {
+      onMarkdownIngestChange?.(false)
+    }
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        disabled={disabled || pdfDocuments.length === 0}
-        render={
-          <Button
-            type="button"
-            size="icon-xs"
-            variant="ghost"
-            disabled={disabled || pdfDocuments.length === 0}
-            aria-label="Attach document context"
-            className="text-muted-foreground hover:text-foreground rounded-full"
-          >
-            <PaperclipIcon className="size-3.5" />
-          </Button>
-        }
+    <>
+      <input
+        ref={markdownInputRef}
+        type="file"
+        accept=".md,.markdown,text/markdown"
+        multiple
+        className="hidden"
+        onChange={(event) => {
+          void handleMarkdownFiles(event.target.files)
+          event.target.value = ''
+        }}
       />
+
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          disabled={disabled}
+          render={
+            <Button
+              type="button"
+              size="icon-xs"
+              variant="ghost"
+              disabled={disabled}
+              aria-label="Attach document context"
+              className="text-muted-foreground hover:text-foreground rounded-full"
+            >
+              <PaperclipIcon className="size-3.5" />
+            </Button>
+          }
+        />
 
       <DropdownMenuContent align="end" side="top" className="w-72">
         <DropdownMenuGroup>
@@ -134,37 +170,57 @@ export function ChatContextAttachmentControls({
             >
               <MenuOptionContent
                 title={activeDoc.filename}
-                description="Use the full active PDF as chat context"
+                description={
+                  activeDoc.mime === 'text/markdown'
+                    ? 'Use the active markdown note as chat context'
+                    : 'Use the full active PDF as chat context'
+                }
               />
             </DropdownMenuItem>
           ) : null}
 
-          {pdfDocuments.length === 0 ? (
-            <DropdownMenuItem disabled>No PDF documents in this session</DropdownMenuItem>
-          ) : null}
+          <DropdownMenuItem
+            className="items-start py-2.5"
+            onClick={() => markdownInputRef.current?.click()}
+          >
+            <MenuOptionContent
+              title="Upload markdown file"
+              description="Add a .md file as supporting context for this question"
+            />
+          </DropdownMenuItem>
         </DropdownMenuGroup>
 
-        {pdfDocuments.length > 0 ? (
+        {contextDocuments.length > 0 ? (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuLabel className="text-muted-foreground text-[11px] font-medium">
                 Session documents
               </DropdownMenuLabel>
-              {pdfDocuments.map((doc) => (
+              {contextDocuments.map((doc) => (
                 <DropdownMenuItem
                   key={doc.doc_id}
                   className="items-start py-2.5"
                   onClick={() => addAttachment(createDocumentContextAttachment(doc))}
                 >
-                  <MenuOptionContent title={doc.filename} description="Attach full document" />
+                  <MenuOptionContent
+                    title={doc.filename}
+                    description={
+                      doc.mime === 'text/markdown' ? 'Attach markdown context' : 'Attach full document'
+                    }
+                  />
                 </DropdownMenuItem>
               ))}
             </DropdownMenuGroup>
           </>
+        ) : pdfDocuments.length === 0 ? (
+          <DropdownMenuGroup>
+            <DropdownMenuItem disabled>No documents in this session yet</DropdownMenuItem>
+          </DropdownMenuGroup>
         ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   )
 }
 

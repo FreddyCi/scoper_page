@@ -15,6 +15,11 @@ import {
 import type { ChatContextAttachment } from '@/lib/types'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
+import {
+  appendMarkdownContextAttachments,
+  extractMarkdownFiles,
+  ingestMarkdownFilesForChat,
+} from '@/services/chat-markdown-drop'
 import { useSessionStore } from '@/store/session-store'
 
 type ChatComposerProps = {
@@ -33,10 +38,14 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const [cursor, setCursor] = useState(0)
   const [mentionHighlight, setMentionHighlight] = useState(0)
   const [attachments, setAttachments] = useState<ChatContextAttachment[]>([])
+  const [dragActive, setDragActive] = useState(false)
+  const [ingestingMarkdown, setIngestingMarkdown] = useState(false)
+  const [dropError, setDropError] = useState<string | null>(null)
+  const dragDepthRef = useRef(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const canSend = draft.trim().length > 0 && !chatGenerating
-  const isBusy = chatGenerating || chatModelStatus === 'loading'
+  const canSend = draft.trim().length > 0 && !chatGenerating && !ingestingMarkdown
+  const isBusy = chatGenerating || chatModelStatus === 'loading' || ingestingMarkdown
 
   const activeMention = findActiveMentionQuery(draft, cursor)
   const mentionCandidates = useMemo(
@@ -75,15 +84,75 @@ export function ChatComposer({ className }: ChatComposerProps) {
     setCursor(0)
     setMentionHighlight(0)
     setAttachments([])
+    setDropError(null)
+  }
+
+  function handleDragEnter(event: React.DragEvent<HTMLDivElement>) {
+    if (isBusy) return
+    if (!event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    dragDepthRef.current += 1
+    setDragActive(true)
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
+    if (isBusy) return
+    event.preventDefault()
+    dragDepthRef.current -= 1
+    if (dragDepthRef.current <= 0) {
+      dragDepthRef.current = 0
+      setDragActive(false)
+    }
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    if (isBusy) return
+    if (!event.dataTransfer.types.includes('Files')) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+  }
+
+  async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    if (isBusy) return
+    event.preventDefault()
+    dragDepthRef.current = 0
+    setDragActive(false)
+
+    const files = extractMarkdownFiles(event.dataTransfer)
+    if (files.length === 0) {
+      setDropError('Drop .md or .markdown files to add context')
+      return
+    }
+
+    setDropError(null)
+    setIngestingMarkdown(true)
+    try {
+      const nextAttachments = await ingestMarkdownFilesForChat(files)
+      setAttachments((current) => appendMarkdownContextAttachments(current, nextAttachments))
+    } catch (error) {
+      setDropError(error instanceof Error ? error.message : 'Failed to add markdown context')
+    } finally {
+      setIngestingMarkdown(false)
+    }
   }
 
   return (
     <div
       className={cn(
-        'border-border bg-workspace-muted/70 flex flex-col overflow-hidden rounded-2xl border',
+        'border-border bg-workspace-muted/70 relative flex flex-col overflow-hidden rounded-2xl border',
+        dragActive && 'border-sky-400 ring-2 ring-sky-300/60',
         className,
       )}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={(event) => void handleDrop(event)}
     >
+      {dragActive ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-sky-50/80">
+          <p className="text-sky-900 text-sm font-medium">Drop markdown files to attach context</p>
+        </div>
+      ) : null}
       {attachments.length > 0 ? (
         <div className="border-border/70 border-b px-3 py-2">
           <ChatContextAttachmentPreview
@@ -184,12 +253,15 @@ export function ChatComposer({ className }: ChatComposerProps) {
           }}
           placeholder={
             isBusy
-              ? 'Agent is responding…'
-              : 'Ask the agent… / for skills, @ for context, attach PDF passages'
+              ? ingestingMarkdown
+                ? 'Adding markdown context…'
+                : 'Agent is responding…'
+              : 'Ask the agent… / for skills, @ for context, drop .md files here'
           }
           disabled={isBusy}
           className="text-foreground placeholder:text-subtle-foreground min-h-[3.25rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
         />
+        {dropError ? <p className="text-destructive mt-1 text-xs">{dropError}</p> : null}
       </div>
 
       <div className="border-border/70 flex items-center justify-between gap-2 border-t px-2.5 py-1.5">
@@ -222,6 +294,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
             attachments={attachments}
             onAttachmentsChange={setAttachments}
             disabled={isBusy}
+            onMarkdownIngestChange={setIngestingMarkdown}
           />
 
           <Button

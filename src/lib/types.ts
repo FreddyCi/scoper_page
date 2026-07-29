@@ -176,6 +176,17 @@ export type ChatMessage = {
   created_at: string
 }
 
+export type ChatSidebarTab = 'agent' | 'history'
+
+/** Archived chat thread — saved when starting a new conversation */
+export type ChatThread = {
+  id: string
+  title: string
+  messages: ChatMessage[]
+  created_at: string
+  updated_at: string
+}
+
 /** Agent tool: find_clause response */
 export type FindClauseResult = {
   matches: Array<{

@@ -1,5 +1,6 @@
 import { Fragment, useMemo, type ReactNode } from 'react'
 
+import { ChatHistoryQueryRow } from '@/components/chat/ChatHistoryQueryRow'
 import { CreepFlagRow, DEFAULT_SUMMARY_MAX_CHARS } from '@/components/workspace/CreepFlagRow'
 import {
   MessageScroller,
@@ -9,6 +10,7 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
+import { groupChatQueryHistory } from '@/lib/chat-history'
 import { groupCreepHistory } from '@/lib/creep-history'
 import { buildMockCreepProfiles } from '@/lib/creep-profile-stub'
 import type { ScopeCreepProfile } from '@/lib/types'
@@ -33,13 +35,21 @@ function HistoryGroupLabel({ children, className }: { children: ReactNode; class
   )
 }
 
-/** History tab — scope creep flags grouped like workspace CreepFlagRow cards (BDA-073) */
+/** History tab — agent queries plus scope creep flags (BDA-073) */
 export function ChatHistoryMarkers() {
+  const chatMessages = useSessionStore((state) => state.chatMessages)
+  const chatThreads = useSessionStore((state) => state.chatThreads)
   const creepProfiles = useSessionStore((state) => state.creepProfiles)
   const documents = useSessionStore((state) => state.documents)
   const mode = useSessionStore((state) => state.mode)
+  const focusChatMessage = useSessionStore((state) => state.focusChatMessage)
 
-  const profiles = useMemo((): ScopeCreepProfile[] => {
+  const chatGroups = useMemo(
+    () => groupChatQueryHistory(chatMessages, chatThreads),
+    [chatMessages, chatThreads],
+  )
+
+  const creepProfilesForHistory = useMemo((): ScopeCreepProfile[] => {
     if (creepProfiles.length > 0) return creepProfiles
     if (import.meta.env.DEV && mode === 'scope_creep') {
       return buildMockCreepProfiles(documents)
@@ -47,17 +57,15 @@ export function ChatHistoryMarkers() {
     return []
   }, [creepProfiles, documents, mode])
 
-  const groups = useMemo(
-    () => groupCreepHistory(profiles, documents),
-    [profiles, documents],
+  const creepGroups = useMemo(
+    () => groupCreepHistory(creepProfilesForHistory, documents),
+    [creepProfilesForHistory, documents],
   )
 
-  if (groups.length === 0) {
+  if (chatGroups.length === 0 && creepGroups.length === 0) {
     return (
       <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm leading-relaxed">
-        {mode === 'scope_creep'
-          ? 'Tag baseline and change documents, then run scope analysis. Flags will appear here as markers.'
-          : 'Switch to Scope Creep mode and analyze documents to populate history markers.'}
+        Ask the agent a question or run scope analysis — prior queries and flags will appear here.
       </div>
     )
   }
@@ -67,33 +75,68 @@ export function ChatHistoryMarkers() {
       <MessageScroller className="min-h-0 flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent className="gap-2 px-0.5">
-            <MessageScrollerItem messageId="history-intro" scrollAnchor={false}>
-              <HistorySectionHeading>Scope analysis</HistorySectionHeading>
-            </MessageScrollerItem>
-
-            {groups.map((group, groupIndex) => (
-              <Fragment key={group.id}>
-                <MessageScrollerItem messageId={group.id} scrollAnchor={false}>
-                  <HistoryGroupLabel className={cn(groupIndex > 0 && 'pt-2')}>
-                    {group.label}
-                  </HistoryGroupLabel>
+            {chatGroups.length > 0 ? (
+              <>
+                <MessageScrollerItem messageId="history-chat-intro" scrollAnchor={false}>
+                  <HistorySectionHeading>Agent queries</HistorySectionHeading>
                 </MessageScrollerItem>
 
-                {group.flags.map((entry) => (
-                  <MessageScrollerItem
-                    key={entry.id}
-                    messageId={entry.id}
-                    scrollAnchor={entry.scrollAnchor}
-                  >
-                    <CreepFlagRow
-                      flag={entry.flag}
-                      summaryMaxChars={DEFAULT_SUMMARY_MAX_CHARS}
-                      summaryClassName="text-xs leading-relaxed"
-                    />
-                  </MessageScrollerItem>
+                {chatGroups.map((group, groupIndex) => (
+                  <Fragment key={group.id}>
+                    <MessageScrollerItem messageId={group.id} scrollAnchor={false}>
+                      <HistoryGroupLabel className={cn(groupIndex > 0 && 'pt-2')}>
+                        {group.label}
+                      </HistoryGroupLabel>
+                    </MessageScrollerItem>
+
+                    {group.entries.map((entry) => (
+                      <MessageScrollerItem
+                        key={entry.id}
+                        messageId={entry.id}
+                        scrollAnchor={entry.scrollAnchor}
+                      >
+                        <ChatHistoryQueryRow
+                          label={entry.label}
+                          onSelect={() => focusChatMessage(entry.messageId, entry.threadId)}
+                        />
+                      </MessageScrollerItem>
+                    ))}
+                  </Fragment>
                 ))}
-              </Fragment>
-            ))}
+              </>
+            ) : null}
+
+            {creepGroups.length > 0 ? (
+              <>
+                <MessageScrollerItem messageId="history-creep-intro" scrollAnchor={false}>
+                  <HistorySectionHeading>Scope analysis</HistorySectionHeading>
+                </MessageScrollerItem>
+
+                {creepGroups.map((group, groupIndex) => (
+                  <Fragment key={group.id}>
+                    <MessageScrollerItem messageId={group.id} scrollAnchor={false}>
+                      <HistoryGroupLabel className={cn(groupIndex > 0 && 'pt-2')}>
+                        {group.label}
+                      </HistoryGroupLabel>
+                    </MessageScrollerItem>
+
+                    {group.flags.map((entry) => (
+                      <MessageScrollerItem
+                        key={entry.id}
+                        messageId={entry.id}
+                        scrollAnchor={entry.scrollAnchor && chatGroups.length === 0}
+                      >
+                        <CreepFlagRow
+                          flag={entry.flag}
+                          summaryMaxChars={DEFAULT_SUMMARY_MAX_CHARS}
+                          summaryClassName="text-xs leading-relaxed"
+                        />
+                      </MessageScrollerItem>
+                    ))}
+                  </Fragment>
+                ))}
+              </>
+            ) : null}
           </MessageScrollerContent>
         </MessageScrollerViewport>
         <MessageScrollerButton direction="end" />

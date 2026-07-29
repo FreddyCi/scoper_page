@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
 import {
   Message,
@@ -11,6 +13,7 @@ import {
   MessageScrollerItem,
   MessageScrollerProvider,
   MessageScrollerViewport,
+  useMessageScroller,
 } from '@/components/ui/message-scroller'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
@@ -23,6 +26,25 @@ const MODEL_STATUS_COPY = {
   generating: 'Generating…',
   unavailable: 'On-device model unavailable — using demo replies',
 } as const
+
+function ChatScrollFocus() {
+  const chatFocusMessageId = useSessionStore((state) => state.chatFocusMessageId)
+  const clearChatFocusMessage = useSessionStore((state) => state.clearChatFocusMessage)
+  const { scrollToMessage } = useMessageScroller()
+
+  useEffect(() => {
+    if (!chatFocusMessageId) return
+
+    const frame = requestAnimationFrame(() => {
+      scrollToMessage(chatFocusMessageId, { align: 'start', behavior: 'smooth' })
+      clearChatFocusMessage()
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [chatFocusMessageId, clearChatFocusMessage, scrollToMessage])
+
+  return null
+}
 
 /** MessageScroller transcript with Scoper streaming assistant turns (BDA-051) */
 export function ChatTranscript() {
@@ -45,6 +67,7 @@ export function ChatTranscript() {
       ) : null}
 
       <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
+        <ChatScrollFocus />
         <MessageScroller className="min-h-0 flex-1">
           <MessageScrollerViewport>
             <MessageScrollerContent className="justify-end gap-4 px-1">

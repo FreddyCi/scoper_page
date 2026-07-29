@@ -4,6 +4,8 @@ import type {
   ChatActionProposal,
   ChatActionStatus,
   ChatContextAttachment,
+  ChatSidebarTab,
+  ChatThread,
   CitationRef,
   ChatMessage,
   DocumentMeta,
@@ -14,6 +16,7 @@ import type {
   WorkspaceMode,
   WorkspaceView,
 } from '@/lib/types'
+import { createChatThreadSnapshot } from '@/lib/chat-history'
 import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import {
@@ -116,7 +119,10 @@ export type SessionState = {
   citationFocusSeq: number
   chatCollapsed: boolean
   chatStarted: boolean
+  chatSidebarTab: ChatSidebarTab
   chatMessages: ChatMessage[]
+  chatThreads: ChatThread[]
+  chatFocusMessageId: string | null
   chatContextAttachments: ChatContextAttachment[]
   chatGenerating: boolean
   chatModelStatus: ChatModelStatus
@@ -142,6 +148,7 @@ export type SessionState = {
   bumpCitationFocus: () => void
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
+  setChatSidebarTab: (tab: ChatSidebarTab) => void
   sendChatPrompt: (text: string) => void
   setChatContextAttachments: (attachments: ChatContextAttachment[]) => void
   removeChatContextAttachment: (id: string) => void
@@ -167,6 +174,9 @@ export type SessionState = {
     status: ChatActionStatus,
   ) => void
   clearChat: () => void
+  startNewChat: () => void
+  focusChatMessage: (messageId: string, threadId?: 'current' | string) => void
+  clearChatFocusMessage: () => void
   setWorkspaceView: (view: WorkspaceView) => void
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
@@ -188,7 +198,10 @@ const initialState = {
   citationFocusSeq: 0,
   chatCollapsed: readInitialChatCollapsed(),
   chatStarted: readChatStartedPreference(),
+  chatSidebarTab: 'agent' as ChatSidebarTab,
   chatMessages: [] as ChatMessage[],
+  chatThreads: [] as ChatThread[],
+  chatFocusMessageId: null as string | null,
   chatContextAttachments: [] as ChatContextAttachment[],
   chatGenerating: false,
   chatModelStatus: 'idle' as ChatModelStatus,
@@ -359,6 +372,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { chatCollapsed }
     }),
 
+  setChatSidebarTab: (chatSidebarTab) => set({ chatSidebarTab }),
+
   sendChatPrompt: (text) => {
     const { chatContextAttachments } = get()
     void runChatAgentTurn(text, chatContextAttachments)
@@ -454,12 +469,74 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({
       chatStarted: false,
       chatCollapsed: true,
+      chatSidebarTab: 'agent',
       chatMessages: [],
+      chatFocusMessageId: null,
       chatContextAttachments: [],
       chatGenerating: false,
       chatModelStatus: 'idle',
     })
   },
+
+  startNewChat: () => {
+    const state = get()
+    if (state.chatGenerating) return
+
+    const snapshot = createChatThreadSnapshot(state.chatMessages)
+    const chatThreads = snapshot ? [...state.chatThreads, snapshot] : state.chatThreads
+
+    getScoperClient().resetConversation()
+    writeChatStartedPreference(chatThreads.length > 0)
+    writeChatCollapsedPreference(false)
+
+    set({
+      chatThreads,
+      chatMessages: [],
+      chatFocusMessageId: null,
+      chatContextAttachments: [],
+      chatGenerating: false,
+      chatModelStatus: state.chatModelStatus === 'unavailable' ? 'unavailable' : 'idle',
+      chatSidebarTab: 'agent',
+      chatStarted: chatThreads.length > 0,
+      chatCollapsed: false,
+    })
+  },
+
+  focusChatMessage: (messageId, threadId = 'current') => {
+    if (threadId !== 'current') {
+      const state = get()
+      const thread = state.chatThreads.find((item) => item.id === threadId)
+      if (!thread) return
+
+      let chatThreads = state.chatThreads.filter((item) => item.id !== threadId)
+      const currentSnapshot = createChatThreadSnapshot(state.chatMessages)
+      if (currentSnapshot) {
+        chatThreads = [...chatThreads, currentSnapshot]
+      }
+
+      getScoperClient().resetConversation()
+      writeChatStartedPreference(true)
+      writeChatCollapsedPreference(false)
+
+      set({
+        chatThreads,
+        chatMessages: thread.messages,
+        chatFocusMessageId: messageId,
+        chatSidebarTab: 'agent',
+        chatStarted: true,
+        chatCollapsed: false,
+      })
+      return
+    }
+
+    set({
+      chatFocusMessageId: messageId,
+      chatSidebarTab: 'agent',
+      chatCollapsed: false,
+    })
+  },
+
+  clearChatFocusMessage: () => set({ chatFocusMessageId: null }),
 
   setWorkspaceView: (workspaceView) => set({ workspaceView }),
 
@@ -527,7 +604,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       ...initialState,
       chatStarted: false,
       chatCollapsed: true,
+      chatSidebarTab: 'agent',
       chatMessages: [],
+      chatThreads: [],
+      chatFocusMessageId: null,
       chatContextAttachments: [],
       chatGenerating: false,
       chatModelStatus: 'idle',

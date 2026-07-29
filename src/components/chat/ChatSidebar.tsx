@@ -27,6 +27,8 @@ const chatTabTriggerClass = 'gap-1.5 sm:px-3'
 function ChatSidebarHeaderControls() {
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
   const clearChat = useSessionStore((s) => s.clearChat)
+  const startNewChat = useSessionStore((s) => s.startNewChat)
+  const chatGenerating = useSessionStore((s) => s.chatGenerating)
 
   return (
     <>
@@ -42,7 +44,14 @@ function ChatSidebarHeaderControls() {
       </TabsList>
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        <Button type="button" size="icon-xs" variant="ghost" aria-label="New chat">
+        <Button
+          type="button"
+          size="icon-xs"
+          variant="ghost"
+          aria-label="New chat"
+          disabled={chatGenerating}
+          onClick={() => startNewChat()}
+        >
           <PlusIcon className="size-3.5" />
         </Button>
         <Button type="button" size="icon-xs" variant="ghost" aria-label="Refresh chat" onClick={clearChat}>
@@ -100,8 +109,15 @@ export function ChatSidebar({ variant = 'body', className }: ChatSidebarProps) {
 }
 
 export function ChatSidebarTabs({ children }: { children: ReactNode }) {
+  const chatSidebarTab = useSessionStore((state) => state.chatSidebarTab)
+  const setChatSidebarTab = useSessionStore((state) => state.setChatSidebarTab)
+
   return (
-    <Tabs defaultValue="agent" className="contents">
+    <Tabs
+      value={chatSidebarTab}
+      onValueChange={(value) => setChatSidebarTab(value as 'agent' | 'history')}
+      className="contents"
+    >
       {children}
     </Tabs>
   )

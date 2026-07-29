@@ -23,6 +23,12 @@ const XLS_MIME = 'application/vnd.ms-excel'
 export type IngestOptions = {
   ocrEnabled?: boolean
   onProgress?: (progress: IngestProgress) => void
+  onFileProgress?: (progress: IngestFileProgress) => void
+}
+
+export type IngestFileProgress = {
+  filePercent: number
+  phase?: string
 }
 
 export type IngestProgress = {
@@ -30,6 +36,8 @@ export type IngestProgress = {
   total: number
   percent: number
   currentFilename: string
+  filePercent?: number
+  phase?: string
 }
 
 export type IngestFileError = {
@@ -82,6 +90,30 @@ function detectIngestFormat(file: File): IngestFormat {
   throw new Error(`Unsupported file type: ${file.name}`)
 }
 
+function computeIngestPercent(completed: number, total: number, filePercent = 0): number {
+  if (total === 0) return filePercent >= 100 ? 100 : 0
+  return Math.min(100, Math.round(((completed + filePercent / 100) / total) * 100))
+}
+
+function reportFileProgress(
+  options: IngestOptions,
+  fileIndex: number,
+  totalFiles: number,
+  filename: string,
+  filePercent: number,
+  phase?: string,
+): void {
+  options.onFileProgress?.({ filePercent, phase })
+  options.onProgress?.({
+    completed: fileIndex,
+    total: totalFiles,
+    percent: computeIngestPercent(fileIndex, totalFiles, filePercent),
+    currentFilename: filename,
+    filePercent,
+    phase,
+  })
+}
+
 function ocrWasUsed(ocrEnabled: boolean, parsed: LiteParseParseResult): boolean {
   if (!ocrEnabled) return false
   return parsed.pages.some((page) =>
@@ -112,12 +144,34 @@ async function ingestPdf(
   file: File,
   docId: string,
   ocrEnabled: boolean,
+  options: IngestOptions = {},
+  fileIndex = 0,
+  totalFiles = 1,
 ): Promise<IngestResult> {
+  const report = (filePercent: number, phase?: string) => {
+    reportFileProgress(options, fileIndex, totalFiles, file.name, filePercent, phase)
+  }
+
+  report(2, 'Reading file')
   const bytes = new Uint8Array(await file.arrayBuffer())
   cacheDocumentBytes(docId, bytes)
+
+  report(8, 'Reading metadata')
   const scoperMeta = await readScoperExportMetadata(bytes, file.name)
   const liteparse = await getLiteParseClient()
-  const parsed = await liteparse.parsePdf(docId, bytes, { ocrEnabled })
+
+  report(12, 'Parsing document')
+  const parsed = await liteparse.parsePdf(docId, bytes, {
+    ocrEnabled,
+    onProgress: (progress) => {
+      const parsePercent = 12 + Math.round(progress.percent * 0.68)
+      const phase =
+        progress.totalPages > 1
+          ? `Parsing pages (${progress.completedPages}/${progress.totalPages})`
+          : 'Parsing document'
+      report(parsePercent, phase)
+    },
+  })
 
   const roleFromExport = scoperMeta.role
   const role =
@@ -136,9 +190,11 @@ async function ingestPdf(
     uploaded_at: new Date().toISOString(),
   }
 
+  report(82, 'Saving blocks')
   await persistIngest(document, parsed.blocks)
 
   if (scoperMeta.isScoperExport && scoperMeta.commentMode !== 'burned-in') {
+    report(90, 'Importing comments')
     const { fetchDocumentBlocks } = await import('@/services/document-blocks')
     await importPdfMarkupComments({
       docId,
@@ -147,6 +203,8 @@ async function ingestPdf(
       blocks: await fetchDocumentBlocks(docId),
     })
   }
+
+  report(100, 'Done')
 
   return {
     doc_id: docId,
@@ -158,10 +216,18 @@ async function ingestPdf(
   }
 }
 
-async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> {
+async function ingestMarkdown(
+  file: File,
+  docId: string,
+  options: IngestOptions = {},
+  fileIndex = 0,
+  totalFiles = 1,
+): Promise<IngestResult> {
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 10, 'Reading file')
   const bytes = new Uint8Array(await file.arrayBuffer())
   cacheDocumentBytes(docId, bytes)
 
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing markdown')
   const markdown = new TextDecoder('utf-8').decode(bytes)
   const blocks = parseMarkdownToBlocks(docId, markdown)
 
@@ -183,7 +249,9 @@ async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> 
     uploaded_at: new Date().toISOString(),
   }
 
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 80, 'Saving blocks')
   await persistIngestBlocks(document, blocks)
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 100, 'Done')
 
   return {
     doc_id: docId,
@@ -195,7 +263,13 @@ async function ingestMarkdown(file: File, docId: string): Promise<IngestResult> 
   }
 }
 
-async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
+async function ingestDocx(
+  file: File,
+  docId: string,
+  options: IngestOptions = {},
+  fileIndex = 0,
+  totalFiles = 1,
+): Promise<IngestResult> {
   const extension = getFileExtension(file.name)
   if (extension === 'doc') {
     throw new Error(
@@ -203,6 +277,7 @@ async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
     )
   }
 
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 10, 'Reading file')
   const bytes = new Uint8Array(await file.arrayBuffer())
   cacheDocumentBytes(docId, bytes)
 
@@ -210,6 +285,7 @@ async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   )
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing document')
   const blocks = await parseDocxToBlocks(docId, arrayBuffer)
 
   const role = await resolveDocumentRoleForIngest(
@@ -226,7 +302,9 @@ async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
     uploaded_at: new Date().toISOString(),
   }
 
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 80, 'Saving blocks')
   await persistIngestBlocks(document, blocks)
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 100, 'Done')
 
   return {
     doc_id: docId,
@@ -238,7 +316,14 @@ async function ingestDocx(file: File, docId: string): Promise<IngestResult> {
   }
 }
 
-async function ingestExcel(file: File, docId: string): Promise<IngestResult> {
+async function ingestExcel(
+  file: File,
+  docId: string,
+  options: IngestOptions = {},
+  fileIndex = 0,
+  totalFiles = 1,
+): Promise<IngestResult> {
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 10, 'Reading file')
   const bytes = new Uint8Array(await file.arrayBuffer())
   cacheDocumentBytes(docId, bytes)
 
@@ -246,6 +331,7 @@ async function ingestExcel(file: File, docId: string): Promise<IngestResult> {
     bytes.byteOffset,
     bytes.byteOffset + bytes.byteLength,
   )
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing spreadsheet')
   const blocks = parseXlsxToBlocks(docId, arrayBuffer)
   const mime = resolveMime(file)
 
@@ -263,7 +349,9 @@ async function ingestExcel(file: File, docId: string): Promise<IngestResult> {
     uploaded_at: new Date().toISOString(),
   }
 
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 80, 'Saving blocks')
   await persistIngestBlocks(document, blocks)
+  reportFileProgress(options, fileIndex, totalFiles, file.name, 100, 'Done')
 
   return {
     doc_id: docId,
@@ -278,6 +366,8 @@ async function ingestExcel(file: File, docId: string): Promise<IngestResult> {
 export async function ingestFile(
   file: File,
   options: IngestOptions = {},
+  fileIndex = 0,
+  totalFiles = 1,
 ): Promise<IngestResult> {
   if (!isAcceptedUploadFile(file)) {
     throw new Error(`Unsupported file type: ${file.name}`)
@@ -289,13 +379,13 @@ export async function ingestFile(
 
   switch (format) {
     case 'pdf':
-      return ingestPdf(file, docId, ocrEnabled)
+      return ingestPdf(file, docId, ocrEnabled, options, fileIndex, totalFiles)
     case 'markdown':
-      return ingestMarkdown(file, docId)
+      return ingestMarkdown(file, docId, options, fileIndex, totalFiles)
     case 'word':
-      return ingestDocx(file, docId)
+      return ingestDocx(file, docId, options, fileIndex, totalFiles)
     case 'excel':
-      return ingestExcel(file, docId)
+      return ingestExcel(file, docId, options, fileIndex, totalFiles)
     default: {
       const exhaustive: never = format
       throw new Error(`Unsupported ingest format: ${String(exhaustive)}`)
@@ -312,16 +402,11 @@ export async function ingestFiles(
   const total = files.length
 
   for (let index = 0; index < files.length; index++) {
-    const file = files[index]
-    options.onProgress?.({
-      completed: index,
-      total,
-      percent: total === 0 ? 0 : Math.round((index / total) * 100),
-      currentFilename: file.name,
-    })
+    const file = files[index]!
+    reportFileProgress(options, index, total, file.name, 0, 'Starting')
 
     try {
-      results.push(await ingestFile(file, options))
+      results.push(await ingestFile(file, options, index, total))
     } catch (error) {
       errors.push({
         filename: file.name,
@@ -332,8 +417,10 @@ export async function ingestFiles(
     options.onProgress?.({
       completed: index + 1,
       total,
-      percent: total === 0 ? 100 : Math.round(((index + 1) / total) * 100),
+      percent: computeIngestPercent(index + 1, total, 0),
       currentFilename: file.name,
+      filePercent: 100,
+      phase: 'Complete',
     })
   }
 

@@ -73,6 +73,7 @@ export function useUploadQueue() {
   const [items, setItems] = useState<PendingUpload[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [progressPhase, setProgressPhase] = useState<string | null>(null)
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const list = Array.from(files)
@@ -87,6 +88,7 @@ export function useUploadQueue() {
     setItems([])
     setIsSubmitting(false)
     setUploadProgress(0)
+    setProgressPhase(null)
   }, [])
 
   const submitUpload = useCallback(async () => {
@@ -96,6 +98,7 @@ export function useUploadQueue() {
 
     setIsSubmitting(true)
     setUploadProgress(0)
+    setProgressPhase(null)
     setItems((current) =>
       current.map((item, index) => ({
         ...item,
@@ -108,6 +111,7 @@ export function useUploadQueue() {
       const { succeeded, failed } = await enqueueFiles(files, {
         onProgress: (progress) => {
           setUploadProgress(progress.percent)
+          setProgressPhase(progress.phase ?? null)
           setItems((current) => applyIngestProgress(current, files, progress))
         },
       })
@@ -160,6 +164,7 @@ export function useUploadQueue() {
     count: items.length,
     isSubmitting,
     uploadProgress,
+    progressPhase,
     addFiles,
     removeFile,
     clearQueue,

@@ -1,10 +1,13 @@
 import type {
+  LiteParsePageResult,
   LiteParseParseResult,
+  LiteParseProgress,
   LiteParseWorkerMessage,
   LiteParseWorkerRequest,
   LiteParseWorkerResponse,
 } from '@/lib/liteparse-protocol'
 import { buildParseResultFromPages } from '@/lib/liteparse-normalize'
+import { countPdfPages } from '@/lib/pdf-page-render'
 import { pageNumbersNeedingOcr } from '@/services/liteparse-main'
 import { parsePdfWithOcrFallback } from '@/services/liteparse-ocr-fallback'
 
@@ -82,15 +85,17 @@ export class LiteParseClient {
   async parsePdf(
     docId: string,
     bytes: Uint8Array,
-    options?: { ocrEnabled?: boolean },
+    options?: { ocrEnabled?: boolean; onProgress?: (progress: LiteParseProgress) => void },
   ): Promise<LiteParseParseResult> {
     await this.init()
-    const parsed = await this.send<LiteParseParseResult>({
-      type: 'parse',
-      doc_id: docId,
-      bytes,
-      ocrEnabled: false,
-    })
+    const parsed = options?.onProgress
+      ? await this.parsePdfWithProgress(docId, bytes, options.onProgress)
+      : await this.send<LiteParseParseResult>({
+          type: 'parse',
+          doc_id: docId,
+          bytes,
+          ocrEnabled: false,
+        })
 
     if (!options?.ocrEnabled) {
       return parsed
@@ -105,13 +110,76 @@ export class LiteParseClient {
     }
 
     const targetPages = parsed.blocks.length === 0 ? undefined : ocrPages
-    const ocrParsed = await parsePdfWithOcrFallback(docId, bytes, targetPages)
+    const ocrParsed = await parsePdfWithOcrFallback(
+      docId,
+      bytes,
+      targetPages,
+      150,
+      options.onProgress,
+    )
 
     if (parsed.blocks.length === 0) {
       return ocrParsed
     }
 
     return mergeParseResults(docId, parsed, ocrParsed)
+  }
+
+  private async parsePdfWithProgress(
+    docId: string,
+    bytes: Uint8Array,
+    onProgress: (progress: LiteParseProgress) => void,
+    batchSize = 5,
+  ): Promise<LiteParseParseResult> {
+    const totalPages = await countPdfPages(bytes)
+
+    if (totalPages <= 1) {
+      onProgress({ completedPages: 0, totalPages: 1, percent: 0 })
+      const parsed = await this.send<LiteParseParseResult>({
+        type: 'parse',
+        doc_id: docId,
+        bytes,
+        ocrEnabled: false,
+      })
+      onProgress({ completedPages: 1, totalPages: 1, percent: 100 })
+      return parsed
+    }
+
+    const mergedPages: LiteParsePageResult[] = []
+
+    for (let start = 1; start <= totalPages; start += batchSize) {
+      const end = Math.min(start + batchSize - 1, totalPages)
+      const targetPages = start === end ? String(start) : `${start}-${end}`
+
+      onProgress({
+        completedPages: start - 1,
+        totalPages,
+        percent: Math.round(((start - 1) / totalPages) * 100),
+      })
+
+      const batch = await this.send<LiteParseParseResult>({
+        type: 'parse',
+        doc_id: docId,
+        bytes,
+        targetPages,
+        ocrEnabled: false,
+      })
+
+      mergedPages.push(...batch.pages)
+
+      onProgress({
+        completedPages: end,
+        totalPages,
+        percent: Math.round((end / totalPages) * 100),
+      })
+    }
+
+    mergedPages.sort((left, right) => left.pageNum - right.pageNum)
+    const text = mergedPages
+      .flatMap((page) => page.textItems.map((item) => item.text))
+      .join('\n')
+
+    return buildParseResultFromPages(docId, mergedPages, text)
   }
 
   async terminate(): Promise<void> {

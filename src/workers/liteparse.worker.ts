@@ -33,12 +33,32 @@ async function ensureParser() {
   return initPromise
 }
 
-async function parsePdf(docId: string, bytes: Uint8Array): Promise<LiteParseParseResult> {
+async function parsePdf(
+  docId: string,
+  bytes: Uint8Array,
+  targetPages?: string,
+): Promise<LiteParseParseResult> {
   await ensureParser()
-  if (!parser) throw new Error('LiteParse worker unavailable')
 
-  const result = await parser.parse(bytes)
-  return normalizeLiteParseResult(docId, result.pages, result.text)
+  const scopedParser =
+    targetPages !== undefined
+      ? new LiteParse({
+          ocrEnabled: false,
+          outputFormat: 'json',
+          targetPages,
+        })
+      : parser
+
+  if (!scopedParser) throw new Error('LiteParse worker unavailable')
+
+  try {
+    const result = await scopedParser.parse(bytes)
+    return normalizeLiteParseResult(docId, result.pages, result.text)
+  } finally {
+    if (scopedParser !== parser) {
+      scopedParser.free()
+    }
+  }
 }
 
 self.onmessage = async (event: MessageEvent<LiteParseWorkerMessage>) => {
@@ -60,7 +80,11 @@ self.onmessage = async (event: MessageEvent<LiteParseWorkerMessage>) => {
           throw new Error('OCR parsing must run on the main thread')
         }
 
-        const parsed = await parsePdf(event.data.doc_id, event.data.bytes)
+        const parsed = await parsePdf(
+          event.data.doc_id,
+          event.data.bytes,
+          event.data.targetPages,
+        )
         postResponse({ id, ok: true, result: parsed })
         return
       }

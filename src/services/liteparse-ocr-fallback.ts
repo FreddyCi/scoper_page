@@ -7,6 +7,7 @@ import { normalizeLiteParseResult } from '@/lib/liteparse-normalize'
 import type { LiteParseParseResult, LiteParseTextItem } from '@/lib/liteparse-protocol'
 import { countPdfPages, renderPdfPage } from '@/lib/pdf-page-render'
 import type { OcrRecognitionResult } from '@/lib/ocr-protocol'
+import type { LiteParseProgress } from '@/lib/liteparse-protocol'
 import { recognizeImageSource } from '@/services/ocr-main'
 
 function ocrResultsToTextItems(
@@ -43,6 +44,7 @@ export async function parsePdfWithOcrFallback(
   bytes: Uint8Array,
   pageNumbers?: number[],
   dpi = 150,
+  onProgress?: (progress: LiteParseProgress) => void,
 ): Promise<LiteParseParseResult> {
   const totalPages = await countPdfPages(bytes)
   const targets =
@@ -53,7 +55,14 @@ export async function parsePdfWithOcrFallback(
   const rawPages = []
   const textParts: string[] = []
 
-  for (const pageNum of targets) {
+  for (let index = 0; index < targets.length; index += 1) {
+    const pageNum = targets[index]!
+    onProgress?.({
+      completedPages: index,
+      totalPages: targets.length,
+      percent: Math.round((index / targets.length) * 100),
+    })
+
     const rendered = await renderPdfPage(bytes, pageNum, dpi)
     const ocrResults = await recognizeImageSource(rendered.canvas)
     const textItems = ocrResultsToTextItems(
@@ -72,6 +81,12 @@ export async function parsePdfWithOcrFallback(
     })
     textParts.push(textItems.map((item) => item.text).join(' '))
   }
+
+  onProgress?.({
+    completedPages: targets.length,
+    totalPages: targets.length,
+    percent: 100,
+  })
 
   return normalizeLiteParseResult(docId, rawPages, textParts.join('\n'))
 }

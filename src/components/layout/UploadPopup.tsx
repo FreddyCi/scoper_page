@@ -37,6 +37,7 @@ type UploadPopupProps = {
   items: PendingUpload[]
   isSubmitting: boolean
   uploadProgress: number
+  progressPhase?: string | null
   onOpenChange: (open: boolean) => void
   onAddFiles: (files: FileList | File[]) => void
   onRemoveFile: (id: string) => void
@@ -77,10 +78,12 @@ function UploadFileRow({
   item,
   onRemove,
   disabled,
+  progressDetail,
 }: {
   item: PendingUpload
   onRemove: (id: string) => void
   disabled: boolean
+  progressDetail?: string | null
 }) {
   const Icon = fileIconForName(item.file.name)
   const attachmentState =
@@ -89,6 +92,10 @@ function UploadFileRow({
       : item.status === 'error'
         ? 'error'
         : 'idle'
+  const detail =
+    item.status === 'parsing' && progressDetail
+      ? progressDetail
+      : statusLabel(item)
 
   return (
     <Attachment state={attachmentState} size="sm" className="w-full min-w-0">
@@ -98,7 +105,7 @@ function UploadFileRow({
       <AttachmentContent>
         <AttachmentTitle>{item.file.name}</AttachmentTitle>
         <AttachmentDescription>
-          {formatUploadFileSize(item.file.size)} · {statusLabel(item)}
+          {formatUploadFileSize(item.file.size)} · {detail}
         </AttachmentDescription>
       </AttachmentContent>
       <AttachmentActions>
@@ -119,6 +126,7 @@ export function UploadPopup({
   items,
   isSubmitting,
   uploadProgress,
+  progressPhase,
   onOpenChange,
   onAddFiles,
   onRemoveFile,
@@ -286,7 +294,7 @@ export function UploadPopup({
                 </div>
                 {isSubmitting ? (
                   <Progress value={uploadProgress} className="w-full">
-                    <ProgressLabel>Upload progress</ProgressLabel>
+                    <ProgressLabel>{progressPhase ?? 'Parsing document'}</ProgressLabel>
                     <ProgressValue />
                   </Progress>
                 ) : null}
@@ -297,6 +305,7 @@ export function UploadPopup({
                       item={item}
                       onRemove={onRemoveFile}
                       disabled={isSubmitting}
+                      progressDetail={item.status === 'parsing' ? progressPhase : null}
                     />
                   ))}
                 </div>

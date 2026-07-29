@@ -24,10 +24,22 @@ export type LiteParseParseResult = {
   text: string
 }
 
+export type LiteParseProgress = {
+  completedPages: number
+  totalPages: number
+  percent: number
+}
+
 export type LiteParseWorkerRequest =
   | { type: 'init' }
   | { type: 'ping' }
-  | { type: 'parse'; doc_id: string; bytes: Uint8Array; ocrEnabled?: boolean }
+  | {
+      type: 'parse'
+      doc_id: string
+      bytes: Uint8Array
+      ocrEnabled?: boolean
+      targetPages?: string
+    }
 
 export type LiteParseWorkerSuccess = {
   ok: true

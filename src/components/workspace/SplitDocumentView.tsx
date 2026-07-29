@@ -69,7 +69,7 @@ function ExtractViewHelpButton() {
           <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
           <li>Use the comment icon on a block row to attach a review note.</li>
           <li>When review notes exist, use the footer navigator to step through each note.</li>
-          <li>Use Export for PDF markup or a LiteParse markdown file with PDF context.</li>
+          <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
           <li>
             <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
             {' '}
@@ -96,6 +96,8 @@ function SplitDocumentViewFooter({
   onExportClick,
   markdownExportLoading = false,
   onExportMarkdownClick,
+  contextConvertLoading = false,
+  onConvertToContextClick,
 }: {
   statusLabel: string
   commentNavigator?: ReactNode
@@ -110,6 +112,8 @@ function SplitDocumentViewFooter({
   onExportClick?: (mode: 'markup' | 'burned-in') => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
+  contextConvertLoading?: boolean
+  onConvertToContextClick?: () => void
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
@@ -127,28 +131,33 @@ function SplitDocumentViewFooter({
         {commentNavigator}
       </div>
       <div className="flex items-center gap-2">
-        {onExportClick || onExportMarkdownClick ? (
+        {onExportClick || onExportMarkdownClick || onConvertToContextClick ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              disabled={exportDisabled || exportLoading || markdownExportLoading}
+              disabled={
+                exportDisabled || exportLoading || markdownExportLoading || contextConvertLoading
+              }
               render={
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  disabled={exportDisabled || exportLoading || markdownExportLoading}
+                  disabled={
+                    exportDisabled ||
+                    exportLoading ||
+                    markdownExportLoading ||
+                    contextConvertLoading
+                  }
                   className="border-sky-200/80 bg-surface hover:bg-sky-50/80 rounded-full"
                 />
               }
             >
               <DownloadIcon className="size-3.5" />
-              {exportLoading || markdownExportLoading
-                ? 'Exporting…'
-                : onExportClick && onExportMarkdownClick
+              {exportLoading || markdownExportLoading || contextConvertLoading
+                ? 'Working…'
+                : onExportClick || onExportMarkdownClick || onConvertToContextClick
                   ? 'Export'
-                  : onExportMarkdownClick
-                    ? 'Export Markdown'
-                    : exportLabel}
+                  : exportLabel}
             </DropdownMenuTrigger>
             <BrandDropdownContent align="end" side="top" sideOffset={10}>
               {onExportMarkdownClick ? (
@@ -167,6 +176,27 @@ function SplitDocumentViewFooter({
                         title="Download .md"
                         description="Browser-only conversion like the LiteParse demo — no server upload."
                         titleClassName={brandAccentStyles('sky').title}
+                      />
+                    </DropdownMenuItem>
+                  </div>
+                </BrandMenuSection>
+              ) : null}
+              {onConvertToContextClick ? (
+                <BrandMenuSection accent="violet">
+                  <BrandMenuSectionHeader
+                    accent="violet"
+                    title="Convert to context"
+                    description="Parse this PDF to markdown and add it as a supporting context tab in chat."
+                  />
+                  <div className="flex flex-col gap-1 p-1.5 pt-0">
+                    <DropdownMenuItem
+                      className={brandMenuItemClass('violet')}
+                      onClick={onConvertToContextClick}
+                    >
+                      <MenuOptionContent
+                        title="Add context tab"
+                        description="Ingests markdown blocks, pins the file to chat, and opens it in the workspace tab row."
+                        titleClassName={brandAccentStyles('violet').title}
                       />
                     </DropdownMenuItem>
                   </div>
@@ -224,6 +254,7 @@ export function SplitDocumentView({
   const [comparingScope, setComparingScope] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportingMarkdown, setExportingMarkdown] = useState(false)
+  const [convertingToContext, setConvertingToContext] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [commentNavIndex, setCommentNavIndex] = useState(0)
   const [pendingCommentFocus, setPendingCommentFocus] = useState<{
@@ -376,6 +407,29 @@ export function SplitDocumentView({
     })()
   }
 
+  function handleConvertToContext() {
+    if (!canExportPdf || convertingToContext) return
+
+    setExportError(null)
+    setConvertingToContext(true)
+
+    void (async () => {
+      try {
+        const { convertPdfToContextDocument } = await import('@/services/convert-pdf-to-context')
+        await convertPdfToContextDocument(document, {
+          ocrEnabled,
+          includeScoperComments: true,
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Context conversion failed'
+        setExportError(message)
+        console.error('[split-document-view] context conversion failed', error)
+      } finally {
+        setConvertingToContext(false)
+      }
+    })()
+  }
+
   function handleCtaClick() {
     if (mode === 'scope_creep') {
       const baseline = documents.find((doc) => doc.role === 'baseline')
@@ -521,6 +575,8 @@ export function SplitDocumentView({
         onExportClick={canExportPdf ? handleExportPdf : undefined}
         markdownExportLoading={exportingMarkdown}
         onExportMarkdownClick={canExportPdf ? handleExportMarkdown : undefined}
+        contextConvertLoading={convertingToContext}
+        onConvertToContextClick={canExportPdf ? handleConvertToContext : undefined}
       />
     </div>
   )

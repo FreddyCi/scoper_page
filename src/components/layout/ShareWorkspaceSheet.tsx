@@ -3,7 +3,6 @@ import {
   DownloadIcon,
   Link2Icon,
   LockIcon,
-  Share2Icon,
   UploadIcon,
   XIcon,
 } from 'lucide-react'
@@ -109,7 +108,7 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
             disabled={disabled}
             className="text-subtle-foreground hover:text-foreground h-7 rounded-full px-2.5 text-xs font-normal"
           >
-            <Share2Icon className="size-3.5" />
+            <UploadIcon className="size-3.5" />
             Share
           </Button>
         }

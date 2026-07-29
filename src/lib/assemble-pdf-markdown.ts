@@ -146,3 +146,18 @@ export function markdownExportFilename(pdfFilename: string): string {
   const base = pdfFilename.replace(/\.pdf$/i, '').trim() || 'document'
   return `${base}.md`
 }
+
+export function contextMarkdownFilename(pdfFilename: string): string {
+  const base = pdfFilename.replace(/\.pdf$/i, '').trim() || 'document'
+  return `${base}-context.md`
+}
+
+/** Remove YAML front matter before ingesting markdown as chat context blocks. */
+export function stripYamlFrontMatter(markdown: string): string {
+  if (!markdown.startsWith('---\n')) return markdown
+
+  const end = markdown.indexOf('\n---\n', 4)
+  if (end === -1) return markdown
+
+  return markdown.slice(end + 5).trimStart()
+}

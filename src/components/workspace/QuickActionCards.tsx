@@ -1,9 +1,3 @@
-import type { LucideIcon } from 'lucide-react'
-import {
-  ClipboardCheckIcon,
-  GitCompareArrowsIcon,
-} from 'lucide-react'
-
 import {
   featureCardAccent,
   featureCardDescriptionClass,
@@ -19,8 +13,6 @@ type QuickAction = {
   id: string
   label: string
   description: string
-  icon?: LucideIcon
-  imageSrc?: string
   mode?: WorkspaceMode
   openUpload?: boolean
 }
@@ -30,7 +22,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: 'analyse-rfp',
     label: 'Analyse RFP',
     description: 'Qualify bidders against your requirements profile',
-    icon: ClipboardCheckIcon,
     mode: 'rfp',
     openUpload: true,
   },
@@ -38,7 +29,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: 'scope-creep',
     label: 'Check scope creep',
     description: 'Compare baseline scope against change requests',
-    icon: GitCompareArrowsIcon,
     mode: 'scope_creep',
     openUpload: true,
   },
@@ -46,7 +36,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: 'upload-docs',
     label: 'Upload docs',
     description: 'Add RFP, bidder responses, and supporting context',
-    imageSrc: '/image/upload-doc.png',
     openUpload: true,
   },
 ]
@@ -67,47 +56,25 @@ export function QuickActionCards({ className }: { className?: string }) {
         className,
       )}
     >
-      {QUICK_ACTIONS.map((action, index) => {
-        const Icon = action.icon
+      {QUICK_ACTIONS.map((action, index) => (
+        <button
+          key={action.id}
+          type="button"
+          onClick={() => handleSelect(action)}
+          className={cn(
+            'group cursor-pointer text-left',
+            featureCardShellClass,
+            featureCardAccent(index),
+          )}
+        >
+          <div className="px-2 text-center">
+            <h3 className={featureCardTitleClass}>{action.label}</h3>
+            <p className={featureCardDescriptionClass}>{action.description}</p>
+          </div>
 
-        return (
-          <button
-            key={action.id}
-            type="button"
-            onClick={() => handleSelect(action)}
-            className={cn(
-              'group cursor-pointer text-left',
-              featureCardShellClass,
-              featureCardAccent(index),
-            )}
-          >
-            <div className="px-2 text-center">
-              <h3 className={featureCardTitleClass}>{action.label}</h3>
-              <p className={featureCardDescriptionClass}>{action.description}</p>
-            </div>
-
-            <div
-              className={cn(
-                featureCardInnerPanelClass,
-                'mt-5',
-                action.imageSrc ? 'items-center justify-center p-3' : 'p-4',
-              )}
-            >
-              {action.imageSrc ? (
-                <img
-                  src={action.imageSrc}
-                  alt=""
-                  className="mx-auto h-full max-h-[11.5rem] w-full object-contain"
-                />
-              ) : Icon ? (
-                <div className="bg-muted/60 flex size-10 items-center justify-center rounded-xl">
-                  <Icon className="text-foreground size-5" />
-                </div>
-              ) : null}
-            </div>
-          </button>
-        )
-      })}
+          <div aria-hidden className={cn(featureCardInnerPanelClass, 'mt-5 min-h-[14rem] p-4')} />
+        </button>
+      ))}
     </div>
   )
 }

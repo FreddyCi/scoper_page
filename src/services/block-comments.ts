@@ -1,11 +1,21 @@
+import { reviewerInitialsFromName } from '@/lib/reviewer-profile'
 import { getDuckdbClient } from '@/services/duckdb-client'
+import { useSessionStore } from '@/store/session-store'
 import type { BlockRecord, CommentRecord } from '@/lib/types'
 
 type CommentRow = {
   comment_id: string
   block_id: string
   text: string
+  author_initials: string | null
   created_at: string
+}
+
+function resolveAuthorInitials(override?: string): string {
+  if (override?.trim()) {
+    return reviewerInitialsFromName(override.trim())
+  }
+  return reviewerInitialsFromName(useSessionStore.getState().reviewerName)
 }
 
 function normalizeComment(row: CommentRow): CommentRecord {
@@ -13,29 +23,43 @@ function normalizeComment(row: CommentRow): CommentRecord {
     comment_id: row.comment_id,
     block_id: row.block_id,
     text: row.text,
+    author_initials: row.author_initials?.trim() || '?',
     created_at: row.created_at,
   }
 }
 
 /** Persist a review note on a document block (BDA-082) */
-export async function insertBlockComment(blockId: string, text: string): Promise<CommentRecord> {
+export async function insertBlockComment(
+  blockId: string,
+  text: string,
+  options?: { authorInitials?: string },
+): Promise<CommentRecord> {
   const trimmed = text.trim()
   if (!trimmed) {
     throw new Error('Comment text cannot be empty')
   }
 
+  const author_initials = resolveAuthorInitials(options?.authorInitials)
+
   const comment: CommentRecord = {
     comment_id: `comment-${crypto.randomUUID()}`,
     block_id: blockId,
     text: trimmed,
+    author_initials,
     created_at: new Date().toISOString(),
   }
 
   const duckdb = await getDuckdbClient()
   await duckdb.query(
-    `INSERT INTO comments (comment_id, block_id, text, created_at)
-     VALUES (?, ?, ?, ?)`,
-    [comment.comment_id, comment.block_id, comment.text, comment.created_at],
+    `INSERT INTO comments (comment_id, block_id, text, author_initials, created_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      comment.comment_id,
+      comment.block_id,
+      comment.text,
+      comment.author_initials,
+      comment.created_at,
+    ],
   )
 
   return comment
@@ -45,7 +69,7 @@ export async function insertBlockComment(blockId: string, text: string): Promise
 export async function fetchCommentsForBlock(blockId: string): Promise<CommentRecord[]> {
   const duckdb = await getDuckdbClient()
   const rows = await duckdb.query<CommentRow>(
-    `SELECT comment_id, block_id, text, created_at
+    `SELECT comment_id, block_id, text, author_initials, created_at
      FROM comments
      WHERE block_id = ?
      ORDER BY created_at ASC, comment_id ASC`,
@@ -82,6 +106,7 @@ type AnnotatedBlockRow = {
   height: number | null
   comment_id: string
   comment_text: string
+  author_initials: string | null
   created_at: string
 }
 
@@ -102,6 +127,7 @@ export async function fetchDocumentComments(docId: string): Promise<DocumentComm
     comment_id: string
     block_id: string
     comment_text: string
+    author_initials: string | null
     created_at: string
     doc_id: string
     page_num: number | null
@@ -112,7 +138,7 @@ export async function fetchDocumentComments(docId: string): Promise<DocumentComm
     width: number | null
     height: number | null
   }>(
-    `SELECT c.comment_id, c.block_id, c.text AS comment_text, c.created_at,
+    `SELECT c.comment_id, c.block_id, c.text AS comment_text, c.author_initials, c.created_at,
             b.doc_id, b.page_num, b.section_path, b.text AS block_text,
             b.x, b.y, b.width, b.height
      FROM comments c
@@ -137,12 +163,13 @@ export async function fetchDocumentComments(docId: string): Promise<DocumentComm
     if (row.height != null) block.height = row.height
 
     return {
-      comment: {
+      comment: normalizeComment({
         comment_id: row.comment_id,
         block_id: row.block_id,
         text: row.comment_text,
+        author_initials: row.author_initials,
         created_at: row.created_at,
-      },
+      }),
       block,
     }
   })
@@ -156,7 +183,7 @@ export async function fetchAnnotatedBlocksForExport(
   const rows = await duckdb.query<AnnotatedBlockRow>(
     `SELECT b.block_id, b.doc_id, b.page_num, b.section_path, b.text,
             b.x, b.y, b.width, b.height,
-            c.comment_id, c.text AS comment_text, c.created_at
+            c.comment_id, c.text AS comment_text, c.author_initials, c.created_at
      FROM comments c
      INNER JOIN blocks b ON b.block_id = c.block_id
      WHERE b.doc_id = ?
@@ -167,12 +194,13 @@ export async function fetchAnnotatedBlocksForExport(
   const grouped = new Map<string, AnnotatedBlockExport>()
 
   for (const row of rows) {
-    const comment: CommentRecord = {
+    const comment = normalizeComment({
       comment_id: row.comment_id,
       block_id: row.block_id,
       text: row.comment_text,
+      author_initials: row.author_initials,
       created_at: row.created_at,
-    }
+    })
 
     const existing = grouped.get(row.block_id)
     if (existing) {
@@ -200,6 +228,8 @@ export async function fetchAnnotatedBlocksForExport(
 
 /** Dev harness — comment persists in session DuckDB after re-fetch (BDA-082) */
 export async function runBlockCommentsHarness(): Promise<void> {
+  useSessionStore.getState().setReviewerName('Harness Reviewer')
+
   const duckdb = await getDuckdbClient()
   const docId = 'comment-harness-doc'
   const blockId = 'comment-harness-block'
@@ -223,7 +253,10 @@ export async function runBlockCommentsHarness(): Promise<void> {
     text: 'Indemnification clause sample text for comment harness.',
   })
 
-  await insertBlockComment(blockId, 'Flag for legal review before sign-off.')
+  const saved = await insertBlockComment(blockId, 'Flag for legal review before sign-off.')
+  if (saved.author_initials !== 'HR') {
+    throw new Error('runBlockCommentsHarness failed: expected author initials HR')
+  }
 
   const comments = await fetchCommentsForBlock(blockId)
   const hasLegalReview = comments.some((comment) => comment.text.includes('legal review'))

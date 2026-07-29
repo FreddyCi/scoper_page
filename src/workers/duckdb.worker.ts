@@ -7,7 +7,7 @@ import type {
   DuckdbWorkerMessage,
   DuckdbWorkerResponse,
 } from '@/lib/duckdb-protocol'
-import { DUCKDB_SCHEMA_STATEMENTS } from '@/lib/duckdb-schema'
+import { DUCKDB_MIGRATION_STATEMENTS, DUCKDB_SCHEMA_STATEMENTS } from '@/lib/duckdb-schema'
 import type { BlockRecord, DocumentMeta } from '@/lib/types'
 
 const WASM_URL = '/duckdb/duckdb-eh.wasm'
@@ -33,6 +33,10 @@ async function ensureInitialized() {
     connection = await db.connect()
 
     for (const statement of DUCKDB_SCHEMA_STATEMENTS) {
+      await connection.query(statement)
+    }
+
+    for (const statement of DUCKDB_MIGRATION_STATEMENTS) {
       await connection.query(statement)
     }
   })()

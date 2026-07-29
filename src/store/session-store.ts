@@ -17,6 +17,10 @@ import type {
   WorkspaceView,
 } from '@/lib/types'
 import { createChatThreadSnapshot } from '@/lib/chat-history'
+import {
+  readReviewerNamePreference,
+  writeReviewerNamePreference,
+} from '@/lib/reviewer-profile'
 import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import {
@@ -114,6 +118,7 @@ export type SessionState = {
   evaluationBaselineProfile: RfpResultsProfile | null
   evaluationDocId: string | null
   companyContext: string
+  reviewerName: string
   creepProfiles: ScopeCreepProfile[]
   selectedCitation: CitationRef | null
   citationFocusSeq: number
@@ -141,6 +146,7 @@ export type SessionState = {
   setEvaluationBaselineProfile: (profile: RfpResultsProfile | null) => void
   setEvaluationDocId: (docId: string | null) => void
   setCompanyContext: (context: string) => void
+  setReviewerName: (name: string) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
@@ -193,6 +199,7 @@ const initialState = {
   evaluationBaselineProfile: null as RfpResultsProfile | null,
   evaluationDocId: null as string | null,
   companyContext: readCompanyContextPreference(),
+  reviewerName: readReviewerNamePreference(),
   creepProfiles: [] as ScopeCreepProfile[],
   selectedCitation: null as CitationRef | null,
   citationFocusSeq: 0,
@@ -310,6 +317,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setCompanyContext: (companyContext) => {
     writeCompanyContextPreference(companyContext)
     set({ companyContext })
+  },
+
+  setReviewerName: (reviewerName) => {
+    writeReviewerNamePreference(reviewerName)
+    set({ reviewerName })
   },
 
   clearEvaluationSetup: () => {

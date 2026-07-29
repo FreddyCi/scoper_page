@@ -5,7 +5,7 @@ import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
 import { beginBlobSave } from '@/lib/download-blob'
 import { addHighlightAnnotation, addTextNoteAnnotation } from '@/lib/pdf-export-annotations'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
-import type { Bbox, DocumentMeta } from '@/lib/types'
+import type { Bbox, CommentRecord, DocumentMeta } from '@/lib/types'
 import {
   fetchAnnotatedBlocksForExport,
   type AnnotatedBlockExport,
@@ -32,11 +32,22 @@ function hasBbox(block: AnnotatedBlockExport['block']): block is AnnotatedBlockE
   )
 }
 
+function formatCommentForExport(
+  comment: CommentRecord,
+  index: number,
+  total: number,
+): string {
+  const numbered = total > 1 ? `${index + 1}. ` : ''
+  const author =
+    comment.author_initials && comment.author_initials !== '?'
+      ? `[${comment.author_initials}] `
+      : ''
+  return `${numbered}${author}${comment.text}`
+}
+
 function formatAnnotationContents(entry: AnnotatedBlockExport): string {
   return entry.comments
-    .map((comment, index) =>
-      entry.comments.length > 1 ? `${index + 1}. ${comment.text}` : comment.text,
-    )
+    .map((comment, index) => formatCommentForExport(comment, index, entry.comments.length))
     .join('\n')
 }
 
@@ -70,8 +81,14 @@ function buildCommentBody(
 ): string[] {
   const lines: string[] = ['Review note']
   entry.comments.forEach((comment, index) => {
-    const prefix = entry.comments.length > 1 ? `${index + 1}. ` : ''
-    lines.push(...wrapText(`${prefix}${comment.text}`, maxWidth, font, fontSize))
+    lines.push(
+      ...wrapText(
+        formatCommentForExport(comment, index, entry.comments.length),
+        maxWidth,
+        font,
+        fontSize,
+      ),
+    )
   })
   return lines
 }

@@ -48,6 +48,13 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     comment_id VARCHAR PRIMARY KEY,
     block_id VARCHAR NOT NULL,
     text VARCHAR NOT NULL,
+    author_initials VARCHAR NOT NULL DEFAULT '?',
     created_at VARCHAR NOT NULL
   )`,
+] as const
+
+/** Applied after CREATE TABLE — DuckDB ADD COLUMN cannot use NOT NULL/DEFAULT */
+export const DUCKDB_MIGRATION_STATEMENTS = [
+  `ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_initials VARCHAR`,
+  `UPDATE comments SET author_initials = '?' WHERE author_initials IS NULL`,
 ] as const

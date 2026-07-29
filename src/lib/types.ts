@@ -97,6 +97,7 @@ export type CommentRecord = {
   comment_id: string
   block_id: string
   text: string
+  author_initials: string
   created_at: string
 }
 

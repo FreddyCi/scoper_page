@@ -2,9 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { MessageSquareIcon, XIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import {
+  CommentAuthorAvatar,
+  ReviewerIdentityFields,
+} from '@/components/workspace/CommentAuthorAvatar'
 import { useBlockComments } from '@/hooks/use-block-comments'
 import type { BlockRecord } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 type BlockCommentPopoverProps = {
   block: BlockRecord | null
@@ -82,6 +87,8 @@ export function BlockCommentPopover({
   const anchorRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const blockId = block?.block_id ?? null
+  const reviewerName = useSessionStore((state) => state.reviewerName)
+  const setReviewerName = useSessionStore((state) => state.setReviewerName)
   const { comments, loading, saving, error, addComment } = useBlockComments(blockId)
 
   useEffect(() => {
@@ -205,12 +212,18 @@ export function BlockCommentPopover({
               {comments.map((comment) => (
                 <li
                   key={comment.comment_id}
-                  className="border-border bg-muted/30 rounded-lg border px-3 py-2 text-sm"
+                  className="border-border bg-muted/30 flex gap-2 rounded-lg border px-3 py-2 text-sm"
                 >
-                  <p className="text-foreground leading-relaxed">{comment.text}</p>
-                  <p className="text-muted-foreground mt-1 text-[11px]">
-                    {formatCommentTime(comment.created_at)}
-                  </p>
+                  <CommentAuthorAvatar initials={comment.author_initials} className="mt-0.5" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-foreground leading-relaxed">{comment.text}</p>
+                    <p className="text-muted-foreground mt-1 text-[11px]">
+                      {comment.author_initials !== '?'
+                        ? `${comment.author_initials} · `
+                        : ''}
+                      {formatCommentTime(comment.created_at)}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -221,6 +234,10 @@ export function BlockCommentPopover({
           ) : null}
 
           <div className="space-y-2">
+            <ReviewerIdentityFields
+              reviewerName={reviewerName}
+              onReviewerNameChange={setReviewerName}
+            />
             <textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}

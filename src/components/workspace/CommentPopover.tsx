@@ -15,6 +15,49 @@ type BlockCommentPopoverProps = {
   className?: string
 }
 
+const BLOCK_EXCERPT_WORD_LIMIT = 30
+
+function truncateWords(text: string, maxWords: number): { excerpt: string; isTruncated: boolean } {
+  const words = text.trim().split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) {
+    return { excerpt: text, isTruncated: false }
+  }
+
+  return {
+    excerpt: `${words.slice(0, maxWords).join(' ')}…`,
+    isTruncated: true,
+  }
+}
+
+function BlockExcerpt({ text, blockId }: { text: string; blockId: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const { excerpt, isTruncated } = truncateWords(text, BLOCK_EXCERPT_WORD_LIMIT)
+
+  useEffect(() => {
+    setExpanded(false)
+  }, [blockId])
+
+  return (
+    <blockquote
+      className={cn(
+        'border-sky-400 bg-sky-50/70 text-foreground rounded-r-md border-l-4 px-3 py-2 text-xs leading-relaxed',
+        expanded && isTruncated && 'scrollbar-thin max-h-32 overflow-y-auto',
+      )}
+    >
+      <p>{expanded || !isTruncated ? text : excerpt}</p>
+      {isTruncated ? (
+        <button
+          type="button"
+          className="text-sky-800 hover:text-sky-950 mt-1 text-xs font-medium hover:underline"
+          onClick={() => setExpanded((value) => !value)}
+        >
+          {expanded ? 'Show less' : 'Read more'}
+        </button>
+      ) : null}
+    </blockquote>
+  )
+}
+
 function formatCommentTime(iso: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso
@@ -150,9 +193,7 @@ export function BlockCommentPopover({
             <p className="text-muted-foreground text-xs leading-relaxed">
               This note is attached to the highlighted passage in the PDF preview.
             </p>
-            <blockquote className="border-sky-400 bg-sky-50/70 text-foreground rounded-r-md border-l-4 px-3 py-2 text-xs leading-relaxed">
-              {block.text}
-            </blockquote>
+            <BlockExcerpt text={block.text} blockId={block.block_id} />
           </div>
 
           {loading ? (

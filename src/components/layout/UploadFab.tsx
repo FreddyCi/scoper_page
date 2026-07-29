@@ -1,10 +1,8 @@
-import { useCallback } from 'react'
 import { UploadIcon } from 'lucide-react'
 
-import { UploadPopup } from '@/components/layout/UploadPopup'
+import { useUploadQueueContext } from '@/components/layout/UploadQueueProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useUploadQueue } from '@/hooks/use-upload-queue'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -15,45 +13,10 @@ type UploadFabProps = {
 export function UploadFab({ className }: UploadFabProps) {
   const open = useSessionStore((s) => s.uploadPopupOpen)
   const setUploadPopupOpen = useSessionStore((s) => s.setUploadPopupOpen)
-  const {
-    items,
-    count,
-    isSubmitting,
-    uploadProgress,
-    progressPhase,
-    addFiles,
-    removeFile,
-    clearQueue,
-    submitUpload,
-  } = useUploadQueue()
-
-  const handleCancel = useCallback(() => {
-    if (!isSubmitting) clearQueue()
-  }, [clearQueue, isSubmitting])
-
-  const handleOpenChange = useCallback(
-    (next: boolean) => {
-      setUploadPopupOpen(next)
-      if (!next && !isSubmitting) clearQueue()
-    },
-    [clearQueue, isSubmitting, setUploadPopupOpen],
-  )
+  const { count } = useUploadQueueContext()
 
   return (
     <div className={cn('relative', className)}>
-      <UploadPopup
-        open={open}
-        items={items}
-        isSubmitting={isSubmitting}
-        uploadProgress={uploadProgress}
-        progressPhase={progressPhase}
-        onOpenChange={handleOpenChange}
-        onAddFiles={addFiles}
-        onRemoveFile={removeFile}
-        onCancel={handleCancel}
-        onUpload={submitUpload}
-      />
-
       <Button
         type="button"
         size="icon"

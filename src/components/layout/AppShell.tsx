@@ -9,6 +9,7 @@ import {
 } from '@/components/layout/shell-layout'
 import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
 import { UploadFab } from '@/components/layout/UploadFab'
+import { UploadQueueProvider } from '@/components/layout/UploadQueueProvider'
 import {
   WorkspaceDocumentTabsRow,
   WorkspaceHeaderTopRow,
@@ -73,14 +74,16 @@ export function AppShell({ children }: AppShellProps) {
                   !chatCollapsed && 'border-border border-r',
                 )}
               >
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  {children ?? <WorkspaceContent />}
-                </div>
+                <UploadQueueProvider>
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                    {children ?? <WorkspaceContent />}
+                  </div>
 
-                <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] pt-0 pb-3 text-xs">
-                  <UploadFab />
-                  <span>Workspace</span>
-                </footer>
+                  <footer className="text-subtle-foreground relative flex shrink-0 items-center justify-between px-[var(--spacing-panel)] pt-0 pb-3 text-xs">
+                    <UploadFab />
+                    <span>Workspace</span>
+                  </footer>
+                </UploadQueueProvider>
               </section>
 
               <aside

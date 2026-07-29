@@ -112,6 +112,7 @@ export type SessionState = {
   chatCollapsed: boolean
   chatStarted: boolean
   chatMessages: ChatMessage[]
+  chatContextAttachments: ChatContextAttachment[]
   chatGenerating: boolean
   chatModelStatus: ChatModelStatus
   workspaceView: WorkspaceView
@@ -135,7 +136,9 @@ export type SessionState = {
   bumpCitationFocus: () => void
   setChatCollapsed: (collapsed: boolean) => void
   toggleChatCollapsed: () => void
-  sendChatPrompt: (text: string, contextAttachments?: ChatContextAttachment[]) => void
+  sendChatPrompt: (text: string) => void
+  setChatContextAttachments: (attachments: ChatContextAttachment[]) => void
+  removeChatContextAttachment: (id: string) => void
   beginChatTurn: (
     text: string,
     contextAttachments?: ChatContextAttachment[],
@@ -179,6 +182,7 @@ const initialState = {
   chatCollapsed: readInitialChatCollapsed(),
   chatStarted: readChatStartedPreference(),
   chatMessages: [] as ChatMessage[],
+  chatContextAttachments: [] as ChatContextAttachment[],
   chatGenerating: false,
   chatModelStatus: 'idle' as ChatModelStatus,
   workspaceView: 'landing' as WorkspaceView,
@@ -344,20 +348,31 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { chatCollapsed }
     }),
 
-  sendChatPrompt: (text, contextAttachments = []) => {
-    void runChatAgentTurn(text, contextAttachments)
+  sendChatPrompt: (text) => {
+    const { chatContextAttachments } = get()
+    void runChatAgentTurn(text, chatContextAttachments)
   },
+
+  setChatContextAttachments: (chatContextAttachments) => set({ chatContextAttachments }),
+
+  removeChatContextAttachment: (id) =>
+    set((state) => ({
+      chatContextAttachments: state.chatContextAttachments.filter((item) => item.id !== id),
+    })),
 
   beginChatTurn: (text, contextAttachments = []) => {
     const trimmed = text.trim()
     const state = get()
     const isFirstPrompt = !state.chatStarted
+    const activeAttachments =
+      contextAttachments.length > 0 ? contextAttachments : state.chatContextAttachments
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       text: trimmed,
-      contextAttachments: contextAttachments.length > 0 ? contextAttachments : undefined,
+      contextAttachments:
+        activeAttachments.length > 0 ? activeAttachments : undefined,
       created_at: new Date().toISOString(),
     }
 
@@ -429,6 +444,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatStarted: false,
       chatCollapsed: true,
       chatMessages: [],
+      chatContextAttachments: [],
       chatGenerating: false,
       chatModelStatus: 'idle',
     })
@@ -483,6 +499,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatStarted: false,
       chatCollapsed: true,
       chatMessages: [],
+      chatContextAttachments: [],
       chatGenerating: false,
       chatModelStatus: 'idle',
     })

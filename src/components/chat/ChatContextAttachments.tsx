@@ -47,10 +47,35 @@ type ChatContextAttachmentControlsProps = {
 function ContextAttachmentChip({
   attachment,
   onRemove,
+  variant = 'default',
 }: {
   attachment: ChatContextAttachment
   onRemove: () => void
+  variant?: 'default' | 'tucked'
 }) {
+  if (variant === 'tucked') {
+    return (
+      <div className="border-border/80 bg-surface/95 text-foreground shadow-panel inline-flex max-w-[14rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 text-xs backdrop-blur-sm">
+        {attachment.kind === 'block' ? (
+          <HighlighterIcon className="size-3.5 shrink-0 text-sky-700" />
+        ) : (
+          <FileTextIcon className="size-3.5 shrink-0 text-sky-700" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-medium">{attachment.label}</p>
+        </div>
+        <button
+          type="button"
+          aria-label={`Remove ${attachment.label}`}
+          className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-md p-0.5 transition-colors"
+          onClick={onRemove}
+        >
+          <XIcon className="size-3.5" />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <Attachment state="done" size="xs" orientation="horizontal" className="max-w-56">
       <AttachmentMedia>
@@ -228,12 +253,34 @@ export function ChatContextAttachmentPreview({
   attachments,
   onRemove,
   className,
+  variant = 'default',
 }: {
   attachments: ChatContextAttachment[]
   onRemove?: (id: string) => void
   className?: string
+  variant?: 'default' | 'tucked'
 }) {
   if (attachments.length === 0) return null
+
+  if (variant === 'tucked') {
+    return (
+      <div
+        role="list"
+        aria-label="Attached context"
+        className={cn('flex flex-wrap items-end gap-1.5', className)}
+      >
+        {attachments.map((attachment) => (
+          <div key={attachment.id} role="listitem">
+            <ContextAttachmentChip
+              attachment={attachment}
+              variant="tucked"
+              onRemove={() => onRemove?.(attachment.id)}
+            />
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <AttachmentGroup className={cn('pb-1', className)}>

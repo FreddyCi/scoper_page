@@ -12,7 +12,6 @@ import {
   findActiveMentionQuery,
   insertDocMention,
 } from '@/lib/chat-mentions'
-import type { ChatContextAttachment } from '@/lib/types'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import {
@@ -34,10 +33,12 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const sendChatPrompt = useSessionStore((s) => s.sendChatPrompt)
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
   const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
+  const attachments = useSessionStore((s) => s.chatContextAttachments)
+  const setChatContextAttachments = useSessionStore((s) => s.setChatContextAttachments)
+  const removeChatContextAttachment = useSessionStore((s) => s.removeChatContextAttachment)
   const [draft, setDraft] = useState('')
   const [cursor, setCursor] = useState(0)
   const [mentionHighlight, setMentionHighlight] = useState(0)
-  const [attachments, setAttachments] = useState<ChatContextAttachment[]>([])
   const [dragActive, setDragActive] = useState(false)
   const [ingestingMarkdown, setIngestingMarkdown] = useState(false)
   const [dropError, setDropError] = useState<string | null>(null)
@@ -79,11 +80,10 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
   function handleSend() {
     if (!canSend) return
-    sendChatPrompt(draft, attachments)
+    sendChatPrompt(draft)
     setDraft('')
     setCursor(0)
     setMentionHighlight(0)
-    setAttachments([])
     setDropError(null)
   }
 
@@ -128,7 +128,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
     setIngestingMarkdown(true)
     try {
       const nextAttachments = await ingestMarkdownFilesForChat(files)
-      setAttachments((current) => appendMarkdownContextAttachments(current, nextAttachments))
+      setChatContextAttachments(appendMarkdownContextAttachments(attachments, nextAttachments))
     } catch (error) {
       setDropError(error instanceof Error ? error.message : 'Failed to add markdown context')
     } finally {
@@ -137,30 +137,33 @@ export function ChatComposer({ className }: ChatComposerProps) {
   }
 
   return (
-    <div
-      className={cn(
-        'border-border bg-workspace-muted/70 relative flex flex-col overflow-hidden rounded-2xl border',
-        dragActive && 'border-sky-400 ring-2 ring-sky-300/60',
-        className,
-      )}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={(event) => void handleDrop(event)}
-    >
-      {dragActive ? (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-sky-50/80">
-          <p className="text-sky-900 text-sm font-medium">Drop markdown files to attach context</p>
-        </div>
-      ) : null}
+    <div className={cn('relative', className)}>
       {attachments.length > 0 ? (
-        <div className="border-border/70 border-b px-3 py-2">
+        <div className="relative z-0 px-0.5 pb-1">
           <ChatContextAttachmentPreview
             attachments={attachments}
-            onRemove={(id) => setAttachments((current) => current.filter((item) => item.id !== id))}
+            variant="tucked"
+            onRemove={(id) => removeChatContextAttachment(id)}
           />
         </div>
       ) : null}
+
+      <div
+        className={cn(
+          'border-border bg-workspace-muted/70 relative z-10 flex flex-col overflow-hidden rounded-2xl border shadow-panel',
+          attachments.length > 0 && '-mt-2.5',
+          dragActive && 'border-sky-400 ring-2 ring-sky-300/60',
+        )}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={(event) => void handleDrop(event)}
+      >
+        {dragActive ? (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-sky-50/80">
+            <p className="text-sky-900 text-sm font-medium">Drop markdown files to attach context</p>
+          </div>
+        ) : null}
 
       <div className="relative px-3 pt-2.5 pb-1.5">
         <label className="sr-only" htmlFor="chat-composer-input">
@@ -292,7 +295,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
             activeDocId={activeDocId}
             selectedCitation={selectedCitation}
             attachments={attachments}
-            onAttachmentsChange={setAttachments}
+            onAttachmentsChange={setChatContextAttachments}
             disabled={isBusy}
             onMarkdownIngestChange={setIngestingMarkdown}
           />
@@ -309,6 +312,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
             <ArrowUpIcon className="size-3.5" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   )

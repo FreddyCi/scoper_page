@@ -1,5 +1,4 @@
 import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
-import { ChatContextAttachmentPreview } from '@/components/chat/ChatContextAttachments'
 import {
   Message,
   MessageContent,
@@ -48,7 +47,7 @@ export function ChatTranscript() {
       <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
         <MessageScroller className="min-h-0 flex-1">
           <MessageScrollerViewport>
-            <MessageScrollerContent className="gap-4 px-1">
+            <MessageScrollerContent className="justify-end gap-4 px-1">
               {chatMessages.map((item) => {
                 const isUser = item.role === 'user'
 
@@ -70,12 +69,7 @@ export function ChatTranscript() {
                             }
                           >
                             {isUser ? (
-                              <div className="space-y-2">
-                                {item.contextAttachments?.length ? (
-                                  <ChatContextAttachmentPreview attachments={item.contextAttachments} />
-                                ) : null}
-                                <p>{item.text}</p>
-                              </div>
+                              <p>{item.text}</p>
                             ) : (
                               <AssistantMessageBody message={item} />
                             )}

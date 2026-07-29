@@ -25,12 +25,22 @@ type AgentTurnHandlers = {
 }
 
 function toScoperMessages(messages: AppChatMessage[]): ScoperChatMessage[] {
+  const sessionAttachments = useSessionStore.getState().chatContextAttachments
+
   return messages
     .filter((message) => message.role === 'user' || message.role === 'assistant')
     .map((message) => {
       const content =
-        message.role === 'user' && message.contextAttachments?.length
-          ? buildAgentPrompt(message.text.trim(), message.contextAttachments)
+        message.role === 'user'
+          ? (() => {
+              const attachments =
+                sessionAttachments.length > 0
+                  ? sessionAttachments
+                  : (message.contextAttachments ?? [])
+              return attachments.length > 0
+                ? buildAgentPrompt(message.text.trim(), attachments)
+                : message.text.trim()
+            })()
           : message.text.trim()
 
       return {

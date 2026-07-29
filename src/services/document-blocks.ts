@@ -120,6 +120,58 @@ export function groupBlocksBySection(blocks: BlockRecord[]): BlocksByPage[] {
   return [...groups.values()]
 }
 
+const SECTION_PATH_SEPARATOR = ' › '
+
+/** Split a stored section_path — supports ` › ` and legacy ` > ` separators. */
+export function splitSectionPath(path: string): string[] {
+  return path
+    .split(/\s*[›>]\s*/u)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+}
+
+/** Longest shared heading prefix across a document's section paths. */
+export function commonSectionPathPrefix(paths: string[]): string[] {
+  const segmentLists = paths.map(splitSectionPath).filter((segments) => segments.length > 0)
+  if (segmentLists.length === 0) return []
+
+  const [first, ...rest] = segmentLists
+  const prefix: string[] = []
+
+  for (let index = 0; index < first.length; index += 1) {
+    const segment = first[index]
+    if (rest.every((segments) => segments[index] === segment)) {
+      prefix.push(segment)
+      continue
+    }
+    break
+  }
+
+  return prefix
+}
+
+/** Drop repeated breadcrumb prefixes for Read-view section headings. */
+export function compactSectionPathLabel(path: string, commonPrefix: string[]): string {
+  const segments = splitSectionPath(path)
+  if (segments.length === 0) return path.trim()
+
+  let start = 0
+  while (
+    start < commonPrefix.length &&
+    start < segments.length &&
+    segments[start] === commonPrefix[start]
+  ) {
+    start += 1
+  }
+
+  const suffix = segments.slice(start)
+  if (suffix.length === 0) {
+    return segments[segments.length - 1] ?? path.trim()
+  }
+
+  return suffix.join(SECTION_PATH_SEPARATOR)
+}
+
 function isPdfPageSectionLabel(label: string): boolean {
   return /^page \d+$/i.test(label.trim())
 }

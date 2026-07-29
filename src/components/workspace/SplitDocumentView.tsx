@@ -16,7 +16,6 @@ import {
 import { MenuOptionContent } from '@/components/ui/menu-option-content'
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -33,6 +32,10 @@ import { blockToCitation } from '@/lib/types'
 import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
+import {
+  commonSectionPathPrefix,
+  compactSectionPathLabel,
+} from '@/services/document-blocks'
 import { useSessionStore } from '@/store/session-store'
 
 type SplitPaneTab = 'read' | 'preview' | 'extract' | 'original' | 'profiles'
@@ -49,6 +52,9 @@ const MODE_CTA: Record<WorkspaceMode, string> = {
 }
 
 function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
+  const accent = isMarkdown ? 'violet' : 'sky'
+  const styles = brandAccentStyles(accent)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -58,54 +64,64 @@ function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
             variant="ghost"
             size="icon-sm"
             aria-label={isMarkdown ? 'Read view help' : 'Extract view help'}
-            className="text-muted-foreground"
+            className={cn('rounded-full', styles.trigger, 'border-transparent hover:border-current/20')}
           />
         }
       >
         <InfoIcon className="size-4" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-72 p-3">
-        {isMarkdown ? (
-          <>
-            <p className="text-foreground text-sm font-semibold">Markdown views</p>
-            <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
-              <li>
-                <span className="text-foreground font-medium">Read</span> — annotated paragraphs for
-                citations and review notes.
-              </li>
-              <li>
-                <span className="text-foreground font-medium">Preview</span> — full rendered markdown
-                with tables, lists, and document structure.
-              </li>
-              <li>Click a passage in Read to select it for chat citations.</li>
-              <li>Use the comment icon on a paragraph to attach a review note.</li>
-              <li>
-                <span className="text-violet-800 font-medium">Violet highlight</span> = selected
-                passage.{' '}
-                <span className="text-amber-800 font-medium">Amber ring</span> = paragraph with a
-                review note.
-              </li>
-            </ul>
-          </>
-        ) : (
-          <>
-            <p className="text-foreground text-sm font-semibold">Extract &amp; comments</p>
-            <ul className="text-muted-foreground mt-2 space-y-2 text-xs leading-relaxed">
-              <li>Click a block to highlight the matching passage in the PDF preview.</li>
-              <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
-              <li>Use the comment icon on a block row to attach a review note.</li>
-              <li>When review notes exist, use the footer navigator to step through each note.</li>
-              <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
-              <li>
-                <span className="text-sky-800 font-medium">Blue highlight</span> = selected block.
-                {' '}
-                <span className="text-amber-800 font-medium">Amber ring</span> = block with a review
-                note.
-              </li>
-            </ul>
-          </>
-        )}
-      </DropdownMenuContent>
+      <BrandDropdownContent align="start" sideOffset={8}>
+        <BrandMenuSection accent={accent}>
+          <BrandMenuSectionHeader
+            accent={accent}
+            title={isMarkdown ? 'Markdown views' : 'Extract & comments'}
+            description={
+              isMarkdown
+                ? 'Read for citations and review notes · Preview for tables and document structure.'
+                : 'Select blocks in the extract pane and sync highlights with the PDF preview.'
+            }
+          />
+          <ul className="text-muted-foreground space-y-2 px-3 pb-3 text-xs leading-relaxed">
+            {isMarkdown ? (
+              <>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Read</span> — annotated
+                  paragraphs for citations and review notes.
+                </li>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Preview</span> — full rendered
+                  markdown with tables, lists, and formatting.
+                </li>
+                <li>Click a passage in Read to select it for chat citations.</li>
+                <li>Use the comment icon on a paragraph to attach a review note.</li>
+                <li>
+                  When review notes exist, use the footer navigator to step through each note.
+                </li>
+                <li className="border-border/70 border-t pt-2">
+                  <span className={cn('font-medium', styles.title)}>Violet highlight</span> = selected
+                  passage.{' '}
+                  <span className="text-amber-800 font-medium">Amber ring</span> = paragraph with a
+                  review note.
+                </li>
+              </>
+            ) : (
+              <>
+                <li>Click a block to highlight the matching passage in the PDF preview.</li>
+                <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
+                <li>Use the comment icon on a block row to attach a review note.</li>
+                <li>When review notes exist, use the footer navigator to step through each note.</li>
+                <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
+                <li className="border-border/70 border-t pt-2">
+                  <span className={cn('font-medium', styles.title)}>Blue highlight</span> = selected
+                  block.{' '}
+                  <span className="text-amber-800 font-medium">Amber ring</span> = block with a review
+                  note.
+                </li>
+              </>
+            )}
+          </ul>
+        </BrandMenuSection>
+      </BrandDropdownContent>
     </DropdownMenu>
   )
 }
@@ -193,7 +209,7 @@ function SplitDocumentViewFooter({
                   <BrandMenuSectionHeader
                     accent="sky"
                     title="Export Markdown"
-                    description="LiteParse WASM — structured text, PDF annotations, form fields, and Scoper review notes."
+                    description="PDF annotations, form fields, and Scoper review notes."
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
@@ -244,7 +260,7 @@ function SplitDocumentViewFooter({
                     >
                       <MenuOptionContent
                         title="Toggleable markup"
-                        description="Highlights and notes you can hide in Preview or Acrobat. Best for re-importing comments."
+                        description="Highlights and notes you can hide in Preview or Acrobat."
                         titleClassName={brandAccentStyles('amber').title}
                       />
                     </DropdownMenuItem>
@@ -363,13 +379,18 @@ export function SplitDocumentView({
     if (blocksLoading) return 'Loading extracted blocks…'
 
     const blockCountLabel = `${blocks.length} block${blocks.length === 1 ? '' : 's'}`
+    const sectionPaths = blocks
+      .map((block) => block.section_path?.trim())
+      .filter((path): path is string => Boolean(path))
+    const sectionPathPrefix = commonSectionPathPrefix(sectionPaths)
 
     if (selectedCitation?.doc_id === document.doc_id) {
       const selectedBlock = blocks.find((block) => block.block_id === selectedCitation.block_id)
 
       if (isMarkdown) {
         if (selectedBlock?.section_path?.trim()) {
-          return `${blockCountLabel} · ${selectedBlock.section_path} selected`
+          const label = compactSectionPathLabel(selectedBlock.section_path, sectionPathPrefix)
+          return `${blockCountLabel} · ${label} selected`
         }
         return `${blockCountLabel} · Passage selected`
       }

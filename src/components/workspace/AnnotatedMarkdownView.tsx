@@ -9,7 +9,7 @@ import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { blockToCitation } from '@/lib/types'
 import type { BlockRecord, DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { groupBlocksForMarkdownRead } from '@/services/document-blocks'
+import { groupBlocksForMarkdownRead, commonSectionPathPrefix, compactSectionPathLabel } from '@/services/document-blocks'
 import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
@@ -135,6 +135,10 @@ export function AnnotatedMarkdownView({
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
 
   const sectionGroups = useMemo(() => groupBlocksForMarkdownRead(blocks), [blocks])
+  const sectionPathPrefix = useMemo(
+    () => commonSectionPathPrefix(sectionGroups.map((group) => group.label)),
+    [sectionGroups],
+  )
   const activeBlockId =
     selectedCitation?.doc_id === document.doc_id ? selectedCitation.block_id : null
   const activeBlock = blocks.find((block) => block.block_id === activeBlockId) ?? null
@@ -203,7 +207,9 @@ export function AnnotatedMarkdownView({
           <article className="mx-auto max-w-3xl space-y-6">
             {sectionGroups.map((group) => (
               <section key={group.label} className="space-y-3">
-                <SectionHeading label={group.label} />
+                <SectionHeading
+                  label={compactSectionPathLabel(group.label, sectionPathPrefix)}
+                />
                 <div className="space-y-2">
                   {group.blocks.map((block) => (
                     <AnnotatedParagraph

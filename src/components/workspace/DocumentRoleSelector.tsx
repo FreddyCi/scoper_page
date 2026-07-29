@@ -113,7 +113,7 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
           <BrandMenuSectionHeader
             accent="neutral"
             title="Document role"
-            description="Tags how this file is used in RFP qualification and scope creep analysis."
+            description="Choose how this document is used in qualification and scope comparison."
           />
           <DropdownMenuRadioGroup
             value={role}

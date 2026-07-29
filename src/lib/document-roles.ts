@@ -15,10 +15,10 @@ export const DOCUMENT_ROLE_LABELS: Record<DocumentRole, string> = {
 }
 
 export const DOCUMENT_ROLE_DESCRIPTIONS: Record<DocumentRole, string> = {
-  baseline: 'Original scope / SOW to compare against',
-  change_request: 'Addendum or change request to evaluate',
-  supporting: 'Reference context (included in search and scope analysis)',
-  unknown: 'Role not set — tag before scope analysis',
+  baseline: 'Original scope or SOW — the reference you compare against',
+  change_request: 'Proposed change or addendum to compare against baseline',
+  supporting: 'Background material for search, chat, and analysis',
+  unknown: 'Not categorized yet — set a role before comparing or qualifying',
 }
 
 /** Default role for newly ingested documents when none is stored yet */

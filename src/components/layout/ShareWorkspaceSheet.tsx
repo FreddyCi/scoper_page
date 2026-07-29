@@ -150,7 +150,7 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
             </div>
           </div>
 
-          <div className="border-sky-200/70 bg-sky-50/70 text-sky-950 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium">
+          <div className="border-sky-200/70 bg-sky-50/70 text-sky-950 inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 mt-4 text-[11px] font-medium">
             <LockIcon className="size-3" />
             End-to-end encrypted
           </div>

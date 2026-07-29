@@ -15,13 +15,13 @@ export const UPLOAD_SUGGESTIONS: UploadSuggestion[] = [
   },
   {
     id: 'scope-creep',
-    label: 'Check scope creep',
+    label: 'Check Scope Creep',
     description: 'Compare baseline scope against change requests',
     disabled: true,
   },
   {
     id: 'upload-context',
-    label: 'Upload context',
+    label: 'Upload Context',
     description: 'Add markdown notes and supporting context — not RFP documents',
   },
 ]

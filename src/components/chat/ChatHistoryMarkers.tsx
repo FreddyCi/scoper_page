@@ -1,7 +1,6 @@
-import { AlertTriangleIcon, FlagIcon, InfoIcon } from 'lucide-react'
-import { useMemo } from 'react'
+import { Fragment, useMemo, type ReactNode } from 'react'
 
-import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker'
+import { CreepFlagRow } from '@/components/workspace/CreepFlagRow'
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -10,52 +9,31 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
-import { flattenCreepHistory, type CreepHistoryEntry } from '@/lib/creep-history'
+import { groupCreepHistory } from '@/lib/creep-history'
 import { buildMockCreepProfiles } from '@/lib/creep-profile-stub'
-import type { ScopeCreepProfile, ScopeCreepSeverity } from '@/lib/types'
+import type { ScopeCreepProfile } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
-function severityIcon(severity: ScopeCreepSeverity) {
-  switch (severity) {
-    case 'high':
-      return AlertTriangleIcon
-    case 'medium':
-      return FlagIcon
-    default:
-      return InfoIcon
-  }
-}
-
-function CreepFlagMarker({ entry }: { entry: Extract<CreepHistoryEntry, { kind: 'flag' }> }) {
-  const Icon = severityIcon(entry.severity)
-
+function HistorySectionHeading({ children }: { children: ReactNode }) {
   return (
-    <Marker
-      variant="border"
-      render={
-        <button
-          type="button"
-          className="hover:text-foreground w-full rounded-md px-1 py-0.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-          onClick={() => focusCitation(entry.citation)}
-        />
-      }
-    >
-      <MarkerIcon>
-        <Icon className="text-muted-foreground" />
-      </MarkerIcon>
-      <MarkerContent>
-        <span className="text-foreground block text-sm leading-snug">{entry.label}</span>
-        <span className="text-muted-foreground mt-0.5 block text-xs capitalize">
-          {entry.sublabel}
-        </span>
-      </MarkerContent>
-    </Marker>
+    <div className="flex items-center gap-3">
+      <div className="bg-border h-px min-w-0 flex-1" />
+      <span className="text-muted-foreground shrink-0 text-[11px] font-semibold tracking-wide uppercase">
+        {children}
+      </span>
+      <div className="bg-border h-px min-w-0 flex-1" />
+    </div>
   )
 }
 
-/** History tab — scope creep flags as MessageScroller markers (BDA-073) */
+function HistoryGroupLabel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <p className={cn('text-muted-foreground text-xs font-medium leading-snug', className)}>{children}</p>
+  )
+}
+
+/** History tab — scope creep flags grouped like workspace CreepFlagRow cards (BDA-073) */
 export function ChatHistoryMarkers() {
   const creepProfiles = useSessionStore((state) => state.creepProfiles)
   const documents = useSessionStore((state) => state.documents)
@@ -69,14 +47,14 @@ export function ChatHistoryMarkers() {
     return []
   }, [creepProfiles, documents, mode])
 
-  const entries = useMemo(
-    () => flattenCreepHistory(profiles, documents),
+  const groups = useMemo(
+    () => groupCreepHistory(profiles, documents),
     [profiles, documents],
   )
 
-  if (entries.length === 0) {
+  if (groups.length === 0) {
     return (
-      <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm">
+      <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm leading-relaxed">
         {mode === 'scope_creep'
           ? 'Tag baseline and change documents, then run scope analysis. Flags will appear here as markers.'
           : 'Switch to Scope Creep mode and analyze documents to populate history markers.'}
@@ -88,28 +66,29 @@ export function ChatHistoryMarkers() {
     <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
       <MessageScroller className="min-h-0 flex-1">
         <MessageScrollerViewport>
-          <MessageScrollerContent className="gap-3 px-1">
+          <MessageScrollerContent className="gap-2 px-0.5">
             <MessageScrollerItem messageId="history-intro" scrollAnchor={false}>
-              <Marker variant="separator">
-                <MarkerContent>Scope analysis</MarkerContent>
-              </Marker>
+              <HistorySectionHeading>Scope analysis</HistorySectionHeading>
             </MessageScrollerItem>
 
-            {entries.map((entry) => (
-              <MessageScrollerItem
-                key={entry.id}
-                messageId={entry.id}
-                scrollAnchor={entry.scrollAnchor}
-                className={cn(entry.kind === 'separator' && 'pt-1')}
-              >
-                {entry.kind === 'separator' ? (
-                  <Marker variant="separator">
-                    <MarkerContent>{entry.label}</MarkerContent>
-                  </Marker>
-                ) : (
-                  <CreepFlagMarker entry={entry} />
-                )}
-              </MessageScrollerItem>
+            {groups.map((group, groupIndex) => (
+              <Fragment key={group.id}>
+                <MessageScrollerItem messageId={group.id} scrollAnchor={false}>
+                  <HistoryGroupLabel className={cn(groupIndex > 0 && 'pt-2')}>
+                    {group.label}
+                  </HistoryGroupLabel>
+                </MessageScrollerItem>
+
+                {group.flags.map((entry) => (
+                  <MessageScrollerItem
+                    key={entry.id}
+                    messageId={entry.id}
+                    scrollAnchor={entry.scrollAnchor}
+                  >
+                    <CreepFlagRow flag={entry.flag} />
+                  </MessageScrollerItem>
+                ))}
+              </Fragment>
             ))}
           </MessageScrollerContent>
         </MessageScrollerViewport>

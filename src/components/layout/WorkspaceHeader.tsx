@@ -3,6 +3,7 @@ import {
   FileTextIcon,
   GitCompareArrowsIcon,
   MessageCircleMoreIcon,
+  XIcon,
 } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
@@ -126,6 +127,7 @@ export function WorkspaceDocumentTabsRow({
   const documents = useSessionStore((s) => s.documents)
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const setActiveDocId = useSessionStore((s) => s.setActiveDocId)
+  const removeDocument = useSessionStore((s) => s.removeDocument)
 
   if (documents.length === 0) return null
 
@@ -148,7 +150,7 @@ export function WorkspaceDocumentTabsRow({
               aria-selected={isActive}
               title={doc.filename}
               className={cn(
-                'inline-flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
+                'group/tab inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
                 isActive
                   ? 'border-border bg-surface text-foreground max-w-[min(100%,28rem)] border shadow-sm'
                   : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground max-w-[12rem]',
@@ -165,6 +167,21 @@ export function WorkspaceDocumentTabsRow({
                 </span>
               </button>
               <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
+              <button
+                type="button"
+                aria-label={`Remove ${doc.filename}`}
+                title={`Remove ${doc.filename}`}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  removeDocument(doc.doc_id)
+                }}
+                className={cn(
+                  'text-muted-foreground hover:text-foreground hover:bg-muted/70 inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors',
+                  isActive ? 'opacity-100' : 'opacity-0 group-hover/tab:opacity-100 focus-visible:opacity-100',
+                )}
+              >
+                <XIcon className="size-3" />
+              </button>
             </div>
           )
         })}

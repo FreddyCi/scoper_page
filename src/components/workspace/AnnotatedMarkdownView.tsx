@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MessageSquareIcon, MessageSquarePlusIcon } from 'lucide-react'
+import { SparklesIcon } from 'lucide-react'
 import { Streamdown } from 'streamdown'
 
-import { BlockCommentPopover } from '@/components/workspace/CommentPopover'
+import { EnhancePassagePanel } from '@/components/workspace/EnhancePassagePanel'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
@@ -40,17 +40,17 @@ function SectionHeading({ label }: { label: string }) {
 function AnnotatedParagraph({
   block,
   selected,
-  hasComment,
+  hasEnhancement,
   focusSeq,
   onSelect,
-  onCommentClick,
+  onEnhanceClick,
 }: {
   block: BlockRecord
   selected: boolean
-  hasComment: boolean
+  hasEnhancement: boolean
   focusSeq: number
   onSelect: () => void
-  onCommentClick: () => void
+  onEnhanceClick: () => void
 }) {
   const rowRef = useRef<HTMLDivElement>(null)
 
@@ -66,8 +66,8 @@ function AnnotatedParagraph({
       className={cn(
         'group/paragraph relative rounded-xl px-3 py-2.5 transition-colors',
         selected && 'bg-violet-50 ring-1 ring-violet-300',
-        hasComment && !selected && 'border-amber-300/80 bg-amber-50/30 border-l-2',
-        selected && hasComment && 'border-amber-400 bg-violet-50 ring-2 ring-violet-300',
+        hasEnhancement && !selected && 'border-violet-300/80 bg-violet-50/40 border-l-2',
+        selected && hasEnhancement && 'border-violet-400 bg-violet-50 ring-2 ring-violet-300',
       )}
     >
       <div className="flex items-start gap-2">
@@ -77,17 +77,17 @@ function AnnotatedParagraph({
           className="min-w-0 flex-1 text-left"
           aria-current={selected ? 'true' : undefined}
         >
-          {(selected || hasComment) && (
+          {(selected || hasEnhancement) && (
             <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
               {selected ? (
                 <span className="bg-violet-100 text-violet-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
                   Selected
                 </span>
               ) : null}
-              {hasComment ? (
-                <span className="bg-amber-100 text-amber-900 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-                  <MessageSquareIcon className="size-3" />
-                  Review note
+              {hasEnhancement ? (
+                <span className="bg-violet-100 text-violet-900 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                  <SparklesIcon className="size-3" />
+                  Enhanced
                 </span>
               ) : null}
             </div>
@@ -101,35 +101,34 @@ function AnnotatedParagraph({
         </button>
         <button
           type="button"
-          aria-label={hasComment ? 'View block comment' : 'Add block comment'}
+          aria-label={
+            hasEnhancement ? 'View passage enhancement' : 'Enhance this passage'
+          }
           className={cn(
-            'text-muted-foreground hover:text-foreground mt-0.5 shrink-0 rounded-full p-1.5 transition-colors',
+            'text-muted-foreground mt-0.5 shrink-0 rounded-full p-1.5 transition-colors',
             'opacity-0 group-hover/paragraph:opacity-100 focus:opacity-100',
-            hasComment && 'text-amber-700 opacity-100',
+            'hover:bg-violet-50 hover:text-violet-800',
+            hasEnhancement && 'text-violet-700 opacity-100',
           )}
-          onClick={onCommentClick}
+          onClick={onEnhanceClick}
         >
-          {hasComment ? (
-            <MessageSquareIcon className="size-3.5" />
-          ) : (
-            <MessageSquarePlusIcon className="size-3.5" />
-          )}
+          <SparklesIcon className="size-3.5" />
         </button>
       </div>
     </div>
   )
 }
 
-/** Markdown context reader — annotated paragraphs with comments and citations. */
+/** Markdown context reader — annotated paragraphs with enhancements and citations. */
 export function AnnotatedMarkdownView({
   document,
   className,
   pendingCommentFocus = null,
   onPendingCommentFocusHandled,
 }: AnnotatedMarkdownViewProps) {
-  const [commentOpen, setCommentOpen] = useState(false)
+  const [enhanceOpen, setEnhanceOpen] = useState(false)
   const { blocks, loading, error } = useDocumentBlocks(document.doc_id)
-  const { blockIds: commentedBlockIds, refresh: refreshCommentedBlockIds } =
+  const { blockIds: enhancedBlockIds, refresh: refreshEnhancedBlockIds } =
     useCommentedBlockIds(document.doc_id)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
@@ -150,13 +149,13 @@ export function AnnotatedMarkdownView({
     if (!block) return
 
     focusCitation(blockToCitation(block))
-    setCommentOpen(true)
+    setEnhanceOpen(true)
     onPendingCommentFocusHandled?.()
   }, [blocks, onPendingCommentFocusHandled, pendingCommentFocus])
 
-  function openCommentForBlock(block: BlockRecord) {
+  function openEnhanceForBlock(block: BlockRecord) {
     focusCitation(blockToCitation(block))
-    setCommentOpen(true)
+    setEnhanceOpen(true)
   }
 
   if (!loading && !error && blocks.length === 0) {
@@ -173,19 +172,21 @@ export function AnnotatedMarkdownView({
       <header className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
         <div className="min-w-0">
           <h2 className="text-foreground truncate text-sm font-semibold">{document.filename}</h2>
-          <p className="text-violet-800 text-xs">Context document · click a passage to cite or comment</p>
+          <p className="text-violet-800 text-xs">
+            Context document · click a passage to cite or enhance
+          </p>
         </div>
         <span className="border-violet-200/70 bg-violet-50/80 text-violet-950 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium">
           Markdown
         </span>
       </header>
 
-      <BlockCommentPopover
+      <EnhancePassagePanel
         block={activeBlock}
-        open={commentOpen}
-        onOpenChange={setCommentOpen}
-        onCommentAdded={() => {
-          void refreshCommentedBlockIds()
+        open={enhanceOpen}
+        onOpenChange={setEnhanceOpen}
+        onRecorded={() => {
+          void refreshEnhancedBlockIds()
           window.dispatchEvent(
             new CustomEvent('scoper:comments-imported', {
               detail: { docId: document.doc_id },
@@ -216,10 +217,10 @@ export function AnnotatedMarkdownView({
                       key={block.block_id}
                       block={block}
                       selected={activeBlockId === block.block_id}
-                      hasComment={commentedBlockIds.has(block.block_id)}
+                      hasEnhancement={enhancedBlockIds.has(block.block_id)}
                       focusSeq={citationFocusSeq}
                       onSelect={() => focusCitation(blockToCitation(block))}
-                      onCommentClick={() => openCommentForBlock(block)}
+                      onEnhanceClick={() => openEnhanceForBlock(block)}
                     />
                   ))}
                 </div>

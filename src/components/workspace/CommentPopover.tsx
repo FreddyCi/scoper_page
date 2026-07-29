@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MessageSquareIcon, XIcon } from 'lucide-react'
+import { MessageSquareIcon, SparklesIcon, XIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +18,8 @@ type BlockCommentPopoverProps = {
   onCommentAdded?: () => void
   showTrigger?: boolean
   className?: string
+  /** Markdown Read view — enhance copy and violet styling instead of PDF review notes. */
+  variant?: 'pdf' | 'markdown'
 }
 
 const BLOCK_EXCERPT_WORD_LIMIT = 30
@@ -34,7 +36,15 @@ function truncateWords(text: string, maxWords: number): { excerpt: string; isTru
   }
 }
 
-function BlockExcerpt({ text, blockId }: { text: string; blockId: string }) {
+function BlockExcerpt({
+  text,
+  blockId,
+  variant = 'pdf',
+}: {
+  text: string
+  blockId: string
+  variant?: 'pdf' | 'markdown'
+}) {
   const [expanded, setExpanded] = useState(false)
   const { excerpt, isTruncated } = truncateWords(text, BLOCK_EXCERPT_WORD_LIMIT)
 
@@ -45,7 +55,10 @@ function BlockExcerpt({ text, blockId }: { text: string; blockId: string }) {
   return (
     <blockquote
       className={cn(
-        'border-sky-400 bg-sky-50/70 text-foreground rounded-r-md border-l-4 px-3 py-2 text-xs leading-relaxed',
+        'text-foreground rounded-r-md border-l-4 px-3 py-2 text-xs leading-relaxed',
+        variant === 'markdown'
+          ? 'border-violet-400 bg-violet-50/70'
+          : 'border-sky-400 bg-sky-50/70',
         expanded && isTruncated && 'scrollbar-thin max-h-32 overflow-y-auto',
       )}
     >
@@ -53,7 +66,12 @@ function BlockExcerpt({ text, blockId }: { text: string; blockId: string }) {
       {isTruncated ? (
         <button
           type="button"
-          className="text-sky-800 hover:text-sky-950 mt-1 text-xs font-medium hover:underline"
+          className={cn(
+            'mt-1 text-xs font-medium hover:underline',
+            variant === 'markdown'
+              ? 'text-violet-800 hover:text-violet-950'
+              : 'text-sky-800 hover:text-sky-950',
+          )}
           onClick={() => setExpanded((value) => !value)}
         >
           {expanded ? 'Show less' : 'Read more'}
@@ -82,7 +100,9 @@ export function BlockCommentPopover({
   onCommentAdded,
   showTrigger = false,
   className,
+  variant = 'pdf',
 }: BlockCommentPopoverProps) {
+  const isMarkdown = variant === 'markdown'
   const [draft, setDraft] = useState('')
   const anchorRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -163,26 +183,44 @@ export function BlockCommentPopover({
         <div
           ref={panelRef}
           role="dialog"
-          aria-label="Block comments"
+          aria-label={isMarkdown ? 'Enhance passage' : 'Block comments'}
           className={cn(
             'border-border bg-surface shadow-elevated z-30 flex flex-col gap-3 rounded-lg border p-3',
+            isMarkdown && 'border-violet-200/80',
             showTrigger
               ? 'absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))]'
-              : 'absolute top-3 right-3 left-3',
+              : 'absolute top-3 right-3 left-3 sm:left-auto sm:w-[min(22rem,calc(100vw-2rem))]',
           )}
         >
           <div className="min-w-0 space-y-2">
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <h3 className="text-foreground text-sm font-semibold">Block comment</h3>
-                {block.page_num != null ? (
+                <h3 className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
+                  {isMarkdown ? (
+                    <>
+                      <SparklesIcon className="text-violet-700 size-4 shrink-0" />
+                      Enhance passage
+                    </>
+                  ) : (
+                    'Block comment'
+                  )}
+                </h3>
+                {!isMarkdown && block.page_num != null ? (
                   <span className="bg-sky-100 text-sky-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
                     Page {block.page_num}
                   </span>
                 ) : null}
                 {commentCount > 0 ? (
-                  <span className="bg-amber-100 text-amber-900 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
-                    {commentCount} note{commentCount === 1 ? '' : 's'}
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
+                      isMarkdown
+                        ? 'bg-violet-100 text-violet-900'
+                        : 'bg-amber-100 text-amber-900',
+                    )}
+                  >
+                    {commentCount} {isMarkdown ? 'enhancement' : 'note'}
+                    {commentCount === 1 ? '' : 's'}
                   </span>
                 ) : null}
               </div>
@@ -190,7 +228,7 @@ export function BlockCommentPopover({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Close comments"
+                aria-label={isMarkdown ? 'Close enhance panel' : 'Close comments'}
                 className="text-muted-foreground shrink-0"
                 onClick={() => onOpenChange(false)}
               >
@@ -198,13 +236,17 @@ export function BlockCommentPopover({
               </Button>
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">
-              This note is attached to the highlighted passage in the PDF preview.
+              {isMarkdown
+                ? 'Describe how to improve or expand this passage in your context document.'
+                : 'This note is attached to the highlighted passage in the PDF preview.'}
             </p>
-            <BlockExcerpt text={block.text} blockId={block.block_id} />
+            <BlockExcerpt text={block.text} blockId={block.block_id} variant={variant} />
           </div>
 
           {loading ? (
-            <p className="text-muted-foreground text-xs">Loading comments…</p>
+            <p className="text-muted-foreground text-xs">
+              {isMarkdown ? 'Loading enhancements…' : 'Loading comments…'}
+            </p>
           ) : null}
 
           {!loading && comments.length > 0 ? (
@@ -230,7 +272,9 @@ export function BlockCommentPopover({
           ) : null}
 
           {!loading && comments.length === 0 ? (
-            <p className="text-muted-foreground text-xs">No comments yet on this block.</p>
+            <p className="text-muted-foreground text-xs">
+              {isMarkdown ? 'No enhancements yet on this passage.' : 'No comments yet on this block.'}
+            </p>
           ) : null}
 
           <div className="space-y-2">
@@ -241,7 +285,11 @@ export function BlockCommentPopover({
             <textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Add a review note for this block…"
+              placeholder={
+                isMarkdown
+                  ? 'e.g. Add bullet points, clarify wording, expand this section…'
+                  : 'Add a review note for this block…'
+              }
               rows={3}
               className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
             />
@@ -251,9 +299,10 @@ export function BlockCommentPopover({
                 type="button"
                 size="sm"
                 disabled={!draft.trim() || saving}
+                className={cn(isMarkdown && 'bg-violet-950 text-white hover:bg-violet-900')}
                 onClick={() => void handleSubmit()}
               >
-                {saving ? 'Saving…' : 'Add comment'}
+                {saving ? 'Saving…' : isMarkdown ? 'Save enhancement' : 'Add comment'}
               </Button>
             </div>
           </div>

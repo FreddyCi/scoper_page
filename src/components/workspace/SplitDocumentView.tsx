@@ -86,22 +86,23 @@ function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
               <>
                 <li>
                   <span className={cn('font-medium', styles.title)}>Read</span> — annotated
-                  paragraphs for citations and review notes.
+                  paragraphs for citations and enhancements.
                 </li>
                 <li>
                   <span className={cn('font-medium', styles.title)}>Preview</span> — full rendered
                   markdown with tables, lists, and formatting.
                 </li>
                 <li>Click a passage in Read to select it for chat citations.</li>
-                <li>Use the comment icon on a paragraph to attach a review note.</li>
+                <li>Use the sparkles icon to enhance a passage with Scoper 1.7.</li>
                 <li>
-                  When review notes exist, use the footer navigator to step through each note.
+                  Edit the instruction, click <span className="font-medium">Change</span> to
+                  regenerate, then <span className="font-medium">Recorded</span> to apply.
                 </li>
                 <li className="border-border/70 border-t pt-2">
                   <span className={cn('font-medium', styles.title)}>Violet highlight</span> = selected
                   passage.{' '}
-                  <span className="text-amber-800 font-medium">Amber ring</span> = paragraph with a
-                  review note.
+                  <span className={cn('font-medium', styles.title)}>Violet ring</span> = enhanced
+                  passage.
                 </li>
               </>
             ) : (
@@ -410,7 +411,9 @@ export function SplitDocumentView({
   const canExportPdf = document.mime === 'application/pdf'
   const exportStatusHint =
     commentedBlockIds.size > 0
-      ? `${commentedBlockIds.size} review note${commentedBlockIds.size === 1 ? '' : 's'}`
+      ? isMarkdown
+        ? `${commentedBlockIds.size} enhancement${commentedBlockIds.size === 1 ? '' : 's'}`
+        : `${commentedBlockIds.size} review note${commentedBlockIds.size === 1 ? '' : 's'}`
       : document.role !== 'unknown'
         ? `Role: ${DOCUMENT_ROLE_LABELS[document.role]}`
         : null
@@ -659,6 +662,7 @@ export function SplitDocumentView({
               entries={documentComments}
               activeIndex={commentNavIndex}
               loading={documentCommentsLoading}
+              variant={isMarkdown ? 'enhance' : 'review'}
               onIndexChange={navigateToComment}
             />
           ) : null

@@ -55,7 +55,7 @@ function ContextAttachmentChip({
 }) {
   if (variant === 'tucked') {
     return (
-      <div className="border-border/80 bg-surface/95 text-foreground shadow-panel inline-flex max-w-[14rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 text-xs backdrop-blur-sm">
+      <div className="border-border bg-surface text-foreground shadow-panel inline-flex max-w-[14rem] min-w-0 items-center gap-1.5 rounded-xl border px-2 py-1.5 text-xs">
         {attachment.kind === 'block' ? (
           <HighlighterIcon className="size-3.5 shrink-0 text-sky-700" />
         ) : (

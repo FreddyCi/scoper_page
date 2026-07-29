@@ -150,7 +150,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
       <div
         className={cn(
-          'border-border bg-workspace-muted/70 relative z-10 flex flex-col overflow-hidden rounded-2xl border shadow-panel',
+          'border-border bg-workspace-muted relative z-10 flex flex-col overflow-hidden rounded-2xl border shadow-panel',
           attachments.length > 0 && '-mt-2.5',
           dragActive && 'border-sky-400 ring-2 ring-sky-300/60',
         )}

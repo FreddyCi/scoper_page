@@ -60,6 +60,24 @@ const CORPUS = [
       'Legal: Standard limitation of liability applies; indemnification subject to negotiation.',
     ],
   },
+  {
+    filename: 'demo-bidder-response.pdf',
+    lines: [
+      'Demo Vendor LLC — RFP Response',
+      '',
+      'Company: Demo Vendor LLC',
+      'Contact: Alex Morgan, Proposal Manager',
+      '',
+      'Questions: All clarifications submitted per RFP instructions before the deadline.',
+      '',
+      'Certifications: CMMI Level 3 certified; ISO 27001 accredited quality program.',
+      'Insurance: Commercial general liability coverage of $2,000,000 per occurrence.',
+      'Pricing: Fixed-fee schedule with milestone payments — no time-and-materials billing.',
+      '',
+      'Indemnification: Vendor shall indemnify Client against third-party IP claims per RFP Section 3.',
+      'Termination: Accepts termination for convenience with ninety (90) days written notice.',
+    ],
+  },
 ]
 
 function escapePdfText(value) {

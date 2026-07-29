@@ -25,8 +25,10 @@ import type { DocumentMeta } from '@/lib/types'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
+import { promptBidderUploadOnce } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
+import { loadSampleBidderResponse } from '@/services/load-sample-documents'
 import { setDocumentRole } from '@/services/document-roles'
 import { useSessionStore } from '@/store/session-store'
 
@@ -196,6 +198,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
 
   const [running, setRunning] = useState(false)
+  const [loadingDemo, setLoadingDemo] = useState(false)
 
   const requirementDocs = documents.filter((doc) => doc.role !== 'supporting')
   const responseCount = documents.filter(
@@ -227,11 +230,30 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     }
   }
 
+  async function handleLoadDemoResponse() {
+    setLoadingDemo(true)
+    try {
+      await loadSampleBidderResponse()
+    } catch (error) {
+      console.error('[evaluation-panel] demo response load failed', error)
+    } finally {
+      setLoadingDemo(false)
+    }
+  }
+
   async function handleRunQualification() {
     if (!evaluationDocId) return
     setRunning(true)
     try {
       await runRfpQualification()
+
+      const { documents, evaluationDocId: baselineId } = useSessionStore.getState()
+      const responseCount = documents.filter(
+        (doc) => doc.doc_id !== baselineId && doc.role !== 'supporting',
+      ).length
+      if (responseCount === 0) {
+        promptBidderUploadOnce(openUploadPopup)
+      }
     } catch (error) {
       console.error('[evaluation-panel] qualification failed', error)
     } finally {
@@ -356,9 +378,22 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
           </div>
 
           {evaluationDocId && responseCount === 0 ? (
-            <p className="text-muted-foreground rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              Baseline set. Upload bidder responses, then run qualification again to compare profiles.
-            </p>
+            <div className="space-y-2 rounded-lg bg-amber-50 px-3 py-2">
+              <p className="text-xs text-amber-900">
+                Baseline set. Upload bidder responses, then run qualification again to compare
+                profiles.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="h-7 bg-white/80"
+                disabled={loadingDemo || running}
+                onClick={() => void handleLoadDemoResponse()}
+              >
+                {loadingDemo ? 'Loading demo…' : 'Load demo response'}
+              </Button>
+            </div>
           ) : null}
 
           {running ? (

@@ -20,7 +20,7 @@ import {
   contextAttachmentsForDocuments,
   mergeContextAttachments,
 } from '@/lib/chat-context'
-import type { UploadIntent } from '@/lib/upload-suggestions'
+import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getScoperClient } from '@/services/scoper-client'
 
@@ -519,6 +519,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   resetSession: () => {
     clearDocumentBytesCache()
+    clearBidderUploadPrompt()
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
     getScoperClient().resetConversation()
@@ -533,6 +534,18 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     })
   },
 }))
+
+/** Bidder/response docs eligible for qualification cards (excludes baseline + supporting) */
+export function selectBidderResponseCount(state: SessionState): number {
+  const { documents, evaluationDocId } = state
+  return documents.filter(
+    (doc) => doc.doc_id !== evaluationDocId && doc.role !== 'supporting',
+  ).length
+}
+
+export function useBidderResponseCount() {
+  return useSessionStore(selectBidderResponseCount)
+}
 
 /** Active document metadata, or null when none selected / empty session */
 export function selectActiveDocument(state: SessionState): DocumentMeta | null {

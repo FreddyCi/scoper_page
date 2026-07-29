@@ -11,6 +11,7 @@ Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm 
 | [`rfp-it-services.pdf`](rfp-it-services.pdf) | Issuer RFP | Upload first — requirements source |
 | [`bidder-acme-response.pdf`](bidder-acme-response.pdf) | Bidder A | Strong match (CMMI, insurance, fixed fee) |
 | [`bidder-contoso-response.pdf`](bidder-contoso-response.pdf) | Bidder B | Weaker match (gaps on cert, insurance, pricing) |
+| [`demo-bidder-response.pdf`](demo-bidder-response.pdf) | Bidder demo | Quick upload — strong match for qualification demos |
 
 ### Suggested workflow
 

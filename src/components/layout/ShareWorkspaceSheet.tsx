@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react'
+import { useRef, useState } from 'react'
 import {
   DownloadIcon,
   Link2Icon,
@@ -20,6 +20,10 @@ import {
 } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  BrandMenuSection,
+  BrandMenuSectionHeader,
+} from '@/components/ui/brand-menu'
 import { cn } from '@/lib/utils'
 import {
   copyShareLink,
@@ -31,33 +35,6 @@ import { useSessionStore } from '@/store/session-store'
 
 type ShareWorkspaceSheetProps = {
   disabled?: boolean
-}
-
-function ShareSectionCard({
-  accent,
-  children,
-  className,
-}: {
-  accent: 'sky' | 'violet'
-  children: ReactNode
-  className?: string
-}) {
-  const accentClass =
-    accent === 'sky'
-      ? 'border-sky-200/80 bg-surface from-sky-50/70'
-      : 'border-violet-200/80 bg-surface from-violet-50/60'
-
-  return (
-    <section
-      className={cn(
-        'shadow-panel rounded-2xl border bg-gradient-to-br to-transparent p-4',
-        accentClass,
-        className,
-      )}
-    >
-      {children}
-    </section>
-  )
 }
 
 export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetProps) {
@@ -181,14 +158,13 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
         </DrawerHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-3 pb-5">
-          <ShareSectionCard accent="sky">
-            <div className="mb-3 space-y-1">
-              <h3 className="text-sky-950 text-sm font-semibold">Export</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Chat history is not included. Document bytes must still be in memory from upload.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+          <BrandMenuSection accent="sky" className="rounded-2xl p-4">
+            <BrandMenuSectionHeader
+              accent="sky"
+              title="Export"
+              description="Chat history is not included. Document bytes must still be in memory from upload."
+            />
+            <div className="flex flex-wrap gap-2 px-3 pb-3">
               <Button
                 type="button"
                 size="sm"
@@ -211,16 +187,15 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
                 Copy link
               </Button>
             </div>
-          </ShareSectionCard>
+          </BrandMenuSection>
 
-          <ShareSectionCard accent="violet">
-            <div className="mb-3 space-y-1">
-              <h3 className="text-violet-950 text-sm font-semibold">Import</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed">
-                Paste the key from a share link, then choose the `.scoper-share` file.
-              </p>
-            </div>
-            <div className="space-y-3">
+          <BrandMenuSection accent="violet" className="rounded-2xl p-4">
+            <BrandMenuSectionHeader
+              accent="violet"
+              title="Import"
+              description="Paste the key from a share link, then choose the `.scoper-share` file."
+            />
+            <div className="space-y-3 px-3 pb-3">
               <div className="space-y-1.5">
                 <Label htmlFor="share-import-key" className="text-violet-950 text-xs font-medium">
                   Share key
@@ -257,7 +232,7 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
                 Import `.scoper-share` file
               </Button>
             </div>
-          </ShareSectionCard>
+          </BrandMenuSection>
 
           {status ? (
             <p className="border-border/80 bg-surface text-muted-foreground rounded-2xl border px-3 py-2.5 text-xs leading-relaxed">

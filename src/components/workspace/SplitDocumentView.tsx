@@ -6,16 +6,20 @@ import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { Button } from '@/components/ui/button'
 import {
+  BrandDropdownContent,
+  BrandMenuSection,
+  BrandMenuSectionHeader,
+  brandMenuItemClass,
+} from '@/components/ui/brand-menu'
+import { MenuOptionContent } from '@/components/ui/menu-option-content'
+import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { brandAccentStyles } from '@/lib/brand-accent'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentComments } from '@/hooks/use-document-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
@@ -133,6 +137,7 @@ function SplitDocumentViewFooter({
                   size="sm"
                   variant="outline"
                   disabled={exportDisabled || exportLoading || markdownExportLoading}
+                  className="border-sky-200/80 bg-surface hover:bg-sky-50/80 rounded-full"
                 />
               }
             >
@@ -145,66 +150,60 @@ function SplitDocumentViewFooter({
                     ? 'Export Markdown'
                     : exportLabel}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-72 p-0">
+            <BrandDropdownContent align="end" side="top" sideOffset={10}>
               {onExportMarkdownClick ? (
-                <>
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="px-0 py-0 font-normal">
-                      <MenuOptionHeader
-                        title="Export Markdown"
-                        description="LiteParse WASM — structured text, PDF annotations, form fields, and Scoper review notes."
-                      />
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <div className="p-1">
+                <BrandMenuSection accent="sky">
+                  <BrandMenuSectionHeader
+                    accent="sky"
+                    title="Export Markdown"
+                    description="LiteParse WASM — structured text, PDF annotations, form fields, and Scoper review notes."
+                  />
+                  <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
-                      className="items-start rounded-md px-3 py-2.5"
+                      className={brandMenuItemClass('sky')}
                       onClick={onExportMarkdownClick}
                     >
                       <MenuOptionContent
                         title="Download .md"
                         description="Browser-only conversion like the LiteParse demo — no server upload."
+                        titleClassName={brandAccentStyles('sky').title}
                       />
                     </DropdownMenuItem>
                   </div>
-                  {onExportClick ? <DropdownMenuSeparator /> : null}
-                </>
+                </BrandMenuSection>
               ) : null}
               {onExportClick ? (
-                <>
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="px-0 py-0 font-normal">
-                      <MenuOptionHeader
-                        title="Export PDF"
-                        description="Choose how review notes and highlights appear in the exported file."
-                      />
-                    </DropdownMenuLabel>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <div className="p-1">
+                <BrandMenuSection accent="amber">
+                  <BrandMenuSectionHeader
+                    accent="amber"
+                    title="Export PDF"
+                    description="Choose how review notes and highlights appear in the exported file."
+                  />
+                  <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
-                      className="items-start rounded-md px-3 py-2.5"
+                      className={brandMenuItemClass('amber')}
                       onClick={() => onExportClick('markup')}
                     >
                       <MenuOptionContent
                         title="Toggleable markup"
                         description="Highlights and notes you can hide in Preview or Acrobat. Best for re-importing comments."
+                        titleClassName={brandAccentStyles('amber').title}
                       />
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="items-start rounded-md px-3 py-2.5"
+                      className={brandMenuItemClass('amber')}
                       onClick={() => onExportClick('burned-in')}
                     >
                       <MenuOptionContent
                         title="Burned-in notes"
                         description="Always-visible yellow boxes on the page for sharing outside PDF viewers."
+                        titleClassName={brandAccentStyles('amber').title}
                       />
                     </DropdownMenuItem>
                   </div>
-                </>
+                </BrandMenuSection>
               ) : null}
-            </DropdownMenuContent>
+            </BrandDropdownContent>
           </DropdownMenu>
         ) : null}
         <Button type="button" size="sm" variant="default" onClick={onCtaClick} disabled={ctaLoading}>

@@ -4,13 +4,26 @@ type MenuOptionContentProps = {
   title: string
   description: string
   className?: string
+  titleClassName?: string
 }
 
 /** Stacked title + description for dropdown menu rows */
-export function MenuOptionContent({ title, description, className }: MenuOptionContentProps) {
+export function MenuOptionContent({
+  title,
+  description,
+  className,
+  titleClassName,
+}: MenuOptionContentProps) {
   return (
     <div className={cn('flex min-w-0 flex-col gap-0.5', className)}>
-      <span className="text-foreground text-sm leading-snug font-medium">{title}</span>
+      <span
+        className={cn(
+          'text-foreground text-sm leading-snug font-medium',
+          titleClassName,
+        )}
+      >
+        {title}
+      </span>
       <span className="text-muted-foreground text-xs leading-relaxed font-normal">{description}</span>
     </div>
   )

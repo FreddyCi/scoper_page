@@ -2,17 +2,21 @@ import { useState } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
 
 import {
+  BrandDropdownContent,
+  BrandMenuSection,
+  BrandMenuSectionHeader,
+  brandMenuItemClass,
+  brandRoleTriggerClass,
+} from '@/components/ui/brand-menu'
+import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MenuOptionContent, MenuOptionHeader } from '@/components/ui/menu-option-content'
+import { MenuOptionContent } from '@/components/ui/menu-option-content'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { brandAccentStyles, type BrandAccent } from '@/lib/brand-accent'
 import {
   DOCUMENT_ROLE_DESCRIPTIONS,
   DOCUMENT_ROLE_LABELS,
@@ -28,17 +32,18 @@ type DocumentRoleSelectorProps = {
   className?: string
 }
 
-const ROLE_VALUE_CLASS: Record<DocumentRole, string> = {
-  baseline: 'text-foreground',
-  change_request: 'text-foreground',
-  supporting: 'text-foreground',
-  unknown: 'text-muted-foreground',
+const ROLE_ACCENT: Record<DocumentRole, BrandAccent> = {
+  baseline: 'sky',
+  change_request: 'amber',
+  supporting: 'violet',
+  unknown: 'neutral',
 }
 
 /** Per-document role dropdown — baseline | change | supporting | unknown (BDA-070) */
 export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSelectorProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
+  const activeAccent = ROLE_ACCENT[role]
 
   async function handleSelect(nextRole: DocumentRole) {
     if (nextRole === role || pending) {
@@ -72,15 +77,24 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
                   aria-label={`Document role: ${DOCUMENT_ROLE_LABELS[role]}. Choose how this file is used in analysis.`}
                   onMouseDown={(event) => event.stopPropagation()}
                   onClick={(event) => event.stopPropagation()}
-                  className="border-border/80 bg-muted/40 hover:bg-muted/70 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className={brandRoleTriggerClass(activeAccent)}
                 />
               }
             >
-              <span className="text-muted-foreground tracking-wide uppercase">Role</span>
-              <span className={cn('tracking-wide uppercase', ROLE_VALUE_CLASS[role])}>
+              <span
+                className={cn(
+                  'tracking-wide uppercase opacity-80',
+                  brandAccentStyles(activeAccent).title,
+                )}
+              >
+                Role
+              </span>
+              <span className={cn('tracking-wide uppercase', brandAccentStyles(activeAccent).title)}>
                 {DOCUMENT_ROLE_LABELS[role]}
               </span>
-              <ChevronDownIcon className="text-muted-foreground size-3 shrink-0 opacity-70" />
+              <ChevronDownIcon
+                className={cn('size-3 shrink-0 opacity-70', brandAccentStyles(activeAccent).indicator)}
+              />
             </DropdownMenuTrigger>
           }
         />
@@ -89,42 +103,45 @@ export function DocumentRoleSelector({ docId, role, className }: DocumentRoleSel
         </TooltipContent>
       </Tooltip>
 
-      <DropdownMenuContent
+      <BrandDropdownContent
         align="start"
-        sideOffset={6}
-        className="w-72 p-0"
+        sideOffset={8}
         onClick={(event) => event.stopPropagation()}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-0 py-0 font-normal">
-            <MenuOptionHeader
-              title="Document role"
-              description="Tags how this file is used in RFP qualification and scope creep analysis."
-            />
-          </DropdownMenuLabel>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={role}
-          onValueChange={(value) => void handleSelect(value as DocumentRole)}
-          className="p-1"
-        >
-          {DOCUMENT_ROLES.map((option) => (
-            <DropdownMenuRadioItem
-              key={option}
-              value={option}
-              disabled={pending}
-              className="items-start rounded-md py-2.5 pr-9 pl-3 [&_[data-slot=dropdown-menu-radio-item-indicator]]:top-2.5"
-            >
-              <MenuOptionContent
-                title={DOCUMENT_ROLE_LABELS[option]}
-                description={DOCUMENT_ROLE_DESCRIPTIONS[option]}
-              />
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
+        <BrandMenuSection accent="neutral">
+          <BrandMenuSectionHeader
+            accent="neutral"
+            title="Document role"
+            description="Tags how this file is used in RFP qualification and scope creep analysis."
+          />
+          <DropdownMenuRadioGroup
+            value={role}
+            onValueChange={(value) => void handleSelect(value as DocumentRole)}
+            className="flex flex-col gap-1 p-1.5 pt-0"
+          >
+            {DOCUMENT_ROLES.map((option) => {
+              const accent = ROLE_ACCENT[option]
+              const styles = brandAccentStyles(accent)
+
+              return (
+                <DropdownMenuRadioItem
+                  key={option}
+                  value={option}
+                  disabled={pending}
+                  className={brandMenuItemClass(accent, role === option)}
+                >
+                  <MenuOptionContent
+                    title={DOCUMENT_ROLE_LABELS[option]}
+                    description={DOCUMENT_ROLE_DESCRIPTIONS[option]}
+                    titleClassName={styles.title}
+                  />
+                </DropdownMenuRadioItem>
+              )
+            })}
+          </DropdownMenuRadioGroup>
+        </BrandMenuSection>
+      </BrandDropdownContent>
     </DropdownMenu>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { FileTextIcon, HighlighterIcon, PaperclipIcon, XIcon } from 'lucide-react'
 
 import {
@@ -43,40 +43,13 @@ type ChatContextAttachmentControlsProps = {
   onMarkdownIngestChange?: (loading: boolean) => void
 }
 
-const TUCKED_COLLAPSED_VISIBLE = 2
-
 function ContextAttachmentChip({
   attachment,
   onRemove,
-  variant = 'default',
 }: {
   attachment: ChatContextAttachment
   onRemove: () => void
-  variant?: 'default' | 'tucked'
 }) {
-  if (variant === 'tucked') {
-    return (
-      <div className="border-border bg-surface text-foreground shadow-panel inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px]">
-        {attachment.kind === 'block' ? (
-          <HighlighterIcon className="size-3 shrink-0 text-sky-700" />
-        ) : (
-          <FileTextIcon className="size-3 shrink-0 text-sky-700" />
-        )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{attachment.label}</p>
-        </div>
-        <button
-          type="button"
-          aria-label={`Remove ${attachment.label}`}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 rounded-md p-0.5 transition-colors"
-          onClick={onRemove}
-        >
-          <XIcon className="size-3" />
-        </button>
-      </div>
-    )
-  }
-
   return (
     <Attachment state="done" size="xs" orientation="horizontal" className="max-w-56">
       <AttachmentMedia>
@@ -253,66 +226,12 @@ export function ChatContextAttachmentPreview({
   attachments,
   onRemove,
   className,
-  variant = 'default',
 }: {
   attachments: ChatContextAttachment[]
   onRemove?: (id: string) => void
   className?: string
-  variant?: 'default' | 'tucked'
 }) {
-  const [expanded, setExpanded] = useState(false)
-  const prevCountRef = useRef(attachments.length)
-  const shouldCollapse =
-    variant === 'tucked' && attachments.length > TUCKED_COLLAPSED_VISIBLE
-  const hiddenCount = Math.max(0, attachments.length - TUCKED_COLLAPSED_VISIBLE)
-  const visibleAttachments =
-    variant === 'tucked' && !expanded && shouldCollapse
-      ? attachments.slice(0, TUCKED_COLLAPSED_VISIBLE)
-      : attachments
-
-  useEffect(() => {
-    if (variant !== 'tucked') return
-    if (attachments.length <= TUCKED_COLLAPSED_VISIBLE) {
-      setExpanded(false)
-    } else if (attachments.length < prevCountRef.current) {
-      setExpanded(false)
-    }
-    prevCountRef.current = attachments.length
-  }, [attachments.length, variant])
-
   if (attachments.length === 0) return null
-
-  if (variant === 'tucked') {
-    return (
-      <div className={cn('flex flex-col gap-1', className)}>
-        <div
-          role="list"
-          aria-label="Attached context"
-          className="flex flex-col gap-1"
-        >
-          {visibleAttachments.map((attachment) => (
-            <div key={attachment.id} role="listitem" className="min-w-0">
-              <ContextAttachmentChip
-                attachment={attachment}
-                variant="tucked"
-                onRemove={() => onRemove?.(attachment.id)}
-              />
-            </div>
-          ))}
-        </div>
-
-        {shouldCollapse ? (
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground self-start px-0.5 text-[11px] font-medium transition-colors"
-            onClick={() => setExpanded((value) => !value)}
-          >
-            {expanded ? 'Show less' : `+${hiddenCount} more`}
-          </button>
-        ) : null}
-      </div>
-    )
-  }
 
   return (
     <AttachmentGroup className={cn('pb-1', className)}>

@@ -3,8 +3,8 @@ import { ArrowUpIcon, ChevronDownIcon, FileTextIcon, SparklesIcon } from 'lucide
 
 import {
   ChatContextAttachmentControls,
-  ChatContextAttachmentPreview,
 } from '@/components/chat/ChatContextAttachments'
+import { ChatContextStack } from '@/components/chat/ChatContextStack'
 import { Button } from '@/components/ui/button'
 import {
   docMentionLabel,
@@ -136,20 +136,9 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
   return (
     <div className={cn('relative', className)}>
-      {attachments.length > 0 ? (
-        <div className="relative z-0 px-0.5 pb-1">
-          <ChatContextAttachmentPreview
-            attachments={attachments}
-            variant="tucked"
-            onRemove={(id) => removeChatContextAttachment(id)}
-          />
-        </div>
-      ) : null}
-
       <div
         className={cn(
-          'border-border bg-workspace-muted relative z-10 flex flex-col overflow-hidden rounded-2xl border shadow-panel',
-          attachments.length > 0 && '-mt-2.5',
+          'border-border bg-workspace-muted relative flex flex-col overflow-hidden rounded-2xl border shadow-panel',
           dragActive && 'border-sky-400 ring-2 ring-sky-300/60',
         )}
         onDragEnter={handleDragEnter}
@@ -157,6 +146,13 @@ export function ChatComposer({ className }: ChatComposerProps) {
         onDragOver={handleDragOver}
         onDrop={(event) => void handleDrop(event)}
       >
+        {attachments.length > 0 ? (
+          <ChatContextStack
+            attachments={attachments}
+            onRemove={(id) => removeChatContextAttachment(id)}
+          />
+        ) : null}
+
         {dragActive ? (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-sky-50/80">
             <p className="text-sky-900 text-sm font-medium">Drop markdown files to attach context</p>

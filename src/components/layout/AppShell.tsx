@@ -7,6 +7,7 @@ import {
   shellPanelMinWidthClass,
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
+import { ShareWorkspaceSheet } from '@/components/layout/ShareWorkspaceSheet'
 import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
 import { UploadFab } from '@/components/layout/UploadFab'
 import { UploadQueueProvider } from '@/components/layout/UploadQueueProvider'
@@ -90,7 +91,9 @@ export function AppShell({ children }: AppShellProps) {
                     <div className="pointer-events-auto">
                       <UploadFab />
                     </div>
-                    <Button
+                    <div className="pointer-events-auto flex items-center gap-1">
+                      <ShareWorkspaceSheet />
+                      <Button
                       type="button"
                       variant="ghost"
                       size="sm"
@@ -100,6 +103,7 @@ export function AppShell({ children }: AppShellProps) {
                     >
                       Clear workspace
                     </Button>
+                    </div>
                   </footer>
                 </UploadQueueProvider>
               </section>

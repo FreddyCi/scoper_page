@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { SharePackBootstrap } from '@/components/layout/SharePackBootstrap'
 import {
   initScoperEcpEnvironment,
   runDemoExtensionsHarness,
@@ -30,6 +31,7 @@ import {
 } from '@/services/ingest-router'
 import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/liteparse-client'
 import { runOcrHarness } from '@/services/ocr-client'
+import { runSharePackHarness } from '@/services/share-pack-harness'
 import { runSessionStoreHarness } from '@/store/session-store'
 
 function App() {
@@ -52,6 +54,7 @@ function App() {
         await runOcrHarness()
         await runLiteParseOcrHarness()
         await runIngestHarness()
+        await runSharePackHarness()
         await runMarkdownIngestHarness()
         await runDocxIngestHarness()
         await runXlsxIngestHarness()
@@ -81,7 +84,11 @@ function App() {
     })()
   }, [])
 
-  return <AppShell />
+  return (
+    <SharePackBootstrap>
+      <AppShell />
+    </SharePackBootstrap>
+  )
 }
 
 export default App

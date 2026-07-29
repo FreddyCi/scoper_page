@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowUpIcon, ChevronDownIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
+import { ArrowUpIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 
 import {
   ChatContextAttachmentControls,
@@ -263,24 +263,14 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
       <div className="border-border/70 flex items-center justify-between gap-2 border-t px-2.5 py-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
-          <button
-            type="button"
-            className="border-border/80 bg-surface text-foreground hover:bg-surface/90 inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-[11px] font-medium transition-colors"
-            aria-haspopup="listbox"
-          >
+          <span className="border-border/80 bg-surface text-foreground inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-[11px] font-medium">
             <SparklesIcon className="size-3 opacity-80" />
             Agent
-            <ChevronDownIcon className="size-2.5 opacity-60" />
-          </button>
+          </span>
 
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground inline-flex h-6 min-w-0 items-center gap-0.5 truncate rounded-full px-1.5 text-[11px] transition-colors hover:bg-black/[0.04]"
-            aria-haspopup="listbox"
-          >
-            <span className="truncate">{SCOPER_BONSAI_17B.label}</span>
-            <ChevronDownIcon className="size-2.5 shrink-0 opacity-60" />
-          </button>
+          <span className="text-muted-foreground inline-flex h-6 min-w-0 shrink-0 items-center truncate px-1 text-[11px] font-medium">
+            {SCOPER_BONSAI_17B.label}
+          </span>
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">

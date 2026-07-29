@@ -3,7 +3,7 @@ export const SCOPER_BITGPU_TAG = 'v0.19.1'
 
 export const SCOPER_BONSAI_17B = {
   id: 'bonsai-1.7b' as const,
-  label: 'Scoper 1.7',
+  label: 'Scoper 1.7 model',
   repoBase: `https://cdn.jsdelivr.net/gh/stfurkan/bitgpu@${SCOPER_BITGPU_TAG}/models/bonsai-1.7b-gguf`,
   tokenizerBase: 'https://huggingface.co/onnx-community/Bonsai-1.7B-ONNX/resolve/main',
   manifestUrl: `https://cdn.jsdelivr.net/gh/stfurkan/bitgpu@${SCOPER_BITGPU_TAG}/models/bonsai-1.7b-gguf/manifest.json`,

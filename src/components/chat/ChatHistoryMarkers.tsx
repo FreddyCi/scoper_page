@@ -50,8 +50,9 @@ export function ChatHistoryMarkers() {
   )
 
   const creepProfilesForHistory = useMemo((): ScopeCreepProfile[] => {
+    if (mode !== 'scope_creep') return []
     if (creepProfiles.length > 0) return creepProfiles
-    if (import.meta.env.DEV && mode === 'scope_creep') {
+    if (import.meta.env.DEV) {
       return buildMockCreepProfiles(documents)
     }
     return []
@@ -65,7 +66,9 @@ export function ChatHistoryMarkers() {
   if (chatGroups.length === 0 && creepGroups.length === 0) {
     return (
       <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm leading-relaxed">
-        Ask the agent a question or run scope analysis — prior queries and flags will appear here.
+        {mode === 'scope_creep'
+          ? 'Run scope analysis or ask the agent a question — results will appear here.'
+          : 'Ask the agent a question — your queries from this session will appear here.'}
       </div>
     )
   }

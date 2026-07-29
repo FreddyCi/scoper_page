@@ -394,4 +394,6 @@ export async function runCompareScopeHarness(): Promise<void> {
   if (flagResult.flags.length !== profile.flags.length) {
     throw new Error('runCompareScopeHarness failed: flag_creep flag count mismatch')
   }
+
+  useSessionStore.getState().resetSession()
 }

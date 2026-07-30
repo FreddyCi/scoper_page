@@ -135,6 +135,8 @@ export type SessionState = {
   chatContextAttachments: ChatContextAttachment[]
   chatGenerating: boolean
   chatModelStatus: ChatModelStatus
+  chatComposerSeed: string | null
+  chatComposerSeedSeq: number
   workspaceView: WorkspaceView
   activeDocId: string | null
   uploadPopupOpen: boolean
@@ -163,6 +165,8 @@ export type SessionState = {
   toggleChatCollapsed: () => void
   setChatSidebarTab: (tab: ChatSidebarTab) => void
   sendChatPrompt: (text: string) => void
+  seedChatComposer: (text: string) => void
+  clearChatComposerSeed: () => void
   setChatContextAttachments: (attachments: ChatContextAttachment[]) => void
   removeChatContextAttachment: (id: string) => void
   beginChatTurn: (
@@ -221,6 +225,8 @@ const initialState = {
   chatContextAttachments: [] as ChatContextAttachment[],
   chatGenerating: false,
   chatModelStatus: 'idle' as ChatModelStatus,
+  chatComposerSeed: null as string | null,
+  chatComposerSeedSeq: 0,
   workspaceView: 'landing' as WorkspaceView,
   activeDocId: null as string | null,
   uploadPopupOpen: false,
@@ -439,6 +445,21 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const { chatContextAttachments } = get()
     void runChatAgentTurn(text, chatContextAttachments)
   },
+
+  seedChatComposer: (text) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    writeChatCollapsedPreference(false)
+    set((state) => ({
+      chatComposerSeed: trimmed,
+      chatComposerSeedSeq: state.chatComposerSeedSeq + 1,
+      chatCollapsed: false,
+      chatSidebarTab: 'agent',
+      chatStarted: true,
+    }))
+  },
+
+  clearChatComposerSeed: () => set({ chatComposerSeed: null }),
 
   setChatContextAttachments: (chatContextAttachments) => set({ chatContextAttachments }),
 

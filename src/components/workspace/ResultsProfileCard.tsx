@@ -1,9 +1,11 @@
 import { MapPinIcon } from 'lucide-react'
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { docMentionLabel } from '@/lib/chat-mentions'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef, CriterionStatus, RfpResultsProfile, RfpVerdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 const VERDICT_LABEL: Record<RfpVerdict, string> = {
   likely: 'Likely qualifies',
@@ -44,6 +46,12 @@ export function ResultsProfileCard({
   onCriterionClick,
   className,
 }: ResultsProfileCardProps) {
+  const documents = useSessionStore((state) => state.documents)
+  const contractDoc = documents.find((doc) => doc.doc_id === profile.source_doc_id)
+  const chatPromptOptions = {
+    contractFilename: contractDoc?.filename,
+    docMention: contractDoc ? docMentionLabel(contractDoc) : undefined,
+  }
   const statusCounts = countByStatus(profile.criteria)
 
   return (
@@ -102,6 +110,7 @@ export function ResultsProfileCard({
             key={criterion.id}
             criterion={criterion}
             onCriterionClick={onCriterionClick}
+            chatPromptOptions={chatPromptOptions}
           />
         ))}
       </CardContent>

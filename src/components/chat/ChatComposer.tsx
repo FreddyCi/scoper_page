@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 
 import {
@@ -35,6 +35,9 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const attachments = useSessionStore((s) => s.chatContextAttachments)
   const setChatContextAttachments = useSessionStore((s) => s.setChatContextAttachments)
   const removeChatContextAttachment = useSessionStore((s) => s.removeChatContextAttachment)
+  const chatComposerSeed = useSessionStore((s) => s.chatComposerSeed)
+  const chatComposerSeedSeq = useSessionStore((s) => s.chatComposerSeedSeq)
+  const clearChatComposerSeed = useSessionStore((s) => s.clearChatComposerSeed)
   const [draft, setDraft] = useState('')
   const [cursor, setCursor] = useState(0)
   const [mentionHighlight, setMentionHighlight] = useState(0)
@@ -53,6 +56,20 @@ export function ChatComposer({ className }: ChatComposerProps) {
     [activeMention?.query, documents],
   )
   const mentionMenuOpen = Boolean(activeMention && documents.length > 0)
+
+  useEffect(() => {
+    if (!chatComposerSeed) return
+    const text = chatComposerSeed
+    setDraft(text)
+    setCursor(text.length)
+    clearChatComposerSeed()
+    requestAnimationFrame(() => {
+      const textarea = textareaRef.current
+      if (!textarea) return
+      textarea.focus()
+      textarea.setSelectionRange(text.length, text.length)
+    })
+  }, [chatComposerSeed, chatComposerSeedSeq, clearChatComposerSeed])
 
   function syncCursor() {
     const nextCursor = textareaRef.current?.selectionStart ?? draft.length

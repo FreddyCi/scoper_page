@@ -3,6 +3,7 @@ import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { buildAgentPrompt, resolveAgentSearchDocIds } from '@/lib/chat-context'
 import { resolveMentionedDocIds } from '@/lib/chat-mentions'
+import { compactFindClauseQuery } from '@/services/document-search'
 import { buildRichAssistantReply } from '@/lib/chat-stub'
 import type {
   AssistantChatContent,
@@ -172,7 +173,7 @@ async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandler
 
   let findResult: FindClauseResult
   try {
-    findResult = await invokeFindClauseViaEcp(enrichedPrompt, docIds, 6)
+    findResult = await invokeFindClauseViaEcp(compactFindClauseQuery(prompt), docIds, 6)
   } catch (error) {
     if (error instanceof EcpAgentRunDeniedError) {
       finalizeAgentError(handlers.assistantId, error.message)
@@ -222,12 +223,11 @@ async function applyStubAssistantReply(
   const state = useSessionStore.getState()
   const docIds = resolveCitationDocIds(prompt, contextAttachments)
   applyMentionScope(prompt, contextAttachments)
-  const enrichedPrompt = buildAgentPrompt(prompt, contextAttachments)
 
   let findResult: FindClauseResult | null = null
   if (docIds.length > 0) {
     try {
-      findResult = await invokeFindClauseViaEcp(enrichedPrompt, docIds, 6)
+      findResult = await invokeFindClauseViaEcp(compactFindClauseQuery(prompt), docIds, 6)
     } catch (error) {
       if (error instanceof EcpAgentRunDeniedError) {
         finalizeAgentError(assistantId, error.message)

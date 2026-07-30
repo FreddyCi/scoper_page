@@ -26,6 +26,40 @@ const CLAUSE_SYNONYMS: Array<{ pattern: RegExp; terms: string[] }> = [
 const FIND_VERB_PATTERN =
   /\b(find|locate|search|show|where|clause|section|mention|highlight|identify)\b/gi
 
+/** ECP `find_clause` input schema cap — see ecp/tool-schemas.ts */
+export const FIND_CLAUSE_QUERY_MAX_LENGTH = 500
+
+/** Fit chat / keyword-check prompts into the find_clause tool query limit */
+export function compactFindClauseQuery(
+  raw: string,
+  maxLength = FIND_CLAUSE_QUERY_MAX_LENGTH,
+): string {
+  let text = raw.trim()
+  if (!text || text.length <= maxLength) return text
+
+  const userSection = text.split(/\bUser question:\s*/i)[1]?.trim()
+  if (userSection) {
+    text = userSection
+  }
+
+  if (text.length <= maxLength) return text
+
+  const checklist = text.match(/^Checklist item:\s*(.+)$/im)?.[1]?.trim()
+  const finding = text.match(/^Finding:\s*(.+)$/im)?.[1]?.trim()
+  const excerpt = text.match(/^Contract excerpt[^:\n]*:\s*\n?"([^"]+)"/im)?.[1]?.trim()
+
+  const focused = [checklist, finding, excerpt ? excerpt.slice(0, 220) : null]
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+
+  if (focused.length > 0) {
+    return focused.length <= maxLength ? focused : focused.slice(0, maxLength).trim()
+  }
+
+  return text.slice(0, maxLength).trim()
+}
+
 /** Strip @-mentions and common search verbs before term extraction */
 export function normalizeSearchQuery(query: string): string {
   return query
@@ -177,5 +211,14 @@ export async function runDocumentSearchHarness(): Promise<void> {
 
   if (hits[0]?.block.doc_id !== ingested.doc_id) {
     throw new Error('document-search harness: expected hit doc_id to match ingested document')
+  }
+
+  const longPrompt = `${'Why did this fail? '.repeat(40)}Checklist item: local sourcing within 100 mile radius`
+  const compact = compactFindClauseQuery(longPrompt)
+  if (compact.length > FIND_CLAUSE_QUERY_MAX_LENGTH) {
+    throw new Error('document-search harness: compactFindClauseQuery exceeded max length')
+  }
+  if (!compact.includes('local sourcing')) {
+    throw new Error('document-search harness: compactFindClauseQuery dropped checklist terms')
   }
 }

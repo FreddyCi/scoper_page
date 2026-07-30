@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import {
   AlertTriangleIcon,
+  BotMessageSquareIcon,
   CheckCircle2Icon,
+  CheckIcon,
   ChevronRightIcon,
   CircleIcon,
-  ClipboardCopyIcon,
-  MessageSquarePlusIcon,
+  CopyIcon,
   XCircleIcon,
 } from 'lucide-react'
 
@@ -109,40 +110,71 @@ export function CriterionRow({
         </button>
 
         {showChatActions ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 px-2 text-xs"
-              onClick={(event) => void handleCopy(event)}
-            >
-              <ClipboardCopyIcon className="size-3" />
-              {copied ? 'Copied' : 'Copy for chat'}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              className="h-7 gap-1 px-2 text-xs"
-              onClick={handleAskInChat}
-            >
-              <MessageSquarePlusIcon className="size-3" />
-              Ask in chat
-            </Button>
+          <div className="mt-2 flex items-center gap-1 sm:hidden">
+            <ActionIconButtons
+              copied={copied}
+              onCopy={(event) => void handleCopy(event)}
+              onAskInChat={handleAskInChat}
+            />
           </div>
         ) : null}
       </div>
-      {clickable ? (
-        <button
-          type="button"
-          aria-label={`View source for ${criterion.label}`}
-          onClick={handleOpenSource}
-          className="text-muted-foreground mt-0.5 shrink-0 rounded p-0.5 hover:text-sky-600"
-        >
-          <ChevronRightIcon className="size-4" />
-        </button>
-      ) : null}
+      <div className="flex shrink-0 flex-col items-end gap-1.5 pt-0.5">
+        {showChatActions ? (
+          <div className="hidden items-center gap-1 sm:flex">
+            <ActionIconButtons
+              copied={copied}
+              onCopy={(event) => void handleCopy(event)}
+              onAskInChat={handleAskInChat}
+            />
+          </div>
+        ) : null}
+        {clickable ? (
+          <button
+            type="button"
+            aria-label={`View source for ${criterion.label}`}
+            onClick={handleOpenSource}
+            className="text-muted-foreground rounded p-0.5 hover:text-sky-600"
+          >
+            <ChevronRightIcon className="size-4" />
+          </button>
+        ) : null}
+      </div>
     </div>
+  )
+}
+
+function ActionIconButtons({
+  copied,
+  onCopy,
+  onAskInChat,
+}: {
+  copied: boolean
+  onCopy: (event: React.MouseEvent) => void
+  onAskInChat: (event: React.MouseEvent) => void
+}) {
+  return (
+    <>
+      <Button
+        type="button"
+        size="icon-xs"
+        variant="outline"
+        className="text-muted-foreground hover:text-foreground border-border/80 rounded-full"
+        aria-label={copied ? 'Copied to clipboard' : 'Copy for chat'}
+        onClick={onCopy}
+      >
+        {copied ? <CheckIcon className="size-3.5 text-emerald-600" /> : <CopyIcon className="size-3.5" />}
+      </Button>
+      <Button
+        type="button"
+        size="icon-xs"
+        variant="outline"
+        className="border-violet-200/80 text-violet-800 hover:bg-violet-50 rounded-full"
+        aria-label="Add to chat"
+        onClick={onAskInChat}
+      >
+        <BotMessageSquareIcon className="size-3.5" />
+      </Button>
+    </>
   )
 }

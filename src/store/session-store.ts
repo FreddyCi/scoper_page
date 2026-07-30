@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 
 import type {
   ChatActionProposal,
@@ -719,10 +720,11 @@ export function useVisibleProfiles() {
 }
 
 export function useRfpProfiles() {
-  return useSessionStore((state) =>
-    state.contractReviewProfile
-      ? [state.contractReviewProfile, ...state.profiles]
-      : state.profiles,
+  return useSessionStore(
+    useShallow((state) => {
+      if (!state.contractReviewProfile) return state.profiles
+      return [state.contractReviewProfile, ...state.profiles]
+    }),
   )
 }
 

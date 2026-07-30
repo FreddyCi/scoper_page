@@ -10,18 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/combobox'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { DocumentMeta } from '@/lib/types'
+import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
@@ -220,16 +212,6 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     [documents],
   )
 
-  const selectedChecklistDoc = useMemo(
-    () => checklistDocs.find((doc) => doc.doc_id === contractChecklistDocId) ?? null,
-    [checklistDocs, contractChecklistDocId],
-  )
-
-  const selectedContractDoc = useMemo(
-    () => contractDocs.find((doc) => doc.doc_id === evaluationDocId) ?? null,
-    [contractDocs, evaluationDocId],
-  )
-
   const requirementDocs = documents.filter((doc) => doc.role !== 'supporting')
   const responseCount = documents.filter(
     (doc) => doc.doc_id !== evaluationDocId && doc.role !== 'supporting',
@@ -238,11 +220,6 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const focusAreas = useMemo(
     () => baselineProfile?.criteria.map((criterion) => criterion.label) ?? [],
     [baselineProfile],
-  )
-
-  const selectedRequirementDoc = useMemo(
-    () => requirementDocs.find((doc) => doc.doc_id === evaluationDocId) ?? null,
-    [requirementDocs, evaluationDocId],
   )
 
   const hasEvaluationSetup = Boolean(
@@ -350,28 +327,13 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                   Upload the checklist as .docx or .md.
                 </p>
               ) : (
-                <Combobox
+                <DocumentPickerSelect
+                  id="contract-checklist-doc"
+                  placeholder="Select checklist…"
                   items={checklistDocs}
-                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
-                  value={selectedChecklistDoc}
-                  onValueChange={(doc) => setContractChecklistDocId(doc?.doc_id ?? null)}
-                >
-                  <ComboboxInput
-                    id="contract-checklist-doc"
-                    placeholder="Select checklist…"
-                    className="w-full"
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No checklist documents.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(doc: DocumentMeta) => (
-                        <ComboboxItem key={doc.doc_id} value={doc}>
-                          {doc.filename}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                  value={contractChecklistDocId}
+                  onChange={setContractChecklistDocId}
+                />
               )}
             </div>
 
@@ -382,28 +344,13 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
               {contractDocs.length === 0 ? (
                 <p className="text-muted-foreground text-xs">Upload the executed contract PDF.</p>
               ) : (
-                <Combobox
+                <DocumentPickerSelect
+                  id="contract-under-review"
+                  placeholder="Select contract PDF…"
                   items={contractDocs}
-                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
-                  value={selectedContractDoc}
-                  onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
-                >
-                  <ComboboxInput
-                    id="contract-under-review"
-                    placeholder="Select contract PDF…"
-                    className="w-full"
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No PDFs found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(doc: DocumentMeta) => (
-                        <ComboboxItem key={doc.doc_id} value={doc}>
-                          {doc.filename}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                  value={evaluationDocId}
+                  onChange={(docId) => void handleBaselineChange(docId ?? '')}
+                />
               )}
             </div>
 
@@ -480,28 +427,13 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                   </Button>
                 </div>
               ) : (
-                <Combobox
+                <DocumentPickerSelect
+                  id="evaluation-doc"
+                  placeholder="Select requirements document…"
                   items={requirementDocs}
-                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
-                  value={selectedRequirementDoc}
-                  onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
-                >
-                  <ComboboxInput
-                    id="evaluation-doc"
-                    placeholder="Select requirements document…"
-                    className="w-full"
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No documents found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(doc: DocumentMeta) => (
-                        <ComboboxItem key={doc.doc_id} value={doc}>
-                          {doc.filename}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
+                  value={evaluationDocId}
+                  onChange={(docId) => void handleBaselineChange(docId ?? '')}
+                />
               )}
             </div>
             <p className="text-muted-foreground text-xs leading-relaxed">

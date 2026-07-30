@@ -22,6 +22,7 @@ type ResultsProfileGridProps = {
 function EmptyQualificationState() {
   const evaluationDocId = useSessionStore((s) => s.evaluationDocId)
   const baselineProfile = useSessionStore((s) => s.evaluationBaselineProfile)
+  const contractReviewProfile = useSessionStore((s) => s.contractReviewProfile)
   const responseCount = useBidderResponseCount()
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
@@ -29,8 +30,9 @@ function EmptyQualificationState() {
   const [loadingDemo, setLoadingDemo] = useState(false)
   const [demoError, setDemoError] = useState<string | null>(null)
 
-  const hasBaseline = Boolean(evaluationDocId || baselineProfile)
-  const needsBidderUpload = hasBaseline && responseCount === 0
+  const hasBaseline = Boolean(evaluationDocId || baselineProfile || contractReviewProfile)
+  const needsBidderUpload =
+    hasBaseline && responseCount === 0 && !contractReviewProfile
   const needsQualificationRun = hasBaseline && responseCount > 0
 
   useEffect(() => {

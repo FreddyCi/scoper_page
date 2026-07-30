@@ -1,8 +1,19 @@
 import { docMentionLabel } from '@/lib/chat-mentions'
+import { DOCX_MIME, isWordDocument } from '@/lib/document-preview'
 import type { ChatContextAttachment, CitationRef, DocumentMeta } from '@/lib/types'
 
 export function isContextDocument(doc: Pick<DocumentMeta, 'role' | 'mime'>): boolean {
   return doc.role === 'supporting' || doc.mime === 'text/markdown'
+}
+
+export function canAttachDocumentToChat(doc: Pick<DocumentMeta, 'mime'>): boolean {
+  return doc.mime === 'application/pdf' || doc.mime === 'text/markdown' || isWordDocument(doc)
+}
+
+export function documentContextDescription(doc: Pick<DocumentMeta, 'mime'>): string {
+  if (doc.mime === 'text/markdown') return 'Markdown context'
+  if (isWordDocument(doc)) return 'Word document'
+  return 'Full document'
 }
 
 export function createDocumentContextAttachment(doc: DocumentMeta): ChatContextAttachment {
@@ -11,7 +22,7 @@ export function createDocumentContextAttachment(doc: DocumentMeta): ChatContextA
     kind: 'document',
     docId: doc.doc_id,
     label: doc.filename,
-    description: doc.mime === 'text/markdown' ? 'Markdown context' : 'Full document',
+    description: documentContextDescription(doc),
   }
 }
 
@@ -105,11 +116,21 @@ export function buildPromptContextBlock(attachments: ChatContextAttachment[]): s
     const docStub = {
       doc_id: attachment.docId,
       filename: attachment.label,
-      mime: attachment.description === 'Markdown context' ? 'text/markdown' : 'application/pdf',
+      mime:
+        attachment.description === 'Markdown context'
+          ? 'text/markdown'
+          : attachment.description === 'Word document'
+            ? DOCX_MIME
+            : 'application/pdf',
       role: 'unknown' as const,
       uploaded_at: '',
     }
-    const prefix = attachment.description === 'Markdown context' ? 'Markdown context' : 'Document'
+    const prefix =
+      attachment.description === 'Markdown context'
+        ? 'Markdown context'
+        : attachment.description === 'Word document'
+          ? 'Word document'
+          : 'Document'
     return `${prefix}: ${attachment.label} (@${docMentionLabel(docStub)})`
   })
 

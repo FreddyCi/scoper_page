@@ -25,6 +25,8 @@ import { MenuOptionContent } from '@/components/ui/menu-option-content'
 import {
   createBlockContextAttachment,
   createDocumentContextAttachment,
+  canAttachDocumentToChat,
+  documentContextDescription,
   mergeContextAttachments,
 } from '@/lib/chat-context'
 import type { ChatContextAttachment, CitationRef, DocumentMeta } from '@/lib/types'
@@ -93,11 +95,9 @@ export function ChatContextAttachmentControls({
   }
 
   const pdfDocuments = documents.filter((doc) => doc.mime === 'application/pdf')
-  const contextDocuments = documents.filter(
-    (doc) => doc.mime === 'application/pdf' || doc.mime === 'text/markdown',
-  )
+  const contextDocuments = documents.filter(canAttachDocumentToChat)
   const canAttachSelection = Boolean(selectedDoc && selectedCitation && selectedDoc.mime === 'application/pdf')
-  const canAttachActiveDoc = Boolean(activeDoc)
+  const canAttachActiveDoc = Boolean(activeDoc && canAttachDocumentToChat(activeDoc))
 
   async function handleMarkdownFiles(files: FileList | File[] | null) {
     if (!files || files.length === 0) return
@@ -171,7 +171,9 @@ export function ChatContextAttachmentControls({
                 description={
                   activeDoc.mime === 'text/markdown'
                     ? 'Use the active markdown note as chat context'
-                    : 'Use the full active PDF as chat context'
+                    : activeDoc.mime === 'application/pdf'
+                      ? 'Use the full active PDF as chat context'
+                      : 'Use the active Word document as chat context'
                 }
               />
             </DropdownMenuItem>
@@ -204,7 +206,9 @@ export function ChatContextAttachmentControls({
                   <MenuOptionContent
                     title={doc.filename}
                     description={
-                      doc.mime === 'text/markdown' ? 'Attach markdown context' : 'Attach full document'
+                      doc.mime === 'text/markdown'
+                        ? 'Attach markdown context'
+                        : documentContextDescription(doc)
                     }
                   />
                 </DropdownMenuItem>

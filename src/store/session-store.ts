@@ -26,7 +26,9 @@ import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildContractKeywordReview } from '@/services/build-contract-keyword-review'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import {
+  canAttachDocumentToChat,
   contextAttachmentsForDocuments,
+  createDocumentContextAttachment,
   mergeContextAttachments,
 } from '@/lib/chat-context'
 import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
@@ -168,6 +170,7 @@ export type SessionState = {
   seedChatComposer: (text: string) => void
   clearChatComposerSeed: () => void
   setChatContextAttachments: (attachments: ChatContextAttachment[]) => void
+  addChatContextDocument: (docId: string) => boolean
   removeChatContextAttachment: (id: string) => void
   beginChatTurn: (
     text: string,
@@ -462,6 +465,22 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   clearChatComposerSeed: () => set({ chatComposerSeed: null }),
 
   setChatContextAttachments: (chatContextAttachments) => set({ chatContextAttachments }),
+
+  addChatContextDocument: (docId) => {
+    const doc = get().documents.find((item) => item.doc_id === docId)
+    if (!doc || !canAttachDocumentToChat(doc)) return false
+
+    writeChatCollapsedPreference(false)
+    set((state) => ({
+      chatContextAttachments: mergeContextAttachments(state.chatContextAttachments, [
+        createDocumentContextAttachment(doc),
+      ]),
+      chatCollapsed: false,
+      chatSidebarTab: 'agent',
+      chatStarted: true,
+    }))
+    return true
+  },
 
   removeChatContextAttachment: (id) =>
     set((state) => ({

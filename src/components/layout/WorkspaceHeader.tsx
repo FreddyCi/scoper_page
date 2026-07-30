@@ -2,6 +2,7 @@ import {
   ClipboardCheckIcon,
   FileTextIcon,
   GitCompareArrowsIcon,
+  MessageCircleDashedIcon,
   MessageCircleMoreIcon,
   XIcon,
 } from 'lucide-react'
@@ -14,6 +15,8 @@ import {
   shellChatColumnClasses,
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
+import { canAttachDocumentToChat } from '@/lib/chat-context'
+import { setDocumentChatDragData } from '@/lib/chat-context-drag'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
@@ -128,6 +131,7 @@ export function WorkspaceDocumentTabsRow({
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const setActiveDocId = useSessionStore((s) => s.setActiveDocId)
   const removeDocument = useSessionStore((s) => s.removeDocument)
+  const addChatContextDocument = useSessionStore((s) => s.addChatContextDocument)
 
   if (documents.length === 0) return null
 
@@ -142,6 +146,7 @@ export function WorkspaceDocumentTabsRow({
       >
         {documents.map((doc) => {
           const isActive = doc.doc_id === activeDocId
+          const attachable = canAttachDocumentToChat(doc)
 
           return (
             <div
@@ -158,14 +163,48 @@ export function WorkspaceDocumentTabsRow({
             >
               <button
                 type="button"
+                draggable={attachable}
+                onDragStart={(event) => {
+                  if (!attachable) return
+                  setDocumentChatDragData(event.dataTransfer, doc.doc_id, doc.filename)
+                }}
                 onClick={() => setActiveDocId(doc.doc_id)}
-                className="inline-flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-black/[0.03]"
+                className={cn(
+                  'inline-flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-black/[0.03]',
+                  attachable && 'cursor-grab active:cursor-grabbing',
+                )}
               >
                 <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
                 <span className={cn(isActive ? 'whitespace-normal break-all' : 'truncate')}>
                   {doc.filename}
                 </span>
               </button>
+              {attachable ? (
+                <Tooltip>
+                  <TooltipTrigger
+                    delay={0}
+                    render={
+                      <Button
+                        type="button"
+                        size="icon-xs"
+                        variant="ghost"
+                        aria-label={`Add ${doc.filename} to chat context`}
+                        className={cn(
+                          'text-muted-foreground hover:text-foreground size-5 shrink-0 rounded-md',
+                          isActive ? 'opacity-100' : 'opacity-0 group-hover/tab:opacity-100 focus-visible:opacity-100',
+                        )}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          addChatContextDocument(doc.doc_id)
+                        }}
+                      >
+                        <MessageCircleDashedIcon className="size-3.5" />
+                      </Button>
+                    }
+                  />
+                  <TooltipContent side="bottom">Add to chat context</TooltipContent>
+                </Tooltip>
+              ) : null}
               <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
               <button
                 type="button"

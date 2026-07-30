@@ -12,6 +12,7 @@ import {
   findActiveMentionQuery,
   insertDocMention,
 } from '@/lib/chat-mentions'
+import { SCOPER_CHAT_DOCUMENT_MIME, dragCarriesChatDocument } from '@/lib/chat-context-drag'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import {
@@ -34,6 +35,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
   const attachments = useSessionStore((s) => s.chatContextAttachments)
   const setChatContextAttachments = useSessionStore((s) => s.setChatContextAttachments)
+  const addChatContextDocument = useSessionStore((s) => s.addChatContextDocument)
   const removeChatContextAttachment = useSessionStore((s) => s.removeChatContextAttachment)
   const chatComposerSeed = useSessionStore((s) => s.chatComposerSeed)
   const chatComposerSeedSeq = useSessionStore((s) => s.chatComposerSeedSeq)
@@ -42,6 +44,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const [cursor, setCursor] = useState(0)
   const [mentionHighlight, setMentionHighlight] = useState(0)
   const [dragActive, setDragActive] = useState(false)
+  const [draggingSessionDoc, setDraggingSessionDoc] = useState(false)
   const [ingestingMarkdown, setIngestingMarkdown] = useState(false)
   const [dropError, setDropError] = useState<string | null>(null)
   const dragDepthRef = useRef(0)
@@ -103,12 +106,17 @@ export function ChatComposer({ className }: ChatComposerProps) {
     setDropError(null)
   }
 
+  function acceptsComposerDrop(types: readonly string[]) {
+    return types.includes('Files') || dragCarriesChatDocument(types)
+  }
+
   function handleDragEnter(event: React.DragEvent<HTMLDivElement>) {
     if (isBusy) return
-    if (!event.dataTransfer.types.includes('Files')) return
+    if (!acceptsComposerDrop(event.dataTransfer.types)) return
     event.preventDefault()
     dragDepthRef.current += 1
     setDragActive(true)
+    setDraggingSessionDoc(dragCarriesChatDocument(event.dataTransfer.types))
   }
 
   function handleDragLeave(event: React.DragEvent<HTMLDivElement>) {
@@ -118,14 +126,16 @@ export function ChatComposer({ className }: ChatComposerProps) {
     if (dragDepthRef.current <= 0) {
       dragDepthRef.current = 0
       setDragActive(false)
+      setDraggingSessionDoc(false)
     }
   }
 
   function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
     if (isBusy) return
-    if (!event.dataTransfer.types.includes('Files')) return
+    if (!acceptsComposerDrop(event.dataTransfer.types)) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
+    setDraggingSessionDoc(dragCarriesChatDocument(event.dataTransfer.types))
   }
 
   async function handleDrop(event: React.DragEvent<HTMLDivElement>) {
@@ -133,6 +143,18 @@ export function ChatComposer({ className }: ChatComposerProps) {
     event.preventDefault()
     dragDepthRef.current = 0
     setDragActive(false)
+    setDraggingSessionDoc(false)
+
+    const docId = event.dataTransfer.getData(SCOPER_CHAT_DOCUMENT_MIME).trim()
+    if (docId) {
+      const added = addChatContextDocument(docId)
+      if (!added) {
+        setDropError('This document cannot be attached as chat context')
+      } else {
+        setDropError(null)
+      }
+      return
+    }
 
     const files = extractMarkdownFiles(event.dataTransfer)
     if (files.length === 0) {
@@ -172,7 +194,11 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
         {dragActive ? (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-sky-50/80">
-            <p className="text-sky-900 text-sm font-medium">Drop markdown files to attach context</p>
+            <p className="text-sky-900 text-sm font-medium">
+              {draggingSessionDoc
+                ? 'Drop to add document to chat context'
+                : 'Drop markdown files to attach context'}
+            </p>
           </div>
         ) : null}
 
@@ -270,7 +296,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
               ? ingestingMarkdown
                 ? 'Adding markdown context…'
                 : 'Agent is responding…'
-              : 'Ask the agent… / for skills, @ for context, drop .md files here'
+              : 'Ask the agent… / for skills, @ for context, drop docs or .md here'
           }
           disabled={isBusy}
           className="text-foreground placeholder:text-subtle-foreground min-h-[3.25rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"

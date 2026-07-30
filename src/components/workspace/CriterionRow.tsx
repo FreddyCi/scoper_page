@@ -81,100 +81,93 @@ export function CriterionRow({
     seedChatComposer(buildChatPrompt())
   }
 
+  const showTrailing = showChatActions || clickable
+
   return (
     <div
       className={cn(
-        'group flex w-full items-start gap-2 rounded-lg border px-3 py-2.5',
+        'group flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5',
         'border-border/70 bg-workspace-muted/50',
         className,
       )}
     >
       <StatusIcon className={cn('mt-0.5 size-4 shrink-0', STATUS_CLASS[criterion.status])} />
-      <div className="min-w-0 flex-1">
-        <button
-          type="button"
-          disabled={!clickable}
-          onClick={handleOpenSource}
+
+      <button
+        type="button"
+        disabled={!clickable}
+        onClick={handleOpenSource}
+        className={cn(
+          'min-w-0 flex-1 text-left',
+          clickable && 'hover:text-sky-900 cursor-pointer',
+          !clickable && 'cursor-default',
+        )}
+      >
+        <span className="text-foreground block text-sm font-medium leading-snug">{criterion.label}</span>
+        {criterion.detail ? (
+          <span className="text-muted-foreground mt-1 block text-xs leading-relaxed">
+            {criterion.detail}
+          </span>
+        ) : null}
+      </button>
+
+      {showTrailing ? (
+        <div
           className={cn(
-            'w-full text-left',
-            clickable && 'hover:text-sky-900 cursor-pointer',
-            !clickable && 'cursor-default',
+            'flex shrink-0 items-center gap-0.5 self-start',
+            showChatActions && 'bg-background/80 border-border/60 rounded-md border p-0.5 shadow-sm',
           )}
         >
-          <span className="text-foreground block text-sm font-medium">{criterion.label}</span>
-          {criterion.detail ? (
-            <span className="text-muted-foreground mt-0.5 block text-xs leading-relaxed">
-              {criterion.detail}
-            </span>
+          {showChatActions ? (
+            <>
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label={copied ? 'Copied to clipboard' : 'Copy for chat'}
+                onClick={(event) => void handleCopy(event)}
+              >
+                {copied ? (
+                  <CheckIcon className="size-3.5 text-emerald-600" />
+                ) : (
+                  <CopyIcon className="size-3.5" />
+                )}
+              </Button>
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="text-violet-700 hover:bg-violet-50 hover:text-violet-900"
+                aria-label="Add to chat"
+                onClick={handleAskInChat}
+              >
+                <BotMessageSquareIcon className="size-3.5" />
+              </Button>
+            </>
           ) : null}
-        </button>
-
-        {showChatActions ? (
-          <div className="mt-2 flex items-center gap-1 sm:hidden">
-            <ActionIconButtons
-              copied={copied}
-              onCopy={(event) => void handleCopy(event)}
-              onAskInChat={handleAskInChat}
-            />
-          </div>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 flex-col items-end gap-1.5 pt-0.5">
-        {showChatActions ? (
-          <div className="hidden items-center gap-1 sm:flex">
-            <ActionIconButtons
-              copied={copied}
-              onCopy={(event) => void handleCopy(event)}
-              onAskInChat={handleAskInChat}
-            />
-          </div>
-        ) : null}
-        {clickable ? (
-          <button
-            type="button"
-            aria-label={`View source for ${criterion.label}`}
-            onClick={handleOpenSource}
-            className="text-muted-foreground rounded p-0.5 hover:text-sky-600"
-          >
-            <ChevronRightIcon className="size-4" />
-          </button>
-        ) : null}
-      </div>
+          {clickable ? (
+            <>
+              {showChatActions ? (
+                <span className="bg-border/80 mx-0.5 h-3.5 w-px shrink-0" aria-hidden />
+              ) : null}
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                className="text-muted-foreground hover:text-sky-600"
+                aria-label={`View source for ${criterion.label}`}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  handleOpenSource()
+                }}
+              >
+                <ChevronRightIcon className="size-3.5" />
+              </Button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
     </div>
-  )
-}
-
-function ActionIconButtons({
-  copied,
-  onCopy,
-  onAskInChat,
-}: {
-  copied: boolean
-  onCopy: (event: React.MouseEvent) => void
-  onAskInChat: (event: React.MouseEvent) => void
-}) {
-  return (
-    <>
-      <Button
-        type="button"
-        size="icon-xs"
-        variant="outline"
-        className="text-muted-foreground hover:text-foreground border-border/80 rounded-full"
-        aria-label={copied ? 'Copied to clipboard' : 'Copy for chat'}
-        onClick={onCopy}
-      >
-        {copied ? <CheckIcon className="size-3.5 text-emerald-600" /> : <CopyIcon className="size-3.5" />}
-      </Button>
-      <Button
-        type="button"
-        size="icon-xs"
-        variant="outline"
-        className="border-violet-200/80 text-violet-800 hover:bg-violet-50 rounded-full"
-        aria-label="Add to chat"
-        onClick={onAskInChat}
-      >
-        <BotMessageSquareIcon className="size-3.5" />
-      </Button>
-    </>
   )
 }

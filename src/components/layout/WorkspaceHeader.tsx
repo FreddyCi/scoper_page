@@ -2,7 +2,6 @@ import {
   ClipboardCheckIcon,
   FileTextIcon,
   GitCompareArrowsIcon,
-  MessageCircleDashedIcon,
   MessageCircleMoreIcon,
   XIcon,
 } from 'lucide-react'
@@ -131,7 +130,6 @@ export function WorkspaceDocumentTabsRow({
   const activeDocId = useSessionStore((s) => s.activeDocId)
   const setActiveDocId = useSessionStore((s) => s.setActiveDocId)
   const removeDocument = useSessionStore((s) => s.removeDocument)
-  const addChatContextDocument = useSessionStore((s) => s.addChatContextDocument)
 
   if (documents.length === 0) return null
 
@@ -154,57 +152,33 @@ export function WorkspaceDocumentTabsRow({
               role="tab"
               aria-selected={isActive}
               title={doc.filename}
+              onClick={() => setActiveDocId(doc.doc_id)}
               className={cn(
-                'group/tab inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
+                'group/tab inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
                 isActive
                   ? 'border-border bg-surface text-foreground max-w-[min(100%,28rem)] border shadow-sm'
                   : 'text-muted-foreground hover:bg-surface/70 hover:text-foreground max-w-[12rem]',
               )}
             >
-              <button
-                type="button"
+              <div
                 draggable={attachable}
                 onDragStart={(event) => {
                   if (!attachable) return
                   setDocumentChatDragData(event.dataTransfer, doc.doc_id, doc.filename)
                 }}
-                onClick={() => setActiveDocId(doc.doc_id)}
+                onClick={(event) => event.stopPropagation()}
+                title={attachable ? `${doc.filename} — drag to chat` : doc.filename}
                 className={cn(
-                  'inline-flex min-w-0 items-center gap-1.5 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-black/[0.03]',
+                  'border-border/60 inline-flex min-w-0 items-center gap-1.5 rounded-md border px-1.5 py-0.5',
                   attachable && 'cursor-grab active:cursor-grabbing',
+                  !attachable && 'cursor-default',
                 )}
               >
                 <FileTextIcon className="size-3.5 shrink-0 opacity-70" />
                 <span className={cn(isActive ? 'whitespace-normal break-all' : 'truncate')}>
                   {doc.filename}
                 </span>
-              </button>
-              {attachable ? (
-                <Tooltip>
-                  <TooltipTrigger
-                    delay={0}
-                    render={
-                      <Button
-                        type="button"
-                        size="icon-xs"
-                        variant="ghost"
-                        aria-label={`Add ${doc.filename} to chat context`}
-                        className={cn(
-                          'text-muted-foreground hover:text-foreground size-5 shrink-0 rounded-md',
-                          isActive ? 'opacity-100' : 'opacity-0 group-hover/tab:opacity-100 focus-visible:opacity-100',
-                        )}
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          addChatContextDocument(doc.doc_id)
-                        }}
-                      >
-                        <MessageCircleDashedIcon className="size-3.5" />
-                      </Button>
-                    }
-                  />
-                  <TooltipContent side="bottom">Add to chat context</TooltipContent>
-                </Tooltip>
-              ) : null}
+              </div>
               <DocumentRoleSelector docId={doc.doc_id} role={doc.role} />
               <button
                 type="button"
@@ -215,7 +189,7 @@ export function WorkspaceDocumentTabsRow({
                   removeDocument(doc.doc_id)
                 }}
                 className={cn(
-                  'text-muted-foreground hover:text-foreground hover:bg-muted/70 inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors',
+                  'text-muted-foreground hover:text-foreground hover:bg-muted/70 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors',
                   isActive ? 'opacity-100' : 'opacity-0 group-hover/tab:opacity-100 focus-visible:opacity-100',
                 )}
               >

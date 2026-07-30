@@ -59,7 +59,7 @@ function BlockExcerpt({
         variant === 'markdown'
           ? 'border-violet-400 bg-violet-50/70'
           : 'border-sky-400 bg-sky-50/70',
-        expanded && isTruncated && 'scrollbar-thin max-h-32 overflow-y-auto',
+        expanded && isTruncated && 'scrollbar-thin max-h-40 overflow-y-auto overscroll-contain',
       )}
     >
       <p>{expanded || !isTruncated ? text : excerpt}</p>
@@ -185,14 +185,14 @@ export function BlockCommentPopover({
           role="dialog"
           aria-label={isMarkdown ? 'Enhance passage' : 'Block comments'}
           className={cn(
-            'border-border bg-surface shadow-elevated z-30 flex flex-col gap-3 rounded-lg border p-3',
+            'border-border bg-surface shadow-elevated z-30 flex max-h-[min(34rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-lg border',
             isMarkdown && 'border-violet-200/80',
             showTrigger
               ? 'absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))]'
               : 'absolute top-3 right-3 left-3 sm:left-auto sm:w-[min(22rem,calc(100vw-2rem))]',
           )}
         >
-          <div className="min-w-0 space-y-2">
+          <div className="border-border/70 min-w-0 shrink-0 space-y-2 border-b p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
@@ -240,71 +240,75 @@ export function BlockCommentPopover({
                 ? 'Describe how to improve or expand this passage in your context document.'
                 : 'This note is attached to the highlighted passage in the PDF preview.'}
             </p>
-            <BlockExcerpt text={block.text} blockId={block.block_id} variant={variant} />
           </div>
 
-          {loading ? (
-            <p className="text-muted-foreground text-xs">
-              {isMarkdown ? 'Loading enhancements…' : 'Loading comments…'}
-            </p>
-          ) : null}
+          <div className="scrollbar-thin min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-3">
+            <BlockExcerpt text={block.text} blockId={block.block_id} variant={variant} />
 
-          {!loading && comments.length > 0 ? (
-            <ul className="max-h-36 space-y-2 overflow-y-auto">
-              {comments.map((comment) => (
-                <li
-                  key={comment.comment_id}
-                  className="border-border bg-muted/30 flex gap-2 rounded-lg border px-3 py-2 text-sm"
-                >
-                  <CommentAuthorAvatar initials={comment.author_initials} className="mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground leading-relaxed">{comment.text}</p>
-                    <p className="text-muted-foreground mt-1 text-[11px]">
-                      {comment.author_initials !== '?'
-                        ? `${comment.author_initials} · `
-                        : ''}
-                      {formatCommentTime(comment.created_at)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : null}
+            {loading ? (
+              <p className="text-muted-foreground text-xs">
+                {isMarkdown ? 'Loading enhancements…' : 'Loading comments…'}
+              </p>
+            ) : null}
 
-          {!loading && comments.length === 0 ? (
-            <p className="text-muted-foreground text-xs">
-              {isMarkdown ? 'No enhancements yet on this passage.' : 'No comments yet on this block.'}
-            </p>
-          ) : null}
+            {!loading && comments.length > 0 ? (
+              <ul className="space-y-2">
+                {comments.map((comment) => (
+                  <li
+                    key={comment.comment_id}
+                    className="border-border bg-muted/30 flex gap-2 rounded-lg border px-3 py-2 text-sm"
+                  >
+                    <CommentAuthorAvatar initials={comment.author_initials} className="mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-foreground leading-relaxed">{comment.text}</p>
+                      <p className="text-muted-foreground mt-1 text-[11px]">
+                        {comment.author_initials !== '?'
+                          ? `${comment.author_initials} · `
+                          : ''}
+                        {formatCommentTime(comment.created_at)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
 
-          <div className="space-y-2">
-            <ReviewerIdentityFields
-              reviewerName={reviewerName}
-              onReviewerNameChange={setReviewerName}
-            />
-            <textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder={
-                isMarkdown
-                  ? 'e.g. Add bullet points, clarify wording, expand this section…'
-                  : 'Add a review note for this block…'
-              }
-              rows={3}
-              className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
-            />
-            {error ? <p className="text-destructive text-xs">{error}</p> : null}
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                size="sm"
-                disabled={!draft.trim() || saving}
-                className={cn(isMarkdown && 'bg-violet-950 text-white hover:bg-violet-900')}
-                onClick={() => void handleSubmit()}
-              >
-                {saving ? 'Saving…' : isMarkdown ? 'Save enhancement' : 'Add comment'}
-              </Button>
+            {!loading && comments.length === 0 ? (
+              <p className="text-muted-foreground text-xs">
+                {isMarkdown ? 'No enhancements yet on this passage.' : 'No comments yet on this block.'}
+              </p>
+            ) : null}
+
+            <div className="space-y-2">
+              <ReviewerIdentityFields
+                reviewerName={reviewerName}
+                onReviewerNameChange={setReviewerName}
+              />
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder={
+                  isMarkdown
+                    ? 'e.g. Add bullet points, clarify wording, expand this section…'
+                    : 'Add a review note for this block…'
+                }
+                rows={3}
+                className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
+              />
+              {error ? <p className="text-destructive text-xs">{error}</p> : null}
             </div>
+          </div>
+
+          <div className="border-border/70 bg-surface flex shrink-0 justify-end border-t p-3">
+            <Button
+              type="button"
+              size="sm"
+              disabled={!draft.trim() || saving}
+              className={cn(isMarkdown && 'bg-violet-950 text-white hover:bg-violet-900')}
+              onClick={() => void handleSubmit()}
+            >
+              {saving ? 'Saving…' : isMarkdown ? 'Save enhancement' : 'Add comment'}
+            </Button>
           </div>
         </div>
       ) : null}

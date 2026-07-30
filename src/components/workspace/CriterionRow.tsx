@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   AlertTriangleIcon,
-  BotMessageSquareIcon,
+  MessageCircleDashedIcon,
   CheckCircle2Icon,
   CheckIcon,
   ChevronRightIcon,
@@ -138,11 +138,11 @@ export function CriterionRow({
                 type="button"
                 size="icon-xs"
                 variant="ghost"
-                className="text-violet-700 hover:bg-violet-50 hover:text-violet-900"
+                className="text-muted-foreground hover:text-foreground"
                 aria-label="Add to chat"
                 onClick={handleAskInChat}
               >
-                <BotMessageSquareIcon className="size-3.5" />
+                <MessageCircleDashedIcon className="size-3.5" />
               </Button>
             </>
           ) : null}

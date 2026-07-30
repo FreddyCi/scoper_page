@@ -194,6 +194,7 @@ export type SessionState = {
     status: ChatActionStatus,
   ) => void
   clearChat: () => void
+  replayLastChatTurn: () => void
   startNewChat: () => void
   focusChatMessage: (messageId: string, threadId?: 'current' | string) => void
   clearChatFocusMessage: () => void
@@ -577,6 +578,40 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatGenerating: false,
       chatModelStatus: 'idle',
     })
+  },
+
+  replayLastChatTurn: () => {
+    const state = get()
+    if (state.chatGenerating) return
+
+    let lastUserIndex = -1
+    for (let index = state.chatMessages.length - 1; index >= 0; index -= 1) {
+      if (state.chatMessages[index]?.role === 'user') {
+        lastUserIndex = index
+        break
+      }
+    }
+    if (lastUserIndex < 0) return
+
+    const lastUser = state.chatMessages[lastUserIndex]
+    const trimmed = lastUser.text.trim()
+    if (!trimmed) return
+
+    const priorMessages = state.chatMessages.slice(0, lastUserIndex)
+    const attachments = lastUser.contextAttachments ?? []
+
+    getScoperClient().resetConversation()
+    set({
+      chatMessages: priorMessages,
+      chatFocusMessageId: null,
+      chatContextAttachments: attachments.length > 0 ? [...attachments] : [],
+      chatGenerating: false,
+      chatModelStatus: state.chatModelStatus === 'unavailable' ? 'unavailable' : 'idle',
+      chatSidebarTab: 'agent',
+      chatStarted: true,
+    })
+
+    void runChatAgentTurn(trimmed, attachments)
   },
 
   startNewChat: () => {

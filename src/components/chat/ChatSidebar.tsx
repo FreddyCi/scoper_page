@@ -13,6 +13,7 @@ import { ChatHistoryMarkers } from '@/components/chat/ChatHistoryMarkers'
 import { ChatTranscript } from '@/components/chat/ChatTranscript'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -26,9 +27,11 @@ const chatTabTriggerClass = 'gap-1.5 sm:px-3'
 
 function ChatSidebarHeaderControls() {
   const toggleChatCollapsed = useSessionStore((s) => s.toggleChatCollapsed)
-  const clearChat = useSessionStore((s) => s.clearChat)
+  const replayLastChatTurn = useSessionStore((s) => s.replayLastChatTurn)
   const startNewChat = useSessionStore((s) => s.startNewChat)
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
+  const chatMessages = useSessionStore((s) => s.chatMessages)
+  const canReplay = chatMessages.some((message) => message.role === 'user') && !chatGenerating
 
   return (
     <>
@@ -44,28 +47,59 @@ function ChatSidebarHeaderControls() {
       </TabsList>
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          aria-label="New chat"
-          disabled={chatGenerating}
-          onClick={() => startNewChat()}
-        >
-          <PlusIcon className="size-3.5" />
-        </Button>
-        <Button type="button" size="icon-xs" variant="ghost" aria-label="Refresh chat" onClick={clearChat}>
-          <RotateCcwIcon className="size-3.5" />
-        </Button>
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          aria-label="Close chat sidebar"
-          onClick={toggleChatCollapsed}
-        >
-          <XIcon className="size-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger
+            delay={0}
+            render={
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label="New chat"
+                disabled={chatGenerating}
+                onClick={() => startNewChat()}
+              >
+                <PlusIcon className="size-3.5" />
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">New chat</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            delay={0}
+            render={
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label="Replay last question"
+                disabled={!canReplay}
+                onClick={() => replayLastChatTurn()}
+              >
+                <RotateCcwIcon className="size-3.5" />
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">Replay last question (includes attached context)</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            delay={0}
+            render={
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label="Close chat sidebar"
+                onClick={toggleChatCollapsed}
+              >
+                <XIcon className="size-4" />
+              </Button>
+            }
+          />
+          <TooltipContent side="bottom">Close chat</TooltipContent>
+        </Tooltip>
       </div>
     </>
   )

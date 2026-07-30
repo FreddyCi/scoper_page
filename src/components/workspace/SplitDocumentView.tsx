@@ -6,6 +6,7 @@ import { CommentNavigator } from '@/components/workspace/CommentNavigator'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
+import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
 import { Button } from '@/components/ui/button'
 import {
   BrandDropdownContent,
@@ -21,6 +22,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { brandAccentStyles } from '@/lib/brand-accent'
+import {
+  isMarkdownDocument,
+  readLayoutKind,
+  usesReadPreviewLayout,
+} from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentComments } from '@/hooks/use-document-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
@@ -51,9 +57,10 @@ const MODE_CTA: Record<WorkspaceMode, string> = {
   scope_creep: 'Compare scope',
 }
 
-function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
-  const accent = isMarkdown ? 'violet' : 'sky'
+function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof readLayoutKind> }) {
+  const accent = layoutKind === 'pdf' ? 'sky' : 'violet'
   const styles = brandAccentStyles(accent)
+  const isReadable = layoutKind !== 'pdf'
 
   return (
     <DropdownMenu>
@@ -63,7 +70,13 @@ function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
             type="button"
             variant="ghost"
             size="icon-sm"
-            aria-label={isMarkdown ? 'Read view help' : 'Extract view help'}
+            aria-label={
+              layoutKind === 'word'
+                ? 'Word view help'
+                : isReadable
+                  ? 'Read view help'
+                  : 'Extract view help'
+            }
             className={cn('rounded-full', styles.trigger, 'border-transparent hover:border-current/20')}
           />
         }
@@ -74,15 +87,35 @@ function ExtractViewHelpButton({ isMarkdown }: { isMarkdown: boolean }) {
         <BrandMenuSection accent={accent}>
           <BrandMenuSectionHeader
             accent={accent}
-            title={isMarkdown ? 'Markdown views' : 'Extract & comments'}
+            title={
+              layoutKind === 'word'
+                ? 'Word views'
+                : isReadable
+                  ? 'Markdown views'
+                  : 'Extract & comments'
+            }
             description={
-              isMarkdown
-                ? 'Read for citations and review notes · Preview for tables and document structure.'
-                : 'Select blocks in the extract pane and sync highlights with the PDF preview.'
+              layoutKind === 'word'
+                ? 'Read to select checklist passages for chat · Preview for a clean formatted layout.'
+                : isReadable
+                  ? 'Read for citations and review notes · Preview for tables and document structure.'
+                  : 'Select blocks in the extract pane and sync highlights with the PDF preview.'
             }
           />
           <ul className="text-muted-foreground space-y-2 px-3 pb-3 text-xs leading-relaxed">
-            {isMarkdown ? (
+            {layoutKind === 'word' ? (
+              <>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Read</span> — select paragraphs
+                  for chat citations (keyword checklist review).
+                </li>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Preview</span> — full extracted
+                  text in a readable document layout.
+                </li>
+                <li>Original Word formatting is not rendered; content comes from ingest blocks.</li>
+              </>
+            ) : isReadable ? (
               <>
                 <li>
                   <span className={cn('font-medium', styles.title)}>Read</span> — annotated
@@ -294,8 +327,10 @@ export function SplitDocumentView({
   initialPage = 1,
   className,
 }: SplitDocumentViewProps) {
-  const isMarkdown = document.mime === 'text/markdown'
-  const defaultTab: SplitPaneTab = isMarkdown ? 'read' : 'extract'
+  const isMarkdown = isMarkdownDocument(document)
+  const usesReadLayout = usesReadPreviewLayout(document)
+  const layoutKind = readLayoutKind(document)
+  const defaultTab: SplitPaneTab = usesReadLayout ? 'read' : 'extract'
   const [activeTab, setActiveTab] = useState<SplitPaneTab>(defaultTab)
   const [buildingProfiles, setBuildingProfiles] = useState(false)
   const [comparingScope, setComparingScope] = useState(false)
@@ -355,19 +390,19 @@ export function SplitDocumentView({
   }
 
   useEffect(() => {
-    setActiveTab(isMarkdown ? 'read' : 'extract')
-  }, [document.doc_id, isMarkdown])
+    setActiveTab(usesReadLayout ? 'read' : 'extract')
+  }, [document.doc_id, usesReadLayout])
 
   useEffect(() => {
     if (selectedCitation?.doc_id === document.doc_id) {
-      setActiveTab(isMarkdown ? 'read' : 'extract')
+      setActiveTab(usesReadLayout ? 'read' : 'extract')
     }
   }, [
     selectedCitation?.block_id,
     citationFocusSeq,
     document.doc_id,
     selectedCitation?.doc_id,
-    isMarkdown,
+    usesReadLayout,
   ])
 
   useEffect(() => {
@@ -388,7 +423,7 @@ export function SplitDocumentView({
     if (selectedCitation?.doc_id === document.doc_id) {
       const selectedBlock = blocks.find((block) => block.block_id === selectedCitation.block_id)
 
-      if (isMarkdown) {
+      if (usesReadLayout) {
         if (selectedBlock?.section_path?.trim()) {
           const label = compactSectionPathLabel(selectedBlock.section_path, sectionPathPrefix)
           return `${blockCountLabel} · ${label} selected`
@@ -406,7 +441,7 @@ export function SplitDocumentView({
     }
 
     return `${blockCountLabel} · ${document.filename}`
-  }, [blocks, blocks.length, blocksLoading, document.doc_id, document.filename, isMarkdown, selectedCitation])
+  }, [blocks, blocks.length, blocksLoading, document.doc_id, document.filename, usesReadLayout, selectedCitation])
 
   const canExportPdf = document.mime === 'application/pdf'
   const exportStatusHint =
@@ -563,7 +598,7 @@ export function SplitDocumentView({
         <div className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <TabsList variant="segmented">
-              {isMarkdown ? (
+              {usesReadLayout ? (
                 <>
                   <TabsTrigger value="read">Read</TabsTrigger>
                   <TabsTrigger value="preview">Preview</TabsTrigger>
@@ -576,7 +611,7 @@ export function SplitDocumentView({
               )}
               <TabsTrigger value="profiles">Profiles</TabsTrigger>
             </TabsList>
-            <ExtractViewHelpButton isMarkdown={isMarkdown} />
+            <ExtractViewHelpButton layoutKind={layoutKind} />
           </div>
 
           <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
@@ -594,11 +629,18 @@ export function SplitDocumentView({
         </TabsContent>
 
         <TabsContent value="preview" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
-          <MarkdownDocumentViewer
-            document={document}
-            variant="preview"
-            className="h-full min-h-0 rounded-none border-0 shadow-none"
-          />
+          {isMarkdown ? (
+            <MarkdownDocumentViewer
+              document={document}
+              variant="preview"
+              className="h-full min-h-0 rounded-none border-0 shadow-none"
+            />
+          ) : (
+            <OfficeDocumentPreview
+              document={document}
+              className="h-full min-h-0 rounded-none border-0 shadow-none"
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="extract" className="mt-0 flex min-h-0 flex-1 flex-col">

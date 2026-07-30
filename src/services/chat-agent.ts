@@ -4,6 +4,9 @@ import { focusCitation } from '@/services/citation-bridge'
 import { ingestFile } from '@/services/ingest-router'
 import { useSessionStore } from '@/store/session-store'
 
+const KEYWORD_CHECK_PROMPT =
+  /\b(run keyword check|keyword checklist|contract keyword check|check keywords)\b/i
+
 /** Run one chat turn through the document agent loop (BDA-051/053) */
 export async function runChatAgentTurn(
   prompt: string,
@@ -15,6 +18,16 @@ export async function runChatAgentTurn(
   const { assistantMessage } = useSessionStore.getState().beginChatTurn(trimmed, contextAttachments)
 
   try {
+    if (KEYWORD_CHECK_PROMPT.test(trimmed)) {
+      await useSessionStore.getState().runContractKeywordReview()
+      const profile = useSessionStore.getState().contractReviewProfile
+      const text = profile
+        ? `${profile.summary} Open the Profiles view to step through each checklist row and citations.`
+        : 'Upload a contract PDF (set as baseline) and a keyword checklist Word or markdown file (supporting role), then ask again.'
+      useSessionStore.getState().finalizeAssistantMessage(assistantMessage.id, { text })
+      return
+    }
+
     await runAgentTurn(trimmed, {
       assistantId: assistantMessage.id,
       contextAttachments,

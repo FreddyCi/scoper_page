@@ -22,6 +22,7 @@ import {
   writeReviewerNamePreference,
 } from '@/lib/reviewer-profile'
 import { runChatAgentTurn } from '@/services/chat-agent'
+import { buildContractKeywordReview } from '@/services/build-contract-keyword-review'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import {
   contextAttachmentsForDocuments,
@@ -117,6 +118,8 @@ export type SessionState = {
   profiles: RfpResultsProfile[]
   evaluationBaselineProfile: RfpResultsProfile | null
   evaluationDocId: string | null
+  contractChecklistDocId: string | null
+  contractReviewProfile: RfpResultsProfile | null
   companyContext: string
   reviewerName: string
   creepProfiles: ScopeCreepProfile[]
@@ -145,6 +148,9 @@ export type SessionState = {
   setProfiles: (profiles: RfpResultsProfile[]) => void
   setEvaluationBaselineProfile: (profile: RfpResultsProfile | null) => void
   setEvaluationDocId: (docId: string | null) => void
+  setContractChecklistDocId: (docId: string | null) => void
+  setContractReviewProfile: (profile: RfpResultsProfile | null) => void
+  runContractKeywordReview: () => Promise<void>
   setCompanyContext: (context: string) => void
   setReviewerName: (name: string) => void
   clearEvaluationSetup: () => void
@@ -198,6 +204,8 @@ const initialState = {
   profiles: [] as RfpResultsProfile[],
   evaluationBaselineProfile: null as RfpResultsProfile | null,
   evaluationDocId: null as string | null,
+  contractChecklistDocId: null as string | null,
+  contractReviewProfile: null as RfpResultsProfile | null,
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   creepProfiles: [] as ScopeCreepProfile[],
@@ -330,7 +338,47 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       companyContext: '',
       evaluationDocId: null,
       evaluationBaselineProfile: null,
+      contractChecklistDocId: null,
+      contractReviewProfile: null,
       profiles: [],
+    })
+  },
+
+  setContractChecklistDocId: (contractChecklistDocId) => set({ contractChecklistDocId }),
+
+  setContractReviewProfile: (contractReviewProfile) => set({ contractReviewProfile }),
+
+  runContractKeywordReview: async () => {
+    const { documents, evaluationDocId, contractChecklistDocId } = get()
+
+    const contractDocId =
+      evaluationDocId ??
+      documents.find((doc) => doc.role === 'baseline' && doc.mime === 'application/pdf')?.doc_id ??
+      documents.find((doc) => doc.mime === 'application/pdf' && doc.role !== 'supporting')?.doc_id ??
+      null
+
+    const checklistDocId =
+      contractChecklistDocId ??
+      documents.find(
+        (doc) =>
+          doc.mime === 'text/markdown' ||
+          doc.mime ===
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      )?.doc_id ??
+      null
+
+    if (!contractDocId || !checklistDocId) return
+
+    const profile = await buildContractKeywordReview(documents, {
+      contractDocId,
+      checklistDocId,
+    })
+
+    set({
+      evaluationDocId: contractDocId,
+      contractChecklistDocId: checklistDocId,
+      contractReviewProfile: profile,
+      workspaceView: 'profiles',
     })
   },
 
@@ -671,7 +719,11 @@ export function useVisibleProfiles() {
 }
 
 export function useRfpProfiles() {
-  return useSessionStore((state) => state.profiles)
+  return useSessionStore((state) =>
+    state.contractReviewProfile
+      ? [state.contractReviewProfile, ...state.profiles]
+      : state.profiles,
+  )
 }
 
 export function useCreepProfiles() {

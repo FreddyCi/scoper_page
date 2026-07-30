@@ -4,6 +4,7 @@ import { Streamdown } from 'streamdown'
 
 import { EnhancePassagePanel } from '@/components/workspace/EnhancePassagePanel'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
+import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { blockToCitation } from '@/lib/types'
@@ -11,6 +12,7 @@ import type { BlockRecord, DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { groupBlocksForMarkdownRead, commonSectionPathPrefix, compactSectionPathLabel } from '@/services/document-blocks'
 import { focusCitation } from '@/services/citation-bridge'
+import { isMarkdownDocument, isWordDocument } from '@/lib/document-preview'
 import { useSessionStore } from '@/store/session-store'
 
 type AnnotatedMarkdownViewProps = {
@@ -44,6 +46,7 @@ function AnnotatedParagraph({
   focusSeq,
   onSelect,
   onEnhanceClick,
+  allowEnhance,
 }: {
   block: BlockRecord
   selected: boolean
@@ -51,6 +54,7 @@ function AnnotatedParagraph({
   focusSeq: number
   onSelect: () => void
   onEnhanceClick: () => void
+  allowEnhance: boolean
 }) {
   const rowRef = useRef<HTMLDivElement>(null)
 
@@ -99,6 +103,7 @@ function AnnotatedParagraph({
             {block.text}
           </Streamdown>
         </button>
+        {allowEnhance ? (
         <button
           type="button"
           aria-label={
@@ -114,6 +119,7 @@ function AnnotatedParagraph({
         >
           <SparklesIcon className="size-3.5" />
         </button>
+        ) : null}
       </div>
     </div>
   )
@@ -132,6 +138,12 @@ export function AnnotatedMarkdownView({
     useCommentedBlockIds(document.doc_id)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
+  const allowEnhance = isMarkdownDocument(document)
+  const isWord = isWordDocument(document)
+  const accentLabel = isWord ? 'Word' : 'Markdown'
+  const accentHint = isWord
+    ? 'Checklist / context · click a passage to cite in chat'
+    : 'Context document · click a passage to cite or enhance'
 
   const sectionGroups = useMemo(() => groupBlocksForMarkdownRead(blocks), [blocks])
   const sectionPathPrefix = useMemo(
@@ -159,6 +171,9 @@ export function AnnotatedMarkdownView({
   }
 
   if (!loading && !error && blocks.length === 0) {
+    if (isWordDocument(document)) {
+      return <OfficeDocumentPreview document={document} className={className} />
+    }
     return <MarkdownDocumentViewer document={document} className={className} />
   }
 
@@ -172,15 +187,14 @@ export function AnnotatedMarkdownView({
       <header className="border-border/70 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5">
         <div className="min-w-0">
           <h2 className="text-foreground truncate text-sm font-semibold">{document.filename}</h2>
-          <p className="text-violet-800 text-xs">
-            Context document · click a passage to cite or enhance
-          </p>
+          <p className="text-violet-800 text-xs">{accentHint}</p>
         </div>
         <span className="border-violet-200/70 bg-violet-50/80 text-violet-950 shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium">
-          Markdown
+          {accentLabel}
         </span>
       </header>
 
+      {allowEnhance ? (
       <EnhancePassagePanel
         block={activeBlock}
         open={enhanceOpen}
@@ -194,6 +208,7 @@ export function AnnotatedMarkdownView({
           )
         }}
       />
+      ) : null}
 
       <div className="bg-workspace min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
         {loading ? (
@@ -221,6 +236,7 @@ export function AnnotatedMarkdownView({
                       focusSeq={citationFocusSeq}
                       onSelect={() => focusCitation(blockToCitation(block))}
                       onEnhanceClick={() => openEnhanceForBlock(block)}
+                      allowEnhance={allowEnhance}
                     />
                   ))}
                 </div>

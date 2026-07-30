@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
+import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
+import { isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox } from '@/lib/types'
@@ -138,6 +140,10 @@ export function DocumentViewer({
 
   if (document.mime === 'text/markdown') {
     return <MarkdownDocumentViewer document={document} className={className} />
+  }
+
+  if (isWordDocument(document)) {
+    return <OfficeDocumentPreview document={document} className={className} />
   }
 
   if (document.mime !== 'application/pdf') {

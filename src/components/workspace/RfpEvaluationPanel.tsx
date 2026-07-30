@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 import { AiSupportLoadingCard } from '@/components/ui/ai-support-loading-card'
 import { Badge } from '@/components/ui/badge'
@@ -189,16 +189,46 @@ function CompanyContextAssistant({
 export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const documents = useSessionStore((s) => s.documents)
   const evaluationDocId = useSessionStore((s) => s.evaluationDocId)
+  const contractChecklistDocId = useSessionStore((s) => s.contractChecklistDocId)
+  const contractReviewProfile = useSessionStore((s) => s.contractReviewProfile)
   const companyContext = useSessionStore((s) => s.companyContext)
   const baselineProfile = useSessionStore((s) => s.evaluationBaselineProfile)
   const setEvaluationDocId = useSessionStore((s) => s.setEvaluationDocId)
+  const setContractChecklistDocId = useSessionStore((s) => s.setContractChecklistDocId)
+  const runContractKeywordReview = useSessionStore((s) => s.runContractKeywordReview)
   const setCompanyContext = useSessionStore((s) => s.setCompanyContext)
   const clearEvaluationSetup = useSessionStore((s) => s.clearEvaluationSetup)
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
 
   const [running, setRunning] = useState(false)
+  const [runningKeywordCheck, setRunningKeywordCheck] = useState(false)
   const [loadingDemo, setLoadingDemo] = useState(false)
+
+  const checklistDocs = useMemo(
+    () =>
+      documents.filter(
+        (doc) =>
+          doc.mime === 'text/markdown' ||
+          doc.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ),
+    [documents],
+  )
+
+  const contractDocs = useMemo(
+    () => documents.filter((doc) => doc.mime === 'application/pdf' && doc.role !== 'supporting'),
+    [documents],
+  )
+
+  const selectedChecklistDoc = useMemo(
+    () => checklistDocs.find((doc) => doc.doc_id === contractChecklistDocId) ?? null,
+    [checklistDocs, contractChecklistDocId],
+  )
+
+  const selectedContractDoc = useMemo(
+    () => contractDocs.find((doc) => doc.doc_id === evaluationDocId) ?? null,
+    [contractDocs, evaluationDocId],
+  )
 
   const requirementDocs = documents.filter((doc) => doc.role !== 'supporting')
   const responseCount = documents.filter(
@@ -241,6 +271,17 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     }
   }
 
+  async function handleRunKeywordCheck() {
+    setRunningKeywordCheck(true)
+    try {
+      await runContractKeywordReview()
+    } catch (error) {
+      console.error('[evaluation-panel] keyword check failed', error)
+    } finally {
+      setRunningKeywordCheck(false)
+    }
+  }
+
   async function handleRunQualification() {
     if (!evaluationDocId) return
     setRunning(true)
@@ -269,6 +310,11 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     focusCitation(citation)
   }
 
+  useEffect(() => {
+    if (contractChecklistDocId || checklistDocs.length === 0) return
+    setContractChecklistDocId(checklistDocs[0]!.doc_id)
+  }, [checklistDocs, contractChecklistDocId, setContractChecklistDocId])
+
   return (
     <Card
       className={cn(
@@ -286,6 +332,115 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
 
       <CardContent className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="flex flex-col gap-4">
+          <section className="border-border/70 space-y-3 rounded-lg border bg-violet-50/40 px-3 py-3">
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium">Contract keyword check</h3>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Run a keyword checklist (Word or markdown) against a contract PDF. Results appear as
+                a profile card with cited rows — or ask in chat: &quot;run keyword check&quot;.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="contract-checklist-doc" className="leading-snug">
+                Keyword checklist
+              </Label>
+              {checklistDocs.length === 0 ? (
+                <p className="text-muted-foreground text-xs">
+                  Upload the checklist as .docx or .md.
+                </p>
+              ) : (
+                <Combobox
+                  items={checklistDocs}
+                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
+                  value={selectedChecklistDoc}
+                  onValueChange={(doc) => setContractChecklistDocId(doc?.doc_id ?? null)}
+                >
+                  <ComboboxInput
+                    id="contract-checklist-doc"
+                    placeholder="Select checklist…"
+                    className="w-full"
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No checklist documents.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(doc: DocumentMeta) => (
+                        <ComboboxItem key={doc.doc_id} value={doc}>
+                          {doc.filename}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="contract-under-review" className="leading-snug">
+                Contract under review
+              </Label>
+              {contractDocs.length === 0 ? (
+                <p className="text-muted-foreground text-xs">Upload the executed contract PDF.</p>
+              ) : (
+                <Combobox
+                  items={contractDocs}
+                  itemToStringValue={(doc: DocumentMeta) => doc.filename}
+                  value={selectedContractDoc}
+                  onValueChange={(doc) => void handleBaselineChange(doc?.doc_id ?? '')}
+                >
+                  <ComboboxInput
+                    id="contract-under-review"
+                    placeholder="Select contract PDF…"
+                    className="w-full"
+                  />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No PDFs found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(doc: DocumentMeta) => (
+                        <ComboboxItem key={doc.doc_id} value={doc}>
+                          {doc.filename}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
+              )}
+            </div>
+
+            <Button
+              type="button"
+              size="sm"
+              className="w-full"
+              disabled={!evaluationDocId || runningKeywordCheck}
+              onClick={() => void handleRunKeywordCheck()}
+            >
+              {runningKeywordCheck ? 'Running keyword check…' : 'Run keyword check'}
+            </Button>
+
+            {contractReviewProfile && !runningKeywordCheck ? (
+              <div className="border-border/70 space-y-2 border-t pt-3">
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  {contractReviewProfile.summary}
+                </p>
+                <div className="max-h-48 space-y-2 overflow-y-auto">
+                  {contractReviewProfile.criteria.slice(0, 6).map((criterion) => (
+                    <CriterionRow
+                      key={criterion.id}
+                      criterion={criterion}
+                      onCriterionClick={handleCriterionClick}
+                      className="py-2"
+                    />
+                  ))}
+                </div>
+                {contractReviewProfile.criteria.length > 6 ? (
+                  <p className="text-muted-foreground text-xs">
+                    +{contractReviewProfile.criteria.length - 6} more rows on the profile card
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-3">
               <Label htmlFor="company-context" className="leading-snug">

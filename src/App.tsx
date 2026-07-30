@@ -15,6 +15,7 @@ import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
+import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
@@ -66,6 +67,7 @@ function App() {
         await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()
+        await runContractKeywordReviewHarness()
         await runScoperHarness()
         await runDemoExtensionsHarness()
         await runEcpAgentRunHarness()

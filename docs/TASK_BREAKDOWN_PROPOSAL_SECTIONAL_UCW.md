@@ -472,6 +472,7 @@ flowchart TD
 **Completed Changes:**
 - ✅ [`ContextUsageSheet.tsx`](../src/components/chat/ContextUsageSheet.tsx) — `ContextUsageBreakdown`, `ContextUsageComposerChip` (popover above footer)
 - ✅ Chip in `ChatComposer` when chat/proposal busy or `contextPhase !== 'idle'`
+- ✅ Circular progress ring + popover (Cursor-style) on composer footer right; header with close control
 - ✅ `formatContextWindowScale` / token format helpers in `context-usage.ts` (4K/8K labels)
 - ✅ Read-only v1 (no manual compact)
 **Test Strategy:** Open during proposal generate; segments update after each section.  

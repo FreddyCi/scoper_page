@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { GaugeIcon } from 'lucide-react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react'
+import { createPortal } from 'react-dom'
+import { XIcon } from 'lucide-react'
 
 import {
   computeContextUsage,
@@ -12,6 +13,8 @@ import {
 import { getPageContextConfig } from '@/lib/page-context-manager'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 const SEGMENT_BAR_CLASS: Record<ContextUsageSegmentKind, string> = {
   system: 'bg-slate-500',
@@ -22,11 +25,74 @@ const SEGMENT_BAR_CLASS: Record<ContextUsageSegmentKind, string> = {
   reserved: 'bg-muted-foreground/25',
 }
 
+type ContextUsageRingProps = {
+  percentFull: number
+  className?: string
+  /** Accessible label for the ring button. */
+  'aria-label'?: string
+}
+
+/** Circular KV fill indicator (Cursor-style composer ring). */
+export function ContextUsageRing({
+  percentFull,
+  className,
+  'aria-label': ariaLabel,
+}: ContextUsageRingProps) {
+  const size = 16
+  const stroke = 2
+  const radius = (size - stroke) / 2
+  const circumference = 2 * Math.PI * radius
+  const clamped = Math.min(100, Math.max(0, percentFull))
+  const offset = circumference * (1 - clamped / 100)
+
+  const progressClass =
+    clamped >= 85
+      ? 'text-destructive'
+      : clamped >= 55
+        ? 'text-amber-600'
+        : 'text-foreground'
+
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      className={cn('shrink-0', className)}
+      role="img"
+      aria-label={ariaLabel ?? `Context ${Math.round(clamped)} percent full`}
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        className="text-muted-foreground/30"
+        stroke="currentColor"
+        strokeWidth={stroke}
+      />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        className={cn('transition-[stroke-dashoffset] duration-300', progressClass)}
+        stroke="currentColor"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+      />
+    </svg>
+  )
+}
+
 type ContextUsageBreakdownProps = {
   usage: ContextUsageResult
-  /** When false, accountable fill is shown as empty until snapshot arrives (BDA-171). */
   hasLiveSnapshot: boolean
   className?: string
+  /** Hide title block when the popover shell already shows a header. */
+  showTitle?: boolean
 }
 
 /** Read-only segmented breakdown panel (sheet / popover body). */
@@ -34,12 +100,16 @@ export function ContextUsageBreakdown({
   usage,
   hasLiveSnapshot,
   className,
+  showTitle = true,
 }: ContextUsageBreakdownProps) {
   const windowLabel = formatContextWindowScale(usage.contextSize)
   const accountableTokens = hasLiveSnapshot ? usage.totalTokens : 0
   const percentLabel = hasLiveSnapshot
     ? formatContextUsagePercent(usage.percentFull)
     : '~0%'
+  const displayPercent = hasLiveSnapshot
+    ? `${Math.round(usage.percentFull)}%`
+    : '0%'
 
   const barSegments = useMemo(() => {
     if (!hasLiveSnapshot) {
@@ -65,17 +135,23 @@ export function ContextUsageBreakdown({
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
-      <div className="space-y-0.5">
-        <p className="text-foreground text-sm font-medium">Context Usage</p>
+      {showTitle ? (
+        <div className="space-y-0.5">
+          <p className="text-foreground text-sm font-medium">Context Usage</p>
+          <p className="text-muted-foreground text-xs">
+            {windowLabel} context window · estimates use ~4 chars per token
+          </p>
+        </div>
+      ) : (
         <p className="text-muted-foreground text-xs">
-          {windowLabel} context window · estimates use ~4 chars per token
+          {windowLabel} window · ~4 chars per token
         </p>
-      </div>
+      )}
 
       <div className="space-y-1">
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-foreground text-lg font-semibold tabular-nums">
-            {percentLabel}{' '}
+            {displayPercent}{' '}
             <span className="text-muted-foreground text-sm font-normal">Full</span>
           </span>
           <span className="text-muted-foreground text-xs tabular-nums">
@@ -145,34 +221,81 @@ export function ContextUsageBreakdown({
   )
 }
 
-type ContextUsageComposerChipProps = {
+type ContextUsagePopoverPosition = {
+  top: number
+  left: number
+  width: number
+}
+
+const CONTEXT_USAGE_POPOVER_WIDTH = 320
+
+function useContextUsagePopoverPosition(
+  open: boolean,
+  anchorRef: RefObject<HTMLElement | null>,
+): ContextUsagePopoverPosition | null {
+  const [position, setPosition] = useState<ContextUsagePopoverPosition | null>(null)
+
+  useLayoutEffect(() => {
+    if (!open || !anchorRef.current) {
+      setPosition(null)
+      return
+    }
+
+    function update() {
+      const anchor = anchorRef.current
+      if (!anchor) return
+
+      const rect = anchor.getBoundingClientRect()
+      const width = Math.min(CONTEXT_USAGE_POPOVER_WIDTH, window.innerWidth - 16)
+      const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8))
+      const top = rect.top - 8
+
+      setPosition({ top, left, width })
+    }
+
+    update()
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [anchorRef, open])
+
+  return position
+}
+
+type ContextUsageComposerClusterProps = {
+  children?: ReactNode
   className?: string
 }
 
 /**
- * Footer chip + popover for live KV usage during chat or proposal runs (BDA-171).
+ * Context ring immediately left of paperclip; popover anchors above this cluster (Cursor-style).
  */
-export function ContextUsageComposerChip({ className }: ContextUsageComposerChipProps) {
+export function ContextUsageComposerCluster({
+  children,
+  className,
+}: ContextUsageComposerClusterProps) {
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
   const proposalGenerating = useSessionStore((s) => s.proposalGenerating)
   const contextPhase = useSessionStore((s) => s.contextPhase)
   const snapshot = useSessionStore((s) => s.contextUsageSnapshot)
 
-  const visible =
-    chatGenerating || proposalGenerating || contextPhase !== 'idle'
-
   const [open, setOpen] = useState(false)
-  const anchorRef = useRef<HTMLButtonElement>(null)
+  const clusterRef = useRef<HTMLDivElement>(null)
+  const ringRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  const popoverPosition = useContextUsagePopoverPosition(open, clusterRef)
 
   const usage = useMemo(() => {
     if (snapshot) return snapshot
     return computeContextUsage({ segments: {} }, { config: getPageContextConfig() })
   }, [snapshot])
 
-  const chipPercent = snapshot
-    ? formatContextUsagePercent(snapshot.percentFull)
-    : '~0%'
+  const ringPercent = snapshot?.percentFull ?? 0
+  const hasLiveSnapshot = snapshot != null
 
   useEffect(() => {
     if (!open) return
@@ -181,7 +304,7 @@ export function ContextUsageComposerChip({ className }: ContextUsageComposerChip
       const target = event.target as Node
       if (
         panelRef.current?.contains(target) ||
-        anchorRef.current?.contains(target)
+        clusterRef.current?.contains(target)
       ) {
         return
       }
@@ -200,39 +323,85 @@ export function ContextUsageComposerChip({ className }: ContextUsageComposerChip
     }
   }, [open])
 
-  if (!visible) return null
+  const popover =
+    open && popoverPosition && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={panelRef}
+            className="border-border bg-surface shadow-elevated fixed z-[200] rounded-xl border p-3"
+            style={{
+              top: popoverPosition.top,
+              left: popoverPosition.left,
+              width: popoverPosition.width,
+              transform: 'translateY(-100%)',
+            }}
+            role="dialog"
+            aria-label="Context usage breakdown"
+          >
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <p className="text-foreground text-sm font-medium">Context Usage</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground -mr-1 -mt-0.5 shrink-0"
+                aria-label="Close context usage"
+                onClick={() => setOpen(false)}
+              >
+                <XIcon className="size-3.5" />
+              </Button>
+            </div>
+            <ContextUsageBreakdown
+              usage={usage}
+              hasLiveSnapshot={hasLiveSnapshot}
+              showTitle={false}
+            />
+          </div>,
+          document.body,
+        )
+      : null
 
   return (
-    <div className={cn('relative', className)}>
-      {open ? (
-        <div
-          ref={panelRef}
-          className="border-border bg-surface shadow-elevated absolute bottom-full left-0 z-30 mb-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border p-3"
-          role="dialog"
-          aria-label="Context usage breakdown"
-        >
-          <ContextUsageBreakdown usage={usage} hasLiveSnapshot={snapshot != null} />
-        </div>
-      ) : null}
+    <div ref={clusterRef} className={cn('relative flex items-center gap-0', className)}>
+      {popover}
 
-      <button
-        ref={anchorRef}
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((current) => !current)}
-        className={cn(
-          'border-border/80 bg-surface text-foreground inline-flex h-6 shrink-0 items-center gap-1 rounded-full border px-2 text-[11px] font-medium transition-colors',
-          open ? 'ring-ring ring-2 ring-offset-1' : 'hover:bg-muted/60',
-        )}
-      >
-        <GaugeIcon className="size-3 opacity-80" aria-hidden />
-        <span className="tabular-nums">{chipPercent}</span>
-        <span className="text-muted-foreground hidden min-[380px]:inline">Context</span>
-      </button>
+      <Tooltip>
+        <TooltipTrigger
+          delay={0}
+          render={
+            <button
+              ref={ringRef}
+              type="button"
+              aria-expanded={open}
+              aria-haspopup="dialog"
+              onClick={() => setOpen((current) => !current)}
+              className={cn(
+                'text-muted-foreground hover:text-foreground inline-flex size-7 shrink-0 items-center justify-center rounded-full transition-colors',
+                open && 'bg-muted text-foreground',
+                (chatGenerating || proposalGenerating || contextPhase !== 'idle') &&
+                  'text-foreground',
+              )}
+            >
+              <ContextUsageRing percentFull={ringPercent} />
+            </button>
+          }
+        />
+        <TooltipContent side="top" sideOffset={6}>
+          Show context usage
+        </TooltipContent>
+      </Tooltip>
+
+      {children}
     </div>
   )
 }
 
-/** Alias for plan doc name — same as composer chip + breakdown popover. */
-export const ContextUsageSheet = ContextUsageComposerChip
+/** @deprecated Use {@link ContextUsageComposerCluster} beside the paperclip control. */
+export function ContextUsageComposerChip({ className }: { className?: string }) {
+  return (
+    <ContextUsageComposerCluster className={className} />
+  )
+}
+
+/** Alias for plan doc name — ring + popover beside attachments. */
+export const ContextUsageSheet = ContextUsageComposerCluster

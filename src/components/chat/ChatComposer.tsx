@@ -4,7 +4,7 @@ import { ArrowUpIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 import {
   ChatContextAttachmentControls,
 } from '@/components/chat/ChatContextAttachments'
-import { ContextUsageComposerChip } from '@/components/chat/ContextUsageSheet'
+import { ContextUsageComposerCluster } from '@/components/chat/ContextUsageSheet'
 import { ChatContextStack } from '@/components/chat/ChatContextStack'
 import { Button } from '@/components/ui/button'
 import {
@@ -312,23 +312,23 @@ export function ChatComposer({ className }: ChatComposerProps) {
             Agent
           </span>
 
-          <ContextUsageComposerChip />
-
           <span className="text-muted-foreground inline-flex h-6 min-w-0 shrink-0 items-center truncate px-1 text-[11px] font-medium">
             {SCOPER_BONSAI_17B.label}
           </span>
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
-          <ChatContextAttachmentControls
-            documents={documents}
-            activeDocId={activeDocId}
-            selectedCitation={selectedCitation}
-            attachments={attachments}
-            onAttachmentsChange={setChatContextAttachments}
-            disabled={isBusy}
-            onMarkdownIngestChange={setIngestingMarkdown}
-          />
+          <ContextUsageComposerCluster>
+            <ChatContextAttachmentControls
+              documents={documents}
+              activeDocId={activeDocId}
+              selectedCitation={selectedCitation}
+              attachments={attachments}
+              onAttachmentsChange={setChatContextAttachments}
+              disabled={isBusy}
+              onMarkdownIngestChange={setIngestingMarkdown}
+            />
+          </ContextUsageComposerCluster>
 
           <Button
             type="button"

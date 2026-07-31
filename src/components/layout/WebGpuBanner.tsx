@@ -8,22 +8,44 @@ type WebGpuBannerProps = {
   className?: string
 }
 
-/** Surfaces WebGPU availability for on-device Scoper chat (BDA-050) */
+function resolveScoperBannerMessage(state: {
+  webGpuAvailable: boolean | null
+  webGpuError: string | null
+  maxSeqLenNotice: string | null
+  lastError: string | null
+}): string | null {
+  if (state.webGpuAvailable === false) {
+    return (
+      state.webGpuError ??
+      'WebGPU is unavailable. On-device chat is disabled; document parsing still works.'
+    )
+  }
+  if (state.maxSeqLenNotice) {
+    return state.maxSeqLenNotice
+  }
+  if (state.lastError?.toLowerCase().includes('maxseqlen')) {
+    return state.lastError
+  }
+  return null
+}
+
+/** Surfaces WebGPU availability and Scoper engine hints (BDA-050, BDA-152) */
 export function WebGpuBanner({ className }: WebGpuBannerProps) {
   const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     const client = getScoperClient()
-    void client.probeEnvironment().then((state) => {
-      if (state.webGpuAvailable) {
-        setMessage(null)
-        return
-      }
-      setMessage(
-        state.webGpuError ??
-          'WebGPU is unavailable. On-device chat is disabled; document parsing still works.',
-      )
-    })
+
+    const sync = () => {
+      setMessage(resolveScoperBannerMessage(client.getState()))
+    }
+
+    client.setListeners({ onStateChange: sync })
+    void client.probeEnvironment().then(sync)
+
+    return () => {
+      client.setListeners({})
+    }
   }, [])
 
   if (!message) return null

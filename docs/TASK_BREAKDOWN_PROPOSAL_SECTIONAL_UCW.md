@@ -48,18 +48,20 @@ flowchart TD
 ### **ID:** BDA-152
 
 **Title:** Raise Scoper maxSeqLen to 8K  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** Update [`src/lib/scoper-model.ts`](../src/lib/scoper-model.ts) to `maxSeqLen: 8192` while keeping `kvCache: 'q8'` and `overflow: 'sinks'`. Add optional env override `VITE_SCOPER_MAX_SEQ_LEN` (default 8192; allow 4096 fallback). On engine load failure with 8192, retry or surface readable error via scoper client / [`WebGpuBanner`](../src/components/layout/WebGpuBanner.tsx).  
 **Completed Changes:**
-- 🔄 Set `maxSeqLen: 8192` in scoper model config
-- 🔄 Parse `VITE_SCOPER_MAX_SEQ_LEN` with validation (4096 | 8192)
-- 🔄 Fallback path + user-visible hint when 8K load fails
+- ✅ Default context window 8192 via `getScoperEngineOptions()` / `getScoperMaxSeqLenFromEnv()`
+- ✅ `VITE_SCOPER_MAX_SEQ_LEN` validated to 4096 | 8192 (`src/vite-env.d.ts`)
+- ✅ Worker retries load at 4096 after 8K failure; posts `engine-config` with notice
+- ✅ Client state `maxSeqLen` + `maxSeqLenNotice`; banner shows fallback copy
 **Test Strategy:** `pnpm build`; dev load model with WebGPU; confirm worker accepts 8192 or falls back per env; harness/chat still send.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors  
+- 👤 WebGPU 8K vs 4K fallback — verify in browser after model load  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream B1; Studio `CONTEXT_WINDOW_ARCHITECTURE.md` (reference only)
 
 ---

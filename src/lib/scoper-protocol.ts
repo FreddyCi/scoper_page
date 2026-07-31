@@ -34,6 +34,11 @@ export type ScoperWorkerResponse = (ScoperWorkerSuccess | ScoperWorkerFailure) &
 
 export type ScoperWorkerEvent =
   | { type: 'progress'; phase: ScoperLoadPhase; loaded?: number; total?: number }
+  | {
+      type: 'engine-config'
+      maxSeqLen: number
+      notice?: string
+    }
   | { type: 'delta'; delta: string }
   | {
       type: 'complete'

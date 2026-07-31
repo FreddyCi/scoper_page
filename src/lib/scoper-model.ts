@@ -16,11 +16,49 @@ export const SCOPER_BONSAI_17B = {
     'https://huggingface.co/onnx-community/Bonsai-1.7B-ONNX/resolve/main/tokenizer_config.json',
 }
 
-/** Default engine options for long chat sessions in the demo */
+export type ScoperMaxSeqLen = 4096 | 8192
+
+export const SCOPER_MAX_SEQ_LEN_DEFAULT: ScoperMaxSeqLen = 8192
+export const SCOPER_MAX_SEQ_LEN_FALLBACK: ScoperMaxSeqLen = 4096
+
+const SCOPER_MAX_SEQ_LEN_ALLOWED = new Set<number>([4096, 8192])
+
+/** Parsed `VITE_SCOPER_MAX_SEQ_LEN` (4096 | 8192); defaults to 8192. */
+export function getScoperMaxSeqLenFromEnv(
+  raw: string | undefined = import.meta.env.VITE_SCOPER_MAX_SEQ_LEN,
+): ScoperMaxSeqLen {
+  if (raw === undefined || raw === '') {
+    return SCOPER_MAX_SEQ_LEN_DEFAULT
+  }
+  const parsed = Number.parseInt(String(raw).trim(), 10)
+  if (!SCOPER_MAX_SEQ_LEN_ALLOWED.has(parsed)) {
+    console.warn(
+      `[scoper] Invalid VITE_SCOPER_MAX_SEQ_LEN="${raw}"; expected 4096 or 8192. Using ${SCOPER_MAX_SEQ_LEN_DEFAULT}.`,
+    )
+    return SCOPER_MAX_SEQ_LEN_DEFAULT
+  }
+  return parsed as ScoperMaxSeqLen
+}
+
+export function scoperMaxSeqLenFallbackNotice(fallbackFrom: ScoperMaxSeqLen): string {
+  return `On-device model could not load a ${fallbackFrom / 1024}K context window; using ${SCOPER_MAX_SEQ_LEN_FALLBACK / 1024}K instead. Set VITE_SCOPER_MAX_SEQ_LEN=4096 to skip the 8K attempt.`
+}
+
+/** Default engine options for long chat / proposal sessions in the demo */
+export function getScoperEngineOptions(maxSeqLen: ScoperMaxSeqLen = getScoperMaxSeqLenFromEnv()) {
+  return {
+    kvCache: 'q8' as const,
+    overflow: 'sinks' as const,
+    maxSeqLen,
+    sinkTokens: 4,
+  }
+}
+
+/** @deprecated Prefer `getScoperEngineOptions()` for explicit maxSeqLen */
 export const SCOPER_ENGINE_DEFAULTS = {
   kvCache: 'q8' as const,
   overflow: 'sinks' as const,
-  maxSeqLen: 4096,
+  maxSeqLen: SCOPER_MAX_SEQ_LEN_DEFAULT,
   sinkTokens: 4,
 }
 

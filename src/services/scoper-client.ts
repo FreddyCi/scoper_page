@@ -25,6 +25,10 @@ export type ScoperClientState = {
   webGpuAvailable: boolean | null
   webGpuError: string | null
   modelCached: boolean | null
+  /** Effective context window after engine load (4096 | 8192). */
+  maxSeqLen: number | null
+  /** User-visible hint when 8K load failed and 4K fallback succeeded. */
+  maxSeqLenNotice: string | null
 }
 
 type ScoperClientListeners = {
@@ -46,6 +50,8 @@ export class ScoperClient {
     webGpuAvailable: null,
     webGpuError: null,
     modelCached: null,
+    maxSeqLen: null,
+    maxSeqLenNotice: null,
   }
 
   private readonly handleMessage = (event: MessageEvent<ScoperWorkerOutbound>) => {
@@ -77,6 +83,12 @@ export class ScoperClient {
 
   private handleEvent(message: ScoperWorkerEvent) {
     switch (message.type) {
+      case 'engine-config':
+        this.setState({
+          maxSeqLen: message.maxSeqLen,
+          maxSeqLenNotice: message.notice ?? null,
+        })
+        return
       case 'progress': {
         const loadProgress = {
           phase: message.phase,
@@ -295,6 +307,8 @@ export class ScoperClient {
       status: 'idle',
       loadProgress: null,
       lastError: null,
+      maxSeqLen: null,
+      maxSeqLenNotice: null,
     })
   }
 }

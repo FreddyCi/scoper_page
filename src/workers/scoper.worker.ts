@@ -6,8 +6,12 @@ import { createChat, type ChatMessage } from 'bitgpu/chat'
 import { fetchArrayBufferCached, fetchJsonCached } from '@/lib/scoper-cache'
 import {
   SCOPER_BONSAI_17B,
-  SCOPER_ENGINE_DEFAULTS,
+  getScoperEngineOptions,
+  getScoperMaxSeqLenFromEnv,
+  SCOPER_MAX_SEQ_LEN_FALLBACK,
+  scoperMaxSeqLenFallbackNotice,
   SCOPER_SEND_DEFAULTS,
+  type ScoperMaxSeqLen,
 } from '@/lib/scoper-model'
 import type { ScoperWorkerCommand, ScoperWorkerOutbound } from '@/lib/scoper-protocol'
 
@@ -23,22 +27,18 @@ function postError(message: string, code: 'WEBGPU_UNAVAILABLE' | 'UNKNOWN' = 'UN
   postOutbound({ type: 'error', message, code })
 }
 
-async function handleLoad() {
-  if (chat) {
-    postOutbound({ type: 'progress', phase: 'ready' })
-    return
-  }
-
-  engine = await createEngine({
+async function createScoperEngine(maxSeqLen: ScoperMaxSeqLen) {
+  const engineOptions = getScoperEngineOptions(maxSeqLen)
+  return createEngine({
     manifestUrl: SCOPER_BONSAI_17B.manifestUrl,
     auxUrl: SCOPER_BONSAI_17B.auxUrl,
     dataUrl: SCOPER_BONSAI_17B.dataUrl,
     fetchJson: fetchJsonCached,
     fetchArrayBuffer: fetchArrayBufferCached,
-    kvCache: SCOPER_ENGINE_DEFAULTS.kvCache,
-    overflow: SCOPER_ENGINE_DEFAULTS.overflow,
-    maxSeqLen: SCOPER_ENGINE_DEFAULTS.maxSeqLen,
-    sinkTokens: SCOPER_ENGINE_DEFAULTS.sinkTokens,
+    kvCache: engineOptions.kvCache,
+    overflow: engineOptions.overflow,
+    maxSeqLen: engineOptions.maxSeqLen,
+    sinkTokens: engineOptions.sinkTokens,
     onProgress: (progress) => {
       postOutbound({
         type: 'progress',
@@ -48,6 +48,34 @@ async function handleLoad() {
       })
     },
   })
+}
+
+async function handleLoad() {
+  if (chat) {
+    postOutbound({ type: 'progress', phase: 'ready' })
+    return
+  }
+
+  const preferred = getScoperMaxSeqLenFromEnv()
+  let effective: ScoperMaxSeqLen = preferred
+  let notice: string | undefined
+
+  try {
+    engine = await createScoperEngine(preferred)
+  } catch (firstError) {
+    if (preferred === SCOPER_MAX_SEQ_LEN_FALLBACK) {
+      throw firstError
+    }
+    engine = null
+    effective = SCOPER_MAX_SEQ_LEN_FALLBACK
+    try {
+      engine = await createScoperEngine(effective)
+      notice = scoperMaxSeqLenFallbackNotice(preferred)
+      console.warn('[scoper-worker] maxSeqLen fallback:', firstError)
+    } catch {
+      throw firstError
+    }
+  }
 
   chat = await createChat(engine, {
     tokenizerJsonUrl: SCOPER_BONSAI_17B.tokenizerJsonUrl,
@@ -55,6 +83,7 @@ async function handleLoad() {
     fetchJson: fetchJsonCached,
   })
 
+  postOutbound({ type: 'engine-config', maxSeqLen: effective, notice })
   postOutbound({ type: 'progress', phase: 'ready' })
 }
 

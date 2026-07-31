@@ -35,8 +35,11 @@ import {
 import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getProposalSetupState } from '@/lib/proposal-readiness'
+import { assessProposalContextQuality } from '@/lib/proposal-context-quality'
+import type { ProposalHandoffState } from '@/lib/proposal-context-roll'
 import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
 import { buildProposalVolumes } from '@/services/build-proposal-volumes'
+import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { getScoperClient } from '@/services/scoper-client'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
@@ -131,6 +134,8 @@ export type SessionState = {
   reviewerName: string
   creepProfiles: ScopeCreepProfile[]
   proposalRequirementsProfile: ProposalRequirementsProfile | null
+  /** Rolling UCW handoff between sectional turns; cleared at each generate batch (BDA-165). */
+  proposalHandoffState: ProposalHandoffState | null
   proposalGenerating: boolean
   proposalGenerationError: string | null
   selectedCitation: CitationRef | null
@@ -230,6 +235,7 @@ const initialState = {
   reviewerName: readReviewerNamePreference(),
   creepProfiles: [] as ScopeCreepProfile[],
   proposalRequirementsProfile: null as ProposalRequirementsProfile | null,
+  proposalHandoffState: null as ProposalHandoffState | null,
   proposalGenerating: false,
   proposalGenerationError: null as string | null,
   selectedCitation: null as CitationRef | null,
@@ -286,6 +292,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return {
         mode,
         proposalRequirementsProfile: null,
+        proposalHandoffState: null,
         proposalGenerating: false,
         proposalGenerationError: null,
       }
@@ -466,6 +473,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   clearProposalGeneration: () =>
     set({
+      proposalHandoffState: null,
       proposalGenerating: false,
       proposalGenerationError: null,
     }),
@@ -520,19 +528,36 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       proposalRequirementsProfile: state.proposalRequirementsProfile,
     })
 
-    if (!setup.readyToGenerate || state.proposalGenerating) return
+    if (!setup.readyToGenerate || state.proposalGenerating || state.chatGenerating) return
 
     const profile = state.proposalRequirementsProfile
     if (!profile) return
 
-    set({ proposalGenerating: true, proposalGenerationError: null })
+    const contextQuality = assessProposalContextQuality(state.companyContext)
+    if (!contextQuality.ok) {
+      set({
+        proposalGenerationError: contextQuality.warnings.join(' '),
+        proposalHandoffState: null,
+      })
+      return
+    }
+
+    set({
+      proposalGenerating: true,
+      proposalGenerationError: null,
+      proposalHandoffState: null,
+    })
 
     try {
+      await ensureScoperEcpReadyBeforeAgentRun()
+      getScoperClient().resetConversation()
+
       await buildProposalVolumes({
         documents: state.documents,
         profile,
         companyContext: state.companyContext,
         onProfileUpdate: (updated) => set({ proposalRequirementsProfile: updated }),
+        onHandoffUpdate: (handoff) => set({ proposalHandoffState: handoff }),
       })
     } catch (error) {
       set({

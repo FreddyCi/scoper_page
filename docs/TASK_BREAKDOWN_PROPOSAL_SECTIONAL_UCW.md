@@ -308,17 +308,18 @@ flowchart TD
 ### **ID:** BDA-165
 
 **Title:** Store generate preflight and handoff reset  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-154, BDA-164  
 **Priority:** High  
 **Description:** Update [`src/store/session-store.ts`](../src/store/session-store.ts) `runGenerateProposalVolumes`: preflight `ensureScoperEcpReadyBeforeAgentRun()` + readiness/context gates; clear `proposalHandoffState` at batch start; **one** initial `resetConversation()`; **do not** set `chatGenerating`; set `proposalGenerating` only.  
 **Completed Changes:**
-- 🔄 Handoff slice on store (if not only orchestrator-local)
-- 🔄 Preflight + flags
+- ✅ `proposalHandoffState` slice; cleared on batch start + `clearProposalGeneration`
+- ✅ Context quality + `chatGenerating` gates; ECP preflight + batch `resetConversation`
+- ✅ `onHandoffUpdate` from `buildProposalVolumes`
 **Test Strategy:** Generate proposal: chat thread unchanged; `chatGenerating` false; one reset at start + per-section rolls.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalStoreGeneratePreflightHarness`; generation harness chat assertions  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C3; BDA-114
 
 ---

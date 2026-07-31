@@ -13,6 +13,7 @@ import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-e
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
 import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
 import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
+import { runProposalStoreGeneratePreflightHarness } from '@/services/proposal-store-generate-harness'
 import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
@@ -39,6 +40,7 @@ export function runProposalUnitHarnesses(): void {
 
 /** Async proposal harnesses that need session + DuckDB state (BDA-150). */
 export async function runProposalAsyncUnitHarnesses(): Promise<void> {
+  await runProposalStoreGeneratePreflightHarness()
   await runProposalSectionEcpHarness()
   await runCommandIngestProposalLandingHarness()
 }

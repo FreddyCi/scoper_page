@@ -102,6 +102,7 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     profiles,
     creepProfiles: [],
     proposalRequirementsProfile: null,
+    proposalHandoffState: null,
     proposalGenerating: false,
     proposalGenerationError: null,
     evaluationDocId: manifest.evaluationDocId,

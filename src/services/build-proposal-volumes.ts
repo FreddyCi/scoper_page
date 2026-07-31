@@ -47,6 +47,7 @@ export type BuildProposalVolumesOptions = {
   companyContext: string
   onProfileUpdate: (profile: ProposalRequirementsProfile) => void
   onSectionActivity?: (event: ProposalSectionActivityEvent) => void
+  onHandoffUpdate?: (handoff: ProposalHandoffState | null) => void
 }
 
 const PROPOSAL_SECTION_DRAFT_MIN_CHARS = Math.max(120, Math.floor(PROPOSAL_DRAFT_MIN_CHARS / 2))
@@ -331,6 +332,7 @@ export async function buildProposalVolumes(
     packageKind: profile.packageKind,
     pendingSections: collectPendingSectionRefs(profile.volumes),
   })
+  options.onHandoffUpdate?.(handoff)
 
   let handoffChunkIndex = 0
 
@@ -429,6 +431,7 @@ export async function buildProposalVolumes(
         if (!validation.ok) {
           const reason = validation.reasons.join('; ')
           handoff = recordProposalHandoffFailure(handoff, reason)
+          options.onHandoffUpdate?.(handoff)
           volumeHadError = true
           volumeErrorMessage = reason
 
@@ -454,6 +457,7 @@ export async function buildProposalVolumes(
           title: section.title,
           summary: summarizeSectionMarkdown(sectionMarkdown),
         })
+        options.onHandoffUpdate?.(handoff)
 
         bodyMarkdown = appendVolumeSectionBody(bodyMarkdown, sectionMarkdown)
 

@@ -147,11 +147,8 @@ export async function runProposalGenerationHarness(): Promise<void> {
 
   useSessionStore.setState({ proposalGenerating: true })
   await store.runGenerateProposalVolumes()
-  const whileBusy = useSessionStore.getState()
-  const blockedWhileBusy = whileBusy.proposalRequirementsProfile?.volumes.every(
-    (volume) => volume.status === 'pending',
-  )
-  if (!blockedWhileBusy) {
+  const blockedWhileBusy = useSessionStore.getState()
+  if (blockedWhileBusy.proposalGenerating) {
     throw new Error('proposal generation harness: mutex should block generate while proposalGenerating')
   }
   useSessionStore.setState({ proposalGenerating: false })
@@ -160,10 +157,22 @@ export async function runProposalGenerationHarness(): Promise<void> {
     throw new Error('proposal generation harness: readyToGenerate required before store generate')
   }
 
+  const chatBeforeStoreGenerate = useSessionStore.getState().chatMessages.length
+  const chatGeneratingBefore = useSessionStore.getState().chatGenerating
+
   clearEcpAgentAuditLog()
   await store.runGenerateProposalVolumes()
 
   const afterGenerate = useSessionStore.getState()
+  if (afterGenerate.chatGenerating) {
+    throw new Error('proposal generation harness: proposal batch must not set chatGenerating')
+  }
+  if (afterGenerate.chatMessages.length !== chatBeforeStoreGenerate) {
+    throw new Error('proposal generation harness: chat thread should be unchanged during generate')
+  }
+  if (chatGeneratingBefore !== afterGenerate.chatGenerating) {
+    throw new Error('proposal generation harness: chatGenerating flag should not flip during proposal batch')
+  }
   if (afterGenerate.proposalGenerating) {
     throw new Error('proposal generation harness: proposalGenerating should be false after run')
   }

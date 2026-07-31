@@ -4,6 +4,7 @@ import { ArrowUpIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 import {
   ChatContextAttachmentControls,
 } from '@/components/chat/ChatContextAttachments'
+import { ContextUsageComposerChip } from '@/components/chat/ContextUsageSheet'
 import { ChatContextStack } from '@/components/chat/ChatContextStack'
 import { Button } from '@/components/ui/button'
 import {
@@ -310,6 +311,8 @@ export function ChatComposer({ className }: ChatComposerProps) {
             <SparklesIcon className="size-3 opacity-80" />
             Agent
           </span>
+
+          <ContextUsageComposerChip />
 
           <span className="text-muted-foreground inline-flex h-6 min-w-0 shrink-0 items-center truncate px-1 text-[11px] font-medium">
             {SCOPER_BONSAI_17B.label}

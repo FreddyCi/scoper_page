@@ -465,16 +465,18 @@ flowchart TD
 ### **ID:** BDA-171
 
 **Title:** Context Usage sheet UI  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-169, BDA-170  
 **Priority:** Medium  
 **Description:** New [`ContextUsageSheet.tsx`](../src/components/chat/ContextUsageSheet.tsx) or composer popover: header **Context Usage**, `~X% Full`, `~used / max Tokens`, segmented bar + legend. Open via chip in [`ChatComposer`](../src/components/chat/ChatComposer.tsx) footer when `chatGenerating || proposalGenerating || contextPhase !== 'idle'`. Scale labels for 4K fallback.  
 **Completed Changes:**
-- 🔄 Sheet/popover UI matching Cursor-style breakdown
-- 🔄 Read-only v1 (no manual compact button)
+- ✅ [`ContextUsageSheet.tsx`](../src/components/chat/ContextUsageSheet.tsx) — `ContextUsageBreakdown`, `ContextUsageComposerChip` (popover above footer)
+- ✅ Chip in `ChatComposer` when chat/proposal busy or `contextPhase !== 'idle'`
+- ✅ `formatContextWindowScale` / token format helpers in `context-usage.ts` (4K/8K labels)
+- ✅ Read-only v1 (no manual compact)
 **Test Strategy:** Open during proposal generate; segments update after each section.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Build + `runContextUsageHarness` format checks; manual: chip during `proposalGenerating` / `contextPhase`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan F2; user screenshot reference in docs
 

@@ -158,8 +158,33 @@ export function runContextUsageHarness(): void {
     throw new Error('runContextUsageHarness: tier should match checkContextThreshold')
   }
 
+  if (formatContextWindowScale(4096) !== '4K' || formatContextWindowScale(8192) !== '8K') {
+    throw new Error('runContextUsageHarness: formatContextWindowScale mismatch')
+  }
+  if (!formatApproxTokenCount(1234).includes('1,234')) {
+    throw new Error('runContextUsageHarness: formatApproxTokenCount mismatch')
+  }
+
   const reserved = usage.segments.find((segment) => segment.kind === 'reserved')
   if (!reserved || reserved.tokens !== config.contextSize - usage.totalTokens) {
     throw new Error('runContextUsageHarness: reserved segment mismatch')
   }
+}
+
+/** Human-readable KV scale for UI labels (4K / 8K fallback). */
+export function formatContextWindowScale(contextSize: number): string {
+  if (contextSize === 4096) return '4K'
+  if (contextSize === 8192) return '8K'
+  const k = contextSize / 1024
+  return Number.isInteger(k) ? `${k}K` : `${k.toFixed(1)}K`
+}
+
+export function formatApproxTokenCount(tokens: number): string {
+  return `~${tokens.toLocaleString()}`
+}
+
+export function formatContextUsagePercent(percentFull: number): string {
+  const rounded =
+    percentFull >= 10 ? Math.round(percentFull) : Math.round(percentFull * 10) / 10
+  return `~${rounded}%`
 }

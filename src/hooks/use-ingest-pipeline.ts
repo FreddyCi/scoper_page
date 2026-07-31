@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 
 import { ingestFiles, type IngestProgress } from '@/services/ingest-router'
 import type { IngestResult } from '@/lib/types'
-import { getProposalPostIngestPatch } from '@/lib/proposal-post-ingest'
+import { applyPostIngestModeEffects } from '@/lib/post-ingest-mode-effects'
 import { useSessionStore } from '@/store/session-store'
 
 export type IngestPipelineResult = {
@@ -27,26 +27,7 @@ export function useIngestPipeline() {
 
       if (results.length > 0) {
         commitIngestResults(results)
-
-        const { mode, documents } = useSessionStore.getState()
-        if (mode === 'rfp' && documents.length > 0 && useSessionStore.getState().evaluationDocId) {
-          await useSessionStore.getState().runRfpQualification()
-        }
-
-        if (mode === 'proposal') {
-          const store = useSessionStore.getState()
-          const patch = getProposalPostIngestPatch(
-            {
-              evaluationDocId: store.evaluationDocId,
-              documents: store.documents,
-            },
-            results,
-          )
-          if (patch.evaluationDocId != null) {
-            store.setEvaluationDocId(patch.evaluationDocId)
-          }
-          store.setWorkspaceView(patch.workspaceView)
-        }
+        await applyPostIngestModeEffects(results)
       }
 
       if (import.meta.env.DEV) {

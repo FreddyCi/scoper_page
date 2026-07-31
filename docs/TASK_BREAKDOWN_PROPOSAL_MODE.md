@@ -598,16 +598,18 @@ sequenceDiagram
 ### **ID:** BDA-141
 
 **Title:** Command ingest proposal landing  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-140  
 **Priority:** Medium  
 **Description:** Align [`use-command-ingest.ts`](../src/hooks/use-command-ingest.ts) / commit paths so proposal mode post-ingest matches upload popup behavior (profiles view, evaluation doc).  
 **Completed Changes:**
-- 🔄 Mode check parity
+- ✅ [`post-ingest-mode-effects.ts`](../src/lib/post-ingest-mode-effects.ts) — shared `applyPostIngestModeEffects` (popup + command via `enqueueFiles`)
+- ✅ [`use-command-ingest.ts`](../src/hooks/use-command-ingest.ts) syncs payload mode before ingest; documents shared pipeline
+- ✅ `runCommandIngestProposalLandingHarness` — commit + effects → profiles + evaluation doc
 **Test Strategy:** Command card upload in proposal mode → same landing as BDA-140.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §4  
 
 ---

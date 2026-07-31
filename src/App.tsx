@@ -39,6 +39,7 @@ import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
+import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
 import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
@@ -61,6 +62,7 @@ function App() {
         runSessionStoreHarness()
         runProposalReadinessHarness()
         runProposalPostIngestHarness()
+        await runCommandIngestProposalLandingHarness()
         runAssembleProposalMarkdownHarness()
         runProposalPromptsHarness()
         runChatStubProposalHarness()

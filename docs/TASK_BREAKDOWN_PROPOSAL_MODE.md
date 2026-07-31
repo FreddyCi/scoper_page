@@ -462,16 +462,18 @@ sequenceDiagram
 ### **ID:** BDA-130
 
 **Title:** Proposal panel setup section  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-112, BDA-113  
 **Priority:** Critical  
 **Description:** Create [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx) setup card: RFP [`DocumentPickerSelect`](../src/components/workspace/DocumentPickerSelect.tsx) bound to `evaluationDocId`; responder context textarea (labels: *your company / capabilities* — not buyer qualification); wire `setCompanyContext` / `setEvaluationDocId`.  
 **Completed Changes:**
-- 🔄 Panel shell + setup card
+- ✅ Setup card: RFP picker (`evaluationDocId`), **Your company / capabilities** textarea, buyer vs responder copy
+- ✅ Gating checklist via `useProposalSetupState` (`hasRfp`, `hasContext`, `hasProfile`)
+- ✅ `runProposalPanelSetupHarness()` asserts store wiring for readiness flags
 **Test Strategy:** Select RFP + type context; readiness helper shows `hasRfp` / `hasContext`.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness passes; panel in profiles view (`BDA-122`)
+**Assigned:** Completed  
 **Context/Artifacts:** [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx) patterns  
 
 ---

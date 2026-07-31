@@ -17,6 +17,7 @@ import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
+import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
 import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
@@ -59,6 +60,7 @@ function App() {
         runProposalReadinessHarness()
         runProposalPromptsHarness()
         runChatStubProposalHarness()
+        runProposalPanelSetupHarness()
         await runDuckdbHarness()
         await runBlockCommentsHarness()
         await runLiteParseHarness()

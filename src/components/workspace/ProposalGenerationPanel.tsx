@@ -50,7 +50,7 @@ function volumeStatusLabel(status: string): string {
   }
 }
 
-/** Proposal workspace — setup, profile build, volume generation (BDA-122 / BDA-130+) */
+/** Proposal workspace — setup, profile build, volume generation (BDA-130+) */
 export function ProposalGenerationPanel({ className }: ProposalGenerationPanelProps) {
   const documents = useSessionStore((s) => s.documents)
   const evaluationDocId = useSessionStore((s) => s.evaluationDocId)

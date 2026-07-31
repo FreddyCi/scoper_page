@@ -251,17 +251,18 @@ flowchart TD
 ### **ID:** BDA-162
 
 **Title:** Section-level proposal prompts  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-160  
 **Priority:** High  
 **Description:** Extend [`src/lib/proposal-prompts.ts`](../src/lib/proposal-prompts.ts): `buildSectionUserPrompt(section, volume, handoff, excerpts)`; system line instructs **only this section**, no other volumes or writer meta. Package-aware tone via `packageKind`.  
 **Completed Changes:**
-- 🔄 Section prompt builder + system guardrail line
-- 🔄 Reuse existing volume guardrails where applicable
+- ✅ `buildSectionSystemPrompt`, `buildSectionUserPrompt`, `buildSectionPromptParts`, `buildSectionPrompt`
+- ✅ Handoff block via `buildProposalHandoffBlock`; contract vs solicitation tone
+- ✅ Harness asserts section-only guardrails and 8K char budget estimate
 **Test Strategy:** Snapshot prompt length under 8K budget with mocked excerpts; no "write all volumes" phrasing.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalPromptsHarness` section cases; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C2; BDA-115
 
 ---

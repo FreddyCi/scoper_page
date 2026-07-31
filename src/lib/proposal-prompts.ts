@@ -1,5 +1,11 @@
-import type { ProposalVolume } from '@/lib/types'
+import type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
+import { buildProposalHandoffBlock, type ProposalHandoffState } from '@/lib/proposal-context-roll'
+import { CHARS_PER_TOKEN_ESTIMATE } from '@/lib/page-context-manager'
+import type { ProposalVolume, ProposalVolumeSection } from '@/lib/types'
 import { compactFindClauseQuery } from '@/services/document-search'
+
+export const PROPOSAL_SECTION_ONLY_LINE =
+  'Write only this section in markdown. Do not output other volumes, sections, or writer instructions.'
 
 export const PROPOSAL_GUARDRAIL_PHRASES = [
   'Mirror solicitation section headings exactly where applicable.',
@@ -19,6 +25,40 @@ export const PROPOSAL_VOLUME_SYSTEM_PROMPT = [
   'Be specific to the RFP excerpts and responder context; avoid filler and generic sales language.',
 ].join('\n')
 
+function packageKindLabel(packageKind: ProposalPackageKind): string {
+  switch (packageKind) {
+    case 'contract_framework':
+      return 'contract or master agreement'
+    case 'solicitation':
+      return 'solicitation RFP'
+    default:
+      return 'procurement document'
+  }
+}
+
+/** System instructions for one sectional draft turn (BDA-162). */
+export function buildSectionSystemPrompt(packageKind: ProposalPackageKind): string {
+  const docLabel = packageKindLabel(packageKind)
+  const toneLine =
+    packageKind === 'contract_framework'
+      ? 'Use compliance-oriented language: accept, exception, or redline stance tied to the cited clauses.'
+      : 'Use proposal response language aligned to the cited solicitation requirements.'
+
+  return [
+    `You are drafting a single section of a complete proposal response to a ${docLabel}.`,
+    toneLine,
+    '',
+    'Guardrails:',
+    ...PROPOSAL_GUARDRAIL_PHRASES.map((line) => `- ${line}`),
+    '',
+    PROPOSAL_SECTION_ONLY_LINE,
+    'Use ## / ### headings appropriate to this section only.',
+    'Be specific to the excerpts and responder context; avoid filler and generic sales language.',
+  ].join('\n')
+}
+
+export const PROPOSAL_SECTION_SYSTEM_PROMPT = buildSectionSystemPrompt('solicitation')
+
 export type VolumePromptContext = {
   companyContext: string
   rfpFilename?: string
@@ -27,6 +67,75 @@ export type VolumePromptContext = {
 export type VolumePromptParts = {
   system: string
   user: string
+}
+
+export type SectionPromptInput = {
+  section: ProposalVolumeSection
+  volume: ProposalVolume
+  handoff: ProposalHandoffState | null
+  excerpts: string[]
+  context: VolumePromptContext
+  packageKind?: ProposalPackageKind
+  handoffChunkIndex?: number
+}
+
+/** User turn for one proposal section (includes optional UCW handoff block). */
+export function buildSectionUserPrompt(input: SectionPromptInput): string {
+  const {
+    section,
+    volume,
+    handoff,
+    excerpts,
+    context,
+    packageKind = handoff?.packageKind ?? 'solicitation',
+    handoffChunkIndex = 1,
+  } = input
+
+  const excerptBlock =
+    excerpts.length > 0
+      ? excerpts.map((line, index) => `${index + 1}. ${line}`).join('\n')
+      : '(No RFP excerpts available — use the attached document context.)'
+
+  const handoffBlock =
+    handoff != null ? buildProposalHandoffBlock(handoff, handoffChunkIndex) : ''
+
+  return [
+    handoffBlock,
+    handoffBlock ? '' : null,
+    `Package kind: ${packageKind}`,
+    `Volume: ${volume.title}`,
+    volume.solicitationRefs?.length
+      ? `Solicitation refs: ${volume.solicitationRefs.join(', ')}`
+      : '',
+    `Volume requirements: ${volume.requirementSummary}`,
+    `Section to write: ${section.title}`,
+    context.rfpFilename ? `Source document: ${context.rfpFilename}` : '',
+    '',
+    'Responder company context:',
+    context.companyContext.trim(),
+    '',
+    'Relevant RFP excerpts for this section:',
+    excerptBlock,
+    '',
+    `Write markdown for the "${section.title}" section only (within the "${volume.title}" volume).`,
+    PROPOSAL_SECTION_ONLY_LINE,
+  ]
+    .filter((line) => line !== null && line !== '')
+    .join('\n')
+}
+
+export function buildSectionPromptParts(input: SectionPromptInput): VolumePromptParts {
+  const packageKind = input.packageKind ?? input.handoff?.packageKind ?? 'solicitation'
+  return {
+    system: buildSectionSystemPrompt(packageKind),
+    user: buildSectionUserPrompt(input),
+  }
+}
+
+/** Combined prompt for isolated sectional Scoper sends. */
+export function buildSectionPrompt(input: SectionPromptInput): string {
+  const { system, user } = buildSectionPromptParts(input)
+  return [system, '', '---', '', user].join('\n')
 }
 
 /** User turn: volume metadata, responder context, and RFP excerpts. */
@@ -138,5 +247,56 @@ export function runProposalPromptsHarness(): void {
 
   if (!findQuery.includes('Technical') || findQuery.length === 0) {
     throw new Error('runProposalPromptsHarness: find-clause query should retain volume focus')
+  }
+
+  const section: ProposalVolumeSection = {
+    id: 'sec-insurance',
+    title: 'Insurance requirements',
+    findClauseQuery: 'insurance coverage bonding',
+    status: 'pending',
+  }
+
+  const handoff = {
+    activeGoal: 'Draft complete proposal for the IT services RFP',
+    completedSections: [],
+    topicMemory: [],
+    pendingSections: [{ volumeId: volume.id, sectionId: section.id, title: section.title }],
+    packageKind: 'solicitation' as const,
+    doNotRepeat: [],
+  }
+
+  const sectionParts = buildSectionPromptParts({
+    section,
+    volume,
+    handoff,
+    excerpts,
+    context,
+  })
+  const sectionCombined = buildSectionPrompt({
+    section,
+    volume,
+    handoff,
+    excerpts,
+    context,
+  })
+
+  if (sectionParts.system.includes('all volumes') || sectionParts.user.includes('all volumes')) {
+    throw new Error('runProposalPromptsHarness: section prompt must not ask for all volumes')
+  }
+  if (!sectionParts.system.includes(PROPOSAL_SECTION_ONLY_LINE)) {
+    throw new Error('runProposalPromptsHarness: section system missing section-only guardrail')
+  }
+  if (!sectionParts.user.includes('Insurance requirements') || !sectionParts.user.includes('PROPOSAL CONTEXT HANDOFF')) {
+    throw new Error('runProposalPromptsHarness: section user missing title or handoff')
+  }
+
+  const maxPromptChars = 8192 * CHARS_PER_TOKEN_ESTIMATE * 0.75
+  if (sectionCombined.length > maxPromptChars) {
+    throw new Error('runProposalPromptsHarness: section prompt exceeds 8K budget estimate')
+  }
+
+  const contractSystem = buildSectionSystemPrompt('contract_framework')
+  if (!contractSystem.includes('contract or master agreement')) {
+    throw new Error('runProposalPromptsHarness: contract package system tone missing')
   }
 }

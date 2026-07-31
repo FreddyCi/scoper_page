@@ -387,17 +387,17 @@ flowchart TD
 ### **ID:** BDA-167
 
 **Title:** ProposalGenerationPanel section progress  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-164, BDA-160  
 **Priority:** High  
 **Description:** Update [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx): while generating, show active section title and `completedSections/totalSections` (e.g. "Section 3/7 — Insurance") from store/profile.  
 **Completed Changes:**
-- 🔄 Subscribe to generation progress fields
-- 🔄 Status line during `proposalGenerating`
+- ✅ `formatVolumeSectionProgressLine` + `summarizeProposalProfileGeneration`
+- ✅ Panel status + loading card; active volume row shows sectional label
 **Test Strategy:** Manual: start generate on multi-section volume; label updates per section.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Extended `runProposalVolumeSectionTypesHarness`; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C4
 
 ---

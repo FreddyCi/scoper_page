@@ -10,6 +10,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { ProposalVolumeMarkdownPreview } from '@/components/workspace/ProposalVolumeMarkdownPreview'
+import { formatVolumeSectionProgressLine } from '@/lib/proposal-volume-section'
 import type { ProposalVolume, ProposalVolumeStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -62,6 +63,10 @@ export function ProposalVolumeRow({
   const [expanded, setExpanded] = useState(false)
   const StatusIcon = STATUS_ICON[volume.status]
   const statusLabel = volumeStatusLabel(volume.status)
+  const sectionProgressLine =
+    active || volume.status === 'generating'
+      ? formatVolumeSectionProgressLine(volume)
+      : null
   const showLiveStatus = !muted || volume.status !== 'pending'
   const hasBody = Boolean(volume.bodyMarkdown?.trim())
 
@@ -129,11 +134,12 @@ export function ProposalVolumeRow({
                 showLiveStatus ? 'text-muted-foreground' : 'text-muted-foreground/70',
               )}
             >
-              {muted && volume.status === 'pending'
-                ? 'Awaiting setup'
-                : hasBody
-                  ? `${statusLabel} · Preview`
-                  : statusLabel}
+              {sectionProgressLine ??
+                (muted && volume.status === 'pending'
+                  ? 'Awaiting setup'
+                  : hasBody
+                    ? `${statusLabel} · Preview`
+                    : statusLabel)}
             </span>
           </div>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">

@@ -22,6 +22,7 @@ import {
 import { canExportProposalProfile } from '@/lib/proposal-export-quality'
 import { beginBlobSave } from '@/lib/download-blob'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
+import { summarizeProposalProfileGeneration } from '@/lib/proposal-volume-section'
 import { cn } from '@/lib/utils'
 import {
   useProposalRequirementsProfile,
@@ -74,7 +75,15 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
     const draftCount = profile.volumes.filter((v) => v.status === 'draft').length
     const errorCount = profile.volumes.filter((v) => v.status === 'error').length
     const activeVolume = profile.volumes.find((v) => v.status === 'generating')
-    return { total, draftCount, errorCount, activeVolume }
+    const profileGeneration = summarizeProposalProfileGeneration(profile.volumes)
+    return {
+      total,
+      draftCount,
+      errorCount,
+      activeVolume,
+      statusLine: profileGeneration.statusLine,
+      sectionProgressLine: profileGeneration.sectionProgressLine,
+    }
   }, [profile])
 
   const allVolumesDraft =
@@ -248,9 +257,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             ) : null}
             {proposalGenerating && generationProgress ? (
               <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status" aria-live="polite">
-                {generationProgress.activeVolume
-                  ? `Writing “${generationProgress.activeVolume.title}” — ${generationProgress.draftCount} of ${generationProgress.total} complete`
-                  : `Finishing proposal — ${generationProgress.draftCount} of ${generationProgress.total} complete`}
+                {generationProgress.statusLine}
               </p>
             ) : allVolumesDraft && !proposalGenerating ? (
               <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status">
@@ -304,7 +311,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             {proposalGenerating ? (
               <AiSupportLoadingCard
                 className="shrink-0"
-                label="Generating"
+                label={generationProgress?.sectionProgressLine ?? generationProgress?.statusLine ?? 'Generating'}
                 buttonLabel="Generate complete proposal"
               />
             ) : (

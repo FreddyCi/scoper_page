@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 
 import { AppShell } from '@/components/layout/AppShell'
+import { DevAppBootstrap } from '@/components/layout/DevAppBootstrap'
 import { SharePackBootstrap } from '@/components/layout/SharePackBootstrap'
 import {
   initScoperEcpEnvironment,
@@ -57,63 +58,63 @@ function App() {
     })
   }, [])
 
-  useEffect(() => {
+  const runDevHarnessChain = useCallback(async () => {
     if (!import.meta.env.DEV) return
 
-    void (async () => {
-      try {
-        await runEcpEnvironmentHarness()
-        runSessionStoreHarness()
-        runProposalUnitHarnesses()
-        runChatVoiceUnitHarnesses()
-        await runProposalAsyncUnitHarnesses()
-        await runDuckdbHarness()
-        await runBlockCommentsHarness()
-        await runLiteParseHarness()
-        await runOcrHarness()
-        await runLiteParseOcrHarness()
-        await runIngestHarness()
-        await runExportPdfMarkdownHarness()
-        await runConvertPdfToContextHarness()
-        await runSharePackHarness()
-        await runMarkdownIngestHarness()
-        await runDocxIngestHarness()
-        await runXlsxIngestHarness()
-        await runImportPdfCommentsHarness()
-        await runCompareScopeHarness()
-        await runDocumentRoleHarness()
-        await runBuildRfpProfilesHarness()
-        await runContractKeywordReviewHarness()
-        await runScoperHarness()
-        await runChatVoiceAsyncHarnesses()
-        await runDemoExtensionsHarness()
-        await runEcpAgentRunHarness()
-        await runProposalIntegrationHarnesses()
-        await runChatAgentHarness()
-        await runChatCitationsHarness()
-        await runChatCitationChipHarness()
-        await runDocumentSearchHarness()
-        await runFindClauseHarness()
-        await runFindClauseAgentHarness()
-        runChatHistoryMarkersHarness()
-        await runCitationBridgeHarness()
-        await runCitationClickHarness()
-        runResultsProfileUiHarness()
-        runResultsProfileGridHarness()
-        if (shouldRunLegacyCreepHarnesses()) {
-          runCreepProfileUiHarness()
-          runCreepProfileGridHarness()
-        }
-      } catch (error) {
-        console.error('[dev-harness]', error)
+    try {
+      await runEcpEnvironmentHarness()
+      runSessionStoreHarness()
+      runProposalUnitHarnesses()
+      runChatVoiceUnitHarnesses()
+      await runProposalAsyncUnitHarnesses()
+      await runDuckdbHarness()
+      await runBlockCommentsHarness()
+      await runLiteParseHarness()
+      await runOcrHarness()
+      await runLiteParseOcrHarness()
+      await runIngestHarness()
+      await runExportPdfMarkdownHarness()
+      await runConvertPdfToContextHarness()
+      await runSharePackHarness()
+      await runMarkdownIngestHarness()
+      await runDocxIngestHarness()
+      await runXlsxIngestHarness()
+      await runImportPdfCommentsHarness()
+      await runCompareScopeHarness()
+      await runDocumentRoleHarness()
+      await runBuildRfpProfilesHarness()
+      await runContractKeywordReviewHarness()
+      await runScoperHarness()
+      await runChatVoiceAsyncHarnesses()
+      await runDemoExtensionsHarness()
+      await runEcpAgentRunHarness()
+      await runProposalIntegrationHarnesses()
+      await runChatAgentHarness()
+      await runChatCitationsHarness()
+      await runChatCitationChipHarness()
+      await runDocumentSearchHarness()
+      await runFindClauseHarness()
+      await runFindClauseAgentHarness()
+      runChatHistoryMarkersHarness()
+      await runCitationBridgeHarness()
+      await runCitationClickHarness()
+      runResultsProfileUiHarness()
+      runResultsProfileGridHarness()
+      if (shouldRunLegacyCreepHarnesses()) {
+        runCreepProfileUiHarness()
+        runCreepProfileGridHarness()
       }
-    })()
+    } catch (error) {
+      console.error('[dev-harness]', error)
+    }
   }, [])
 
   return (
-    <SharePackBootstrap>
-      <AppShell />
-    </SharePackBootstrap>
+    <DevAppBootstrap onBootstrap={runDevHarnessChain}>
+      <SharePackBootstrap>
+        <AppShell />
+      </SharePackBootstrap>
+    </DevAppBootstrap>
   )
 }
 

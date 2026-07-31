@@ -7,7 +7,28 @@
     <title>Scoper Doc Agent Demo</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div
+        class="app-initial-boot"
+        aria-live="polite"
+        aria-busy="true"
+        style="
+          min-height: 100svh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #f3f2ee;
+          color: #111827;
+          font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        "
+      >
+        <p style="font-size: 0.75rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: #6b7280;">
+          Scoper Doc Agent
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.875rem; font-weight: 500">Loading…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

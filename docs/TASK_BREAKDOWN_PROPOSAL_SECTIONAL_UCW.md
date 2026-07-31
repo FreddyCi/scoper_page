@@ -523,16 +523,17 @@ flowchart TD
 ### **ID:** BDA-174
 
 **Title:** Wire activity emissions agent and orchestrator  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-170, BDA-164  
 **Priority:** High  
 **Description:** Emit `pushAgentActivity` + update `contextUsageSnapshot` from [`agent.ts`](../src/services/agent.ts) (find_clause start/complete, soft recall, hard roll) and [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) (roll → find_clause → writing → validated). Set `contextPhase: 'compacting'` during `rollProposalContext()`. Optional mirror strings to proposal panel status.  
 **Completed Changes:**
-- 🔄 All plan emission points
-- 🔄 Snapshot refresh after each milestone
+- ✅ [`agent-activity-bridge.ts`](../src/services/agent-activity-bridge.ts) — roll w/ compacting phase, proposal section emits, chat find_clause / soft recall / hard roll, usage sync
+- ✅ `build-proposal-volumes.ts` wired via `notifyProposalSectionRoll` / `notifyProposalSectionActivity`
+- ✅ `agent.ts` + `chat-agent.ts` chat turn tracking and emissions
 **Test Strategy:** Dev harness asserts log contains roll + section entries after mock generate.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runAgentActivityEmissionsHarness` in proposal unit harnesses; `pnpm build`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan F3; BDA-164
 

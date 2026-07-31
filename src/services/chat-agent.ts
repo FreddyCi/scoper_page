@@ -37,6 +37,7 @@ export async function runChatAgentTurn(
     })
   } finally {
     useSessionStore.getState().setChatGenerating(false)
+    useSessionStore.getState().setContextPhase('idle')
   }
 }
 

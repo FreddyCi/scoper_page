@@ -34,6 +34,15 @@ export type AgentActivitySlice = {
   contextPhase: ContextPhase
 }
 
+/** Milestones for proposal orchestrator / activity log (BDA-164, BDA-174). */
+export type ProposalSectionActivityEvent = {
+  kind: 'roll' | 'find_clause' | 'writing' | 'validated' | 'section_error'
+  volumeId: string
+  sectionId: string
+  sectionTitle: string
+  message?: string
+}
+
 export function createAgentActivityInitialState(): AgentActivitySlice {
   return {
     agentActivityLog: [],

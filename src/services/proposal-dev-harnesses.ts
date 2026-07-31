@@ -11,6 +11,7 @@ import { runMarkerShimmerHarness } from '@/components/ui/marker'
 import { runShimmerHarness } from '@/components/ui/shimmer'
 import { runAgentActivityStoreHarness } from '@/services/agent-activity-store-harness'
 import { runAgentActivityMarkersHarness } from '@/services/agent-activity-markers-harness'
+import { runAgentActivityEmissionsHarness } from '@/services/agent-activity-bridge'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
@@ -36,6 +37,7 @@ export function runProposalUnitHarnesses(): void {
   runMarkerShimmerHarness()
   runAgentActivityHarness()
   runAgentActivityTranscriptHarness()
+  runAgentActivityEmissionsHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
   runProposalSetupQualityGatesHarness()

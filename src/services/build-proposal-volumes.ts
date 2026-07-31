@@ -5,10 +5,15 @@ import {
   applySectionCompletion,
   createEmptyProposalHandoff,
   recordProposalHandoffFailure,
-  rollProposalContext,
   type ProposalHandoffSectionRef,
   type ProposalHandoffState,
 } from '@/lib/proposal-context-roll'
+import type { ProposalSectionActivityEvent } from '@/lib/agent-activity'
+import {
+  notifyProposalSectionActivity,
+  notifyProposalSectionRoll,
+  syncContextUsageFromTracker,
+} from '@/services/agent-activity-bridge'
 import {
   PROPOSAL_DRAFT_MIN_CHARS,
   validateProposalVolumeDraft,
@@ -32,14 +37,7 @@ import {
 } from '@/services/proposal-volume-ecp'
 import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 
-/** Milestones for proposal panel / activity log wiring (BDA-174). */
-export type ProposalSectionActivityEvent = {
-  kind: 'roll' | 'find_clause' | 'writing' | 'validated' | 'section_error'
-  volumeId: string
-  sectionId: string
-  sectionTitle: string
-  message?: string
-}
+export type { ProposalSectionActivityEvent } from '@/lib/agent-activity'
 
 export type BuildProposalVolumesOptions = {
   documents: DocumentMeta[]
@@ -240,13 +238,17 @@ async function generateSectionBody(
     ecpFindCount < 2 &&
     (input.excerpts?.length ?? 0) === 0
   ) {
-    options.onSectionActivity?.({
-      kind: 'find_clause',
-      volumeId: input.volume.id,
-      sectionId: input.section.id,
-      sectionTitle: input.section.title,
-      message: 'Review retrieve after validation failure',
-    })
+    notifyProposalSectionActivity(
+      {
+        kind: 'find_clause',
+        volumeId: input.volume.id,
+        sectionId: input.section.id,
+        sectionTitle: input.section.title,
+        message: 'Review retrieve after validation failure',
+      },
+      input.contextTracker,
+      options.onSectionActivity,
+    )
 
     const reviewExcerpts = await runReviewFindClause(
       input.section,
@@ -258,14 +260,16 @@ async function generateSectionBody(
     ecpFindCount += 1
 
     if (reviewExcerpts.length > 0) {
-      rollProposalContext()
-      options.onSectionActivity?.({
-        kind: 'roll',
-        volumeId: input.volume.id,
-        sectionId: input.section.id,
-        sectionTitle: input.section.title,
-        message: 'Roll before review retrieve rewrite',
-      })
+      notifyProposalSectionRoll(
+        {
+          volumeId: input.volume.id,
+          sectionId: input.section.id,
+          sectionTitle: input.section.title,
+          message: 'Roll before review retrieve rewrite',
+        },
+        input.contextTracker,
+        options.onSectionActivity,
+      )
 
       markdown = await generateProposalSectionMarkdownViaEcp({
         section: input.section,
@@ -295,6 +299,8 @@ async function generateSectionBody(
       input.companyContext,
     )
   }
+
+  syncContextUsageFromTracker(input.contextTracker)
 
   return { markdown, ecpFindCount }
 }
@@ -375,13 +381,15 @@ export async function buildProposalVolumes(
             ?.sections?.find((entry) => entry.id === sectionSeed.id) ?? sectionSeed
 
         handoffChunkIndex += 1
-        rollProposalContext()
-        options.onSectionActivity?.({
-          kind: 'roll',
-          volumeId: volume.id,
-          sectionId: section.id,
-          sectionTitle: section.title,
-        })
+        notifyProposalSectionRoll(
+          {
+            volumeId: volume.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+          },
+          contextTracker,
+          options.onSectionActivity,
+        )
 
         profile = patchProposalVolumeSection(profile, volume.id, section.id, {
           status: 'generating',
@@ -394,19 +402,27 @@ export async function buildProposalVolumes(
         })
         options.onProfileUpdate(profile)
 
-        options.onSectionActivity?.({
-          kind: 'find_clause',
-          volumeId: volume.id,
-          sectionId: section.id,
-          sectionTitle: section.title,
-        })
+        notifyProposalSectionActivity(
+          {
+            kind: 'find_clause',
+            volumeId: volume.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+          },
+          contextTracker,
+          options.onSectionActivity,
+        )
 
-        options.onSectionActivity?.({
-          kind: 'writing',
-          volumeId: volume.id,
-          sectionId: section.id,
-          sectionTitle: section.title,
-        })
+        notifyProposalSectionActivity(
+          {
+            kind: 'writing',
+            volumeId: volume.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+          },
+          contextTracker,
+          options.onSectionActivity,
+        )
 
         const { markdown: sectionMarkdown } = await generateSectionBody(
           {
@@ -440,13 +456,17 @@ export async function buildProposalVolumes(
             errorMessage: reason,
             bodyMarkdown: sectionMarkdown.trim() || undefined,
           })
-          options.onSectionActivity?.({
-            kind: 'section_error',
-            volumeId: volume.id,
-            sectionId: section.id,
-            sectionTitle: section.title,
-            message: reason,
-          })
+          notifyProposalSectionActivity(
+            {
+              kind: 'section_error',
+              volumeId: volume.id,
+              sectionId: section.id,
+              sectionTitle: section.title,
+              message: reason,
+            },
+            contextTracker,
+            options.onSectionActivity,
+          )
           options.onProfileUpdate(profile)
           break
         }
@@ -472,12 +492,16 @@ export async function buildProposalVolumes(
             profile.volumes.find((entry) => entry.id === volume.id)?.sections,
           ),
         })
-        options.onSectionActivity?.({
-          kind: 'validated',
-          volumeId: volume.id,
-          sectionId: section.id,
-          sectionTitle: section.title,
-        })
+        notifyProposalSectionActivity(
+          {
+            kind: 'validated',
+            volumeId: volume.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+          },
+          contextTracker,
+          options.onSectionActivity,
+        )
         options.onProfileUpdate(profile)
       }
 
@@ -516,6 +540,8 @@ export async function buildProposalVolumes(
 
     options.onProfileUpdate(profile)
   }
+
+  syncContextUsageFromTracker(contextTracker)
 
   return profile
 }

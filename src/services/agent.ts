@@ -17,6 +17,15 @@ import {
   getScoperClient,
   ScoperWebGpuUnavailableError,
 } from '@/services/scoper-client'
+import {
+  emitChatFindClauseComplete,
+  emitChatFindClauseStart,
+  getChatContextTracker,
+  recordChatTurnText,
+  resetChatContextTracker,
+  setChatContextPhase,
+  syncContextUsageFromTracker,
+} from '@/services/agent-activity-bridge'
 import { useSessionStore } from '@/store/session-store'
 
 type AgentTurnHandlers = {
@@ -155,13 +164,19 @@ async function streamFindClauseSummary(
 ): Promise<string> {
   await ensureScoperReady()
   useSessionStore.getState().setChatModelStatus('generating')
+  setChatContextPhase('generating')
+
+  const tracker = getChatContextTracker()
+  const scoperMessages = buildFindClauseScoperPrompt(prompt, findResult)
+  recordChatTurnText(tracker, scoperMessages.map((message) => message.content).join('\n'))
 
   const scoper = getScoperClient()
-  const result = await scoper.send(buildFindClauseScoperPrompt(prompt, findResult), {
+  const result = await scoper.send(scoperMessages, {
     onText: handlers.onStreamDelta,
   })
 
   useSessionStore.getState().setChatModelStatus('ready')
+  syncContextUsageFromTracker(tracker)
   return result.text.trim() || findResult.summary
 }
 
@@ -171,9 +186,12 @@ async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandler
   const docIds = resolveCitationDocIds(prompt, attachments)
   applyMentionScope(prompt, attachments)
 
+  const findQuery = compactFindClauseQuery(prompt)
+  emitChatFindClauseStart(findQuery)
+
   let findResult: FindClauseResult
   try {
-    findResult = await invokeFindClauseViaEcp(compactFindClauseQuery(prompt), docIds, 6)
+    findResult = await invokeFindClauseViaEcp(findQuery, docIds, 6)
   } catch (error) {
     if (error instanceof EcpAgentRunDeniedError) {
       finalizeAgentError(handlers.assistantId, error.message)
@@ -182,9 +200,12 @@ async function runFindClauseAgentPath(prompt: string, handlers: AgentTurnHandler
     throw error
   }
 
+  emitChatFindClauseComplete(findResult.matches.length)
+
   try {
     const summary = await streamFindClauseSummary(enrichedPrompt, findResult, handlers)
     finalizeFindClauseTurn(handlers.assistantId, summary, findResult)
+    syncContextUsageFromTracker(getChatContextTracker())
     return
   } catch (error) {
     if (import.meta.env.DEV) {
@@ -201,13 +222,19 @@ async function runGenericScoperTurn(
 ) {
   await ensureScoperReady()
   useSessionStore.getState().setChatModelStatus('generating')
+  setChatContextPhase('generating')
+
+  const tracker = getChatContextTracker()
+  const scoperMessages = toScoperMessages(messages)
+  recordChatTurnText(tracker, scoperMessages.map((message) => message.content).join('\n'))
 
   const scoper = getScoperClient()
-  const result = await scoper.send(toScoperMessages(messages), {
+  const result = await scoper.send(scoperMessages, {
     onText: handlers.onStreamDelta,
   })
 
   useSessionStore.getState().setChatModelStatus('ready')
+  syncContextUsageFromTracker(tracker)
 
   useSessionStore.getState().finalizeAssistantMessage(handlers.assistantId, {
     text: result.text,
@@ -226,8 +253,11 @@ async function applyStubAssistantReply(
 
   let findResult: FindClauseResult | null = null
   if (docIds.length > 0) {
+    const findQuery = compactFindClauseQuery(prompt)
     try {
-      findResult = await invokeFindClauseViaEcp(compactFindClauseQuery(prompt), docIds, 6)
+      emitChatFindClauseStart(findQuery)
+      findResult = await invokeFindClauseViaEcp(findQuery, docIds, 6)
+      emitChatFindClauseComplete(findResult.matches.length)
     } catch (error) {
       if (error instanceof EcpAgentRunDeniedError) {
         finalizeAgentError(assistantId, error.message)
@@ -261,6 +291,9 @@ async function applyStubAssistantReply(
 export async function runAgentTurn(prompt: string, handlers: AgentTurnHandlers): Promise<void> {
   const trimmed = prompt.trim()
   if (!trimmed) return
+
+  resetChatContextTracker()
+  setChatContextPhase('generating')
 
   await ensureScoperEcpReadyBeforeAgentRun()
 

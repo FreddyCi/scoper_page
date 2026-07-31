@@ -134,6 +134,19 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 ---
 
+## Chat voice input (BDA-195)
+
+**Execution date:** 2026-07-31  
+**Script:** [`TASK_BREAKDOWN_CHAT_VOICE.md`](TASK_BREAKDOWN_CHAT_VOICE.md) § BDA-195
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `pnpm qa:proposal` (BDA-195 static) | **Pass** | `ChatVoiceButton`, draft merge, send blocked during voice, harness registration, ARCHITECTURE |
+| `pnpm qa:automated` (build + smoke) | **Pass** | Whisper worker bundle ~514 KB under limit |
+| Manual UI (mic, partials, stop, edit, Send, fillers, busy gates) | **Pending spot-check** | Chrome + WebGPU; see BDA-195 manual table |
+
+---
+
 ## Sign-off
 
 | Field | Value |

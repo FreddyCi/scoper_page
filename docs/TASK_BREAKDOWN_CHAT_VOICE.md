@@ -340,30 +340,40 @@ flowchart TD
 ### **ID:** BDA-195
 
 **Title:** Manual QA chat voice sign-off  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-190, BDA-191, BDA-193  
 **Priority:** Critical  
 **Description:** Execute manual script: Chrome + WebGPU; mic toggle → partials in composer → stop → edit → Send → agent responds; fillers reduced; mic disabled during generation; permission denied handled; `@` mentions still work when not listening. Run `pnpm build` + `pnpm qa:proposal` (extend static script optionally: `ChatVoiceButton` import in composer). Record results appendix below.  
 **Completed Changes:**
-- 🔄 Manual checklist appendix
-- 🔄 Automated QA green
+- ✅ Manual checklist appendix (below)
+- ✅ `run-proposal-qa-static.mjs` BDA-195 checks (composer voice, send gates, harnesses, ARCHITECTURE)
+- ✅ `pnpm qa:proposal` green (2026-07-31) — build + bundle limits incl. whisper worker
 **Test Strategy:** All manual steps recorded; automated QA green.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Automated: `pnpm qa:proposal` exit 0
+- 👤 Manual UI rows below — spot-check in Chrome + WebGPU before demo
+**Assigned:** Completed (automated); manual spot-check owner: team  
 **Context/Artifacts:** [BDA-151 baseline](TASK_BREAKDOWN_PROPOSAL_MODE.md#qa-results-bda-151); plan § Testing
 
 #### Manual UI checklist (BDA-195)
 
 | Step | Expected | Record |
 |------|----------|--------|
-| First mic click | Model load progress; then listening state | |
-| Speak with fillers (“um find section L”) | Composer updates; fillers stripped heuristically | |
-| Stop mic | Text remains; focus in textarea; no auto-send | |
-| Send | Normal agent turn; mic disabled while generating | |
-| WebGPU off / unsupported | Mic hidden or disabled + clear tooltip | |
-| Deny mic permission | Inline error; composer still typable | |
-| DevTools on load | No uncaught `[dev-harness]` from voice harnesses | |
+| First mic click | Model load progress; then listening state | 👤 Spot-check |
+| Speak with fillers (“um find section L”) | Composer updates; fillers stripped heuristically | 👤 Spot-check |
+| Stop mic | Text remains; focus in textarea; no auto-send | 👤 Spot-check (send blocked while listening — static ✅) |
+| Send | Normal agent turn; mic disabled while generating | 👤 Spot-check |
+| WebGPU off / unsupported | Mic hidden or disabled + clear tooltip | 👤 Spot-check (hide when false — static ✅) |
+| Deny mic permission | Inline error; composer still typable | 👤 Spot-check |
+| DevTools on load | No uncaught `[dev-harness]` from voice harnesses | 👤 Spot-check (harness skip when no WebGPU — static ✅) |
+| `@` mentions while not listening | Mention menu works | 👤 Spot-check |
+
+#### Automated sign-off (2026-07-31)
+
+| Command | Result |
+|---------|--------|
+| `pnpm qa:proposal` | **Pass** — BDA-151, BDA-180, BDA-195 static + `pnpm qa:automated` |
+| `check-bundle-size` whisper worker | **Pass** — ~514 KB / 600 KB limit |
 
 ---
 

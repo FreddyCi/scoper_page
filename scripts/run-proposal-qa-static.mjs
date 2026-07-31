@@ -120,6 +120,63 @@ assert(
 console.log(
   '[qa:proposal] PASS BDA-180 static wiring (context ring, activity markers, sectional loop, export gate)',
 )
+
+console.log('[qa:proposal] BDA-195 chat voice static checks')
+
+assert(
+  chatComposer.includes('ChatVoiceButton'),
+  'ChatComposer must mount ChatVoiceButton (BDA-190)',
+)
+assert(
+  chatComposer.includes('mergeComposerVoiceDraft'),
+  'ChatComposer must merge voice partials into draft (BDA-190)',
+)
+assert(
+  chatComposer.includes('voicePhase === \'listening\'') &&
+    chatComposer.includes('isChatVoiceSessionActive()'),
+  'ChatComposer handleSend must block while voice session active (BDA-191)',
+)
+assert(
+  chatComposer.includes('!voiceActive'),
+  'ChatComposer canSend must disable send during voice load/listen (BDA-195)',
+)
+
+const chatVoiceButton = read('src/components/chat/ChatVoiceButton.tsx')
+assert(
+  chatVoiceButton.includes('shouldShowChatVoiceMic'),
+  'ChatVoiceButton must hide mic when WebGPU unavailable (BDA-191)',
+)
+
+const appTsx = read('src/App.tsx')
+assert(
+  appTsx.includes('runChatVoiceUnitHarnesses'),
+  'App dev chain must run runChatVoiceUnitHarnesses (BDA-193)',
+)
+assert(
+  appTsx.includes('runChatVoiceAsyncHarnesses'),
+  'App dev chain must run runChatVoiceAsyncHarnesses (BDA-193)',
+)
+
+assert(
+  existsSync(path.join(root, 'src/services/chat-voice-dev-harnesses.ts')),
+  'chat-voice-dev-harnesses.ts must exist (BDA-193)',
+)
+assert(
+  existsSync(path.join(root, 'src/services/whisper-client-harness.ts')),
+  'whisper-client-harness.ts must exist (BDA-193)',
+)
+
+const architecture = read('docs/ARCHITECTURE.md')
+assert(
+  architecture.includes('whisper.worker'),
+  'ARCHITECTURE.md must document whisper worker (BDA-194)',
+)
+
+console.log('[qa:proposal] PASS BDA-195 chat voice wiring (composer, gates, harnesses, docs)')
+
+console.log(
+  '[qa:proposal] Manual UI: TASK_BREAKDOWN_CHAT_VOICE.md § BDA-195 manual checklist; baseline BDA-151 in TASK_BREAKDOWN_PROPOSAL_MODE.md',
+)
 console.log(
   '[qa:proposal] Manual UI: TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md § BDA-180; baseline BDA-151 in TASK_BREAKDOWN_PROPOSAL_MODE.md',
 )

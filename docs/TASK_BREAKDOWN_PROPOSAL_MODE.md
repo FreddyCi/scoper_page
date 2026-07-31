@@ -223,17 +223,18 @@ sequenceDiagram
 ### **ID:** BDA-116
 
 **Title:** Build proposal RFP profile service  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-110, BDA-115  
 **Priority:** Critical  
 **Description:** Add [`src/services/build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts): input RFP `doc_id`; [`fetchDocumentBlocks`](../src/services/document-blocks.ts); derive volumes from `section_path` / heading heuristics ([`commonSectionPathPrefix`](../src/services/document-blocks.ts)); cap summary length; return `ProposalRequirementsProfile`. In-memory only (no DuckDB v1).  
 **Completed Changes:**
-- 🔄 Volume extraction logic
-- 🔄 Edge case: single-volume fallback if no sections detected
+- ✅ `buildProposalRfpProfile` — section grouping, proposal keyword ranking, `compactSectionPathLabel`
+- ✅ Single-volume fallback when extraction yields no volumes; `PROPOSAL_SUMMARY_MAX` (480)
+- ✅ `runProposalRfpProfileHarness` — prefers `rfp-it-services.pdf`, asserts summary cap + pending volumes
 **Test Strategy:** Run against `public/sample/rfp-it-services.pdf` or harness; ≥1 volume with non-empty title.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness passes on sample RFP ingest; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** [`parse-contract-checklist.ts`](../src/services/parse-contract-checklist.ts) (section heuristics), plan §2  
 
 ---

@@ -16,6 +16,8 @@ const PROPOSAL_SUMMARY_MAX = 480
 const MAX_VOLUMES = 12
 const MIN_SECTION_CHARS = 120
 
+export { PROPOSAL_SUMMARY_MAX }
+
 const PROPOSAL_SECTION_HINT =
   /section\s*[lm]\b|instructions\s*to\s*offerors|evaluation\s*factors|proposal\s*requirements|submission\s*requirements|volume\s*\d|technical\s*approach|management\s*approach|past\s*performance|cost\s*proposal|price\s*proposal/i
 
@@ -139,15 +141,24 @@ export async function buildProposalRfpProfile(
 }
 
 /** Dev harness — ingest sample PDF and assert ≥1 volume (BDA-116 / BDA-117) */
-export async function runProposalRfpProfileHarness(): Promise<void> {
-  const response = await fetch('/sample/minimal.pdf')
+async function ingestSamplePdf(url: string, filename: string) {
+  const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`proposal RFP profile harness: failed to load sample PDF (${response.status})`)
+    throw new Error(`proposal RFP profile harness: failed to load ${url} (${response.status})`)
   }
 
   const blob = await response.blob()
-  const file = new File([blob], 'minimal.pdf', { type: 'application/pdf' })
-  const ingested = await ingestFile(file, { ocrEnabled: false })
+  const file = new File([blob], filename, { type: 'application/pdf' })
+  return ingestFile(file, { ocrEnabled: false })
+}
+
+export async function runProposalRfpProfileHarness(): Promise<void> {
+  let ingested
+  try {
+    ingested = await ingestSamplePdf('/sample/rfp-it-services.pdf', 'rfp-it-services.pdf')
+  } catch {
+    ingested = await ingestSamplePdf('/sample/minimal.pdf', 'minimal.pdf')
+  }
 
   const document: DocumentMeta = {
     doc_id: ingested.doc_id,
@@ -166,7 +177,27 @@ export async function runProposalRfpProfileHarness(): Promise<void> {
     throw new Error('proposal RFP profile harness: expected at least one volume')
   }
 
-  if (!profile.volumes[0]?.title.trim()) {
-    throw new Error('proposal RFP profile harness: volume title must be non-empty')
+  if (profile.rfp_doc_id !== document.doc_id) {
+    throw new Error('proposal RFP profile harness: rfp_doc_id mismatch')
+  }
+
+  if (profile.summary.length > PROPOSAL_SUMMARY_MAX) {
+    throw new Error('proposal RFP profile harness: summary exceeds max length')
+  }
+
+  for (const volume of profile.volumes) {
+    if (!volume.title.trim()) {
+      throw new Error('proposal RFP profile harness: volume title must be non-empty')
+    }
+    if (volume.status !== 'pending') {
+      throw new Error('proposal RFP profile harness: new volumes should be pending')
+    }
+  }
+
+  const missingDoc = await buildProposalRfpProfile([document], {
+    rfpDocId: 'missing-doc-id',
+  })
+  if (missingDoc != null) {
+    throw new Error('proposal RFP profile harness: unknown rfpDocId should return null')
   }
 }

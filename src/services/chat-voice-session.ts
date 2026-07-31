@@ -1,4 +1,8 @@
 import { cleanSpeechTranscript } from '@/lib/speech-transcript-cleanup'
+import {
+  isSilentSpeechChunk,
+  isWhisperNoiseTranscript,
+} from '@/lib/speech-chunk-vad'
 import type { ChatVoiceCaptureStartResult } from '@/services/chat-voice-capture'
 import {
   isChatVoiceCaptureActive,
@@ -89,11 +93,21 @@ async function drainTranscribeQueue(): Promise<void> {
       if (!chunk) break
 
       try {
+        if (isSilentSpeechChunk(chunk.pcm)) {
+          continue
+        }
+
         const result = await client.transcribeChunk(chunk.pcm, {
           copyAudio: true,
           sampleRateHz: chunk.sampleRateHz,
         })
-        emitPartial(mergeSegmentIntoTranscript(mergedTranscript, result.text))
+
+        const segment = result.text.trim()
+        if (!segment || isWhisperNoiseTranscript(segment)) {
+          continue
+        }
+
+        emitPartial(mergeSegmentIntoTranscript(mergedTranscript, segment))
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error))
         setSessionState('error')
@@ -157,11 +171,11 @@ export async function startChatVoiceSession(
   const client = getWhisperClient()
   client.setListeners({
     onPartial: (text) => {
-      if (!listenActive || !text.trim()) return
+      if (!listenActive || !text.trim() || isWhisperNoiseTranscript(text)) return
       emitPartial(mergeSegmentIntoTranscript(mergedTranscript, text))
     },
     onSegment: (text) => {
-      if (!listenActive || !text.trim()) return
+      if (!listenActive || !text.trim() || isWhisperNoiseTranscript(text)) return
       emitPartial(mergeSegmentIntoTranscript(mergedTranscript, text))
     },
     onError: (error) => {

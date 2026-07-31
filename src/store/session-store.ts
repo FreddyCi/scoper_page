@@ -920,10 +920,12 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     clearBidderUploadPrompt()
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
+    writeCompanyContextPreference('')
     getScoperClient().resetConversation()
     get().clearProposalGeneration()
     set({
       ...initialState,
+      companyContext: '',
       chatStarted: false,
       chatCollapsed: true,
       chatSidebarTab: 'agent',

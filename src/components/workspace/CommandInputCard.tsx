@@ -47,7 +47,12 @@ type CommandInputCardProps = {
 
 const PLACEHOLDER_COPY: Record<WorkspaceMode, string> = {
   rfp: 'Describe what to analyse in these RFP documents…',
-  proposal: 'Describe the RFP and your company capabilities for proposal generation…',
+  proposal: 'Attach the solicitation RFP and describe your company as the responder…',
+}
+
+const MODE_CHIP_LABEL: Record<WorkspaceMode, string> = {
+  rfp: 'RFP Analysis',
+  proposal: 'Generate Proposal',
 }
 
 const FAN_ROTATIONS = ['-rotate-6', '-rotate-3', 'rotate-0', 'rotate-3', 'rotate-6'] as const
@@ -200,8 +205,8 @@ function CommandSettingsPopover({
           <div className="flex flex-col gap-1">
             {(
               [
-                ['rfp', 'RFP Analysis'],
-                ['proposal', 'Generate Proposal'],
+                ['rfp', MODE_CHIP_LABEL.rfp],
+                ['proposal', MODE_CHIP_LABEL.proposal],
               ] as const
             ).map(([value, label]) => (
               <button
@@ -354,11 +359,12 @@ export function CommandInputCard({
 
           <button
             type="button"
-            disabled
-            className="text-muted-foreground ml-1 inline-flex min-w-0 items-center gap-1 truncate rounded-full px-1.5 py-1 text-xs transition-colors"
-            aria-haspopup="listbox"
+            className="text-muted-foreground hover:text-foreground ml-1 inline-flex min-w-0 max-w-[9.5rem] items-center gap-1 truncate rounded-full border border-border/80 bg-muted/40 px-2 py-1 text-xs font-medium transition-colors sm:max-w-none"
+            aria-haspopup="dialog"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen((value) => !value)}
           >
-            <span className="truncate">Bonsai 1.7B</span>
+            <span className="truncate">{MODE_CHIP_LABEL[mode]}</span>
             <ChevronDownIcon className="size-3 shrink-0 opacity-60" />
           </button>
         </div>

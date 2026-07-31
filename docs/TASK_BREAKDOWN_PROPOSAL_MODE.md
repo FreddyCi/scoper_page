@@ -382,16 +382,18 @@ sequenceDiagram
 ### **ID:** BDA-123
 
 **Title:** CommandInputCard proposal mode  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** Medium  
 **Description:** [`CommandInputCard.tsx`](../src/components/workspace/CommandInputCard.tsx): mode chip **Generate Proposal**; placeholder for proposal mode (responder / RFP intent).  
 **Completed Changes:**
-- 🔄 PLACEHOLDER_COPY + mode toggle list
+- ✅ `MODE_CHIP_LABEL` — visible chip **Generate Proposal** / **RFP Analysis** (opens settings)
+- ✅ `PLACEHOLDER_COPY.proposal` — responder + RFP intent
+- ✅ Settings mode list shares `MODE_CHIP_LABEL` with store `setMode('proposal')`
 **Test Strategy:** Switch mode in command card; placeholder updates.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3  
 
 ---

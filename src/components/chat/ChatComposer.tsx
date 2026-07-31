@@ -19,7 +19,6 @@ import {
 } from '@/lib/chat-mentions'
 import { SCOPER_CHAT_DOCUMENT_MIME, dragCarriesChatDocument } from '@/lib/chat-context-drag'
 import { mergeComposerVoiceDraft } from '@/lib/chat-composer-voice-draft'
-import { shouldStopChatVoiceForHandoff } from '@/lib/chat-voice-gating'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import {
@@ -28,7 +27,6 @@ import {
 } from '@/services/chat-markdown-drop'
 import {
   isChatVoiceSessionActive,
-  stopChatVoiceSession,
 } from '@/services/chat-voice-session'
 import { useSessionStore } from '@/store/session-store'
 
@@ -65,7 +63,11 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const preMicDraftRef = useRef('')
 
   const voiceActive = voicePhase === 'loading' || voicePhase === 'listening'
-  const canSend = draft.trim().length > 0 && !chatGenerating && !ingestingMarkdown
+  const canSend =
+    draft.trim().length > 0 &&
+    !chatGenerating &&
+    !ingestingMarkdown &&
+    !voiceActive
   const isBusy =
     chatGenerating || chatModelStatus === 'loading' || ingestingMarkdown || voiceActive
 
@@ -113,14 +115,13 @@ export function ChatComposer({ className }: ChatComposerProps) {
     })
   }
 
-  async function handleSend() {
+  function handleSend() {
+    if (voicePhase === 'loading' || voicePhase === 'listening' || isChatVoiceSessionActive()) {
+      return
+    }
+
     const text = draft.trim()
     if (!text || chatGenerating || ingestingMarkdown) return
-
-    const voiceSessionActive = isChatVoiceSessionActive() || voicePhase !== 'idle'
-    if (shouldStopChatVoiceForHandoff(voiceSessionActive, true)) {
-      await stopChatVoiceSession({ disposeWhisper: true })
-    }
 
     sendChatPrompt(draft)
     setDraft('')
@@ -338,7 +339,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
 
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
-              void handleSend()
+              handleSend()
             }
           }}
           placeholder={
@@ -399,7 +400,7 @@ export function ChatComposer({ className }: ChatComposerProps) {
             className="bg-foreground text-background hover:bg-foreground/90 rounded-full"
             aria-label="Send message"
             disabled={!canSend}
-            onClick={() => void handleSend()}
+            onClick={handleSend}
           >
             <ArrowUpIcon className="size-3.5" />
           </Button>

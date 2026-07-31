@@ -238,17 +238,19 @@ flowchart TD
 ### **ID:** BDA-190
 
 **Title:** ChatComposer voice draft merge  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-189, BDA-188  
 **Priority:** Critical  
 **Description:** Integrate in [`ChatComposer.tsx`](../src/components/chat/ChatComposer.tsx): mount `ChatVoiceButton` in footer cluster (left of [`ContextUsageComposerCluster`](../src/components/chat/ContextUsageSheet.tsx) / paperclip). **Draft merge:** preserve pre-mic text; replace/update trailing voice segment while listening; placeholder “Listening…” when active; voice errors near `dropError`. Do not call `sendChatPrompt` on mic stop. Expand `isBusy` to include voice loading/listening as needed.  
 **Completed Changes:**
-- 🔄 Voice segment merge helper
-- 🔄 Focus textarea on mic stop
+- ✅ [`chat-composer-voice-draft.ts`](../src/lib/chat-composer-voice-draft.ts) — `mergeComposerVoiceDraft` + harness
+- ✅ `ChatComposer` — mic left of attachments; pre-mic snapshot on load; partial merge; `voiceError`; focus on stop
+- ✅ `isBusy` / send gated during voice load+listen; placeholders Listening… / Loading speech model…
 **Test Strategy:** Type text → start mic → speak → stop → pre-mic + transcript intact; Send still manual.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Merge harness on dev load
+- 👤 Manual mic flow in browser
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-052 composer; plan § Draft merge rule
 
 ---

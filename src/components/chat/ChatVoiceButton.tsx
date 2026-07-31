@@ -52,6 +52,7 @@ export type ChatVoiceButtonProps = {
   disabled?: boolean
   onPartial?: (text: string) => void
   onListeningChange?: (listening: boolean) => void
+  onPhaseChange?: (phase: ChatVoiceButtonVisualState) => void
   onVoiceError?: (error: Error) => void
 }
 
@@ -61,6 +62,7 @@ export function ChatVoiceButton({
   disabled = false,
   onPartial,
   onListeningChange,
+  onPhaseChange,
   onVoiceError,
 }: ChatVoiceButtonProps) {
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
@@ -72,10 +74,12 @@ export function ChatVoiceButton({
   const onPartialRef = useRef(onPartial)
   const onListeningChangeRef = useRef(onListeningChange)
   const onVoiceErrorRef = useRef(onVoiceError)
+  const onPhaseChangeRef = useRef(onPhaseChange)
 
   onPartialRef.current = onPartial
   onListeningChangeRef.current = onListeningChange
   onVoiceErrorRef.current = onVoiceError
+  onPhaseChangeRef.current = onPhaseChange
 
   useEffect(() => {
     let cancelled = false
@@ -121,6 +125,10 @@ export function ChatVoiceButton({
     webGpuAvailable !== true ||
     isLoading ||
     ((agentBusy || disabled) && !isListening)
+
+  useEffect(() => {
+    onPhaseChangeRef.current?.(visual)
+  }, [visual])
 
   const handleToggle = useCallback(async () => {
     if (isLoading) return

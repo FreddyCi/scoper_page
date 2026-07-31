@@ -4,6 +4,10 @@ import { ArrowUpIcon, FileTextIcon, SparklesIcon } from 'lucide-react'
 import {
   ChatContextAttachmentControls,
 } from '@/components/chat/ChatContextAttachments'
+import {
+  ChatVoiceButton,
+  type ChatVoiceButtonVisualState,
+} from '@/components/chat/ChatVoiceButton'
 import { ContextUsageComposerCluster } from '@/components/chat/ContextUsageSheet'
 import { ChatContextStack } from '@/components/chat/ChatContextStack'
 import { Button } from '@/components/ui/button'
@@ -14,6 +18,7 @@ import {
   insertDocMention,
 } from '@/lib/chat-mentions'
 import { SCOPER_CHAT_DOCUMENT_MIME, dragCarriesChatDocument } from '@/lib/chat-context-drag'
+import { mergeComposerVoiceDraft } from '@/lib/chat-composer-voice-draft'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { cn } from '@/lib/utils'
 import {
@@ -48,11 +53,17 @@ export function ChatComposer({ className }: ChatComposerProps) {
   const [draggingSessionDoc, setDraggingSessionDoc] = useState(false)
   const [ingestingMarkdown, setIngestingMarkdown] = useState(false)
   const [dropError, setDropError] = useState<string | null>(null)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
+  const [voicePhase, setVoicePhase] = useState<ChatVoiceButtonVisualState>('idle')
   const dragDepthRef = useRef(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const preMicDraftRef = useRef('')
 
-  const canSend = draft.trim().length > 0 && !chatGenerating && !ingestingMarkdown
-  const isBusy = chatGenerating || chatModelStatus === 'loading' || ingestingMarkdown
+  const voiceActive = voicePhase === 'loading' || voicePhase === 'listening'
+  const canSend =
+    draft.trim().length > 0 && !chatGenerating && !ingestingMarkdown && !voiceActive
+  const isBusy =
+    chatGenerating || chatModelStatus === 'loading' || ingestingMarkdown || voiceActive
 
   const activeMention = findActiveMentionQuery(draft, cursor)
   const mentionCandidates = useMemo(
@@ -105,6 +116,33 @@ export function ChatComposer({ className }: ChatComposerProps) {
     setCursor(0)
     setMentionHighlight(0)
     setDropError(null)
+    setVoiceError(null)
+  }
+
+  function handleVoicePhaseChange(phase: ChatVoiceButtonVisualState) {
+    if (phase === 'loading') {
+      preMicDraftRef.current = draft
+      setVoiceError(null)
+    }
+    setVoicePhase((previous) => {
+      if (phase === 'idle' && previous === 'listening') {
+        requestAnimationFrame(() => {
+          const textarea = textareaRef.current
+          if (!textarea) return
+          textarea.focus()
+          const end = textarea.value.length
+          textarea.setSelectionRange(end, end)
+          setCursor(end)
+        })
+      }
+      return phase
+    })
+  }
+
+  function handleVoicePartial(voiceSegment: string) {
+    const merged = mergeComposerVoiceDraft(preMicDraftRef.current, voiceSegment)
+    setDraft(merged)
+    setCursor(merged.length)
   }
 
   function acceptsComposerDrop(types: readonly string[]) {
@@ -293,16 +331,23 @@ export function ChatComposer({ className }: ChatComposerProps) {
             }
           }}
           placeholder={
-            isBusy
-              ? ingestingMarkdown
-                ? 'Adding markdown context…'
-                : 'Agent is responding…'
-              : 'Ask the agent… / for skills, @ for context, drop docs or .md here'
+            voicePhase === 'listening'
+              ? 'Listening…'
+              : voicePhase === 'loading'
+                ? 'Loading speech model…'
+                : isBusy
+                  ? ingestingMarkdown
+                    ? 'Adding markdown context…'
+                    : 'Agent is responding…'
+                  : 'Ask the agent… / for skills, @ for context, drop docs or .md here'
           }
           disabled={isBusy}
           className="text-foreground placeholder:text-subtle-foreground min-h-[3.25rem] w-full resize-none bg-transparent text-sm leading-relaxed outline-none"
         />
         {dropError ? <p className="text-destructive mt-1 text-xs">{dropError}</p> : null}
+        {!dropError && voiceError ? (
+          <p className="text-destructive mt-1 text-xs">{voiceError}</p>
+        ) : null}
       </div>
 
       <div className="border-border/70 flex items-center justify-between gap-2 border-t px-2.5 py-1.5">
@@ -318,6 +363,12 @@ export function ChatComposer({ className }: ChatComposerProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-0.5">
+          <ChatVoiceButton
+            disabled={ingestingMarkdown}
+            onPhaseChange={handleVoicePhaseChange}
+            onPartial={handleVoicePartial}
+            onVoiceError={(error) => setVoiceError(error.message)}
+          />
           <ContextUsageComposerCluster>
             <ChatContextAttachmentControls
               documents={documents}

@@ -1,3 +1,6 @@
+import { clearEcpAgentAuditLog, getEcpAgentAuditLog } from '@/ecp/agent-run'
+import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
+import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { getProposalSetupState } from '@/lib/proposal-readiness'
 import type { DocumentMeta } from '@/lib/types'
 import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
@@ -45,6 +48,9 @@ export async function runProposalGenerationHarness(): Promise<void> {
     throw new Error('proposal generation harness: need profile volumes for service loop test')
   }
 
+  clearEcpAgentAuditLog()
+  await ensureScoperEcpReadyBeforeAgentRun()
+
   let profileUpdates = 0
   const generated = await buildProposalVolumes({
     documents: [document],
@@ -69,6 +75,14 @@ export async function runProposalGenerationHarness(): Promise<void> {
     if (volume.status === 'draft' && !volume.bodyMarkdown?.trim()) {
       throw new Error('proposal generation harness: draft volume missing bodyMarkdown')
     }
+  }
+
+  const findClauseAllows = getEcpAgentAuditLog().filter(
+    (entry) =>
+      entry.capabilityId === DOCUMENT_CAPABILITIES.find_clause && entry.decision === 'allow',
+  )
+  if (findClauseAllows.length < 1) {
+    throw new Error('proposal generation harness: expected ECP find_clause allow audit entry')
   }
 
   const store = useSessionStore.getState()
@@ -105,7 +119,16 @@ export async function runProposalGenerationHarness(): Promise<void> {
   }
   useSessionStore.setState({ proposalGenerating: false })
 
+  clearEcpAgentAuditLog()
   await store.runGenerateProposalVolumes()
+
+  const storeAllows = getEcpAgentAuditLog().filter(
+    (entry) =>
+      entry.capabilityId === DOCUMENT_CAPABILITIES.find_clause && entry.decision === 'allow',
+  )
+  if (storeAllows.length < 1) {
+    throw new Error('proposal generation harness: store generate should audit find_clause allow')
+  }
 
   const afterGenerate = useSessionStore.getState()
   if (afterGenerate.proposalGenerating) {

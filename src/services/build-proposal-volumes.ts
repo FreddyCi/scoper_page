@@ -1,5 +1,7 @@
-import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
-import { buildVolumePrompt } from '@/lib/proposal-prompts'
+import {
+  EcpAgentRunDeniedError,
+  generateProposalVolumeMarkdownViaEcp,
+} from '@/services/proposal-volume-ecp'
 import type {
   BlockRecord,
   DocumentMeta,
@@ -7,7 +9,7 @@ import type {
   ProposalVolume,
 } from '@/lib/types'
 import { fetchDocumentBlocks, groupBlocksBySection } from '@/services/document-blocks'
-import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
+import { ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 
 export type BuildProposalVolumesOptions = {
   documents: DocumentMeta[]
@@ -74,31 +76,40 @@ function stubVolumeMarkdown(
 }
 
 async function generateVolumeBody(
-  prompt: string,
   volume: ProposalVolume,
-  excerpts: string[],
+  rfpDoc: DocumentMeta,
+  blockExcerpts: string[],
   companyContext: string,
 ): Promise<string> {
   try {
-    await ensureScoperEcpReadyBeforeAgentRun()
-    const scoper = getScoperClient()
-    const result = await scoper.send([{ role: 'user', content: prompt }])
-    const text = result.text.trim()
-    if (text.length > 0) return text
+    const markdown = await generateProposalVolumeMarkdownViaEcp({
+      volume,
+      companyContext,
+      rfpDoc,
+      blockExcerpts,
+    })
+    if (markdown.trim().length > 0) return markdown
   } catch (error) {
+    if (error instanceof EcpAgentRunDeniedError) {
+      throw error
+    }
     if (!(error instanceof ScoperWebGpuUnavailableError) && import.meta.env.DEV) {
-      console.warn('[build-proposal-volumes] model generation failed', error)
+      console.warn('[build-proposal-volumes] ECP volume generation failed', error)
     }
   }
 
-  return stubVolumeMarkdown(volume, excerpts, companyContext)
+  return stubVolumeMarkdown(volume, blockExcerpts, companyContext)
 }
 
-/** Generate markdown for each volume sequentially; caller owns store busy flags. ECP path: BDA-127. */
+/** Generate markdown for each volume sequentially via ECP find_clause + Scoper (BDA-127). */
 export async function buildProposalVolumes(
   options: BuildProposalVolumesOptions,
 ): Promise<ProposalRequirementsProfile> {
   const rfpDoc = options.documents.find((doc) => doc.doc_id === options.profile.rfp_doc_id)
+  if (!rfpDoc) {
+    throw new Error('buildProposalVolumes: RFP document not found in session')
+  }
+
   const blocks = await fetchDocumentBlocks(options.profile.rfp_doc_id)
 
   let profile: ProposalRequirementsProfile = {
@@ -114,20 +125,11 @@ export async function buildProposalVolumes(
     options.onProfileUpdate(profile)
 
     try {
-      const excerpts = excerptsForVolume(blocks, volume)
-      const prompt = buildVolumePrompt(
-        volume,
-        {
-          companyContext: options.companyContext,
-          rfpFilename: rfpDoc?.filename,
-        },
-        excerpts,
-      )
-
+      const blockExcerpts = excerptsForVolume(blocks, volume)
       const bodyMarkdown = await generateVolumeBody(
-        prompt,
         volume,
-        excerpts,
+        rfpDoc,
+        blockExcerpts,
         options.companyContext,
       )
 
@@ -136,7 +138,12 @@ export async function buildProposalVolumes(
         bodyMarkdown,
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Volume generation failed'
+      const message =
+        error instanceof EcpAgentRunDeniedError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Volume generation failed'
       profile = patchProposalVolume(profile, volume.id, {
         status: 'error',
         errorMessage: message,

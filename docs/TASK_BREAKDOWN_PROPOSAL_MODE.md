@@ -270,7 +270,7 @@ sequenceDiagram
 - ✅ `buildVolumePrompt` + excerpt heuristics; Scoper send after `ensureScoperEcpReadyBeforeAgentRun`; stub fallback
 - ✅ Store mutex in `runGenerateProposalVolumes` (harness asserts busy block + gating no-op)
 - ✅ [`proposal-generation-harness.ts`](../src/services/proposal-generation-harness.ts) — service update count + store E2E
-- ⏭️ ECP retrieval + isolated `runAgentTurn` — **BDA-127** (not part of MVP sign-off)
+- ⏭️ ECP retrieval + isolated `runAgentTurn` — **done in BDA-127** (`proposal-volume-ecp.ts`)
 **Test Strategy:** Harness with stub/WebGPU: each volume ends `draft` with non-empty markdown.  
 **Test Results:**
 - ✅ `runProposalGenerationHarness` — 2× updates per volume, gating, mutex, draft bodies
@@ -282,18 +282,19 @@ sequenceDiagram
 ### **ID:** BDA-127
 
 **Title:** Wire proposal volume generation through ECP  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-118, BDA-062 (main breakdown — agent via ECP)  
 **Priority:** Critical  
 **Description:** Refactor [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) so each volume uses the **ECP-governed agent path**: RFP [`createDocumentContextAttachment`](../src/lib/chat-context.ts); [`compactFindClauseQuery`](../src/services/document-search.ts) on [`buildVolumePrompt`](../src/lib/proposal-prompts.ts) output; [`runAgentTurn`](../src/services/agent.ts) or extracted helper that routes retrieval through [`runEcpAgentTool`](../src/ecp/agent-run.ts) → `@demo/document.find_clause` with doc scope = RFP `evaluationDocId` only. Keep chat thread isolated (no proposal turns in sidebar history). Preserve stub fallback when Scoper/WebGPU unavailable after ECP deny or empty matches.  
 **Completed Changes:**
-- 🔄 `generateVolumeBody` (or successor) calls ECP find_clause path before/alongside Scoper summary
-- 🔄 Isolated turn helper — no `chatMessages` pollution
-- 🔄 Map `EcpAgentRunDeniedError` → volume error status
+- ✅ [`proposal-volume-ecp.ts`](../src/services/proposal-volume-ecp.ts) — `generateProposalVolumeMarkdownViaEcp`: `runEcpAgentTool` find_clause scoped to RFP `doc_id`, `buildVolumeFindClauseQuery`, RFP attachment via `buildAgentPrompt`
+- ✅ No chat thread mutations; Scoper load without `chatGenerating`
+- ✅ `EcpAgentRunDeniedError` → per-volume `error`; WebGPU/empty Scoper → stub or find summary fallback
+- ✅ `runProposalGenerationHarness` asserts ECP `find_clause` allow audit (service + store paths)
 **Test Strategy:** `runProposalGenerationHarness` or `runProposalEcpGenerationHarness`: after generate, audit log contains allowed `find_clause` for RFP doc; volumes still reach `draft` or explicit `error`.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness checks audit allow entries; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** [ECP integration](#ecp-integration-proposal-generation), [`runEcpAgentRunHarness`](../src/ecp/agent-run.ts), [`DOCUMENT_CAPABILITIES.find_clause`](../src/ecp/extensions/document.ts)  
 
 ---

@@ -427,17 +427,17 @@ flowchart TD
 ### **ID:** BDA-169
 
 **Title:** Context usage accounting module  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-153, BDA-154  
 **Priority:** High  
 **Description:** New [`src/lib/context-usage.ts`](../src/lib/context-usage.ts): `computeContextUsage(snapshot)` → `{ percentFull, totalTokens, segments[] }` with segments (system, ECP/tool, RFP label, handoff, active turn, reserved). Integrate `checkContextThreshold`. Update estimates after each send, ECP call, roll.  
 **Completed Changes:**
-- 🔄 Segment model + compute function
-- 🔄 Token estimate from chars (consistent with orchestrator)
+- ✅ `context-usage.ts` — segment model, `computeContextUsage`, harness
+- ✅ `ProposalContextTracker.recordSegment` + sectional ECP/review retrieve wiring
 **Test Strategy:** Harness: segment sum ≤ contextSize; percent matches manual calc.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runContextUsageHarness`; tracker harness; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream F1
 
 ---

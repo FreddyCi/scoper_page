@@ -4,6 +4,12 @@ import {
   getPageContextConfig,
   type PageContextConfig,
 } from '@/lib/page-context-manager'
+import {
+  computeContextUsage,
+  createEmptyContextUsageSegments,
+  type ContextUsageResult,
+  type ContextUsageSegmentKind,
+} from '@/lib/context-usage'
 
 export class ProposalContextOverflowError extends Error {
   readonly name = 'ProposalContextOverflowError'
@@ -51,6 +57,8 @@ export function proposalContextHardLimitMessage(
 export class ProposalContextTracker {
   private proposalContextCharsUsed = 0
 
+  private segmentChars = createEmptyContextUsageSegments()
+
   private readonly config: PageContextConfig
 
   constructor(options: CreateProposalContextTrackerOptions = {}) {
@@ -70,9 +78,14 @@ export class ProposalContextTracker {
     }
   }
 
+  getContextUsage(): ContextUsageResult {
+    return computeContextUsage({ segments: { ...this.segmentChars } }, { config: this.config })
+  }
+
   /** Clear after {@link rollProposalContext} between sections. */
   reset(): void {
     this.proposalContextCharsUsed = 0
+    this.segmentChars = createEmptyContextUsageSegments()
   }
 
   recordChars(charCount: number): ContextThresholdTier {
@@ -82,8 +95,20 @@ export class ProposalContextTracker {
     return checkContextThreshold(this.proposalContextCharsUsed, this.config)
   }
 
+  recordSegment(kind: ContextUsageSegmentKind, text: string | number): ContextThresholdTier {
+    if (kind === 'reserved') {
+      return this.getSnapshot().tier
+    }
+    const chars = typeof text === 'number' ? text : text.length
+    if (chars <= 0) {
+      return checkContextThreshold(this.proposalContextCharsUsed, this.config)
+    }
+    this.segmentChars[kind] += chars
+    return this.recordChars(chars)
+  }
+
   recordText(text: string): ContextThresholdTier {
-    return this.recordChars(text.length)
+    return this.recordSegment('active_turn', text)
   }
 
   /**
@@ -111,10 +136,10 @@ export function runProposalContextTrackerHarness(): void {
     config: { ...tinyConfig, contextSize: 400, hardRollThreshold: 0.85 },
   })
 
-  tracker.recordText('x'.repeat(100))
+  tracker.recordSegment('system', 'x'.repeat(100))
   tracker.assertNotHard()
 
-  tracker.recordText('y'.repeat(1400))
+  tracker.recordSegment('active_turn', 'y'.repeat(1400))
   let threw = false
   try {
     tracker.assertNotHard()
@@ -125,9 +150,17 @@ export function runProposalContextTrackerHarness(): void {
     throw new Error('runProposalContextTrackerHarness: expected hard-tier overflow')
   }
 
+  const usage = tracker.getContextUsage()
+  if (usage.totalChars !== tracker.getSnapshot().proposalContextCharsUsed) {
+    throw new Error('runProposalContextTrackerHarness: usage chars should match tracker total')
+  }
+
   tracker.reset()
   if (tracker.getSnapshot().proposalContextCharsUsed !== 0) {
     throw new Error('runProposalContextTrackerHarness: reset did not clear chars')
+  }
+  if (tracker.getContextUsage().totalTokens !== 0) {
+    throw new Error('runProposalContextTrackerHarness: reset should clear segment usage')
   }
   tracker.assertNotHard()
 

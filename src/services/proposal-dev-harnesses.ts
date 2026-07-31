@@ -5,6 +5,7 @@ import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-sect
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
+import { runContextUsageHarness } from '@/lib/context-usage'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
@@ -25,6 +26,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
+  runContextUsageHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
   runProposalSetupQualityGatesHarness()

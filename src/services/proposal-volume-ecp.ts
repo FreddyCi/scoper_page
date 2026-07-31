@@ -2,10 +2,12 @@ import { EcpAgentRunDeniedError, runEcpAgentTool } from '@/ecp/agent-run'
 import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { buildAgentPrompt, createDocumentContextAttachment } from '@/lib/chat-context'
+import { buildProposalHandoffBlock } from '@/lib/proposal-context-roll'
 import type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
 import type { ProposalHandoffState } from '@/lib/proposal-context-roll'
 import {
   buildSectionPrompt,
+  buildSectionPromptParts,
   buildVolumeFindClauseQuery,
 } from '@/lib/proposal-prompts'
 import {
@@ -122,7 +124,7 @@ export async function generateProposalSectionMarkdownViaEcp(
 
   if (excerpts.length === 0) {
     const findQuery = input.section.findClauseQuery.trim()
-    contextTracker.recordText(findQuery)
+    contextTracker.recordSegment('ecp_tool', findQuery)
 
     findResult = (await runEcpAgentTool({
       capabilityId: DOCUMENT_CAPABILITIES.find_clause,
@@ -135,7 +137,7 @@ export async function generateProposalSectionMarkdownViaEcp(
       ecpExcerpts.length > 0 ? ecpExcerpts : (input.blockExcerptsFallback ?? [])
   }
 
-  const sectionPrompt = buildSectionPrompt({
+  const sectionPromptInput = {
     section: input.section,
     volume: input.volume,
     handoff: input.handoff,
@@ -146,14 +148,30 @@ export async function generateProposalSectionMarkdownViaEcp(
     },
     packageKind: input.packageKind,
     handoffChunkIndex: input.handoffChunkIndex,
-  })
+  }
+
+  const handoffBlock =
+    input.handoff != null
+      ? buildProposalHandoffBlock(input.handoff, input.handoffChunkIndex ?? 1)
+      : ''
+  const parts = buildSectionPromptParts(sectionPromptInput)
+  const rfpMeta = [rfpAttachment.label, rfpAttachment.description].filter(Boolean).join('\n')
+
+  contextTracker.recordSegment('system', parts.system)
+  if (handoffBlock.length > 0) {
+    contextTracker.recordSegment('handoff', handoffBlock)
+  }
+  contextTracker.recordSegment('rfp_label', rfpMeta)
+  const userBody =
+    handoffBlock.length > 0 && parts.user.startsWith(handoffBlock)
+      ? parts.user.slice(handoffBlock.length).replace(/^\s+/, '')
+      : parts.user
+  contextTracker.recordSegment('active_turn', userBody)
+
+  const sectionPrompt = buildSectionPrompt(sectionPromptInput)
 
   const prompt = buildAgentPrompt(sectionPrompt, [rfpAttachment])
 
-  for (const excerpt of excerpts) {
-    contextTracker.recordText(excerpt)
-  }
-  contextTracker.recordText(prompt)
   contextTracker.assertNotHard()
 
   try {
@@ -165,7 +183,7 @@ export async function generateProposalSectionMarkdownViaEcp(
       ? await input.sendOverride(prompt)
       : await scoper.send([{ role: 'user', content: prompt }])
 
-    contextTracker.recordText(result.text)
+    contextTracker.recordSegment('active_turn', result.text)
     const text = result.text.trim()
     if (text.length > 0) return text
   } catch (error) {

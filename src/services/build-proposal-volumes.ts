@@ -167,7 +167,7 @@ async function runReviewFindClause(
   contextTracker: ReturnType<typeof createProposalContextTracker>,
 ): Promise<string[]> {
   const query = buildSectionReviewFindClauseQuery(volume, section.title, packageKind)
-  contextTracker.recordText(query)
+  contextTracker.recordSegment('ecp_tool', query)
 
   const findResult = (await runEcpAgentTool({
     capabilityId: DOCUMENT_CAPABILITIES.find_clause,

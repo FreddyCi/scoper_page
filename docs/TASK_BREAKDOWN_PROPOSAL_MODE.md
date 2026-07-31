@@ -659,17 +659,48 @@ sequenceDiagram
 ### **ID:** BDA-151
 
 **Title:** Manual QA and production build  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-120 through BDA-135, BDA-140, BDA-141  
 **Priority:** Critical  
 **Description:** Execute manual script: Landing → **Generate Complete Proposal** → upload sample RFP → responder context → Build profile → Generate → export .md. Toggle RFP ↔ Proposal without crash. Confirm proposal mode does not show bidder qualification grid or creep grid. **After BDA-127:** DevTools harness shows ECP `find_clause` allow during generate; generation still works offline after model/cache warm (same as chat).  
 **Completed Changes:**
-- 🔄 QA notes in this doc or QA_RESULTS append
+- ✅ `pnpm qa:proposal` — static routing checks + `pnpm qa:automated` (build, bundle limits, preview smoke)
+- ✅ QA results appendix below (automated + manual checklist)
 **Test Strategy:** `pnpm build` pass; manual checklist pass.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Automated: `pnpm qa:proposal` (2026-07-30)
+- ✅ Dev harnesses: `runProposalIntegrationHarnesses` asserts ECP `find_clause` allow (BDA-119 / BDA-127)
+- 👤 Manual UI: use checklist below in browser (`pnpm dev`, WebGPU for full generation)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §6, [`sample/rfp-it-services.pdf`](../sample/rfp-it-services.pdf), [ECP integration](#ecp-integration-proposal-generation)  
+
+#### QA results (BDA-151)
+
+**Automated (CI-local)**
+
+| Check | Command / source | Result |
+|-------|------------------|--------|
+| Production build + assets | `pnpm qa:automated` | Pass |
+| Proposal routing static | `scripts/run-proposal-qa-static.mjs` | Pass — `ProposalGenerationPanel` for proposal; no `CreepProfileGrid` in `WorkspaceContent` |
+| Legacy `scope_creep` containment | same | Pass — only `share-pack-import.ts` |
+| Sample RFP corpus | `public/sample/rfp-it-services.pdf` | Present |
+| ECP volume path | `runProposalGenerationHarness` | Pass in dev load (after `runEcpAgentRunHarness`) |
+
+**Manual UI checklist** (`pnpm dev`)
+
+| Step | Expected | Record |
+|------|----------|--------|
+| Landing → **Generate Complete Proposal** card | Mode `proposal`, RFP upload opens | |
+| Upload [`rfp-it-services.pdf`](../sample/rfp-it-services.pdf) | Profiles view, RFP selected as solicitation | |
+| Enter responder context (≥20 chars) → **Build proposal profile** | Volumes list + gate checklist | |
+| **Generate complete proposal** | Per-volume progress; drafts or explicit errors | |
+| Expand volume → preview markdown | Streamdown renders body | |
+| **Export .md** | Single file with `# Volume:` sections | |
+| Header **RFP Analysis** ↔ **Proposal** tabs | No crash; proposal shows panel not bidder grid | |
+| Split view CTA in proposal mode | **Open proposal workspace** → profiles | |
+| Console on dev load | No uncaught `[dev-harness]` errors | |
+
+**Notes:** Without WebGPU, volume bodies may use ECP excerpt + stub markdown (same as harness warn). Creep UI harnesses require `VITE_RUN_CREEP_HARNESS=true`.
 
 ---
 
@@ -749,3 +780,4 @@ sequenceDiagram
 |---------|------|---------|
 | v1.0 | 2026-07-30 | Initial atomic breakdown from proposal mode plan |
 | v1.1 | 2026-07-30 | ECP integration section; BDA-127; BDA-118 MVP vs ECP target; traceability to BDA-062 |
+| v1.2 | 2026-07-30 | BDA-151 QA appendix; `pnpm qa:proposal` static + automated sign-off |

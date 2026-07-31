@@ -1,4 +1,4 @@
-import { FileUpIcon } from 'lucide-react'
+import { LayersPlusIcon } from 'lucide-react'
 
 import { useUploadQueueContext } from '@/components/layout/UploadQueueProvider'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ export function UploadFab({ className }: UploadFabProps) {
         aria-expanded={open}
         onClick={() => (open ? setUploadPopupOpen(false) : openUploadPopup('rfp'))}
       >
-        <FileUpIcon className="size-4" />
+        <LayersPlusIcon className="size-4" />
         {count > 0 ? (
           <Badge
             variant="default"

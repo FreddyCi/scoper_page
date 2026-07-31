@@ -501,16 +501,18 @@ sequenceDiagram
 ### **ID:** BDA-132
 
 **Title:** Volume list with gating visuals  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-131, BDA-112  
 **Priority:** High  
 **Description:** Render volume list from profile; **muted/disabled** styling until `readyToGenerate`; checklist UI for three gating conditions (RFP, context, profile built). Optional [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx) for title + status icon.  
 **Completed Changes:**
-- 🔄 List + gate checklist
+- ✅ [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx) — status icons, muted preview when `!readyToGenerate`
+- ✅ [`ProposalSetupGateList.tsx`](../src/components/workspace/ProposalSetupGateList.tsx) — shared checklist (setup + compact footer on volumes card)
+- ✅ Generate CTA disabled + tooltip until `readyToGenerate`; pointer-events-none on muted list
 **Test Strategy:** Before profile built, generate button disabled; after all three, enabled.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan gating spec  
 
 ---

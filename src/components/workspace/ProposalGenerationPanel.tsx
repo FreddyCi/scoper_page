@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CheckIcon, CircleIcon, Loader2Icon } from 'lucide-react'
+import { Loader2Icon } from 'lucide-react'
 
 import { AiSupportLoadingCard } from '@/components/ui/ai-support-loading-card'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,8 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
+import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateList'
+import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
 import { cn } from '@/lib/utils'
 import {
@@ -24,32 +26,6 @@ import {
 
 type ProposalGenerationPanelProps = {
   className?: string
-}
-
-function GateRow({ ok, label }: { ok: boolean; label: string }) {
-  return (
-    <li className="flex items-start gap-2 text-sm">
-      {ok ? (
-        <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
-      ) : (
-        <CircleIcon className="text-muted-foreground/50 mt-0.5 size-4 shrink-0" aria-hidden />
-      )}
-      <span className={cn(!ok && 'text-muted-foreground')}>{label}</span>
-    </li>
-  )
-}
-
-function volumeStatusLabel(status: string): string {
-  switch (status) {
-    case 'generating':
-      return 'Generating…'
-    case 'draft':
-      return 'Draft ready'
-    case 'error':
-      return 'Error'
-    default:
-      return 'Pending'
-  }
 }
 
 /** Proposal workspace — setup, profile build, volume generation (BDA-130+) */
@@ -138,11 +114,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </p>
           </div>
 
-          <ul className="border-border/70 space-y-2 rounded-lg border bg-muted/20 px-3 py-3">
-            <GateRow ok={setup.hasRfp} label="RFP document selected" />
-            <GateRow ok={setup.hasContext} label="Responder context provided" />
-            <GateRow ok={setup.hasProfile} label="Proposal profile built from RFP" />
-          </ul>
+          <ProposalSetupGateList setup={setup} />
 
           {profile && !buildingProfile ? (
             <div
@@ -201,32 +173,42 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 {volumeGenerationError}
               </p>
             ) : null}
-            <ul className="scrollbar-none min-h-0 flex-1 space-y-2 overflow-y-auto">
+            <ul
+              className={cn(
+                'scrollbar-none min-h-0 flex-1 space-y-2 overflow-y-auto',
+                !setup.readyToGenerate &&
+                  profile.volumes.every((v) => v.status === 'pending') &&
+                  'pointer-events-none',
+              )}
+            >
               {profile.volumes.map((volume) => (
-                <li
+                <ProposalVolumeRow
                   key={volume.id}
-                  className="border-border/70 flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium leading-snug">{volume.title}</span>
-                    <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-                      {volumeStatusLabel(volume.status)}
-                    </span>
-                  </div>
-                  <p className="text-muted-foreground text-xs leading-relaxed">
-                    {volume.requirementSummary}
-                  </p>
-                  {volume.errorMessage ? (
-                    <p className="text-destructive text-xs">{volume.errorMessage}</p>
-                  ) : null}
-                </li>
+                  volume={volume}
+                  muted={!setup.readyToGenerate && volume.status === 'pending'}
+                />
               ))}
             </ul>
+
+            {!setup.readyToGenerate ? (
+              <div className="shrink-0 space-y-2">
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Complete every item below to enable generation. Volumes stay in preview until
+                  setup is valid.
+                </p>
+                <ProposalSetupGateList setup={setup} variant="compact" />
+              </div>
+            ) : null}
 
             <Button
               type="button"
               className="w-full shrink-0"
               disabled={!setup.readyToGenerate || proposalGenerating || buildingProfile}
+              title={
+                !setup.readyToGenerate
+                  ? 'Complete RFP selection, responder context, and proposal profile first'
+                  : undefined
+              }
               onClick={() => void runGenerateProposalVolumes()}
             >
               {proposalGenerating ? (

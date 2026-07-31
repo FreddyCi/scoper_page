@@ -11,19 +11,19 @@ import {
   CommandInputCard,
   type CommandInputSubmitPayload,
 } from '@/components/workspace/CommandInputCard'
-import { CreepProfileGrid } from '@/components/workspace/CreepProfileGrid'
+import { ProposalGenerationPanel } from '@/components/workspace/ProposalGenerationPanel'
 import { ResultsProfileGrid } from '@/components/workspace/ResultsProfileGrid'
 import { RfpEvaluationPanel } from '@/components/workspace/RfpEvaluationPanel'
 import { SplitDocumentView } from '@/components/workspace/SplitDocumentView'
 import { WorkspaceLanding } from '@/components/workspace/WorkspaceLanding'
 import { useCommandIngest } from '@/hooks/use-command-ingest'
 import { useRelinkRfpProfilesOnView } from '@/hooks/use-relink-rfp-profiles'
-import { useSessionStore, useShowLanding, useRfpProfiles, useCreepProfiles } from '@/store/session-store'
+import { useSessionStore, useShowLanding, useRfpProfiles } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
   rfp: 'RFP Analysis — qualify bidders against requirements with cited evidence.',
-  proposal: 'Generate Complete Proposal — upload the RFP, add your company context, then build volume drafts tailored to the solicitation.',
+  proposal: 'Upload RFPs and responder context — standards-aligned proposal volumes',
 }
 
 /** Routes workspace body by session view */
@@ -36,7 +36,6 @@ export function WorkspaceContent() {
   const setWorkspaceView = useSessionStore((s) => s.setWorkspaceView)
   const selectedCitation = useSessionStore((s) => s.selectedCitation)
   const profiles = useRfpProfiles()
-  const creepProfiles = useCreepProfiles()
   const { submitCommand, isIngesting } = useCommandIngest()
 
   useRelinkRfpProfilesOnView(workspaceView === 'profiles' && mode === 'rfp')
@@ -106,11 +105,7 @@ export function WorkspaceContent() {
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          <CreepProfileGrid
-            profiles={creepProfiles}
-            documents={documents}
-            className="min-h-0 flex-1"
-          />
+          <ProposalGenerationPanel className="min-h-0 flex-1" />
         )}
       </div>
     )

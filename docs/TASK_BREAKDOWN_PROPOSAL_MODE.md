@@ -363,16 +363,18 @@ sequenceDiagram
 ### **ID:** BDA-122
 
 **Title:** WorkspaceContent proposal profiles route  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111, BDA-130  
 **Priority:** High  
 **Description:** [`WorkspaceContent.tsx`](../src/components/workspace/WorkspaceContent.tsx): `MODE_COPY.proposal`; profiles header title/copy; replace `CreepProfileGrid` branch with `ProposalGenerationPanel`. Remove Scope Creep Analysis heading.  
 **Completed Changes:**
-- 🔄 Routing + copy
+- ✅ Profiles view: **Generate Complete Proposal** heading + aligned `MODE_COPY.proposal`
+- ✅ `ProposalGenerationPanel` replaces `CreepProfileGrid` (no scope creep UI)
+- ✅ Panel includes setup + build/generate shell (extends BDA-130–133 baseline)
 **Test Strategy:** Mode proposal → profiles view shows proposal panel not creep grid.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` clean; proposal mode routes to panel
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3  
 
 ---

@@ -17,9 +17,9 @@ import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateL
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import {
   assembleProposalMarkdown,
-  hasExportableProposalContent,
   proposalExportFilename,
 } from '@/lib/assemble-proposal-markdown'
+import { canExportProposalProfile } from '@/lib/proposal-export-quality'
 import { beginBlobSave } from '@/lib/download-blob'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
 import { cn } from '@/lib/utils'
@@ -82,10 +82,28 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
     generationProgress.draftCount + generationProgress.errorCount === generationProgress.total &&
     generationProgress.total > 0
 
-  const canExportProposal = profile != null && hasExportableProposalContent(profile)
+  const exportGate = useMemo(
+    () => (profile ? canExportProposalProfile(profile) : null),
+    [profile],
+  )
+
+  const canExportProposal = exportGate?.ok ?? false
+
+  const exportButtonTitle =
+    exportGate && !exportGate.ok
+      ? exportGate.reasons.slice(0, 2).join(' ')
+      : !canExportProposal
+        ? 'Complete generation with passing draft quality before exporting'
+        : undefined
 
   async function handleExportProposal() {
-    if (!profile || !canExportProposal || exportingProposal || proposalGenerating) return
+    if (!profile || exportingProposal || proposalGenerating) return
+
+    const gate = canExportProposalProfile(profile)
+    if (!gate.ok) {
+      setExportError(gate.reasons[0] ?? 'Export blocked until all volumes pass quality checks.')
+      return
+    }
 
     setExportError(null)
     setExportingProposal(true)
@@ -164,7 +182,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </p>
           </div>
 
-          <ProposalSetupGateList setup={setup} />
+          <ProposalSetupGateList setup={setup} exportGate={exportGate} />
 
           {profile && !buildingProfile ? (
             <div
@@ -262,6 +280,12 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 </p>
                 <ProposalSetupGateList setup={setup} variant="compact" />
               </div>
+            ) : exportGate && !exportGate.ok ? (
+              <ProposalSetupGateList
+                setup={setup}
+                variant="compact"
+                exportGate={exportGate}
+              />
             ) : null}
 
             {exportError ? (
@@ -283,11 +307,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   variant="outline"
                   className="sm:flex-1"
                   disabled={!canExportProposal || exportingProposal || buildingProfile}
-                  title={
-                    !canExportProposal
-                      ? 'Generate at least one volume draft before exporting'
-                      : undefined
-                  }
+                  title={exportButtonTitle}
                   onClick={() => void handleExportProposal()}
                 >
                   {exportingProposal ? 'Exporting…' : 'Export .md'}

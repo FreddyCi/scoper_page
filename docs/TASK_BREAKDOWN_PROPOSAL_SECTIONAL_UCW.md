@@ -345,17 +345,18 @@ flowchart TD
 ### **ID:** BDA-176
 
 **Title:** Export gate on full profile quality  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-158, BDA-164  
 **Priority:** High  
 **Description:** Wire export action (BDA-135) to `canExportProposalProfile`: block export with inline reasons if any volume/section invalid or placeholder-only. SetupGateList surfaces same checks where applicable.  
 **Completed Changes:**
-- 🔄 Export button disabled + tooltip/message
-- 🔄 All volumes must be draft + quality pass
+- ✅ Export button + handler use `canExportProposalProfile`; inline reasons in gate list + tooltip
+- ✅ `hasExportableProposalContent` delegates to full-profile quality gate
+- ✅ `ProposalSetupGateList` export row + reason list (setup + volumes card)
 **Test Strategy:** Export after failed section → blocked; after full good run → downloads .md.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runAssembleProposalMarkdownHarness` + export quality harness; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A, D; BDA-135
 
 ---

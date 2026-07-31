@@ -1,4 +1,5 @@
 import type { ProposalRequirementsProfile } from '@/lib/types'
+import { canExportProposalProfile } from '@/lib/proposal-export-quality'
 
 export type AssembleProposalMarkdownOptions = {
   rfpFilename?: string
@@ -43,7 +44,7 @@ export function assembleProposalMarkdown(
 }
 
 export function hasExportableProposalContent(profile: ProposalRequirementsProfile): boolean {
-  return profile.volumes.some((volume) => Boolean(volume.bodyMarkdown?.trim()))
+  return canExportProposalProfile(profile).ok
 }
 
 export function proposalExportFilename(rfpFilename: string): string {
@@ -54,6 +55,18 @@ export function proposalExportFilename(rfpFilename: string): string {
 
 /** Dev harness — assembled export shape (BDA-135) */
 export function runAssembleProposalMarkdownHarness(): void {
+  const exportableBody = `
+## Approach
+
+Acme Systems will execute cloud migration in three phases aligned to Section L.1 requirements.
+Our CMMI Level 3 quality system defines entry/exit criteria for each phase with measurable deliverables.
+
+### Staffing and schedule
+
+A dedicated program manager and two senior engineers support the client for twelve months,
+with weekly status reporting and risk registers maintained in the shared project workspace.
+`.trim()
+
   const profile: ProposalRequirementsProfile = {
     profile_id: 'export-harness',
     rfp_doc_id: 'rfp-1',
@@ -67,15 +80,27 @@ export function runAssembleProposalMarkdownHarness(): void {
         title: 'Technical approach',
         requirementSummary: 'Describe installation methodology.',
         status: 'draft',
-        bodyMarkdown: '## Approach\n\nHarness draft body.',
+        bodyMarkdown: exportableBody,
       },
       {
         id: 'vol-b',
         title: 'Management plan',
         requirementSummary: 'Staffing and schedule.',
-        status: 'pending',
+        status: 'draft',
+        bodyMarkdown: exportableBody,
       },
     ],
+  }
+
+  const partialProfile: ProposalRequirementsProfile = {
+    ...profile,
+    volumes: [
+      profile.volumes[0]!,
+      { ...profile.volumes[1]!, status: 'pending', bodyMarkdown: undefined },
+    ],
+  }
+  if (hasExportableProposalContent(partialProfile)) {
+    throw new Error('runAssembleProposalMarkdownHarness: partial profile should not pass export gate')
   }
 
   if (!hasExportableProposalContent(profile)) {
@@ -92,8 +117,8 @@ export function runAssembleProposalMarkdownHarness(): void {
   if (!markdown.includes('# Volume: Management plan')) {
     throw new Error('runAssembleProposalMarkdownHarness: missing second volume header')
   }
-  if (!markdown.includes('_No draft content for this volume._')) {
-    throw new Error('runAssembleProposalMarkdownHarness: expected placeholder for pending volume')
+  if (!markdown.includes('CMMI Level 3')) {
+    throw new Error('runAssembleProposalMarkdownHarness: missing second volume body')
   }
 
   const filename = proposalExportFilename('Sample RFP.pdf')

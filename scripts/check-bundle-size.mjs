@@ -4,10 +4,11 @@ import { join } from 'node:path'
 const distDir = join(process.cwd(), 'dist')
 const assetsDir = join(distDir, 'assets')
 
-/** Post-build bundle size guardrails (BDA-090) — uncompressed bytes */
+/** Post-build bundle size guardrails (BDA-090, BDA-192) — uncompressed bytes */
 const LIMITS = [
   { label: 'main entry chunk', match: /^index-.*\.js$/, maxBytes: 2_600_000 },
   { label: 'scoper worker', match: /^scoper\.worker-.*\.js$/, maxBytes: 400_000 },
+  { label: 'whisper worker', match: /^whisper\.worker-.*\.js$/, maxBytes: 600_000 },
   { label: 'duckdb worker', match: /^duckdb\.worker-.*\.js$/, maxBytes: 250_000 },
   { label: 'liteparse worker', match: /^liteparse\.worker-.*\.js$/, maxBytes: 40_000 },
 ]

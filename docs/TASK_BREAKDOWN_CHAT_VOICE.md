@@ -283,16 +283,16 @@ flowchart TD
 ### **ID:** BDA-192
 
 **Title:** Whisper worker bundle limit  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-183  
 **Priority:** High  
 **Description:** Extend [`scripts/check-bundle-size.mjs`](../scripts/check-bundle-size.mjs): new row for `whisper.worker-*.js` max bytes (set after first green build, separate from main chunk). Ensure lazy worker chunk does not blow main `index-*.js` limit.  
 **Completed Changes:**
-- 🔄 Limit constant + CI message
+- ✅ `whisper worker` row — `whisper.worker-*.js`, max **600 KB** uncompressed (~526 KB observed at BDA-183; lazy chunk, main index unchanged)
 **Test Strategy:** `pnpm build` + check-bundle-size pass.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- 👤 Run locally: `pnpm build` → `[check-bundle-size] ok whisper worker: …`
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-090 pattern
 
 ---

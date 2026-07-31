@@ -36,10 +36,12 @@ function HistoryGroupLabel({ children, className }: { children: ReactNode; class
 function ProposalVolumeHistoryRow({
   title,
   statusLabel,
+  sectionSubtitle,
   onSelect,
 }: {
   title: string
   statusLabel: string
+  sectionSubtitle?: string
   onSelect: () => void
 }) {
   return (
@@ -55,6 +57,9 @@ function ProposalVolumeHistoryRow({
       <div className="min-w-0">
         <p className="text-foreground text-xs leading-relaxed font-medium">{title}</p>
         <p className="text-muted-foreground text-[11px]">{statusLabel}</p>
+        {sectionSubtitle ? (
+          <p className="text-muted-foreground mt-0.5 text-[11px] tabular-nums">{sectionSubtitle}</p>
+        ) : null}
       </div>
     </button>
   )
@@ -140,6 +145,7 @@ export function ChatHistoryMarkers() {
                     <ProposalVolumeHistoryRow
                       title={entry.title}
                       statusLabel={entry.statusLabel}
+                      sectionSubtitle={entry.sectionSubtitle}
                       onSelect={() => setWorkspaceView('profiles')}
                     />
                   </MessageScrollerItem>

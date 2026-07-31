@@ -11,13 +11,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { ProposalVolumeMarkdownPreview } from '@/components/workspace/ProposalVolumeMarkdownPreview'
 import { formatVolumeSectionProgressLine } from '@/lib/proposal-volume-section'
-import type { ProposalVolume, ProposalVolumeStatus } from '@/lib/types'
+import type {
+  ProposalVolume,
+  ProposalVolumeSection,
+  ProposalVolumeStatus,
+} from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-const STATUS_ICON: Record<
-  ProposalVolumeStatus,
-  typeof CircleDashedIcon
-> = {
+const STATUS_ICON: Record<ProposalVolumeStatus, typeof CircleDashedIcon> = {
   pending: CircleDashedIcon,
   generating: Loader2Icon,
   draft: CheckCircle2Icon,
@@ -44,6 +45,74 @@ function volumeStatusLabel(status: ProposalVolumeStatus): string {
   }
 }
 
+function sectionStatusLabel(status: ProposalVolumeStatus): string {
+  switch (status) {
+    case 'generating':
+      return 'Writing'
+    case 'draft':
+      return 'Draft'
+    case 'error':
+      return 'Failed'
+    default:
+      return 'Pending'
+  }
+}
+
+function ProposalVolumeSectionStatusList({
+  sections,
+  compact = false,
+}: {
+  sections: ProposalVolumeSection[]
+  compact?: boolean
+}) {
+  if (sections.length === 0) {
+    return null
+  }
+
+  return (
+    <ul
+      className={cn('space-y-1', compact ? 'mt-1.5' : 'mt-2')}
+      aria-label="Sections in this volume"
+    >
+      {sections.map((section) => {
+        const SectionIcon = STATUS_ICON[section.status]
+        return (
+          <li key={section.id} className="flex items-start gap-2 text-xs">
+            <SectionIcon
+              className={cn(
+                'mt-0.5 size-3.5 shrink-0',
+                STATUS_ICON_CLASS[section.status],
+                section.status === 'generating' && 'animate-spin',
+              )}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between gap-2">
+                <span
+                  className={cn(
+                    'leading-snug',
+                    section.status === 'generating'
+                      ? 'text-foreground font-medium'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {section.title}
+                </span>
+                <span className="text-muted-foreground shrink-0 tabular-nums">
+                  {sectionStatusLabel(section.status)}
+                </span>
+              </div>
+              {section.errorMessage ? (
+                <p className="text-destructive mt-0.5 leading-snug">{section.errorMessage}</p>
+              ) : null}
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export type ProposalVolumeRowProps = {
   volume: ProposalVolume
   /** Muted preview until setup gates pass (`readyToGenerate`). */
@@ -63,10 +132,15 @@ export function ProposalVolumeRow({
   const [expanded, setExpanded] = useState(false)
   const StatusIcon = STATUS_ICON[volume.status]
   const statusLabel = volumeStatusLabel(volume.status)
+  const sections = volume.sections ?? []
+  const hasSections = sections.length > 0
   const sectionProgressLine =
     active || volume.status === 'generating'
       ? formatVolumeSectionProgressLine(volume)
       : null
+  const showSectionList =
+    hasSections &&
+    (expanded || volume.status === 'generating' || volume.status === 'error')
   const showLiveStatus = !muted || volume.status !== 'pending'
   const hasBody = Boolean(volume.bodyMarkdown?.trim())
 
@@ -145,6 +219,9 @@ export function ProposalVolumeRow({
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
             {volume.requirementSummary}
           </p>
+          {showSectionList && !expanded ? (
+            <ProposalVolumeSectionStatusList sections={sections} compact />
+          ) : null}
           {volume.errorMessage ? (
             <p className="text-destructive mt-1 text-xs">{volume.errorMessage}</p>
           ) : null}
@@ -153,7 +230,10 @@ export function ProposalVolumeRow({
 
       {expanded ? (
         <div className="border-border/50 border-t px-3 py-2.5 pl-11" id={previewId}>
-          <ProposalVolumeMarkdownPreview volume={volume} />
+          {hasSections ? (
+            <ProposalVolumeSectionStatusList sections={sections} />
+          ) : null}
+          <ProposalVolumeMarkdownPreview volume={volume} className={hasSections ? 'mt-3' : undefined} />
         </div>
       ) : null}
     </li>

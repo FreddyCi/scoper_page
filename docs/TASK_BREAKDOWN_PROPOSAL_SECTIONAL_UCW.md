@@ -405,17 +405,17 @@ flowchart TD
 ### **ID:** BDA-168
 
 **Title:** ProposalVolumeRow section status  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-167  
 **Priority:** Medium  
 **Description:** Update [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx) and optional [`proposal-history.ts`](../src/lib/proposal-history.ts): nested section labels when generating; per-section status icons when expanded.  
 **Completed Changes:**
-- 🔄 Row shows current section when volume `generating`
-- 🔄 History list optional section subtitles
+- ✅ Section status list (compact while generating; full when expanded)
+- ✅ History tab `sectionSubtitle` during volume generate
 **Test Strategy:** UI reflects store section statuses pending → generating → draft/error.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalHistoryHarness`; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C4; BDA-125
 
 ---

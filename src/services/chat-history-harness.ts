@@ -1,63 +1,58 @@
-import { buildMockCreepProfiles } from '@/lib/creep-profile-stub'
-import { flattenCreepHistory } from '@/lib/creep-history'
+import { listProposalVolumeHistory } from '@/lib/proposal-history'
 import type { DocumentMeta } from '@/lib/types'
-import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
-/** Dev harness — creep flags render as history markers; click focuses citation (BDA-073) */
+/** Dev harness — proposal volume markers in history tab (BDA-125) */
 export function runChatHistoryMarkersHarness(): void {
   const store = useSessionStore.getState()
   store.resetSession()
   store.setMode('proposal')
 
-  const baseline: DocumentMeta = {
-    doc_id: 'history-baseline',
-    filename: 'Baseline-SOW.pdf',
+  const rfpDoc: DocumentMeta = {
+    doc_id: 'history-rfp',
+    filename: 'City-RFP-2026.pdf',
     mime: 'application/pdf',
-    role: 'baseline',
+    role: 'unknown',
     uploaded_at: new Date().toISOString(),
   }
 
-  const changeRequest: DocumentMeta = {
-    doc_id: 'history-change',
-    filename: 'Change-Addendum.pdf',
-    mime: 'application/pdf',
-    role: 'change_request',
-    uploaded_at: new Date().toISOString(),
+  store.setDocuments([rfpDoc])
+  store.setEvaluationDocId(rfpDoc.doc_id)
+  store.setProposalRequirementsProfile({
+    profile_id: 'history-proposal',
+    rfp_doc_id: rfpDoc.doc_id,
+    summary: 'Two volumes for harness.',
+    built_at: new Date().toISOString(),
+    volumes: [
+      {
+        id: 'vol-tech',
+        title: 'Technical approach',
+        requirementSummary: 'Methodology and schedule.',
+        status: 'draft',
+        bodyMarkdown: '# Technical approach\n\nDraft body.',
+      },
+      {
+        id: 'vol-mgmt',
+        title: 'Management plan',
+        requirementSummary: 'Staffing and QA.',
+        status: 'pending',
+      },
+    ],
+  })
+
+  const entries = listProposalVolumeHistory(useSessionStore.getState().proposalRequirementsProfile)
+  if (entries.length !== 2) {
+    throw new Error('runChatHistoryMarkersHarness failed: expected two proposal volume entries')
   }
 
-  store.setDocuments([baseline, changeRequest])
-
-  const profiles = buildMockCreepProfiles([baseline, changeRequest])
-  if (profiles.length === 0) {
-    throw new Error('runChatHistoryMarkersHarness failed: expected mock creep profiles')
+  const anchored = entries.find((entry) => entry.scrollAnchor)
+  if (!anchored || anchored.id !== 'vol-mgmt') {
+    throw new Error('runChatHistoryMarkersHarness failed: last volume should anchor scroll')
   }
 
-  store.setCreepProfiles(profiles)
-
-  const entries = flattenCreepHistory(profiles, [baseline, changeRequest])
-  const flagEntries = entries.filter((entry) => entry.kind === 'flag')
-
-  if (flagEntries.length === 0) {
-    throw new Error('runChatHistoryMarkersHarness failed: expected flag history entries')
-  }
-
-  const anchored = flagEntries.find((entry) => entry.scrollAnchor)
-  if (!anchored || anchored.kind !== 'flag') {
-    throw new Error('runChatHistoryMarkersHarness failed: expected scroll anchor on first flag')
-  }
-
-  focusCitation(anchored.citation)
-
-  const afterFocus = useSessionStore.getState()
-  if (afterFocus.workspaceView !== 'split') {
-    throw new Error('runChatHistoryMarkersHarness failed: marker click should open split view')
-  }
-  if (afterFocus.activeDocId !== anchored.citation.doc_id) {
-    throw new Error('runChatHistoryMarkersHarness failed: active doc should match marker citation')
-  }
-  if (afterFocus.selectedCitation?.block_id !== anchored.citation.block_id) {
-    throw new Error('runChatHistoryMarkersHarness failed: selected citation should match marker')
+  store.setWorkspaceView('profiles')
+  if (useSessionStore.getState().workspaceView !== 'profiles') {
+    throw new Error('runChatHistoryMarkersHarness failed: volume marker should open profiles view')
   }
 
   store.resetSession()

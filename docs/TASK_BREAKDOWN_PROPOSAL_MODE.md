@@ -420,16 +420,19 @@ sequenceDiagram
 ### **ID:** BDA-125
 
 **Title:** ChatHistoryMarkers proposal mode  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** Low  
 **Description:** [`ChatHistoryMarkers.tsx`](../src/components/chat/ChatHistoryMarkers.tsx): remove creep-flag markers for proposal mode; show neutral empty state or proposal-related markers (e.g. last generated volume titles from store).  
 **Completed Changes:**
-- 🔄 Mode branch update
+- ✅ Removed scope creep flags / mock creep from history tab
+- ✅ **Proposal volumes** section from `proposalRequirementsProfile` via [`proposal-history.ts`](../src/lib/proposal-history.ts)
+- ✅ Empty state copy for proposal mode; row click opens profiles workspace
+- ✅ Updated [`chat-history-harness.ts`](../src/services/chat-history-harness.ts)
 **Test Strategy:** History tab in proposal mode — no creep UI leakage.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness asserts volume list + profiles navigation; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3  
 
 ---

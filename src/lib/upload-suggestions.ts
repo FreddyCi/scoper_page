@@ -27,9 +27,8 @@ export const UPLOAD_SUGGESTIONS: UploadSuggestion[] = [
   },
   {
     id: 'generate-complete-proposal',
-    label: 'Generate Complete Proposal',
-    description:
-      'Upload your RFP, add responder context, and generate solicitation-aligned volumes—not generic marketing copy',
+    label: 'Generate Proposal',
+    description: 'Upload RFPs and responder context — standards-aligned proposal volumes',
   },
   {
     id: 'upload-context',

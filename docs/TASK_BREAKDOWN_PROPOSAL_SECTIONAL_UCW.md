@@ -583,16 +583,17 @@ flowchart TD
 ### **ID:** BDA-179
 
 **Title:** Extend proposal generation harness  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-164, BDA-174  
 **Priority:** High  
 **Description:** Extend [`proposal-generation-harness.ts`](../src/services/proposal-generation-harness.ts) (or dev harness entry): assert ECP allow per section; placeholder context blocks still generate; contract MSA fixture → multiple volumes/sections; activity log receives roll + section entries; context segments sum ≤ contextSize.  
 **Completed Changes:**
-- 🔄 Sectional + ECP audit assertions
-- 🔄 Optional MSA fixture path
+- ✅ Per-section `find_clause` allow assertions (service + store + MSA slice)
+- ✅ `assertProposalHandoffContextBlocks`, activity log (roll/ecp/write), `assertContextUsageWithinContextSize`
+- ✅ Contract MSA classifier + 2-volume generation slice with multiple sections
 **Test Strategy:** `pnpm dev` dev chain passes; failure logs `[dev-harness]`.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm build`; integration harness runs via `runProposalIntegrationHarnesses` on dev load
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan Workstream D, E, F5; BDA-150
 

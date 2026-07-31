@@ -909,6 +909,12 @@ export function selectShowLanding(state: SessionState): boolean {
   return state.workspaceView === 'landing' && state.documents.length === 0
 }
 
+/** Proposal mode tab — enabled after RFP qualification baseline exists, or when already in proposal mode (e.g. landing card). */
+export function selectCanSwitchToProposalMode(state: SessionState): boolean {
+  if (state.mode === 'proposal') return true
+  return state.evaluationBaselineProfile != null
+}
+
 /** Whether any documents are loaded */
 export function selectHasDocuments(state: SessionState): boolean {
   return state.documents.length > 0

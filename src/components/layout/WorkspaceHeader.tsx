@@ -1,7 +1,7 @@
 import {
   ClipboardCheckIcon,
+  CombineIcon,
   FileTextIcon,
-  LayersIcon,
   MessageCircleMoreIcon,
   XIcon,
 } from 'lucide-react'
@@ -16,7 +16,7 @@ import {
 import { canAttachDocumentToChat } from '@/lib/chat-context'
 import { setDocumentChatDragData } from '@/lib/chat-context-drag'
 import { cn } from '@/lib/utils'
-import { useSessionStore } from '@/store/session-store'
+import { selectCanSwitchToProposalMode, useSessionStore } from '@/store/session-store'
 import type { WorkspaceMode } from '@/lib/types'
 
 type WorkspaceHeaderProps = {
@@ -42,13 +42,21 @@ const MODE_TAB_TRIGGER_CLASS = 'gap-1.5 sm:px-3'
 function WorkspaceModeToggle() {
   const mode = useSessionStore((s) => s.mode)
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
+  const canSwitchToProposal = useSessionStore(selectCanSwitchToProposalMode)
   const setMode = useSessionStore((s) => s.setMode)
+
+  const proposalTabDisabled = chatGenerating || !canSwitchToProposal
+  const proposalTabBlockedTitle =
+    !chatGenerating && !canSwitchToProposal
+      ? 'Complete RFP analysis (run qualification) before generating a proposal.'
+      : undefined
 
   return (
     <Tabs
       value={mode}
       onValueChange={(value) => {
         if (chatGenerating) return
+        if (value === 'proposal' && !canSwitchToProposal) return
         setMode(value as WorkspaceMode)
       }}
       className="w-auto gap-0"
@@ -59,15 +67,17 @@ function WorkspaceModeToggle() {
           <span className="sm:hidden">RFP</span>
           <span className="hidden sm:inline">RFP Analysis</span>
         </TabsTrigger>
-        <TabsTrigger
-          value="proposal"
-          disabled={chatGenerating}
-          className={MODE_TAB_TRIGGER_CLASS}
-        >
-          <LayersIcon className="size-3.5" />
-          <span className="sm:hidden">Proposal</span>
-          <span className="hidden sm:inline">Generate Complete Proposal</span>
-        </TabsTrigger>
+        <span className="inline-flex" title={proposalTabBlockedTitle}>
+          <TabsTrigger
+            value="proposal"
+            disabled={proposalTabDisabled}
+            className={MODE_TAB_TRIGGER_CLASS}
+          >
+            <CombineIcon className="size-3.5" />
+            <span className="sm:hidden">Proposal</span>
+            <span className="hidden sm:inline">Generate Complete Proposal</span>
+          </TabsTrigger>
+        </span>
       </TabsList>
     </Tabs>
   )

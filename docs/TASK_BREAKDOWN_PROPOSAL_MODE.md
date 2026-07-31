@@ -104,17 +104,21 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 ### **ID:** BDA-113
 
 **Title:** Session store proposal state  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-110, BDA-111  
 **Priority:** Critical  
 **Description:** In [`session-store.ts`](../src/store/session-store.ts): add `proposalRequirementsProfile`, `proposalGenerating`, `proposalGenerationError`. Wire `clearProposalGeneration` on reset/mode change. Do **not** auto-run `runRfpQualification` when `mode === 'proposal'`.  
 **Completed Changes:**
-- 🔄 State fields + selectors if needed
-- 🔄 Reset paths (`resetSession`, `startNewChat`, etc.)
+- ✅ State fields + `setProposalRequirementsProfile`, `clearProposalGeneration`
+- ✅ `setMode` clears proposal profile + generation flags; `resetSession` calls `clearProposalGeneration` + `initialState`
+- ✅ `clearEvaluationSetup`, `removeDocument` clear proposal profile when RFP/evaluation doc removed
+- ✅ `runRfpQualification` early return when `mode === 'proposal'`
+- ✅ `selectProposalSetupState` / `useProposalSetupState` wired to readiness helper
+- ✅ Harness asserts mode switch clears proposal state
 **Test Strategy:** Dev harness or manual: switch modes; proposal state clears appropriately.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runSessionStoreHarness` covers mode switch; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** Existing `contractReviewProfile` / `creepProfiles` patterns  
 
 ---

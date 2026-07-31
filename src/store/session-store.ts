@@ -12,6 +12,7 @@ import type {
   DocumentMeta,
   DocumentRole,
   IngestResult,
+  ProposalRequirementsProfile,
   RfpResultsProfile,
   ScopeCreepProfile,
   WorkspaceMode,
@@ -33,6 +34,7 @@ import {
 } from '@/lib/chat-context'
 import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
+import { getProposalSetupState } from '@/lib/proposal-readiness'
 import { getScoperClient } from '@/services/scoper-client'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
@@ -126,6 +128,9 @@ export type SessionState = {
   companyContext: string
   reviewerName: string
   creepProfiles: ScopeCreepProfile[]
+  proposalRequirementsProfile: ProposalRequirementsProfile | null
+  proposalGenerating: boolean
+  proposalGenerationError: string | null
   selectedCitation: CitationRef | null
   citationFocusSeq: number
   chatCollapsed: boolean
@@ -160,6 +165,8 @@ export type SessionState = {
   setReviewerName: (name: string) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
+  setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
+  clearProposalGeneration: () => void
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
   bumpCitationFocus: () => void
@@ -218,6 +225,9 @@ const initialState = {
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   creepProfiles: [] as ScopeCreepProfile[],
+  proposalRequirementsProfile: null as ProposalRequirementsProfile | null,
+  proposalGenerating: false,
+  proposalGenerationError: null as string | null,
   selectedCitation: null as CitationRef | null,
   citationFocusSeq: 0,
   chatCollapsed: readInitialChatCollapsed(),
@@ -263,7 +273,16 @@ function resolveActiveDocId(
 export const useSessionStore = create<SessionState>((set, get) => ({
   ...initialState,
 
-  setMode: (mode) => set({ mode }),
+  setMode: (mode) =>
+    set((state) => {
+      if (state.mode === mode) return state
+      return {
+        mode,
+        proposalRequirementsProfile: null,
+        proposalGenerating: false,
+        proposalGenerationError: null,
+      }
+    }),
 
   setDocuments: (documents) =>
     set((state) => ({
@@ -299,6 +318,17 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const creepProfiles = state.creepProfiles.filter(
         (p) => p.baseline_doc_id !== docId && p.candidate_doc_id !== docId,
       )
+      const proposalRequirementsProfile =
+        state.proposalRequirementsProfile?.rfp_doc_id === docId ||
+        state.evaluationDocId === docId
+          ? null
+          : state.proposalRequirementsProfile
+      const proposalGenerationError =
+        state.evaluationDocId === docId || state.proposalRequirementsProfile?.rfp_doc_id === docId
+          ? null
+          : state.proposalGenerationError
+      const proposalGenerating =
+        state.evaluationDocId === docId ? false : state.proposalGenerating
       const selectedCitation =
         state.selectedCitation?.doc_id === docId ? null : state.selectedCitation
 
@@ -308,6 +338,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         evaluationBaselineProfile,
         evaluationDocId,
         creepProfiles,
+        proposalRequirementsProfile,
+        proposalGenerating,
+        proposalGenerationError,
         selectedCitation,
         activeDocId: resolveActiveDocId(
           documents,
@@ -352,6 +385,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       contractChecklistDocId: null,
       contractReviewProfile: null,
       profiles: [],
+      proposalRequirementsProfile: null,
+      proposalGenerating: false,
+      proposalGenerationError: null,
     })
   },
 
@@ -394,7 +430,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   runRfpQualification: async () => {
-    const { documents, evaluationDocId, companyContext } = get()
+    const { mode, documents, evaluationDocId, companyContext } = get()
+    if (mode === 'proposal') return
     if (documents.length === 0) return
 
     const resolvedEvaluationDocId =
@@ -416,6 +453,15 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       workspaceView: 'profiles',
     })
   },
+
+  setProposalRequirementsProfile: (proposalRequirementsProfile) =>
+    set({ proposalRequirementsProfile }),
+
+  clearProposalGeneration: () =>
+    set({
+      proposalGenerating: false,
+      proposalGenerationError: null,
+    }),
 
   setCreepProfiles: (creepProfiles) => set({ creepProfiles }),
 
@@ -736,6 +782,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     writeChatStartedPreference(false)
     writeChatCollapsedPreference(true)
     getScoperClient().resetConversation()
+    get().clearProposalGeneration()
     set({
       ...initialState,
       chatStarted: false,
@@ -807,6 +854,23 @@ export function useCreepProfiles() {
   return useSessionStore((state) => state.creepProfiles)
 }
 
+export function selectProposalSetupState(state: SessionState) {
+  return getProposalSetupState({
+    documents: state.documents,
+    evaluationDocId: state.evaluationDocId,
+    companyContext: state.companyContext,
+    proposalRequirementsProfile: state.proposalRequirementsProfile,
+  })
+}
+
+export function useProposalSetupState() {
+  return useSessionStore(useShallow(selectProposalSetupState))
+}
+
+export function useProposalRequirementsProfile() {
+  return useSessionStore((state) => state.proposalRequirementsProfile)
+}
+
 export function useShowLanding() {
   return useSessionStore(selectShowLanding)
 }
@@ -857,6 +921,40 @@ export function runSessionStoreHarness(): void {
   store.setMode('proposal')
   if (useSessionStore.getState().mode !== 'proposal') {
     throw new Error('setMode failed')
+  }
+
+  store.setProposalRequirementsProfile({
+    profile_id: 'harness-proposal',
+    rfp_doc_id: 'doc-rfp-placeholder',
+    summary: 'Harness profile',
+    built_at: new Date().toISOString(),
+    volumes: [
+      {
+        id: 'vol-h',
+        title: 'Technical',
+        requirementSummary: 'Methodology',
+        status: 'pending',
+      },
+    ],
+  })
+  useSessionStore.setState({
+    proposalGenerating: true,
+    proposalGenerationError: 'harness error',
+  })
+
+  store.setMode('rfp')
+  const afterModeSwitch = useSessionStore.getState()
+  if (
+    afterModeSwitch.proposalRequirementsProfile != null ||
+    afterModeSwitch.proposalGenerating ||
+    afterModeSwitch.proposalGenerationError != null
+  ) {
+    throw new Error('setMode should clear proposal state')
+  }
+
+  store.setMode('proposal')
+  if (useSessionStore.getState().mode !== 'proposal') {
+    throw new Error('setMode back to proposal failed')
   }
 
   store.addDocument({

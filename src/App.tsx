@@ -40,7 +40,7 @@ import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runSharePackHarness } from '@/services/share-pack-harness'
-import { runWhisperWorkerHarness } from '@/services/whisper-worker-harness'
+import { runWhisperClientHarness } from '@/services/whisper-client'
 import { runSessionStoreHarness } from '@/store/session-store'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
@@ -81,7 +81,7 @@ function App() {
         await runBuildRfpProfilesHarness()
         await runContractKeywordReviewHarness()
         await runScoperHarness()
-        await runWhisperWorkerHarness()
+        await runWhisperClientHarness()
         await runDemoExtensionsHarness()
         await runEcpAgentRunHarness()
         await runProposalIntegrationHarnesses()

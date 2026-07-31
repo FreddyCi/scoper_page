@@ -112,17 +112,19 @@ flowchart TD
 ### **ID:** BDA-184
 
 **Title:** Whisper client singleton  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-183  
 **Priority:** Critical  
 **Description:** Add [`src/services/whisper-client.ts`](../src/services/whisper-client.ts): spawn worker via Vite `?worker` URL; `ensureLoaded()`, `transcribeChunk()`, `reset()`, `dispose()`; state `idle | loading | ready | transcribing | error`; listeners for progress/partials/errors. Singleton export `getWhisperClient()` like [`getScoperClient()`](../src/services/scoper-client.ts).  
 **Completed Changes:**
-- 🔄 Pending request map + event handlers
-- 🔄 Load progress surfaced to UI consumers
+- ✅ `WhisperClient` + `getWhisperClient()` — lazy worker, RPC map, event fan-out
+- ✅ `ensureLoaded`, `transcribeChunk` (transferable PCM), `reset`, `dispose`, `probeEnvironment`
+- ✅ `runWhisperClientHarness`; dev chain uses client harness (worker harness delegates)
 **Test Strategy:** Harness calls `ensureLoaded` when WebGPU ok; skips gracefully when not.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b` pass
+- ✅ `runWhisperClientHarness` on dev load when WebGPU available
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-183, BDA-192
 
 ---

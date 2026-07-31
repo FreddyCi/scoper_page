@@ -132,17 +132,19 @@ flowchart TD
 ### **ID:** BDA-185
 
 **Title:** Microphone capture and resample  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** High  
 **Description:** Add [`src/services/chat-voice-capture.ts`](../src/services/chat-voice-capture.ts): `startCapture(onChunk)`, `stopCapture()`; `getUserMedia({ audio: true })`; `AudioContext` resample to **16 kHz mono** Float32; fixed-duration chunks (1–2 s) with overlap per Xenova streaming pattern. Clean up tracks/context on stop. Permission-denied errors as typed result.  
 **Completed Changes:**
-- 🔄 Start/stop lifecycle
-- 🔄 Chunk callback with transferable buffers optional
+- ✅ `startChatVoiceCapture` / `stopChatVoiceCapture` / `isChatVoiceCaptureActive`
+- ✅ 16 kHz mono resample + 1.5 s chunks with 0.25 s overlap; permission typed errors
+- ✅ `runChatVoiceCaptureHarness` (resample + lifecycle) in unit harnesses
 **Test Strategy:** Manual: permission prompt; chunks fire while speaking; stop releases mic indicator in OS.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b` + `runChatVoiceCaptureHarness` on dev load
+- 👤 Manual mic prompt / OS indicator — verify in browser
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Architecture (audio on main thread)
 
 ---

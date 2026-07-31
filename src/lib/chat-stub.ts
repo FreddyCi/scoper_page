@@ -52,15 +52,15 @@ export function buildRichAssistantReply(context: ReplyContext): AssistantChatCon
         {
           id: crypto.randomUUID(),
           kind: 'draft',
-          title: 'Draft technical volume outline',
-          subtitle: 'Aligned to solicitation Section L',
+          title: 'Draft volume summary',
+          subtitle: 'Technical volume aligned to Section L',
           status: 'pending',
         },
         {
           id: crypto.randomUUID(),
           kind: 'update',
-          title: 'Refresh proposal profile',
-          subtitle: 'Re-extract volumes from RFP',
+          title: 'Build proposal profile',
+          subtitle: 'Extract volumes from the RFP',
           status: 'pending',
         },
       ],
@@ -183,4 +183,42 @@ export function chatMessagePreview(message: ChatMessage): string {
     return message.rich.paragraphs[0] ?? message.text
   }
   return message.text
+}
+
+/** Dev harness — proposal mode stub actions (BDA-126) */
+export function runChatStubProposalHarness(): void {
+  const rich = buildRichAssistantReply({
+    prompt: 'Summarize the technical volume requirements',
+    mode: 'proposal',
+    documents: [
+      {
+        doc_id: 'stub-rfp',
+        filename: 'City-RFP-2026.pdf',
+        mime: 'application/pdf',
+        role: 'unknown',
+        uploaded_at: new Date().toISOString(),
+      },
+    ],
+    activeDocId: 'stub-rfp',
+  })
+
+  if (!rich.headline?.includes('Draft proposal')) {
+    throw new Error('runChatStubProposalHarness: expected proposal headline')
+  }
+
+  const draftAction = rich.actions?.find((action) => action.kind === 'draft')
+  if (!draftAction?.title.includes('volume')) {
+    throw new Error('runChatStubProposalHarness: expected draft volume action')
+  }
+
+  const rfpRich = buildRichAssistantReply({
+    prompt: 'qualify bidders',
+    mode: 'rfp',
+    documents: [],
+    activeDocId: null,
+  })
+
+  if (rfpRich.actions?.some((action) => action.title.includes('volume summary'))) {
+    throw new Error('runChatStubProposalHarness: RFP mode should not expose proposal draft actions')
+  }
 }

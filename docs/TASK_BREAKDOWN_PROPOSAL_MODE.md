@@ -440,16 +440,17 @@ sequenceDiagram
 ### **ID:** BDA-126
 
 **Title:** Chat stub proposal actions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** Low  
 **Description:** [`chat-stub.ts`](../src/lib/chat-stub.ts): replace `scope_creep` stub with proposal-oriented draft action (e.g. draft volume summary).  
 **Completed Changes:**
-- 🔄 Stub branch
+- ✅ `mode === 'proposal'` branch: proposal headline, Section M citation, **Draft volume summary** + **Build proposal profile** actions
+- ✅ `runChatStubProposalHarness()` in dev chain; RFP mode does not surface proposal-only actions
 **Test Strategy:** Agent stub in proposal mode returns proposal-relevant copy.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness passes; stub fallback via `agent.ts` uses `buildRichAssistantReply`
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §5  
 
 ---

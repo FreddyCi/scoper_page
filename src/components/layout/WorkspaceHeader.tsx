@@ -62,13 +62,13 @@ function WorkspaceModeToggle() {
             render={
               <span className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
                 <TabsTrigger
-                  value="scope_creep"
+                  value="proposal"
                   disabled
                   className={cn(MODE_TAB_TRIGGER_CLASS, 'pointer-events-none')}
                 >
                   <GitCompareArrowsIcon className="size-3.5" />
-                  <span className="sm:hidden">Creep</span>
-                  <span className="hidden sm:inline">Scope Creep</span>
+                  <span className="sm:hidden">Proposal</span>
+                  <span className="hidden sm:inline">Generate Complete Proposal</span>
                 </TabsTrigger>
               </span>
             }

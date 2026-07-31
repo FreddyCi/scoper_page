@@ -8,7 +8,7 @@ import { useSessionStore } from '@/store/session-store'
 export function runChatHistoryMarkersHarness(): void {
   const store = useSessionStore.getState()
   store.resetSession()
-  store.setMode('scope_creep')
+  store.setMode('proposal')
 
   const baseline: DocumentMeta = {
     doc_id: 'history-baseline',

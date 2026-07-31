@@ -98,11 +98,11 @@ export function runCreepProfileUiHarness(): void {
   }
 }
 
-/** Dev harness — creep grid binds store creepProfiles[] in scope_creep mode (BDA-071) */
+/** Dev harness — creep grid binds store creepProfiles[] in proposal mode (legacy BDA-071 UI) */
 export function runCreepProfileGridHarness(): void {
   const store = useSessionStore.getState()
   store.resetSession()
-  store.setMode('scope_creep')
+  store.setMode('proposal')
 
   const baseline = {
     doc_id: 'creep-grid-baseline',
@@ -134,8 +134,8 @@ export function runCreepProfileGridHarness(): void {
   if (state.workspaceView !== 'profiles') {
     throw new Error('CreepProfileGridHarness: expected profiles workspace view')
   }
-  if (state.mode !== 'scope_creep') {
-    throw new Error('CreepProfileGridHarness: expected scope_creep mode')
+  if (state.mode !== 'proposal') {
+    throw new Error('CreepProfileGridHarness: expected proposal mode')
   }
   if (state.creepProfiles.length !== 1) {
     throw new Error('CreepProfileGridHarness: expected 1 creep profile in store')

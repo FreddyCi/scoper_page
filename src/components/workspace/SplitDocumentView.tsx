@@ -31,7 +31,6 @@ import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useDocumentComments } from '@/hooks/use-document-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
-import { compareScope } from '@/services/compare-scope'
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
 import { beginBlobSave } from '@/lib/download-blob'
 import { blockToCitation } from '@/lib/types'
@@ -54,7 +53,7 @@ type SplitDocumentViewProps = {
 
 const MODE_CTA: Record<WorkspaceMode, string> = {
   rfp: 'Qualify document',
-  scope_creep: 'Compare scope',
+  proposal: 'Open proposal workspace',
 }
 
 function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof readLayoutKind> }) {
@@ -333,7 +332,6 @@ export function SplitDocumentView({
   const defaultTab: SplitPaneTab = usesReadLayout ? 'read' : 'extract'
   const [activeTab, setActiveTab] = useState<SplitPaneTab>(defaultTab)
   const [buildingProfiles, setBuildingProfiles] = useState(false)
-  const [comparingScope, setComparingScope] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportingMarkdown, setExportingMarkdown] = useState(false)
   const [convertingToContext, setConvertingToContext] = useState(false)
@@ -345,7 +343,6 @@ export function SplitDocumentView({
   } | null>(null)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
   const mode = useSessionStore((state) => state.mode)
-  const documents = useSessionStore((state) => state.documents)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
@@ -542,29 +539,8 @@ export function SplitDocumentView({
   }
 
   function handleCtaClick() {
-    if (mode === 'scope_creep') {
-      const baseline = documents.find((doc) => doc.role === 'baseline')
-      const change = documents.find((doc) => doc.role === 'change_request')
-
-      if (!baseline || !change) {
-        console.warn('[split-document-view] scope compare requires baseline + change_request roles')
-        return
-      }
-
-      setComparingScope(true)
-      void compareScope({
-        baselineDocId: baseline.doc_id,
-        candidateDocId: change.doc_id,
-      })
-        .then(() => {
-          setWorkspaceView('profiles')
-        })
-        .catch((error) => {
-          console.error('[split-document-view] compareScope failed', error)
-        })
-        .finally(() => {
-          setComparingScope(false)
-        })
+    if (mode === 'proposal') {
+      setWorkspaceView('profiles')
       return
     }
 
@@ -711,8 +687,8 @@ export function SplitDocumentView({
         }
         exportError={exportError}
         ctaLabel={MODE_CTA[mode]}
-        ctaLoading={buildingProfiles || comparingScope}
-        ctaLoadingLabel={comparingScope ? 'Comparing…' : 'Qualifying…'}
+        ctaLoading={buildingProfiles}
+        ctaLoadingLabel="Qualifying…"
         onCtaClick={handleCtaClick}
         exportLabel={exportStatusHint ? `Export PDF (${exportStatusHint})` : 'Export PDF'}
         exportLoading={exportingPdf}

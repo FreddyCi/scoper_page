@@ -50,7 +50,7 @@ export function ChatHistoryMarkers() {
   )
 
   const creepProfilesForHistory = useMemo((): ScopeCreepProfile[] => {
-    if (mode !== 'scope_creep') return []
+    if (mode !== 'proposal') return []
     if (creepProfiles.length > 0) return creepProfiles
     if (import.meta.env.DEV) {
       return buildMockCreepProfiles(documents)
@@ -66,8 +66,8 @@ export function ChatHistoryMarkers() {
   if (chatGroups.length === 0 && creepGroups.length === 0) {
     return (
       <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm leading-relaxed">
-        {mode === 'scope_creep'
-          ? 'Run scope analysis or ask the agent a question — results will appear here.'
+        {mode === 'proposal'
+          ? 'Build a proposal profile or ask the agent — activity will appear here.'
           : 'Ask the agent a question — your queries from this session will appear here.'}
       </div>
     )

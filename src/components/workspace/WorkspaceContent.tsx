@@ -23,7 +23,7 @@ import type { WorkspaceMode } from '@/lib/types'
 
 const MODE_COPY: Record<WorkspaceMode, string> = {
   rfp: 'RFP Analysis — qualify bidders against requirements with cited evidence.',
-  scope_creep: 'Scope Creep — compare baseline vs change; markdown uploads add supporting context.',
+  proposal: 'Generate Complete Proposal — upload the RFP, add your company context, then build volume drafts tailored to the solicitation.',
 }
 
 /** Routes workspace body by session view */
@@ -70,7 +70,7 @@ export function WorkspaceContent() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-foreground text-base font-semibold tracking-tight">
-                {mode === 'rfp' ? 'RFP Analysis' : 'Scope Creep Analysis'}
+                {mode === 'rfp' ? 'RFP Analysis' : 'Generate Complete Proposal'}
               </h1>
               <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{MODE_COPY[mode]}</p>
             </div>

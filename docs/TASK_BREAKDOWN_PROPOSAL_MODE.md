@@ -66,17 +66,19 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 ### **ID:** BDA-111
 
 **Title:** Rename workspace mode to proposal  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-110  
 **Priority:** Critical  
 **Description:** Change `WorkspaceMode` and `ProfileMode` from `'scope_creep'` to `'proposal'`. Mechanical find-replace across `src/` (store, components, hooks, services, harnesses). Fix exhaustiveness switches. Keep legacy string handling only where share-pack import maps old manifests.  
 **Completed Changes:**
-- 🔄 Update `types.ts` unions
-- 🔄 Migrate references in session-store, UI, chat-stub, ingest, share-pack
+- ✅ Updated `WorkspaceMode` / `ProfileMode` in `src/lib/types.ts`
+- ✅ Migrated UI, hooks, chat-stub, ingest, harnesses, session-store dev harness
+- ✅ `normalizeSharePackMode()` maps legacy `scope_creep` → `proposal` in share-pack import
+- ✅ Removed scope-compare CTA/import paths from product surface (proposal → profiles)
 **Test Strategy:** `pnpm build`; grep for `scope_creep` in `src/` — only allowed in share-pack legacy mapper or dev creep harness comments.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` passes; `scope_creep` only in `share-pack-import.ts` legacy mapper
+**Assigned:** Completed  
 **Context/Artifacts:** [`WorkspaceHeader.tsx`](../src/components/layout/WorkspaceHeader.tsx), [`session-store.ts`](../src/store/session-store.ts)  
 
 ---

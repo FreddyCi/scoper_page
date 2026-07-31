@@ -124,7 +124,7 @@ export type CommentRecord = {
   created_at: string
 }
 
-export type ProfileMode = 'rfp' | 'scope_creep'
+export type ProfileMode = 'rfp' | 'proposal'
 
 /** DuckDB `results_profiles` row (criteria normalized in `profile_criteria`) */
 export type ResultsProfileRecord = {
@@ -136,7 +136,7 @@ export type ResultsProfileRecord = {
   summary: string
 }
 
-export type WorkspaceMode = 'rfp' | 'scope_creep'
+export type WorkspaceMode = 'rfp' | 'proposal'
 
 export type WorkspaceView = 'landing' | 'profiles' | 'split'
 

@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 
 import { ingestFiles, type IngestProgress } from '@/services/ingest-router'
-import { compareScope } from '@/services/compare-scope'
 import type { IngestResult } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
 
@@ -33,15 +32,16 @@ export function useIngestPipeline() {
           await useSessionStore.getState().runRfpQualification()
         }
 
-        if (mode === 'scope_creep') {
-          const baseline = documents.find((doc) => doc.role === 'baseline')
-          const change = documents.find((doc) => doc.role === 'change_request')
-          if (baseline && change) {
-            await compareScope({
-              baselineDocId: baseline.doc_id,
-              candidateDocId: change.doc_id,
-            })
+        if (mode === 'proposal') {
+          const store = useSessionStore.getState()
+          if (!store.evaluationDocId) {
+            const rfpDoc =
+              documents.find((doc) => doc.mime === 'application/pdf') ?? documents[0]
+            if (rfpDoc) {
+              store.setEvaluationDocId(rfpDoc.doc_id)
+            }
           }
+          store.setWorkspaceView('profiles')
         }
       }
 

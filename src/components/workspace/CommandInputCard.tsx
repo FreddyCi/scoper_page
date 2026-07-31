@@ -47,7 +47,7 @@ type CommandInputCardProps = {
 
 const PLACEHOLDER_COPY: Record<WorkspaceMode, string> = {
   rfp: 'Describe what to analyse in these RFP documents…',
-  scope_creep: 'Describe the baseline and changes to compare for scope drift…',
+  proposal: 'Describe the RFP and your company capabilities for proposal generation…',
 }
 
 const FAN_ROTATIONS = ['-rotate-6', '-rotate-3', 'rotate-0', 'rotate-3', 'rotate-6'] as const
@@ -201,7 +201,7 @@ function CommandSettingsPopover({
             {(
               [
                 ['rfp', 'RFP Analysis'],
-                ['scope_creep', 'Scope Creep'],
+                ['proposal', 'Generate Proposal'],
               ] as const
             ).map(([value, label]) => (
               <button

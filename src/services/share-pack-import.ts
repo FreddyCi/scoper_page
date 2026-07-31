@@ -1,12 +1,11 @@
 import { base64ToBytes } from '@/lib/share-crypto'
-import type { DocumentMeta } from '@/lib/types'
+import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
 import type { SharePackPayload } from '@/lib/share-table'
 import { cacheDocumentBytes, clearDocumentBytesCache } from '@/services/document-bytes-cache'
 import { assertShareTablesShape, importShareTableRows } from '@/services/share-pack-duckdb'
 import { decryptSharePackFile } from '@/services/share-pack-export'
 import { fetchSharePackBytes } from '@/services/share-pack-link'
 import { fetchRfpProfilesFromDuckdb } from '@/services/rfp-profile-store'
-import { fetchScopeCreepProfiles } from '@/services/scope-creep-store'
 import { getScoperClient } from '@/services/scoper-client'
 import { useSessionStore } from '@/store/session-store'
 
@@ -20,6 +19,12 @@ function writeCompanyContextPreference(value: string) {
   } catch {
     // sessionStorage unavailable
   }
+}
+
+function normalizeSharePackMode(mode: string): WorkspaceMode {
+  if (mode === 'scope_creep') return 'proposal'
+  if (mode === 'rfp' || mode === 'proposal') return mode
+  return 'rfp'
 }
 
 function documentsFromSharePayload(payload: SharePackPayload): DocumentMeta[] {
@@ -50,9 +55,8 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
   await importShareTableRows(tables)
 
   const documents = documentsFromSharePayload(payload)
-  const profiles = manifest.mode === 'rfp' ? await fetchRfpProfilesFromDuckdb() : []
-  const creepProfiles =
-    manifest.mode === 'scope_creep' ? await fetchScopeCreepProfiles() : []
+  const mode = normalizeSharePackMode(String(manifest.mode))
+  const profiles = mode === 'rfp' ? await fetchRfpProfilesFromDuckdb() : []
 
   const evaluationBaselineProfile =
     manifest.evaluationBaselineProfileId != null
@@ -64,10 +68,10 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
   writeCompanyContextPreference(manifest.companyContext)
 
   useSessionStore.setState({
-    mode: manifest.mode,
+    mode,
     documents,
     profiles,
-    creepProfiles,
+    creepProfiles: [],
     evaluationDocId: manifest.evaluationDocId,
     evaluationBaselineProfile,
     companyContext: manifest.companyContext,

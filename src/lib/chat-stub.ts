@@ -22,12 +22,12 @@ export function buildRichAssistantReply(context: ReplyContext): AssistantChatCon
   const subject = activeDocumentLabel(context.documents, context.activeDocId)
   const activeDoc = context.documents.find((doc) => doc.doc_id === context.activeDocId) ?? context.documents[0]
 
-  if (context.mode === 'scope_creep') {
+  if (context.mode === 'proposal') {
     return {
-      headline: `${subject} needs attention`,
+      headline: `Draft proposal for ${subject}`,
       paragraphs: [
-        'I compared the baseline and change documents. Two deliverables drift outside the original scope, and one exclusion clause is missing from the addendum.',
-        'The highlighted passage below is the strongest evidence for a possible creep flag.',
+        'I mapped solicitation sections to response volumes. Each draft mirrors the RFP structure and uses compliance language—not generic marketing copy.',
+        'Open the proposal workspace to build the full profile and generate all volumes.',
       ],
       citations: activeDoc
         ? [
@@ -35,33 +35,32 @@ export function buildRichAssistantReply(context: ReplyContext): AssistantChatCon
               id: crypto.randomUUID(),
               citation: {
                 doc_id: activeDoc.doc_id,
-                block_id: `${activeDoc.doc_id}:p2:i4`,
-                page_num: 2,
+                block_id: `${activeDoc.doc_id}:p1:i0`,
+                page_num: 1,
                 excerpt:
-                  'Contractor shall provide additional analytics dashboards beyond the baseline reporting package.',
+                  'Offerors shall address each evaluation factor in the order listed in Section M.',
               },
-              body: 'Section 2.4 — Change request excerpt:',
-              highlight:
-                'additional analytics dashboards beyond the baseline reporting package',
+              body: 'Section M — Evaluation criteria excerpt:',
+              highlight: 'address each evaluation factor in the order listed',
               sourceLabel: activeDoc.filename,
-              sourceMeta: 'Page 2 · Scope addendum',
+              sourceMeta: 'Page 1 · RFP instructions',
             },
           ]
         : [],
-      actionsIntro: 'I prepared two actions you can review.',
+      actionsIntro: 'Suggested next steps:',
       actions: [
         {
           id: crypto.randomUUID(),
           kind: 'draft',
-          title: 'Draft scope creep summary',
-          subtitle: 'Email draft · 2 evidence cites',
+          title: 'Draft technical volume outline',
+          subtitle: 'Aligned to solicitation Section L',
           status: 'pending',
         },
         {
           id: crypto.randomUUID(),
           kind: 'update',
-          title: 'Update creep profile fields',
-          subtitle: '4 field updates · AI enriched',
+          title: 'Refresh proposal profile',
+          subtitle: 'Re-extract volumes from RFP',
           status: 'pending',
         },
       ],

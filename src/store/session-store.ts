@@ -854,8 +854,8 @@ export function runSessionStoreHarness(): void {
   const store = useSessionStore.getState()
   store.resetSession()
 
-  store.setMode('scope_creep')
-  if (useSessionStore.getState().mode !== 'scope_creep') {
+  store.setMode('proposal')
+  if (useSessionStore.getState().mode !== 'proposal') {
     throw new Error('setMode failed')
   }
 

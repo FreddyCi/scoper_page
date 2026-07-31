@@ -1,3 +1,4 @@
+import { runWhisperProtocolHarness } from '@/lib/whisper-protocol'
 import { runProposalHistoryHarness } from '@/lib/proposal-history'
 import { runProposalSectionFindClauseHarness } from '@/lib/proposal-section-find-clause'
 import { runProposalSetupQualityGatesHarness } from '@/lib/proposal-setup-quality-gates'
@@ -31,6 +32,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
+  runWhisperProtocolHarness()
   runPageContextManagerHarness()
   runContextUsageHarness()
   runShimmerHarness()

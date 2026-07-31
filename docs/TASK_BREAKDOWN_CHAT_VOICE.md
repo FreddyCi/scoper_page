@@ -68,17 +68,19 @@ flowchart TD
 ### **ID:** BDA-182
 
 **Title:** Whisper worker protocol types  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-181  
 **Priority:** Critical  
 **Description:** Add [`src/lib/whisper-protocol.ts`](../src/lib/whisper-protocol.ts): command types `load`, `transcribe`, `reset`, `dispose`; outbound `progress`, `partial`, `segment`, `error`; typed payloads for Float32 audio buffers (transferable). Mirror patterns from [`scoper-protocol.ts`](../src/lib/scoper-protocol.ts).  
 **Completed Changes:**
-- 🔄 Command/event discriminated unions
-- 🔄 Request id + ok/error responses for RPC-style calls
+- ✅ Command/event discriminated unions + RPC request/response types
+- ✅ `whisperTranscribeTransferables`, `resolveWhisperSampleRateHz`, error classes
+- ✅ `runWhisperProtocolHarness` registered in `runProposalUnitHarnesses`
 **Test Strategy:** TypeScript strict compile; no runtime yet.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` pass
+- ✅ Dev harness exhaustiveness check on load
+**Assigned:** Completed  
 **Context/Artifacts:** [`scoper-client.ts`](../src/services/scoper-client.ts), [`scoper.worker.ts`](../src/workers/scoper.worker.ts)
 
 ---

@@ -1,3 +1,4 @@
+import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
@@ -18,6 +19,7 @@ export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
+  runProposalExportQualityHarness()
   runProposalContextRollHarness()
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()

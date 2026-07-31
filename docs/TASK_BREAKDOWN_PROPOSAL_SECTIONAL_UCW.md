@@ -171,17 +171,19 @@ flowchart TD
 ### **ID:** BDA-158
 
 **Title:** Proposal export quality validator  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** High  
 **Description:** New [`src/lib/proposal-export-quality.ts`](../src/lib/proposal-export-quality.ts): meta-outline detection, min length, forbidden writer-instruction leakage, volume-level checks reused for **sections** (same rules as volume validator). Export gate consumes this for full profile.  
 **Completed Changes:**
-- 🔄 `validateProposalVolumeDraft(markdown)` (section + volume)
-- 🔄 `canExportProposalProfile(profile): { ok, reasons[] }`
+- ✅ `validateProposalVolumeDraft()` — min length, placeholders, meta-outline, prompt leak, outline-only
+- ✅ `canExportProposalProfile()` — all volumes `draft` + per-body validation
+- ✅ `runProposalExportQualityHarness()`
 **Test Strategy:** Known bad DPR/MSA export samples fail; synthetic good section passes.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Harness: good draft pass; meta-outline, prompt leak, stub fail; profile gate cases  
+- ✅ `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A, D; user-reported bad export
 
 ---

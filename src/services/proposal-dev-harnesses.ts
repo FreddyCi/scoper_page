@@ -1,4 +1,5 @@
 import { runProposalSectionFindClauseHarness } from '@/lib/proposal-section-find-clause'
+import { runProposalSetupQualityGatesHarness } from '@/lib/proposal-setup-quality-gates'
 import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-section'
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
@@ -25,6 +26,7 @@ export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
+  runProposalSetupQualityGatesHarness()
   runProposalExportQualityHarness()
   runProposalVolumeSectionTypesHarness()
   runProposalSectionFindClauseHarness()

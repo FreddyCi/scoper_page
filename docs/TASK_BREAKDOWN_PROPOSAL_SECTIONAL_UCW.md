@@ -368,17 +368,18 @@ flowchart TD
 ### **ID:** BDA-166
 
 **Title:** SetupGateList quality integration  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-157, BDA-159  
 **Priority:** Medium  
 **Description:** Extend proposal setup gate UI (panel checklist) with `packageWarnings` and context quality issues from BDA-157; link copy to build profile / responder context fixes.  
 **Completed Changes:**
-- 🔄 Read warnings from profile store
-- 🔄 Display non-blocking vs blocking items per product rules
+- ✅ Context row uses `assessProposalContextQuality`; blocking reasons + edit hint
+- ✅ `packageWarnings` advisory panel with rebuild-profile copy
+- ✅ `getProposalContextGateState` + harness
 **Test Strategy:** MSA fixture shows contract warning; weak context shows gate item.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalSetupQualityGatesHarness`; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A; BDA-132
 
 ---

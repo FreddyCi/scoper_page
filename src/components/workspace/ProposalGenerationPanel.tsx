@@ -182,7 +182,12 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </p>
           </div>
 
-          <ProposalSetupGateList setup={setup} exportGate={exportGate} />
+          <ProposalSetupGateList
+            setup={setup}
+            companyContext={companyContext}
+            packageWarnings={profile?.packageWarnings}
+            exportGate={exportGate}
+          />
 
           {profile && !buildingProfile ? (
             <div
@@ -283,6 +288,8 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             ) : exportGate && !exportGate.ok ? (
               <ProposalSetupGateList
                 setup={setup}
+                companyContext={companyContext}
+                packageWarnings={profile.packageWarnings}
                 variant="compact"
                 exportGate={exportGate}
               />

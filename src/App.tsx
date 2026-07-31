@@ -18,7 +18,6 @@ import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import {
   runProposalGenerationHarness,
-  runProposalPromptsHarness,
 } from '@/services/build-proposal-volumes'
 import { runProposalRfpProfileHarness } from '@/services/build-proposal-rfp-profile'
 import { runScoperHarness } from '@/services/scoper-client'
@@ -40,6 +39,7 @@ import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
+import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { runSessionStoreHarness } from '@/store/session-store'
 

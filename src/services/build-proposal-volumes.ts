@@ -216,21 +216,3 @@ export async function runProposalGenerationHarness(): Promise<void> {
 
   store.resetSession()
 }
-
-/** Prompt guardrail smoke test (BDA-115) */
-export function runProposalPromptsHarness(): void {
-  const prompt = buildVolumePrompt(
-    {
-      id: 'vol-1',
-      title: 'Technical approach',
-      requirementSummary: 'Describe installation methodology.',
-      status: 'pending',
-    },
-    { companyContext: 'Certified roofing subcontractor.' },
-    ['Section L.1 requires a detailed methodology.'],
-  )
-
-  if (!prompt.includes('Technical approach') || !prompt.includes('generic marketing')) {
-    throw new Error('proposal prompts harness: guardrails or volume title missing')
-  }
-}

@@ -4,7 +4,7 @@
 **Date:** 2026-07-30  
 **Based on:** [Proposal mode plan](/Users/christopherkruger/.cursor/plans/proposal_mode_replaces_creep_5bdbc4a0.plan.md), [TASK_BREAKDOWN_TEMPLATE.md](TASK_BREAKDOWN_TEMPLATE.md)
 
-**Project Focus:** Replace disabled **Scope Creep** workspace mode with enabled **Generate Complete Proposal** mode: RFP upload + responder context + RFP-derived volume profile → gated AI volume generation (standards-aligned, not generic business writing).
+**Project Focus:** Replace disabled **Scope Creep** workspace mode with enabled **Generate Complete Proposal** mode: RFP upload + responder context + RFP-derived volume profile → gated AI volume generation (standards-aligned, not generic business writing). Volume **drafting** must use the same **ECP-governed document agent path** as chat (`@demo/document.find_clause` via [`runEcpAgentTool`](../src/ecp/agent-run.ts)), not ad-hoc service bypasses.
 
 **Package manager:** pnpm (see [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md))
 
@@ -38,6 +38,58 @@ Part 2 (**Generate** + volume editing) stays **disabled/grayed** until:
 3. `proposalRequirementsProfile` built (user clicked **Build proposal profile**).
 
 Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI generates all volumes tailored to standards—not generic business writing.*
+
+---
+
+## ECP integration (proposal generation)
+
+Proposal mode reuses the **Browser Doc Agent ECP stack** documented in [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) Phase 7–8 (BDA-060–062). Chat and proposal generation share retrieval governance; proposal runs must not weaken registry freeze, namespace allowlists, or param validation.
+
+### Per-volume generation flow (target)
+
+```mermaid
+sequenceDiagram
+  participant Panel as ProposalGenerationPanel
+  participant Store as session-store
+  participant Build as build-proposal-volumes
+  participant Env as ecp/environment
+  participant Agent as agent.ts
+  participant ECP as runEcpAgentTool
+  participant Doc as demo/document.find_clause
+
+  Panel->>Store: runGenerateProposalVolumes()
+  Store->>Build: buildProposalVolumes(onProfileUpdate)
+  loop Each volume
+    Build->>Env: ensureScoperEcpReadyBeforeAgentRun()
+    Build->>Agent: isolated runAgentTurn(prompt, RFP chatContextAttachments)
+    Agent->>ECP: find_clause(compactFindClauseQuery(prompt), docIds=[rfp])
+    ECP->>Doc: invokeCapability
+    Doc-->>Agent: matches + citations
+    Agent-->>Build: markdown body (Scoper summary or stub fallback)
+    Build->>Store: patch volume status + bodyMarkdown
+  end
+```
+
+| Step | Requirement |
+|------|-------------|
+| Registry | Call [`ensureScoperEcpReadyBeforeAgentRun()`](../src/ecp/environment.ts) before each volume (same as chat agent). |
+| RFP scope | Attach RFP via [`createDocumentContextAttachment`](../src/lib/chat-context.ts); resolve search doc ids to **evaluation RFP only** (mirror [`resolveCitationDocIds`](../src/services/agent.ts)). |
+| Retrieval | Evidence through **ECP** [`@demo/document.find_clause`](../src/ecp/extensions/document.ts) — [`runEcpAgentTool`](../src/ecp/agent-run.ts), not direct [`findClause()`](../src/services/find-clause.ts) from proposal code. |
+| Query length | Use [`compactFindClauseQuery`](../src/services/document-search.ts) on volume-focused prompts ([`buildVolumePrompt`](../src/lib/proposal-prompts.ts)). |
+| Chat isolation | Do **not** append proposal volume turns to the user’s main chat thread; use an isolated turn helper or Scoper send with find_clause-enriched prompt (see BDA-127). |
+| Errors | Surface `EcpAgentRunDeniedError` and tool failures as per-volume `status: 'error'` + `errorMessage`; session `proposalGenerationError` for fatal loop errors. |
+| Busy flags | `proposalGenerating` on store only — do not set `chatGenerating` during proposal batch runs. |
+
+### MVP gap (current code)
+
+[`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) today: DuckDB block excerpts + direct [`getScoperClient().send()`](../src/services/scoper-client.ts) after `ensureScoperEcpReadyBeforeAgentRun()`. **ECP `find_clause` and [`runAgentTurn`](../src/services/agent.ts) are not wired.** Close this gap in **BDA-127** before calling generation “ECP-complete.”
+
+### ECP harness expectations
+
+- Extend [`runProposalGenerationHarness`](../src/services/build-proposal-volumes.ts) (or add `runProposalEcpGenerationHarness`) to assert an **allow** audit entry for `find_clause` when RFP doc is attached (same bar as [`runEcpAgentRunHarness`](../src/ecp/agent-run.ts)).
+- Optional dev-only: parity check — ECP find_clause excerpts vs direct service for the same volume query on sample RFP.
+
+**Profile build (BDA-116)** stays in-memory from [`fetchDocumentBlocks`](../src/services/document-blocks.ts) for v1; a future `@demo/document.build_proposal_profile` ECP capability is **out of scope** unless product requires audit parity for outline extraction.
 
 ---
 
@@ -135,6 +187,7 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 - ✅ `runGenerateProposalVolumes` → `buildProposalVolumes` with per-volume store patches; `proposalGenerating` mutex
 - ✅ Supporting services: `proposal-prompts`, `build-proposal-rfp-profile`, `build-proposal-volumes`
 - ✅ Dev harnesses: `runProposalRfpProfileHarness`, `runProposalGenerationHarness`, `runProposalPromptsHarness` in `App.tsx`
+- ⚠️ **ECP:** store actions delegate to MVP volume builder; full ECP agent path tracked in **BDA-127**
 **Test Strategy:** Harness calls actions after mock ingest; profile and volumes populate in store.  
 **Test Results:**
 - ✅ `pnpm build` clean; generation harness exercises store actions end-to-end
@@ -145,21 +198,24 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 
 ## Phase 2: Build services (MVP engine)
 
-> Extract RFP outline → volumes; generate markdown per volume via existing agent/chat stack
+> Extract RFP outline → volumes; generate markdown per volume via **ECP-backed agent retrieval** + on-device Scoper summary (see [ECP integration](#ecp-integration-proposal-generation))
 
 ### **ID:** BDA-115
 
 **Title:** Proposal prompt guardrails module  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-110  
 **Priority:** High  
 **Description:** Add [`src/lib/proposal-prompts.ts`](../src/lib/proposal-prompts.ts): system/user templates per volume — mirror solicitation headings, forbid generic marketing copy, require section alignment and citation of RFP sections. Export `buildVolumePrompt(volume, context, excerpts)`.  
 **Completed Changes:**
-- 🔄 Prompt builders + constants
+- ✅ `PROPOSAL_GUARDRAIL_PHRASES`, `PROPOSAL_VOLUME_SYSTEM_PROMPT`
+- ✅ `buildVolumeUserPrompt`, `buildVolumePromptParts`, `buildVolumePrompt` (combined MVP string)
+- ✅ `buildVolumeFindClauseQuery` → `compactFindClauseQuery` for ECP path (BDA-127)
+- ✅ `runProposalPromptsHarness()` in dev chain (`App.tsx`)
 **Test Strategy:** Snapshot or harness: prompt includes volume title + context snippet + guardrail phrases.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Harness asserts all guardrail phrases, user context, solicitation refs, find-clause query
+**Assigned:** Completed  
 **Context/Artifacts:** [`format-criterion-chat.ts`](../src/lib/format-criterion-chat.ts), plan §2  
 
 ---
@@ -202,19 +258,39 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 
 ### **ID:** BDA-118
 
-**Title:** Build proposal volumes generation  
-**Status:** To Do  
+**Title:** Build proposal volumes generation (MVP loop)  
+**Status:** Partial  
 **Dependencies:** BDA-115, BDA-116, BDA-114  
 **Priority:** Critical  
-**Description:** Add [`src/services/build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts): for each volume, call [`runAgentTurn`](../src/services/agent.ts) or isolated generation with RFP doc in `chatContextAttachments`; update store volume `bodyMarkdown` + status sequentially; disable concurrent double-run via `proposalGenerating`.  
+**Description:** Add [`src/services/build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts): sequential per-volume loop; patch store `bodyMarkdown` + status; mutex via `proposalGenerating`. **MVP shipped:** block excerpts + Scoper send + stub fallback. **Product target (BDA-127):** ECP `find_clause` + agent turn with RFP in `chatContextAttachments`.  
 **Completed Changes:**
-- 🔄 Per-volume loop + store patches
-- 🔄 Error → volume status `error` + message
+- ✅ Per-volume loop + `patchProposalVolume` + store `onProfileUpdate`
+- ✅ Error → volume status `error` + message; stub when WebGPU/model unavailable
+- 🔄 ECP retrieval + isolated `runAgentTurn` — **BDA-127**
 **Test Strategy:** Harness with stub/WebGPU: each volume ends `draft` with non-empty markdown.  
+**Test Results:**
+- ✅ `runProposalGenerationHarness` passes on sample ingest (MVP path)
+**Assigned:** Partial — ECP completion in BDA-127  
+**Context/Artifacts:** [ECP integration](#ecp-integration-proposal-generation), [`agent.ts`](../src/services/agent.ts), [`ecp/agent-run.ts`](../src/ecp/agent-run.ts)  
+
+---
+
+### **ID:** BDA-127
+
+**Title:** Wire proposal volume generation through ECP  
+**Status:** To Do  
+**Dependencies:** BDA-118, BDA-062 (main breakdown — agent via ECP)  
+**Priority:** Critical  
+**Description:** Refactor [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) so each volume uses the **ECP-governed agent path**: RFP [`createDocumentContextAttachment`](../src/lib/chat-context.ts); [`compactFindClauseQuery`](../src/services/document-search.ts) on [`buildVolumePrompt`](../src/lib/proposal-prompts.ts) output; [`runAgentTurn`](../src/services/agent.ts) or extracted helper that routes retrieval through [`runEcpAgentTool`](../src/ecp/agent-run.ts) → `@demo/document.find_clause` with doc scope = RFP `evaluationDocId` only. Keep chat thread isolated (no proposal turns in sidebar history). Preserve stub fallback when Scoper/WebGPU unavailable after ECP deny or empty matches.  
+**Completed Changes:**
+- 🔄 `generateVolumeBody` (or successor) calls ECP find_clause path before/alongside Scoper summary
+- 🔄 Isolated turn helper — no `chatMessages` pollution
+- 🔄 Map `EcpAgentRunDeniedError` → volume error status
+**Test Strategy:** `runProposalGenerationHarness` or `runProposalEcpGenerationHarness`: after generate, audit log contains allowed `find_clause` for RFP doc; volumes still reach `draft` or explicit `error`.  
 **Test Results:**
 - 🔄 Pending  
 **Assigned:** Unassigned  
-**Context/Artifacts:** [`runChatAgentTurn`](../src/services/chat-agent.ts), [`compactFindClauseQuery`](../src/services/document-search.ts) (query length limits)  
+**Context/Artifacts:** [ECP integration](#ecp-integration-proposal-generation), [`runEcpAgentRunHarness`](../src/ecp/agent-run.ts), [`DOCUMENT_CAPABILITIES.find_clause`](../src/ecp/extensions/document.ts)  
 
 ---
 
@@ -222,7 +298,7 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 
 **Title:** End-to-end proposal generation harness  
 **Status:** To Do  
-**Dependencies:** BDA-117, BDA-118  
+**Dependencies:** BDA-117, BDA-118, BDA-127  
 **Priority:** Medium  
 **Description:** `runProposalGenerationHarness()`: full path profile + generate (or generate stub if WebGPU unavailable). Assert `readyToGenerate` gating before generate.  
 **Completed Changes:**
@@ -418,7 +494,7 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 
 **Title:** Generate complete proposal CTA  
 **Status:** To Do  
-**Dependencies:** BDA-132, BDA-118  
+**Dependencies:** BDA-132, BDA-118, BDA-127  
 **Priority:** Critical  
 **Description:** Primary **Generate complete proposal** button calls `runGenerateProposalVolumes()`; disable while `proposalGenerating`; per-volume status spinners (`generating` → `draft` / `error`).  
 **Completed Changes:**
@@ -427,7 +503,7 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 **Test Results:**
 - 🔄 Pending  
 **Assigned:** Unassigned  
-**Context/Artifacts:** Plan §3  
+**Context/Artifacts:** Plan §3, BDA-127 (ECP-backed generation)  
 
 ---
 
@@ -528,14 +604,15 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 **Status:** To Do  
 **Dependencies:** BDA-117, BDA-119  
 **Priority:** Medium  
-**Description:** Wire `runProposalRfpProfileHarness` and `runProposalGenerationHarness` in [`App.tsx`](../src/App.tsx) dev chain; keep creep harnesses optional/env-gated so CI unchanged.  
+**Description:** Wire `runProposalRfpProfileHarness` and `runProposalGenerationHarness` in [`App.tsx`](../src/App.tsx) dev chain; after **BDA-127**, register ECP proposal harness; keep creep harnesses optional/env-gated so CI unchanged.  
 **Completed Changes:**
-- 🔄 App.tsx registration
+- ✅ `App.tsx` registration for profile + generation + prompts harnesses
+- 🔄 ECP proposal harness when BDA-127 lands
 **Test Strategy:** Dev load runs new harnesses without uncaught errors.  
 **Test Results:**
-- 🔄 Pending  
+- 🔄 Partial (MVP harnesses registered)  
 **Assigned:** Unassigned  
-**Context/Artifacts:** Plan §5  
+**Context/Artifacts:** Plan §5, [ECP integration](#ecp-integration-proposal-generation)  
 
 ---
 
@@ -545,14 +622,14 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 **Status:** To Do  
 **Dependencies:** BDA-120 through BDA-135, BDA-140, BDA-141  
 **Priority:** Critical  
-**Description:** Execute manual script: Landing → **Generate Complete Proposal** → upload sample RFP → responder context → Build profile → Generate → export .md. Toggle RFP ↔ Proposal without crash. Confirm proposal mode does not show bidder qualification grid or creep grid.  
+**Description:** Execute manual script: Landing → **Generate Complete Proposal** → upload sample RFP → responder context → Build profile → Generate → export .md. Toggle RFP ↔ Proposal without crash. Confirm proposal mode does not show bidder qualification grid or creep grid. **After BDA-127:** DevTools harness shows ECP `find_clause` allow during generate; generation still works offline after model/cache warm (same as chat).  
 **Completed Changes:**
 - 🔄 QA notes in this doc or QA_RESULTS append
 **Test Strategy:** `pnpm build` pass; manual checklist pass.  
 **Test Results:**
 - 🔄 Pending  
 **Assigned:** Unassigned  
-**Context/Artifacts:** Plan §6, [`sample/rfp-it-services.pdf`](../sample/rfp-it-services.pdf)  
+**Context/Artifacts:** Plan §6, [`sample/rfp-it-services.pdf`](../sample/rfp-it-services.pdf), [ECP integration](#ecp-integration-proposal-generation)  
 
 ---
 
@@ -568,7 +645,8 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 | 6 | BDA-116 | Build RFP profile service | 3h |
 | 7 | BDA-117 | RFP profile harness | 1h |
 | 8 | BDA-114 | Store profile/generate actions | 2h |
-| 9 | BDA-118 | Build volumes generation | 4h |
+| 9 | BDA-118 | Build volumes generation (MVP loop) | 4h |
+| 9b | BDA-127 | ECP-backed volume generation | 3h |
 | 10 | BDA-130 | Proposal panel setup | 2h |
 | 11 | BDA-131 | Build profile button UX | 1.5h |
 | 12 | BDA-132 | Volume list gating | 2h |
@@ -589,7 +667,7 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 | 27 | BDA-150 | Harness registration | 0.5h |
 | 28 | BDA-151 | Manual QA + build | 2h |
 
-**Estimated total:** ~35 hours (~4–5 dev days)
+**Estimated total:** ~38 hours (~4–5 dev days, includes BDA-127 ECP)
 
 ---
 
@@ -598,11 +676,12 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 | Plan section | Tasks |
 |--------------|-------|
 | §1 Domain model and session API | BDA-110–114, BDA-112 |
-| §2 Build services | BDA-115–119 |
+| §2 Build services + ECP generation | BDA-115–119, **BDA-127**, [ECP integration](#ecp-integration-proposal-generation) |
 | §3 UI replace Scope Creep | BDA-120–126, BDA-130–135 |
 | §4 Ingest wiring | BDA-140–141 |
 | §5 Compatibility | BDA-142, BDA-126, BDA-150 |
-| §6 Verification | BDA-151, BDA-117, BDA-119 |
+| §6 Verification | BDA-151, BDA-117, BDA-119, BDA-127 harness |
+| ECP (main BDA-060–062) | BDA-127 — proposal consumes same `@demo/document.find_clause` path as chat |
 
 ---
 
@@ -629,3 +708,4 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 | Version | Date | Changes |
 |---------|------|---------|
 | v1.0 | 2026-07-30 | Initial atomic breakdown from proposal mode plan |
+| v1.1 | 2026-07-30 | ECP integration section; BDA-127; BDA-118 MVP vs ECP target; traceability to BDA-062 |

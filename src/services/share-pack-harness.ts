@@ -5,7 +5,7 @@ import {
   decryptSharePackFile,
   exportEncryptedSharePack,
 } from '@/services/share-pack-export'
-import { applySharePackPayload } from '@/services/share-pack-import'
+import { applySharePackPayload, runSharePackProposalCompatHarness } from '@/services/share-pack-import'
 import { useSessionStore } from '@/store/session-store'
 
 /** Round-trip share pack export/import against harness-ingested workspace. */
@@ -49,4 +49,6 @@ export async function runSharePackHarness(): Promise<void> {
   if (payload.tables.blocks.length === 0) {
     throw new Error('SharePackHarness: expected blocks in share tables')
   }
+
+  await runSharePackProposalCompatHarness()
 }

@@ -114,7 +114,8 @@ export function getShareTablesInClearOrder(): ShareTableDefinition[] {
 export type ShareSessionManifest = {
   version: SharePackVersion
   exported_at: string
-  mode: WorkspaceMode
+  /** Import maps legacy `scope_creep` → `proposal`. */
+  mode: WorkspaceMode | 'scope_creep'
   evaluationDocId: string | null
   evaluationBaselineProfileId: string | null
   companyContext: string

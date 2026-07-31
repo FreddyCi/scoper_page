@@ -617,16 +617,19 @@ sequenceDiagram
 ### **ID:** BDA-142
 
 **Title:** Share pack proposal mode compat  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** Low  
 **Description:** [`share-pack-import.ts`](../src/services/share-pack-import.ts): accept `manifest.mode === 'proposal'`; map legacy `scope_creep` to proposal with empty proposal profile (ignore creep payloads). Export side if share pack writes mode — use `proposal`.  
 **Completed Changes:**
-- 🔄 Import mapper
+- ✅ `normalizeSharePackMode` + `filterShareTablesForImport` strips `scope_flags` / creep `results_profiles` for proposal
+- ✅ Import clears `proposalRequirementsProfile` / generation flags; manifest type documents legacy `scope_creep`
+- ✅ Export [`buildManifest`](../src/services/share-pack-export.ts) writes session `mode` (`proposal` | `rfp`)
+- ✅ `runSharePackProposalCompatHarness` via [`share-pack-harness.ts`](../src/services/share-pack-harness.ts)
 **Test Strategy:** Import old/new manifests without throw.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Dev harness (legacy + explicit proposal manifests)  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §5  
 
 ---

@@ -53,10 +53,10 @@ export const UPLOAD_INTENT_COPY: Record<UploadIntent, UploadIntentCopy> = {
     description:
       'Add RFP packages and bidder responses for document review. Parsed locally in your browser — nothing is sent to a server.',
     dropTitle: 'Drop RFP files here or click to browse',
-    dropHint: 'PDF, Word, and Excel — select one or more files before uploading',
+    dropHint: 'PDF, Word, Excel (.xlsx), LibreOffice (.ods), and Google Sheets export — select one or more files',
     footerNote: 'RFP and bidder files open in document view for review and analysis.',
     highlight: UPLOAD_SUGGESTIONS[0]!,
-    accept: '.pdf,.doc,.docx,.xls,.xlsx',
+    accept: '.pdf,.doc,.docx,.xls,.xlsx,.ods',
   },
   context: {
     title: 'Upload context',

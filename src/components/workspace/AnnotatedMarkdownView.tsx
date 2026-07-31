@@ -12,7 +12,7 @@ import type { BlockRecord, DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { groupBlocksForMarkdownRead, commonSectionPathPrefix, compactSectionPathLabel } from '@/services/document-blocks'
 import { focusCitation } from '@/services/citation-bridge'
-import { isMarkdownDocument, isWordDocument } from '@/lib/document-preview'
+import { isMarkdownDocument, isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useSessionStore } from '@/store/session-store'
 
 type AnnotatedMarkdownViewProps = {
@@ -140,10 +140,13 @@ export function AnnotatedMarkdownView({
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const allowEnhance = isMarkdownDocument(document)
   const isWord = isWordDocument(document)
-  const accentLabel = isWord ? 'Word' : 'Markdown'
-  const accentHint = isWord
-    ? 'Checklist / context · click a passage to cite in chat'
-    : 'Context document · click a passage to cite or enhance'
+  const isSpreadsheet = isSpreadsheetDocument(document)
+  const accentLabel = isSpreadsheet ? 'Spreadsheet' : isWord ? 'Word' : 'Markdown'
+  const accentHint = isSpreadsheet
+    ? 'Workbook rows · click a row to cite in chat · Preview tab shows the sheet grid'
+    : isWord
+      ? 'Checklist / context · click a passage to cite in chat'
+      : 'Context document · click a passage to cite or enhance'
 
   const sectionGroups = useMemo(() => groupBlocksForMarkdownRead(blocks), [blocks])
   const sectionPathPrefix = useMemo(

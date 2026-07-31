@@ -4,7 +4,8 @@ import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
-import { isWordDocument } from '@/lib/document-preview'
+import { SpreadsheetDocumentPreview } from '@/components/workspace/SpreadsheetDocumentPreview'
+import { isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox } from '@/lib/types'
@@ -146,12 +147,16 @@ export function DocumentViewer({
     return <OfficeDocumentPreview document={document} className={className} />
   }
 
+  if (isSpreadsheetDocument(document)) {
+    return <SpreadsheetDocumentPreview document={document} className={className} />
+  }
+
   if (document.mime !== 'application/pdf') {
     return (
       <ViewerState
         className={className}
         title="Preview unavailable"
-        message={`${document.filename} is not a PDF. Document preview supports PDF and Markdown in this MVP.`}
+        message={`${document.filename} is not supported for preview. Use PDF, Markdown, Word, or spreadsheet formats (.xlsx, .ods).`}
       />
     )
   }

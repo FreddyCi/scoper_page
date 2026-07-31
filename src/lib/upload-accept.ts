@@ -7,6 +7,7 @@ export const UPLOAD_ACCEPT_EXTENSIONS = [
   '.markdown',
   '.xls',
   '.xlsx',
+  '.ods',
 ] as const
 
 export const UPLOAD_ACCEPT_STRING = UPLOAD_ACCEPT_EXTENSIONS.join(',')
@@ -19,6 +20,7 @@ const EXTENSION_MIME: Record<string, string> = {
   markdown: 'text/markdown',
   xls: 'application/vnd.ms-excel',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ods: 'application/vnd.oasis.opendocument.spreadsheet',
 }
 
 export function getFileExtension(filename: string): string | null {

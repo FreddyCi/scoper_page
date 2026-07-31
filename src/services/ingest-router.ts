@@ -6,6 +6,11 @@ import {
   isAcceptedUploadFile,
   mimeFromFilename,
 } from '@/lib/upload-accept'
+import {
+  ODS_MIME,
+  XLSX_MIME,
+  XLS_MIME,
+} from '@/lib/document-preview'
 import { getDuckdbClient } from '@/services/duckdb-client'
 import { cacheDocumentBytes } from '@/services/document-bytes-cache'
 import { resolveDocumentRoleForIngest } from '@/services/document-roles'
@@ -17,8 +22,13 @@ import { importPdfMarkupComments, readScoperExportMetadata } from '@/services/im
 import { useSessionStore } from '@/store/session-store'
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-const XLS_MIME = 'application/vnd.ms-excel'
+
+function resolveSpreadsheetMime(mime: string, filename: string): string {
+  const extension = getFileExtension(filename)
+  if (mime === ODS_MIME || extension === 'ods') return ODS_MIME
+  if (mime === XLS_MIME || extension === 'xls') return XLS_MIME
+  return XLSX_MIME
+}
 
 export type IngestOptions = {
   ocrEnabled?: boolean
@@ -81,8 +91,10 @@ function detectIngestFormat(file: File): IngestFormat {
   if (
     mime === 'application/vnd.ms-excel' ||
     mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    mime === ODS_MIME ||
     extension === 'xls' ||
-    extension === 'xlsx'
+    extension === 'xlsx' ||
+    extension === 'ods'
   ) {
     return 'excel'
   }
@@ -335,17 +347,18 @@ async function ingestExcel(
   reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing spreadsheet')
   const blocks = parseXlsxToBlocks(docId, arrayBuffer)
   const mime = resolveMime(file)
+  const spreadsheetMime = resolveSpreadsheetMime(mime, file.name)
 
   const role = await resolveDocumentRoleForIngest(
     docId,
     useSessionStore.getState().documents,
-    mime === XLS_MIME ? XLS_MIME : XLSX_MIME,
+    spreadsheetMime,
   )
 
   const document: DocumentMeta = {
     doc_id: docId,
     filename: file.name,
-    mime: mime === XLS_MIME || mime === XLSX_MIME ? mime : XLSX_MIME,
+    mime: spreadsheetMime,
     role,
     uploaded_at: new Date().toISOString(),
   }

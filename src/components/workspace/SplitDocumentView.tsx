@@ -7,6 +7,7 @@ import { DocumentViewer } from '@/components/workspace/DocumentViewer'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
+import { SpreadsheetDocumentPreview } from '@/components/workspace/SpreadsheetDocumentPreview'
 import { Button } from '@/components/ui/button'
 import {
   BrandDropdownContent,
@@ -72,9 +73,11 @@ function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof r
             aria-label={
               layoutKind === 'word'
                 ? 'Word view help'
-                : isReadable
-                  ? 'Read view help'
-                  : 'Extract view help'
+                : layoutKind === 'spreadsheet'
+                  ? 'Spreadsheet view help'
+                  : isReadable
+                    ? 'Read view help'
+                    : 'Extract view help'
             }
             className={cn('rounded-full', styles.trigger, 'border-transparent hover:border-current/20')}
           />
@@ -89,16 +92,20 @@ function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof r
             title={
               layoutKind === 'word'
                 ? 'Word views'
-                : isReadable
-                  ? 'Markdown views'
-                  : 'Extract & comments'
+                : layoutKind === 'spreadsheet'
+                  ? 'Spreadsheet views'
+                  : isReadable
+                    ? 'Markdown views'
+                    : 'Extract & comments'
             }
             description={
               layoutKind === 'word'
                 ? 'Read to select checklist passages for chat · Preview for a clean formatted layout.'
-                : isReadable
-                  ? 'Read for citations and review notes · Preview for tables and document structure.'
-                  : 'Select blocks in the extract pane and sync highlights with the PDF preview.'
+                : layoutKind === 'spreadsheet'
+                  ? 'Read to select rows for chat · Preview for the full sheet grid (Excel, Google export, .ods).'
+                  : isReadable
+                    ? 'Read for citations and review notes · Preview for tables and document structure.'
+                    : 'Select blocks in the extract pane and sync highlights with the PDF preview.'
             }
           />
           <ul className="text-muted-foreground space-y-2 px-3 pb-3 text-xs leading-relaxed">
@@ -113,6 +120,20 @@ function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof r
                   text in a readable document layout.
                 </li>
                 <li>Original Word formatting is not rendered; content comes from ingest blocks.</li>
+              </>
+            ) : layoutKind === 'spreadsheet' ? (
+              <>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Read</span> — select ingested rows
+                  for chat citations.
+                </li>
+                <li>
+                  <span className={cn('font-medium', styles.title)}>Preview</span> — sheet grid with
+                  tabs; highlights the row when you select a block in Read.
+                </li>
+                <li>
+                  Upload .xlsx (including Google Sheets download), legacy .xls, or LibreOffice .ods.
+                </li>
               </>
             ) : isReadable ? (
               <>
@@ -329,6 +350,7 @@ export function SplitDocumentView({
   const isMarkdown = isMarkdownDocument(document)
   const usesReadLayout = usesReadPreviewLayout(document)
   const layoutKind = readLayoutKind(document)
+  const isSpreadsheet = layoutKind === 'spreadsheet'
   const defaultTab: SplitPaneTab = usesReadLayout ? 'read' : 'extract'
   const [activeTab, setActiveTab] = useState<SplitPaneTab>(defaultTab)
   const [buildingProfiles, setBuildingProfiles] = useState(false)
@@ -609,6 +631,11 @@ export function SplitDocumentView({
             <MarkdownDocumentViewer
               document={document}
               variant="preview"
+              className="h-full min-h-0 rounded-none border-0 shadow-none"
+            />
+          ) : isSpreadsheet ? (
+            <SpreadsheetDocumentPreview
+              document={document}
               className="h-full min-h-0 rounded-none border-0 shadow-none"
             />
           ) : (

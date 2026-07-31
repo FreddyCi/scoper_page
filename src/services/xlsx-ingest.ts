@@ -1,14 +1,10 @@
 import * as XLSX from 'xlsx'
 
 import type { BlockRecord } from '@/lib/types'
-
-function cellText(cell: XLSX.CellObject | undefined): string {
-  if (!cell) return ''
-  const formatted = cell.w?.trim()
-  if (formatted) return formatted
-  if (cell.v == null) return ''
-  return String(cell.v).trim()
-}
+import {
+  cellDisplayText,
+  readSpreadsheetWorkbook,
+} from '@/lib/spreadsheet-workbook'
 
 function rowRangeLabel(range: XLSX.Range, row: number): string {
   const startCol = XLSX.utils.encode_col(range.s.c)
@@ -22,7 +18,7 @@ function rowRangeLabel(range: XLSX.Range, row: number): string {
 
 /** SheetJS workbook → row blocks with sheet + cell-range section_path (BDA-081) */
 export function parseXlsxToBlocks(docId: string, bytes: ArrayBuffer): BlockRecord[] {
-  const workbook = XLSX.read(bytes, { type: 'array' })
+  const workbook = readSpreadsheetWorkbook(bytes)
   const blocks: BlockRecord[] = []
 
   for (const [sheetIndex, sheetName] of workbook.SheetNames.entries()) {
@@ -37,7 +33,7 @@ export function parseXlsxToBlocks(docId: string, bytes: ArrayBuffer): BlockRecor
 
       for (let col = range.s.c; col <= range.e.c; col += 1) {
         const address = XLSX.utils.encode_cell({ r: row, c: col })
-        const value = cellText(sheet[address])
+        const value = cellDisplayText(sheet[address])
         if (value) hasContent = true
         cells.push(value)
       }

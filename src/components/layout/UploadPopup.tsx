@@ -59,7 +59,7 @@ function acceptFileForIntent(file: File, intent: UploadIntent): boolean {
 
 function fileIconForName(filename: string) {
   const extension = getFileExtension(filename)
-  if (extension === 'xlsx' || extension === 'xls') {
+  if (extension === 'xlsx' || extension === 'xls' || extension === 'ods') {
     return FileSpreadsheetIcon
   }
   return FileTextIcon

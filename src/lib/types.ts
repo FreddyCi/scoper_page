@@ -1,5 +1,5 @@
 /**
- * Core domain types — PRD §9.5, plan §Citation contract, §RFP Results Profiles, §Scope Creep
+ * Core domain types — PRD §9.5, plan §Citation contract, §RFP Results Profiles, §Scope Creep, §Proposal volumes
  */
 
 /** PDF bbox in page coordinates — LiteParse top-left origin, PDF points */
@@ -68,6 +68,29 @@ export type ScopeCreepProfile = {
   verdict: ScopeCreepVerdict
   flags: ScopeCreepFlag[]
   summary: string
+}
+
+export type ProposalVolumeStatus = 'pending' | 'generating' | 'draft' | 'error'
+
+/** One solicitation-aligned volume in a complete proposal draft */
+export type ProposalVolume = {
+  id: string
+  title: string
+  requirementSummary: string
+  solicitationRefs?: string[]
+  bodyMarkdown?: string
+  status: ProposalVolumeStatus
+  /** Set when status is error */
+  errorMessage?: string
+}
+
+/** RFP-derived outline used to generate responder proposal volumes */
+export type ProposalRequirementsProfile = {
+  profile_id: string
+  rfp_doc_id: string
+  volumes: ProposalVolume[]
+  summary: string
+  built_at: string
 }
 
 export type DocumentRole = 'baseline' | 'change_request' | 'supporting' | 'unknown'

@@ -1072,6 +1072,7 @@ flowchart LR
 **Related documents:**
 - [PRD.md](PRD.md)
 - [PRD_TEMPLATE.md](PRD_TEMPLATE.md)
+- [TASK_BREAKDOWN_PROPOSAL_MODE.md](TASK_BREAKDOWN_PROPOSAL_MODE.md) — Generate Complete Proposal (replaces Scope Creep tab)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 
@@ -1079,4 +1080,5 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.1 | 2026-07-30 | Link to TASK_BREAKDOWN_PROPOSAL_MODE.md (BDA-110–151) |
 | v1.0 | 2026-07-27 | Initial atomic breakdown from PRD + plan |

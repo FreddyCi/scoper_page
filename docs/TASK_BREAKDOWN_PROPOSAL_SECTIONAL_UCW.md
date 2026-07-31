@@ -88,18 +88,19 @@ flowchart TD
 ### **ID:** BDA-154
 
 **Title:** Proposal handoff and context roll  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-153  
 **Priority:** Critical  
 **Description:** New [`src/lib/proposal-context-roll.ts`](../src/lib/proposal-context-roll.ts): `ProposalHandoffState` (`activeGoal`, `completedSections[]`, `topicMemory` max 4 bullets, `pendingSections[]`, `packageKind`); `buildProposalHandoffBlock(handoff, chunkIndex)` (Studio-shaped markdown); `rollProposalContext(resetConversation)` — **always** after each successful section (empty KV + handoff only). Export helpers to update handoff after section complete.  
 **Completed Changes:**
-- 🔄 Types + handoff block builder
-- 🔄 `rollProposalContext` calls `getScoperClient().resetConversation`
-- 🔄 Truncate topic memory to 4 bullets
+- ✅ `ProposalHandoffState`, `buildProposalHandoffBlock`, `rollProposalContext`
+- ✅ `applySectionCompletion`, `recordProposalHandoffFailure`, `truncateTopicMemory` (max 4)
+- ✅ `runProposalContextRollHarness()` in unit harness chain
 **Test Strategy:** Dev harness or unit: build handoff from mock state; block contains goal, completed, pending, do-not-repeat; roll invokes reset mock once.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors
+- ✅ `runProposalContextRollHarness` on dev load  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream B3; Studio `managed-llm-session.ts` `buildHandoffBlock`
 
 ---

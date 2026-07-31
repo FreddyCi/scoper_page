@@ -1,4 +1,5 @@
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
+import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
@@ -12,6 +13,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
+  runProposalContextRollHarness()
   runProposalReadinessHarness()
   runProposalPostIngestHarness()
   runAssembleProposalMarkdownHarness()

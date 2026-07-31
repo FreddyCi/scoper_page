@@ -6,6 +6,11 @@ import {
   buildVolumeFindClauseQuery,
   buildVolumePrompt,
 } from '@/lib/proposal-prompts'
+import {
+  createProposalContextTracker,
+  ProposalContextOverflowError,
+  type ProposalContextTracker,
+} from '@/lib/proposal-context-tracker'
 import type { DocumentMeta, FindClauseResult, ProposalVolume } from '@/lib/types'
 import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 
@@ -14,6 +19,8 @@ export type ProposalVolumeEcpInput = {
   companyContext: string
   rfpDoc: DocumentMeta
   blockExcerpts: string[]
+  /** Shared batch tracker; reset by caller before each section/volume send. */
+  contextTracker?: ProposalContextTracker
 }
 
 async function ensureScoperLoadedForProposal(): Promise<void> {
@@ -47,9 +54,16 @@ export async function generateProposalVolumeMarkdownViaEcp(
 ): Promise<string> {
   await ensureScoperEcpReadyBeforeAgentRun()
 
+  const scoper = getScoperClient()
+  const contextTracker =
+    input.contextTracker ??
+    createProposalContextTracker({ effectiveMaxSeqLen: scoper.getState().maxSeqLen })
+
   const rfpAttachment = createDocumentContextAttachment(input.rfpDoc)
   const findQuery = buildVolumeFindClauseQuery(input.volume)
   const docIds = [input.rfpDoc.doc_id]
+
+  contextTracker.recordText(findQuery)
 
   const findResult = (await runEcpAgentTool({
     capabilityId: DOCUMENT_CAPABILITIES.find_clause,
@@ -71,13 +85,22 @@ export async function generateProposalVolumeMarkdownViaEcp(
 
   const prompt = buildAgentPrompt(volumePrompt, [rfpAttachment])
 
+  for (const excerpt of excerpts) {
+    contextTracker.recordText(excerpt)
+  }
+  contextTracker.recordText(prompt)
+  contextTracker.assertNotHard()
+
   try {
     await ensureScoperLoadedForProposal()
-    const scoper = getScoperClient()
     const result = await scoper.send([{ role: 'user', content: prompt }])
+    contextTracker.recordText(result.text)
     const text = result.text.trim()
     if (text.length > 0) return text
   } catch (error) {
+    if (error instanceof ProposalContextOverflowError) {
+      throw error
+    }
     if (error instanceof EcpAgentRunDeniedError) {
       throw error
     }
@@ -103,4 +126,4 @@ export async function generateProposalVolumeMarkdownViaEcp(
   return ''
 }
 
-export { EcpAgentRunDeniedError }
+export { EcpAgentRunDeniedError, ProposalContextOverflowError }

@@ -108,17 +108,19 @@ flowchart TD
 ### **ID:** BDA-155
 
 **Title:** Orchestrator context char tracking  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-153, BDA-154  
 **Priority:** High  
 **Description:** In sectional orchestrator (see BDA-164), track `proposalContextCharsUsed` per section send (`prompt.length / 4` estimate). If **hard** tier mid-section, abort section with recoverable error message on volume section. Wire `contextSize` from `PAGE_CONTEXT_CONFIG` tied to effective seq len.  
 **Completed Changes:**
-- 🔄 Estimate chars after each `scoper.send` and ECP-enriched prompt build
-- 🔄 Hard-tier abort path with `status: 'error'` on section
+- ✅ `proposal-context-tracker.ts` — `ProposalContextTracker`, `ProposalContextOverflowError`, snapshot + reset
+- ✅ `proposal-volume-ecp.ts` records find query + prompts; `assertNotHard()` before send
+- ✅ `build-proposal-volumes.ts` batch tracker (reset per volume); overflow → volume `error`
 **Test Strategy:** Harness with artificially low threshold (test-only config) triggers abort; normal run stays under hard tier per section.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalContextTrackerHarness` (tiny contextSize hard abort + reset)
+- ✅ `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan B3; BDA-164
 
 ---

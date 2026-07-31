@@ -1,7 +1,9 @@
 import {
   EcpAgentRunDeniedError,
   generateProposalVolumeMarkdownViaEcp,
+  ProposalContextOverflowError,
 } from '@/services/proposal-volume-ecp'
+import { createProposalContextTracker } from '@/lib/proposal-context-tracker'
 import type {
   BlockRecord,
   DocumentMeta,
@@ -9,7 +11,7 @@ import type {
   ProposalVolume,
 } from '@/lib/types'
 import { fetchDocumentBlocks, groupBlocksBySection } from '@/services/document-blocks'
-import { ScoperWebGpuUnavailableError } from '@/services/scoper-client'
+import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 
 export type BuildProposalVolumesOptions = {
   documents: DocumentMeta[]
@@ -80,6 +82,7 @@ async function generateVolumeBody(
   rfpDoc: DocumentMeta,
   blockExcerpts: string[],
   companyContext: string,
+  contextTracker: ReturnType<typeof createProposalContextTracker>,
 ): Promise<string> {
   try {
     const markdown = await generateProposalVolumeMarkdownViaEcp({
@@ -87,6 +90,7 @@ async function generateVolumeBody(
       companyContext,
       rfpDoc,
       blockExcerpts,
+      contextTracker,
     })
     if (markdown.trim().length > 0) return markdown
   } catch (error) {
@@ -117,7 +121,13 @@ export async function buildProposalVolumes(
     volumes: options.profile.volumes.map((volume) => ({ ...volume })),
   }
 
+  const contextTracker = createProposalContextTracker({
+    effectiveMaxSeqLen: getScoperClient().getState().maxSeqLen,
+  })
+
   for (const volume of profile.volumes) {
+    contextTracker.reset()
+
     profile = patchProposalVolume(profile, volume.id, {
       status: 'generating',
       errorMessage: undefined,
@@ -131,6 +141,7 @@ export async function buildProposalVolumes(
         rfpDoc,
         blockExcerpts,
         options.companyContext,
+        contextTracker,
       )
 
       profile = patchProposalVolume(profile, volume.id, {
@@ -139,11 +150,13 @@ export async function buildProposalVolumes(
       })
     } catch (error) {
       const message =
-        error instanceof EcpAgentRunDeniedError
+        error instanceof ProposalContextOverflowError
           ? error.message
-          : error instanceof Error
+          : error instanceof EcpAgentRunDeniedError
             ? error.message
-            : 'Volume generation failed'
+            : error instanceof Error
+              ? error.message
+              : 'Volume generation failed'
       profile = patchProposalVolume(profile, volume.id, {
         status: 'error',
         errorMessage: message,

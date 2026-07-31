@@ -1,3 +1,4 @@
+import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-section'
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
@@ -21,6 +22,7 @@ export function runProposalUnitHarnesses(): void {
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
   runProposalExportQualityHarness()
+  runProposalVolumeSectionTypesHarness()
   runProposalContextRollHarness()
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()

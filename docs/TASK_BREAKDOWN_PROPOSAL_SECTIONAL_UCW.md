@@ -210,17 +210,17 @@ flowchart TD
 ### **ID:** BDA-160
 
 **Title:** ProposalVolumeSection types  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** Extend [`src/lib/types.ts`](../src/lib/types.ts): `ProposalVolumeSection` (`id`, `title`, `findClauseQuery`, `status`, `bodyMarkdown?`, `errorMessage?`); optional `sections?: ProposalVolumeSection[]` on `ProposalVolume`; profile/volume `generationProgress` (`completedSections`, `totalSections`) for UI.  
 **Completed Changes:**
-- 🔄 Type definitions + status union
-- 🔄 `pnpm build` clean
+- ✅ `ProposalVolumeSection`, `ProposalVolumeGenerationProgress`, optional fields on `ProposalVolume`
+- ✅ `computeVolumeGenerationProgress()` + `runProposalVolumeSectionTypesHarness()`
 **Test Strategy:** Types import from services/components without circular deps.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream C1
 
 ---

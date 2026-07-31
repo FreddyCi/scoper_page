@@ -76,6 +76,27 @@ export type ScopeCreepProfile = {
 
 export type ProposalVolumeStatus = 'pending' | 'generating' | 'draft' | 'error'
 
+export type ProposalVolumeSectionStatus = ProposalVolumeStatus
+
+/** One sectional draft unit within a proposal volume (sectional ECP pipeline). */
+export type ProposalVolumeSection = {
+  id: string
+  title: string
+  /** Compact query for ECP `@demo/document.find_clause`. */
+  findClauseQuery: string
+  status: ProposalVolumeSectionStatus
+  bodyMarkdown?: string
+  errorMessage?: string
+}
+
+/** Per-volume sectional progress for proposal panel UI (BDA-160). */
+export type ProposalVolumeGenerationProgress = {
+  completedSections: number
+  totalSections: number
+  /** Section id currently generating, if any. */
+  activeSectionId?: string
+}
+
 /** One solicitation-aligned volume in a complete proposal draft */
 export type ProposalVolume = {
   id: string
@@ -86,6 +107,9 @@ export type ProposalVolume = {
   status: ProposalVolumeStatus
   /** Set when status is error */
   errorMessage?: string
+  /** Populated when sectional generation is enabled (BDA-161+). */
+  sections?: ProposalVolumeSection[]
+  generationProgress?: ProposalVolumeGenerationProgress
 }
 
 /** RFP-derived outline used to generate responder proposal volumes */

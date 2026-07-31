@@ -27,7 +27,13 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['tesseract.js'],
-    exclude: ['@duckdb/duckdb-wasm', '@llamaindex/liteparse-wasm', 'pdfjs-dist', 'bitgpu'],
+    exclude: [
+      '@duckdb/duckdb-wasm',
+      '@llamaindex/liteparse-wasm',
+      'pdfjs-dist',
+      'bitgpu',
+      '@huggingface/transformers',
+    ],
   },
   server: {
     headers: crossOriginIsolationHeaders,

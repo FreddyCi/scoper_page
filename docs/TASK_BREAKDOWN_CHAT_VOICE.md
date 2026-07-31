@@ -47,17 +47,20 @@ flowchart TD
 ### **ID:** BDA-181
 
 **Title:** Add Transformers.js dependency  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** Add `@huggingface/transformers` for Whisper pipeline. Update [`vite.config.ts`](../vite.config.ts): `optimizeDeps.exclude` (like `bitgpu`); confirm COOP/COEP headers remain for WASM/threading. Document model id `Xenova/whisper-tiny.en` and ~40 MB first-fetch in plan notes. Do not eager-import in main bundle.  
 **Completed Changes:**
-- 🔄 `pnpm add @huggingface/transformers`
-- 🔄 Vite exclude + build smoke
+- ✅ `pnpm add @huggingface/transformers@^4.2.0`
+- ✅ [`vite.config.ts`](../vite.config.ts) — `optimizeDeps.exclude` includes `@huggingface/transformers`
+- ✅ [`src/lib/whisper-model.ts`](../src/lib/whisper-model.ts) — `WHISPER_ASR_MODEL_ID`, 16 kHz constant (worker import in BDA-183)
 **Test Strategy:** `pnpm build` passes; main entry chunk size unchanged vs pre-voice baseline (no transformers in index chunk).  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b` + `vite build` + `check-bundle-size` pass
+- ✅ Main entry chunk ~1.26 MB (unchanged; transformers not in app graph yet)
+- ℹ️ `pnpm install` may warn on ignored optional builds (`onnxruntime-node`, `sharp`); browser path uses WASM/WebGPU in worker (BDA-183)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Dependencies; [`scripts/check-bundle-size.mjs`](../scripts/check-bundle-size.mjs)
 
 ---

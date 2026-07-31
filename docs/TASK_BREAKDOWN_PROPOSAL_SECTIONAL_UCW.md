@@ -152,17 +152,18 @@ flowchart TD
 ### **ID:** BDA-157
 
 **Title:** Proposal context quality checks  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-156  
 **Priority:** High  
 **Description:** New [`src/lib/proposal-context-quality.ts`](../src/lib/proposal-context-quality.ts): validate trimmed company/responder context is substantive (not placeholder lorem); return issues for UI gates.  
 **Completed Changes:**
-- 🔄 Detect placeholder patterns and min substance rules
-- 🔄 API: `assessProposalContextQuality(companyContext): { ok, warnings[] }`
+- ✅ `assessProposalContextQuality()` — min length, placeholder regexes, distinct words, repeated-char filler
+- ✅ `runProposalContextQualityHarness()` in unit harness chain
 **Test Strategy:** Harness: good context passes; `"TBD"` / empty fails.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Harness: substantive pass; TBD, empty, short, repeated filler fail  
+- ✅ `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A
 
 ---

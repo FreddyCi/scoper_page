@@ -23,7 +23,7 @@ import type {
   ProposalVolumeSection,
 } from '@/lib/types'
 import { fetchDocumentBlocks, groupBlocksBySection } from '@/services/document-blocks'
-import { compactFindClauseQuery } from '@/services/document-search'
+import { buildSectionReviewFindClauseQuery } from '@/lib/proposal-section-find-clause'
 import { deriveProposalSectionsForVolume } from '@/services/derive-proposal-sections'
 import {
   generateProposalSectionMarkdownViaEcp,
@@ -163,11 +163,10 @@ async function runReviewFindClause(
   section: ProposalVolumeSection,
   volume: ProposalVolume,
   rfpDoc: DocumentMeta,
+  packageKind: ProposalRequirementsProfile['packageKind'],
   contextTracker: ReturnType<typeof createProposalContextTracker>,
 ): Promise<string[]> {
-  const query = compactFindClauseQuery(
-    `${section.title} ${volume.title} requirements compliance`,
-  )
+  const query = buildSectionReviewFindClauseQuery(volume, section.title, packageKind)
   contextTracker.recordText(query)
 
   const findResult = (await runEcpAgentTool({
@@ -253,6 +252,7 @@ async function generateSectionBody(
       input.section,
       input.volume,
       input.rfpDoc,
+      input.packageKind,
       input.contextTracker,
     )
     ecpFindCount += 1

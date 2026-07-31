@@ -11,7 +11,7 @@ import {
   compactSectionPathLabel,
   groupBlocksBySection,
 } from '@/services/document-blocks'
-import { compactFindClauseQuery } from '@/services/document-search'
+import { buildSectionFindClauseQuery } from '@/lib/proposal-section-find-clause'
 
 export const SOLICITATION_SECTIONS_MAX = 8
 export const CONTRACT_FRAMEWORK_SECTIONS_MAX = 12
@@ -46,28 +46,12 @@ export type DeriveProposalSectionsInput = {
   packageKind: ProposalPackageKind
 }
 
+export { buildSectionFindClauseQuery } from '@/lib/proposal-section-find-clause'
+
 export function maxSectionsForPackageKind(packageKind: ProposalPackageKind): number {
   return packageKind === 'contract_framework'
     ? CONTRACT_FRAMEWORK_SECTIONS_MAX
     : SOLICITATION_SECTIONS_MAX
-}
-
-export function buildSectionFindClauseQuery(
-  volume: ProposalVolume,
-  sectionTitle: string,
-  packageKind: ProposalPackageKind,
-): string {
-  const raw = [
-    volume.title,
-    sectionTitle,
-    volume.requirementSummary,
-    ...(volume.solicitationRefs ?? []),
-    packageKind === 'contract_framework' ? 'contract compliance' : 'RFP requirement',
-  ]
-    .join(' — ')
-    .trim()
-
-  return compactFindClauseQuery(raw)
 }
 
 function sectionIdFromTitle(title: string, index: number): string {

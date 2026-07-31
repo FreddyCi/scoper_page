@@ -327,16 +327,17 @@ flowchart TD
 ### **ID:** BDA-175
 
 **Title:** Package-aware section find_clause queries  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-161, BDA-156  
 **Priority:** Medium  
 **Description:** Section-level query builder (volume + section title + packageKind) ensuring compact queries and contract vs solicitation vocabulary. Integrate into derive-proposal-sections or shared helper used by orchestrator.  
 **Completed Changes:**
-- 🔄 Shared builder used by derivation + runtime refresh
+- ✅ [`proposal-section-find-clause.ts`](../src/lib/proposal-section-find-clause.ts) — primary + review intents
+- ✅ Used in `derive-proposal-sections`; review retrieve in `build-proposal-volumes`
 **Test Strategy:** Queries ≤ max length; harness samples differ by packageKind.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `runProposalSectionFindClauseHarness`; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream D
 
 ---

@@ -1,3 +1,4 @@
+import { runProposalSectionFindClauseHarness } from '@/lib/proposal-section-find-clause'
 import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-section'
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
@@ -26,6 +27,7 @@ export function runProposalUnitHarnesses(): void {
   runProposalContextQualityHarness()
   runProposalExportQualityHarness()
   runProposalVolumeSectionTypesHarness()
+  runProposalSectionFindClauseHarness()
   runProposalContextRollHarness()
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()

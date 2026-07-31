@@ -26,10 +26,10 @@ export const UPLOAD_SUGGESTIONS: UploadSuggestion[] = [
     description: 'Upload RFPs and bidder responses — PDF, Word, Excel, and more',
   },
   {
-    id: 'scope-creep',
-    label: 'Check Scope Creep',
-    description: 'Compare baseline scope against change requests',
-    disabled: true,
+    id: 'generate-complete-proposal',
+    label: 'Generate Complete Proposal',
+    description:
+      'Upload your RFP, add responder context, and generate solicitation-aligned volumes—not generic marketing copy',
   },
   {
     id: 'upload-context',
@@ -73,6 +73,14 @@ export const UPLOAD_INTENT_COPY: Record<UploadIntent, UploadIntentCopy> = {
 
 export function uploadIntentFromSuggestionId(id: string): UploadIntent | null {
   if (id === 'upload-context') return 'context'
+  if (id === 'analyse-rfp' || id === 'generate-complete-proposal') return 'rfp'
+  return null
+}
+
+export function workspaceModeForSuggestionId(
+  id: string,
+): 'rfp' | 'proposal' | null {
   if (id === 'analyse-rfp') return 'rfp'
+  if (id === 'generate-complete-proposal') return 'proposal'
   return null
 }

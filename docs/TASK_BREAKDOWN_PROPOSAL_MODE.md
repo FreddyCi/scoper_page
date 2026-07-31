@@ -344,16 +344,18 @@ sequenceDiagram
 ### **ID:** BDA-121
 
 **Title:** Landing and upload card for proposal  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** High  
 **Description:** [`upload-suggestions.ts`](../src/lib/upload-suggestions.ts): replace scope-creep card with **Generate Complete Proposal**, standards subtitle, enabled. [`QuickActionCards.tsx`](../src/components/workspace/QuickActionCards.tsx): `setMode('proposal')` + open RFP upload (extend `uploadIntentFromSuggestionId` if needed).  
 **Completed Changes:**
-- 🔄 Card copy + click handler
+- ✅ Replaced `scope-creep` with enabled `generate-complete-proposal` card + standards-focused subtitle
+- ✅ `uploadIntentFromSuggestionId` maps proposal card → `rfp` upload; `workspaceModeForSuggestionId` → `proposal`
+- ✅ QuickActionCards sets mode per card (RFP vs proposal) then opens upload popup
 **Test Strategy:** Landing → card → mode proposal + upload popup.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` clean; manual: proposal card switches mode + RFP upload intent
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3  
 
 ---

@@ -6,7 +6,7 @@ import {
   featureCardTitleClass,
 } from '@/components/workspace/feature-card-styles'
 import { Badge } from '@/components/ui/badge'
-import { UPLOAD_SUGGESTIONS, uploadIntentFromSuggestionId } from '@/lib/upload-suggestions'
+import { UPLOAD_SUGGESTIONS, uploadIntentFromSuggestionId, workspaceModeForSuggestionId } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -24,6 +24,7 @@ export function QuickActionCards({ className }: { className?: string }) {
       {UPLOAD_SUGGESTIONS.map((action, index) => {
         const disabled = action.disabled ?? false
         const intent = uploadIntentFromSuggestionId(action.id)
+        const modeForAction = workspaceModeForSuggestionId(action.id)
 
         return (
           <button
@@ -33,7 +34,9 @@ export function QuickActionCards({ className }: { className?: string }) {
             aria-disabled={disabled}
             onClick={() => {
               if (disabled || !intent) return
-              setMode('rfp')
+              if (modeForAction) {
+                setMode(modeForAction)
+              }
               openUploadPopup(intent)
             }}
             className={cn(

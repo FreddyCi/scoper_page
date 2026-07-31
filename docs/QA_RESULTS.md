@@ -121,6 +121,19 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 ---
 
+## Proposal sectional UCW (BDA-180)
+
+**Execution date:** 2026-07-30  
+**Script:** [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) § BDA-180 (extends BDA-151 baseline in [`TASK_BREAKDOWN_PROPOSAL_MODE.md`](TASK_BREAKDOWN_PROPOSAL_MODE.md))
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `pnpm qa:proposal` (BDA-151 + BDA-180 static) | **Pass** | Context Usage cluster, activity markers, export gate, sectional harness symbols |
+| `pnpm qa:automated` | **Pass** | Build + preview smoke |
+| Manual UI (chat markers, context ring, MSA profile, export gate) | **Pending spot-check** | Use BDA-180 manual table in browser with `pnpm dev` |
+
+---
+
 ## Sign-off
 
 | Field | Value |

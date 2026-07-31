@@ -707,6 +707,7 @@ Monolithic **one prompt per volume** is retained in code history only; new work 
 **Completed Changes:**
 - ✅ `pnpm qa:proposal` — static routing checks + `pnpm qa:automated` (build, bundle limits, preview smoke)
 - ✅ QA results appendix below (automated + manual checklist)
+- ✅ Sectional UCW sign-off: [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) § BDA-180 (extends this checklist for chat context UX)
 **Test Strategy:** `pnpm build` pass; manual checklist pass.  
 **Test Results:**
 - ✅ Automated: `pnpm qa:proposal` (2026-07-30)

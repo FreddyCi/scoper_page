@@ -602,20 +602,62 @@ flowchart TD
 ### **ID:** BDA-180
 
 **Title:** Manual QA sectional and chat UX  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-164, BDA-173, BDA-171, BDA-176  
 **Priority:** Critical  
 **Description:** Execute manual script: build profile on sample RFP + contract fixture → generate → observe chat markers + Context Usage updates between sections → export gated until quality pass. Confirm no `chatGenerating` during proposal batch. Re-run BDA-151 checklist where still applicable.  
 **Completed Changes:**
-- 🔄 Checklist appendix in this doc or PROPOSAL_MODE
-- 🔄 `pnpm build` + `pnpm qa:proposal`
+- ✅ QA appendix below (automated + manual); `pnpm qa:proposal` extended with BDA-180 static wiring checks
+- ✅ Cross-reference [BDA-151 manual baseline](TASK_BREAKDOWN_PROPOSAL_MODE.md#qa-results-bda-151)
 **Test Strategy:** All manual steps recorded; automated QA green.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Automated: `pnpm build` + `pnpm qa:proposal` (2026-07-30)
+- ✅ Dev harnesses: `runProposalGenerationHarness` (BDA-179) — per-section ECP, activity log, context budget
+- 👤 Manual UI: use checklist below in browser (`pnpm dev`, WebGPU recommended for full drafts)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan F5; BDA-151
 
-#### Manual UI checklist (BDA-180)
+#### QA results (BDA-180)
+
+**Automated (CI-local)**
+
+| Check | Command / source | Result |
+|-------|------------------|--------|
+| Production build + assets | `pnpm qa:automated` | Pass |
+| Proposal routing (BDA-151) | `scripts/run-proposal-qa-static.mjs` | Pass |
+| Sectional UX wiring (static) | same — Context Usage cluster, activity markers, export gate, no `chatGenerating` in store generate | Pass |
+| Sectional ECP + activity harness | `runProposalGenerationHarness` on dev load | Pass (after ECP env harness) |
+| Architecture reference | `docs/PROPOSAL_CONTEXT_AND_SECTIONS.md` | Present |
+
+**Manual UI checklist** (`pnpm dev`, expand chat sidebar if collapsed)
+
+Prerequisites: substantive responder context (≥20 chars, no TBD — see SetupGateList). WebGPU + model load for non-stub section bodies.
+
+| Step | Expected | Record |
+|------|----------|--------|
+| **BDA-151 baseline** | Complete [BDA-151 table](TASK_BREAKDOWN_PROPOSAL_MODE.md#qa-results-bda-151) (landing → RFP upload → profile → generate → export) | |
+| Upload [`rfp-it-services.pdf`](../sample/rfp-it-services.pdf) → **Build proposal profile** | Solicitation volumes; section rows when expanded (BDA-167/168) | |
+| **Generate complete proposal** | `proposalGenerating` on panel; chat **does not** show user send spinner from `chatGenerating` | |
+| Chat transcript during batch | **Agent activity** strip: `find_clause`, **Writing section**, **Validated section**; no new user/assistant messages | |
+| Between sections | **Compacting proposal context** marker with shimmer (BDA-172) | |
+| Composer **Context Usage** ring (paperclip cluster) | Popover shows segment breakdown; ~% updates between sections; accountable fill ≤ 100% of 8K/4K window | |
+| Upload contract-style doc (MSA PDF or rename sample with MSA-heavy text) → profile | `contract_framework` + package warning when applicable (BDA-159) | |
+| Placeholder / bad company context | Setup gate blocks generate; export stays disabled | |
+| Volume with validation error | Volume `error`; export disabled with `canExportProposalProfile` reason (BDA-176) | |
+| Successful run → **Export .md** | File downloads; bodies pass quality (no meta-outline / offline placeholder-only) | |
+| DevTools console on load | No uncaught `[dev-harness]` errors; debug `[proposal-generation-harness] ok` when integration harness completes | |
+| Optional: filter Network | No upload of document bytes off-origin (same as BDA-151 privacy note) | |
+
+**Regression spot-checks (from BDA-151 still applicable)**
+
+| Step | Expected |
+|------|----------|
+| Header **RFP Analysis** ↔ **Proposal** | No crash; no bidder/creep grids in proposal mode |
+| Mutex | Cannot start chat send while `proposalGenerating` (and vice versa per store guards) |
+
+**Notes:** Without WebGPU, sections may fail export-quality or show stub patterns — activity markers and context usage should still update. Contract fixture can be exercised via any PDF whose extracted text classifies as MSA (filename + body heuristics) or use themed volumes after `contract_framework` profile build.
+
+#### Manual UI checklist (legacy one-table summary)
 
 | Step | Expected | Record |
 |------|----------|--------|
@@ -695,3 +737,4 @@ flowchart TD
 | Version | Date | Changes |
 |---------|------|---------|
 | v1.0 | 2026-07-30 | Atomic breakdown from sectional ECP UCW plan (BDA-152–180) |
+| v1.1 | 2026-07-30 | BDA-180 QA appendix; `pnpm qa:proposal` BDA-180 static checks |

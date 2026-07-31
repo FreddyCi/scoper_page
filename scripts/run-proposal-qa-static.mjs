@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Static pre-checks for proposal mode sign-off (BDA-151) — no browser.
+ * Static pre-checks for proposal mode sign-off (BDA-151, BDA-180) — no browser.
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -61,5 +61,65 @@ try {
   assert(false, 'public/sample/rfp-it-services.pdf missing — run pnpm copy:samples')
 }
 
-console.log('[qa:proposal] PASS static routing, legacy scope_creep containment, sample RFP present')
-console.log('[qa:proposal] Manual UI: see TASK_BREAKDOWN_PROPOSAL_MODE.md § QA results (BDA-151)')
+console.log('[qa:proposal] PASS BDA-151 routing, scope_creep containment, sample RFP')
+
+console.log('[qa:proposal] BDA-180 sectional UCW + chat UX static checks')
+
+const chatComposer = read('src/components/chat/ChatComposer.tsx')
+assert(
+  chatComposer.includes('ContextUsageComposerCluster'),
+  'ChatComposer must mount ContextUsageComposerCluster (BDA-171)',
+)
+
+const chatTranscript = read('src/components/chat/ChatTranscript.tsx')
+assert(
+  chatTranscript.includes('AgentActivityMarkers'),
+  'ChatTranscript must mount AgentActivityMarkers (BDA-173)',
+)
+
+const sessionStore = read('src/store/session-store.ts')
+const generateFnStart = sessionStore.indexOf('runGenerateProposalVolumes: async')
+assert(generateFnStart >= 0, 'session-store must define runGenerateProposalVolumes')
+const generateFnBody = sessionStore.slice(generateFnStart, generateFnStart + 2200)
+assert(
+  generateFnBody.includes('proposalGenerating: true'),
+  'runGenerateProposalVolumes must set proposalGenerating',
+)
+assert(
+  !/chatGenerating:\s*true/.test(generateFnBody),
+  'runGenerateProposalVolumes must not set chatGenerating during proposal batch',
+)
+
+const buildVolumes = read('src/services/build-proposal-volumes.ts')
+assert(
+  buildVolumes.includes('notifyProposalSectionRoll'),
+  'build-proposal-volumes must roll context between sections (BDA-164)',
+)
+
+const generationHarness = read('src/services/proposal-generation-harness.ts')
+assert(
+  generationHarness.includes('assertSectionalAgentActivityLog'),
+  'proposal-generation-harness must assert sectional activity (BDA-179)',
+)
+assert(
+  generationHarness.includes('assertContextUsageWithinContextSize'),
+  'proposal-generation-harness must assert context usage budget (BDA-179)',
+)
+
+const proposalPanel = read('src/components/workspace/ProposalGenerationPanel.tsx')
+assert(
+  proposalPanel.includes('canExportProposalProfile'),
+  'ProposalGenerationPanel must gate export on canExportProposalProfile (BDA-176)',
+)
+
+assert(
+  existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
+  'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',
+)
+
+console.log(
+  '[qa:proposal] PASS BDA-180 static wiring (context ring, activity markers, sectional loop, export gate)',
+)
+console.log(
+  '[qa:proposal] Manual UI: TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md § BDA-180; baseline BDA-151 in TASK_BREAKDOWN_PROPOSAL_MODE.md',
+)

@@ -325,16 +325,18 @@ sequenceDiagram
 ### **ID:** BDA-120
 
 **Title:** Enable proposal mode header tab  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** High  
 **Description:** [`WorkspaceHeader.tsx`](../src/components/layout/WorkspaceHeader.tsx): replace disabled Scope Creep trigger with enabled `value="proposal"`, icon (`LayersIcon` / `FileStackIcon`), labels **Proposal** / **Generate Complete Proposal**, remove Coming soon tooltip.  
 **Completed Changes:**
-- 🔄 Tab UI + aria labels
+- ✅ Enabled `TabsTrigger value="proposal"` with `FileStackIcon`
+- ✅ Labels: **Proposal** (sm) / **Generate Complete Proposal** (sm+)
+- ✅ Removed Coming soon tooltip; mode tabs disabled while `chatGenerating`
 **Test Strategy:** Click tab; `mode === 'proposal'` in store; tab selectable while chat idle.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Manual: tab switches store mode; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3 table  
 
 ---

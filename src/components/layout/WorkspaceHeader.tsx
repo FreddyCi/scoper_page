@@ -1,7 +1,7 @@
 import {
   ClipboardCheckIcon,
+  FileStackIcon,
   FileTextIcon,
-  GitCompareArrowsIcon,
   MessageCircleMoreIcon,
   XIcon,
 } from 'lucide-react'
@@ -9,7 +9,6 @@ import {
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   shellChatColumnClasses,
   shellWorkspaceColumnClass,
@@ -42,39 +41,33 @@ const MODE_TAB_TRIGGER_CLASS = 'gap-1.5 sm:px-3'
 
 function WorkspaceModeToggle() {
   const mode = useSessionStore((s) => s.mode)
+  const chatGenerating = useSessionStore((s) => s.chatGenerating)
   const setMode = useSessionStore((s) => s.setMode)
 
   return (
     <Tabs
       value={mode}
-      onValueChange={(value) => setMode(value as WorkspaceMode)}
+      onValueChange={(value) => {
+        if (chatGenerating) return
+        setMode(value as WorkspaceMode)
+      }}
       className="w-auto gap-0"
     >
       <TabsList variant="segmented" aria-label="Workspace mode">
-        <TabsTrigger value="rfp" className={MODE_TAB_TRIGGER_CLASS}>
+        <TabsTrigger value="rfp" disabled={chatGenerating} className={MODE_TAB_TRIGGER_CLASS}>
           <ClipboardCheckIcon className="size-3.5" />
           <span className="sm:hidden">RFP</span>
           <span className="hidden sm:inline">RFP Analysis</span>
         </TabsTrigger>
-        <Tooltip>
-          <TooltipTrigger
-            delay={0}
-            render={
-              <span className="inline-flex rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
-                <TabsTrigger
-                  value="proposal"
-                  disabled
-                  className={cn(MODE_TAB_TRIGGER_CLASS, 'pointer-events-none')}
-                >
-                  <GitCompareArrowsIcon className="size-3.5" />
-                  <span className="sm:hidden">Proposal</span>
-                  <span className="hidden sm:inline">Generate Complete Proposal</span>
-                </TabsTrigger>
-              </span>
-            }
-          />
-          <TooltipContent side="bottom">Coming soon</TooltipContent>
-        </Tooltip>
+        <TabsTrigger
+          value="proposal"
+          disabled={chatGenerating}
+          className={MODE_TAB_TRIGGER_CLASS}
+        >
+          <FileStackIcon className="size-3.5" />
+          <span className="sm:hidden">Proposal</span>
+          <span className="hidden sm:inline">Generate Complete Proposal</span>
+        </TabsTrigger>
       </TabsList>
     </Tabs>
   )

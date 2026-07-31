@@ -59,6 +59,8 @@ export function runAssembleProposalMarkdownHarness(): void {
     rfp_doc_id: 'rfp-1',
     summary: 'Technical and management volumes.',
     built_at: new Date().toISOString(),
+    packageKind: 'solicitation',
+    packageWarnings: [],
     volumes: [
       {
         id: 'vol-a',

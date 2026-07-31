@@ -1,5 +1,9 @@
 import type { BlockRecord, DocumentMeta, ProposalRequirementsProfile, ProposalVolume } from '@/lib/types'
 import {
+  classifyProposalPackage,
+  type ProposalPackageKind,
+} from '@/lib/proposal-package-classifier'
+import {
   commonSectionPathPrefix,
   compactSectionPathLabel,
   fetchDocumentBlocks,
@@ -19,6 +23,62 @@ export { PROPOSAL_SUMMARY_MAX }
 
 const PROPOSAL_SECTION_HINT =
   /section\s*[lm]\b|instructions\s*to\s*offerors|evaluation\s*factors|proposal\s*requirements|submission\s*requirements|volume\s*\d|technical\s*approach|management\s*approach|past\s*performance|cost\s*proposal|price\s*proposal/i
+
+const CONTRACT_FRAMEWORK_MIN_VOLUMES = 6
+const CONTRACT_FRAMEWORK_MAX_VOLUMES = 12
+
+const CONTRACT_FRAMEWORK_THEMES: { title: string; requirementSummary: string }[] = [
+  {
+    title: 'Scope and statements of work',
+    requirementSummary:
+      'Address how services, deliverables, and change control align to the agreement and any SOW templates.',
+  },
+  {
+    title: 'Insurance and bonding',
+    requirementSummary:
+      'Respond to required coverage types, limits, additional insured endorsements, and bonding if applicable.',
+  },
+  {
+    title: 'Indemnification and liability',
+    requirementSummary:
+      'Explain acceptance or proposed modifications to indemnity, caps, and carve-outs for IP and third-party claims.',
+  },
+  {
+    title: 'Intellectual property',
+    requirementSummary:
+      'Clarify ownership of work product, licenses, background IP, and open-source obligations.',
+  },
+  {
+    title: 'Confidentiality and data protection',
+    requirementSummary:
+      'Cover handling of confidential information, security controls, breach notice, and privacy compliance.',
+  },
+  {
+    title: 'Payment and invoicing',
+    requirementSummary:
+      'Describe rates, milestones, invoicing cadence, taxes, and audit rights tied to the contract framework.',
+  },
+  {
+    title: 'Term and termination',
+    requirementSummary:
+      'Address term length, renewal, termination for convenience/cause, and transition assistance.',
+  },
+  {
+    title: 'Warranties and representations',
+    requirementSummary:
+      'Respond to performance warranties, authority to contract, and compliance representations.',
+  },
+  {
+    title: 'Dispute resolution and governing law',
+    requirementSummary:
+      'Note venue, governing law, escalation, and alternative dispute resolution clauses.',
+  },
+  {
+    title: 'General terms and order of precedence',
+    requirementSummary:
+      'Summarize flow-down requirements, precedence among MSA/SOW/exhibits, and subcontractor obligations.',
+  },
+]
 
 function volumeIdFromTitle(title: string, index: number): string {
   const slug = title
@@ -86,17 +146,65 @@ function deriveVolumesFromBlocks(blocks: BlockRecord[]): ProposalVolume[] {
   }))
 }
 
+/** Contract/MSA-style volume themes (6–12 sections) when the package is not a solicitation RFP. */
+export function deriveContractFrameworkVolumes(): ProposalVolume[] {
+  const selected = CONTRACT_FRAMEWORK_THEMES.slice(0, CONTRACT_FRAMEWORK_MAX_VOLUMES)
+  return selected.map((theme, index) => ({
+    id: volumeIdFromTitle(theme.title, index),
+    title: theme.title,
+    requirementSummary: theme.requirementSummary,
+    status: 'pending' as const,
+  }))
+}
+
+function deriveVolumesForPackage(
+  blocks: BlockRecord[],
+  packageKind: ProposalPackageKind,
+): ProposalVolume[] {
+  const fromBlocks = deriveVolumesFromBlocks(blocks)
+
+  if (packageKind === 'contract_framework') {
+    const themed = deriveContractFrameworkVolumes()
+    if (themed.length >= CONTRACT_FRAMEWORK_MIN_VOLUMES) {
+      return themed.slice(0, CONTRACT_FRAMEWORK_MAX_VOLUMES)
+    }
+  }
+
+  if (fromBlocks.length > 0) {
+    return fromBlocks
+  }
+
+  return [
+    {
+      id: 'vol-complete-proposal',
+      title: 'Complete proposal response',
+      requirementSummary:
+        packageKind === 'contract_framework'
+          ? 'Address each contract theme with specific acceptance, exceptions, or redlines.'
+          : 'Address all instructions and evaluation factors in the solicitation using the attached RFP.',
+      status: 'pending',
+    },
+  ]
+}
+
 function buildProfileSummary(
   filename: string,
   volumes: ProposalVolume[],
   companyContext: string,
+  packageKind: ProposalPackageKind,
 ): string {
   const titles = volumes.map((volume) => volume.title).join('; ')
+  const kindNote =
+    packageKind === 'contract_framework'
+      ? ' Contract-style package detected.'
+      : packageKind === 'unknown'
+        ? ' Package classification uncertain.'
+        : ''
   const contextNote =
     companyContext.trim().length > 0
       ? ` Responder context provided (${companyContext.trim().length} chars).`
       : ''
-  const summary = `${volumes.length} proposal volume(s) derived from ${filename}: ${titles}.${contextNote}`
+  const summary = `${volumes.length} proposal volume(s) derived from ${filename}: ${titles}.${kindNote}${contextNote}`
   return summary.length > PROPOSAL_SUMMARY_MAX
     ? `${summary.slice(0, PROPOSAL_SUMMARY_MAX - 1)}…`
     : summary
@@ -113,28 +221,61 @@ export async function buildProposalRfpProfile(
   const blocks = await fetchDocumentBlocks(options.rfpDocId)
   if (blocks.length === 0) return null
 
-  let volumes = deriveVolumesFromBlocks(blocks)
-  if (volumes.length === 0) {
-    volumes = [
-      {
-        id: 'vol-complete-proposal',
-        title: 'Complete proposal response',
-        requirementSummary:
-          'Address all instructions and evaluation factors in the solicitation using the attached RFP.',
-        status: 'pending',
-      },
-    ]
-  }
+  const classification = classifyProposalPackage({
+    filename: rfpDoc.filename,
+    blocks,
+  })
+
+  const volumes = deriveVolumesForPackage(blocks, classification.packageKind)
 
   return {
     profile_id: `proposal-req-${options.rfpDocId}-${Date.now()}`,
     rfp_doc_id: options.rfpDocId,
     volumes,
+    packageKind: classification.packageKind,
+    packageWarnings: [...classification.packageWarnings],
     summary: buildProfileSummary(
       rfpDoc.filename,
       volumes,
       options.companyContext ?? '',
+      classification.packageKind,
     ),
     built_at: new Date().toISOString(),
+  }
+}
+
+/** Dev harness — package kind on profile + contract volume themes (BDA-159) */
+export function runBuildProposalRfpProfilePackageHarness(): void {
+  const themed = deriveContractFrameworkVolumes()
+  if (
+    themed.length < CONTRACT_FRAMEWORK_MIN_VOLUMES ||
+    themed.length > CONTRACT_FRAMEWORK_MAX_VOLUMES
+  ) {
+    throw new Error(
+      `runBuildProposalRfpProfilePackageHarness: expected ${CONTRACT_FRAMEWORK_MIN_VOLUMES}-${CONTRACT_FRAMEWORK_MAX_VOLUMES} contract themes`,
+    )
+  }
+
+  const rfpLike = classifyProposalPackage({
+    filename: 'rfp-it-services.pdf',
+    documentText: 'REQUEST FOR PROPOSAL — Bidder must submit pricing by the due date.',
+  })
+  if (rfpLike.packageKind !== 'solicitation') {
+    throw new Error('runBuildProposalRfpProfilePackageHarness: sample RFP should classify as solicitation')
+  }
+
+  const contractLike = classifyProposalPackage({
+    filename: 'master-services-agreement.pdf',
+    documentText: 'MASTER SERVICES AGREEMENT between Client and Vendor. Limitation of Liability.',
+  })
+  if (contractLike.packageKind !== 'contract_framework') {
+    throw new Error(
+      'runBuildProposalRfpProfilePackageHarness: MSA sample should classify as contract_framework',
+    )
+  }
+
+  const contractVolumes = deriveVolumesForPackage([], 'contract_framework')
+  if (contractVolumes.length < CONTRACT_FRAMEWORK_MIN_VOLUMES) {
+    throw new Error('runBuildProposalRfpProfilePackageHarness: contract package should use theme volumes')
   }
 }

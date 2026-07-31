@@ -2,6 +2,10 @@
  * Core domain types — PRD §9.5, plan §Citation contract, §RFP Results Profiles, §Scope Creep, §Proposal volumes
  */
 
+import type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
+
+export type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
+
 /** PDF bbox in page coordinates — LiteParse top-left origin, PDF points */
 export type Bbox = {
   x: number
@@ -91,6 +95,9 @@ export type ProposalRequirementsProfile = {
   volumes: ProposalVolume[]
   summary: string
   built_at: string
+  /** Classified solicitation vs contract/MSA (BDA-159). */
+  packageKind: ProposalPackageKind
+  packageWarnings: string[]
 }
 
 export type DocumentRole = 'baseline' | 'change_request' | 'supporting' | 'unknown'

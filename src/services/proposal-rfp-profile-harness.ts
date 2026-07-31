@@ -52,6 +52,12 @@ export async function runProposalRfpProfileHarness(): Promise<void> {
     throw new Error('proposal RFP profile harness: expected at least one volume')
   }
 
+  if (profile.packageKind !== 'solicitation') {
+    throw new Error(
+      `proposal RFP profile harness: expected solicitation package, got ${profile.packageKind}`,
+    )
+  }
+
   if (profile.rfp_doc_id !== document.doc_id) {
     throw new Error('proposal RFP profile harness: rfp_doc_id mismatch')
   }

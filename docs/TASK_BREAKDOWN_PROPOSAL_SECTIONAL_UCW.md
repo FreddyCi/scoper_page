@@ -191,17 +191,18 @@ flowchart TD
 ### **ID:** BDA-159
 
 **Title:** Profile packageKind and warnings  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-156, BDA-116  
 **Priority:** High  
 **Description:** Extend [`src/services/build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts): set `packageKind`, `packageWarnings` on profile; contract vs solicitation volume outlines (contract may use 6–12 theme sections). Persist on `ProposalRequirementsProfile` in types/store.  
 **Completed Changes:**
-- 🔄 Call classifier during profile build
-- 🔄 Patch store profile with kind + warnings
+- ✅ `ProposalRequirementsProfile.packageKind` + `packageWarnings` in types
+- ✅ `classifyProposalPackage` during profile build; contract → 10 theme volumes (6–12 cap)
+- ✅ `runBuildProposalRfpProfilePackageHarness`; RFP integration harness asserts `solicitation`
 **Test Strategy:** Build profile on sample RFP + MSA fixture; store reflects kind.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Unit harness + `pnpm build`; IT sample RFP profile → `solicitation`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A; BDA-116
 
 ---

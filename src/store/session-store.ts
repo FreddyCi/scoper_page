@@ -1015,6 +1015,8 @@ export function runSessionStoreHarness(): void {
     rfp_doc_id: 'doc-rfp-placeholder',
     summary: 'Harness profile',
     built_at: new Date().toISOString(),
+    packageKind: 'unknown',
+    packageWarnings: [],
     volumes: [
       {
         id: 'vol-h',

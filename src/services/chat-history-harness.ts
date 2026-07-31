@@ -23,6 +23,8 @@ export function runChatHistoryMarkersHarness(): void {
     rfp_doc_id: rfpDoc.doc_id,
     summary: 'Two volumes for harness.',
     built_at: new Date().toISOString(),
+    packageKind: 'solicitation',
+    packageWarnings: [],
     volumes: [
       {
         id: 'vol-tech',

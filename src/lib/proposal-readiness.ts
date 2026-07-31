@@ -73,6 +73,8 @@ export function runProposalReadinessHarness(): void {
     rfp_doc_id: 'rfp-1',
     summary: 'Three volumes extracted from Section L/M.',
     built_at: new Date().toISOString(),
+    packageKind: 'solicitation',
+    packageWarnings: [],
     volumes: [
       {
         id: 'vol-1',

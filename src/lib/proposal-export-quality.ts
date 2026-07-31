@@ -223,6 +223,8 @@ export function runProposalExportQualityHarness(): void {
     rfp_doc_id: 'rfp-1',
     summary: 'Harness profile.',
     built_at: new Date().toISOString(),
+    packageKind: 'solicitation',
+    packageWarnings: [],
     volumes: [
       {
         id: 'v1',

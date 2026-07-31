@@ -5,6 +5,7 @@ import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
 import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
+import { runBuildProposalRfpProfilePackageHarness } from '@/services/build-proposal-rfp-profile'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
@@ -23,6 +24,7 @@ export function runProposalUnitHarnesses(): void {
   runProposalContextRollHarness()
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()
+  runBuildProposalRfpProfilePackageHarness()
   runProposalPostIngestHarness()
   runAssembleProposalMarkdownHarness()
   runProposalPromptsHarness()

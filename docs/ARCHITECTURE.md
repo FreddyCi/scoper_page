@@ -82,5 +82,6 @@ After first load:
 
 - Product spec: [`PRD.md`](PRD.md)
 - Tasks: [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md)
+- Proposal sectional UCW: [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md)
 - MVP QA: [`QA_SCRIPT.md`](QA_SCRIPT.md) · [`QA_RESULTS.md`](QA_RESULTS.md)
 - Full v1 QA: [`QA_V1_SCRIPT.md`](QA_V1_SCRIPT.md) · [`QA_V1_RESULTS.md`](QA_V1_RESULTS.md)

@@ -547,15 +547,16 @@ flowchart TD
 ### **ID:** BDA-177
 
 **Title:** PROPOSAL_CONTEXT_AND_SECTIONS doc  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-154, BDA-164  
 **Priority:** Medium  
 **Description:** New [`docs/PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md): 8K policy, handoff shape, ECP call budget (max 2/section), sequential sectional pipeline, difference from Studio 32K / Turso rolls.  
 **Completed Changes:**
-- 🔄 Short architecture doc with diagram reference
+- ✅ [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md) — UCW policy, handoff/roll, ECP budget, pipeline diagram, Studio comparison, module index
+- ✅ Link from [`ARCHITECTURE.md`](ARCHITECTURE.md) related docs
 **Test Strategy:** Peer review: matches implemented behavior after BDA-164.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Doc aligned with `build-proposal-volumes`, `proposal-context-roll`, `page-context-manager`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan Workstream E
 

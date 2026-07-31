@@ -69,17 +69,18 @@ flowchart TD
 ### **ID:** BDA-153
 
 **Title:** Add page context manager module  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-152  
 **Priority:** Critical  
 **Description:** New [`src/lib/page-context-manager.ts`](../src/lib/page-context-manager.ts): export `PAGE_CONTEXT_CONFIG` (`contextSize: 8192`, `softRecallThreshold: 0.55`, `hardRollThreshold: 0.85`), `checkContextThreshold(charsUsed, config) → 'none' | 'soft' | 'hard'`, and `kvBar(used, total)` for UI. Port **policy** from Studio `context-manager.ts`; do not port llama.cpp internals. Config `contextSize` must follow effective `maxSeqLen` when fallback is 4096.  
 **Completed Changes:**
-- 🔄 Create `page-context-manager.ts` with config + threshold helpers
-- 🔄 Unit-testable pure functions (chars → tier)
+- ✅ `page-context-manager.ts` — `getPageContextConfig(effectiveMaxSeqLen)`, thresholds, `checkContextThreshold`, `kvBar`
+- ✅ `runPageContextManagerHarness()` wired in `runProposalUnitHarnesses`
 **Test Strategy:** Import in harness or vitest-style dev assert: at 55% → soft, at 85% → hard; `kvBar` returns sane percentages.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` — 0 TypeScript errors
+- ✅ Dev harness asserts soft/hard tiers (8K + 4K config) and `kvBar`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream B2; [`scoper_studio/.../context-manager.ts`](file:///Users/christopherkruger/Projects/Scoper/scoper_studio/services/bun-server/src/utils/context-manager.ts)
 
 ---

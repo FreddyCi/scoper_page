@@ -6,6 +6,7 @@ import type { DocumentMeta } from '@/lib/types'
 import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
 import { buildProposalVolumes } from '@/services/build-proposal-volumes'
 import { ingestFile } from '@/services/ingest-router'
+import { getScoperClient } from '@/services/scoper-client'
 import { useSessionStore } from '@/store/session-store'
 
 const HARNESS_COMPANY_CONTEXT =
@@ -22,8 +23,37 @@ async function ingestSamplePdf(url: string, filename: string) {
   return ingestFile(file, { ocrEnabled: false })
 }
 
-/** Dev harness — gating, store mutex, per-volume draft bodies (BDA-118 / BDA-119 MVP) */
+async function logProposalHarnessRuntimeMode(): Promise<boolean> {
+  const env = await getScoperClient().probeEnvironment()
+  if (!env.webGpuAvailable) {
+    console.warn(
+      '[proposal-generation-harness] WebGPU unavailable — volume bodies may use find_clause summary or stub markdown',
+    )
+    return false
+  }
+  return true
+}
+
+function assertVolumeOutcomes(
+  volumes: Array<{ status: string; bodyMarkdown?: string }>,
+  label: string,
+): void {
+  for (const volume of volumes) {
+    if (volume.status !== 'draft' && volume.status !== 'error') {
+      throw new Error(`${label}: unexpected volume status ${volume.status}`)
+    }
+    if (volume.status === 'draft' && !volume.bodyMarkdown?.trim()) {
+      throw new Error(`${label}: draft volume missing bodyMarkdown`)
+    }
+  }
+}
+
+/**
+ * End-to-end proposal harness (BDA-119): ingest → profile → gated generate (ECP + Scoper/stub).
+ */
 export async function runProposalGenerationHarness(): Promise<void> {
+  const webGpuAvailable = await logProposalHarnessRuntimeMode()
+
   let ingested
   try {
     ingested = await ingestSamplePdf('/sample/rfp-it-services.pdf', 'rfp-it-services.pdf')
@@ -68,14 +98,7 @@ export async function runProposalGenerationHarness(): Promise<void> {
     )
   }
 
-  for (const volume of generated.volumes) {
-    if (volume.status !== 'draft' && volume.status !== 'error') {
-      throw new Error(`proposal generation harness: service loop left status ${volume.status}`)
-    }
-    if (volume.status === 'draft' && !volume.bodyMarkdown?.trim()) {
-      throw new Error('proposal generation harness: draft volume missing bodyMarkdown')
-    }
-  }
+  assertVolumeOutcomes(generated.volumes, 'proposal generation harness: service loop')
 
   const findClauseAllows = getEcpAgentAuditLog().filter(
     (entry) =>
@@ -91,6 +114,13 @@ export async function runProposalGenerationHarness(): Promise<void> {
   store.addDocument(document)
   store.setEvaluationDocId(document.doc_id)
   store.setCompanyContext(HARNESS_COMPANY_CONTEXT)
+
+  const beforeProfile = getProposalSetupState(useSessionStore.getState())
+  if (beforeProfile.readyToGenerate || beforeProfile.hasProfile) {
+    throw new Error(
+      'proposal generation harness: readyToGenerate must be false before profile build',
+    )
+  }
 
   await store.runGenerateProposalVolumes()
   if (useSessionStore.getState().proposalRequirementsProfile != null) {
@@ -119,6 +149,10 @@ export async function runProposalGenerationHarness(): Promise<void> {
   }
   useSessionStore.setState({ proposalGenerating: false })
 
+  if (!getProposalSetupState(useSessionStore.getState()).readyToGenerate) {
+    throw new Error('proposal generation harness: readyToGenerate required before store generate')
+  }
+
   clearEcpAgentAuditLog()
   await store.runGenerateProposalVolumes()
 
@@ -140,13 +174,14 @@ export async function runProposalGenerationHarness(): Promise<void> {
     throw new Error('proposal generation harness: expected volumes after generate')
   }
 
-  for (const volume of volumes) {
-    if (volume.status !== 'draft' && volume.status !== 'error') {
-      throw new Error(`proposal generation harness: unexpected volume status ${volume.status}`)
-    }
-    if (volume.status === 'draft' && !volume.bodyMarkdown?.trim()) {
-      throw new Error('proposal generation harness: store draft volume missing bodyMarkdown')
-    }
+  assertVolumeOutcomes(volumes, 'proposal generation harness: store path')
+
+  if (import.meta.env.DEV) {
+    console.debug('[proposal-generation-harness] ok', {
+      webGpuAvailable,
+      volumeCount: volumes.length,
+      draftCount: volumes.filter((volume) => volume.status === 'draft').length,
+    })
   }
 
   store.resetSession()

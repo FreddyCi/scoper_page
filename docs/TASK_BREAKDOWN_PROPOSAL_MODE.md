@@ -302,16 +302,18 @@ sequenceDiagram
 ### **ID:** BDA-119
 
 **Title:** End-to-end proposal generation harness  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-117, BDA-118, BDA-127  
 **Priority:** Medium  
 **Description:** `runProposalGenerationHarness()`: full path profile + generate (or generate stub if WebGPU unavailable). Assert `readyToGenerate` gating before generate.  
 **Completed Changes:**
-- 🔄 Harness
+- ✅ [`proposal-generation-harness.ts`](../src/services/proposal-generation-harness.ts) — service loop + store profile/generate, ECP audit, mutex, gating
+- ✅ Logs when WebGPU unavailable; still passes with stub/summary volume bodies
+- ✅ Registered in [`App.tsx`](../src/App.tsx) dev chain (after DuckDB ingest + profile harness)
 **Test Strategy:** Dev boot chain; skip or soft-fail without WebGPU with clear log.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `[proposal-generation-harness]` warn/debug in dev; gating + E2E assertions
+**Assigned:** Completed  
 **Context/Artifacts:** [`App.tsx`](../src/App.tsx) harness list  
 
 ---
@@ -606,17 +608,17 @@ sequenceDiagram
 ### **ID:** BDA-150
 
 **Title:** Register proposal dev harnesses  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-117, BDA-119  
 **Priority:** Medium  
 **Description:** Wire `runProposalRfpProfileHarness` and `runProposalGenerationHarness` in [`App.tsx`](../src/App.tsx) dev chain; after **BDA-127**, register ECP proposal harness; keep creep harnesses optional/env-gated so CI unchanged.  
 **Completed Changes:**
-- ✅ `App.tsx` registration for profile + generation + prompts harnesses
-- 🔄 ECP proposal harness when BDA-127 lands
+- ✅ `App.tsx`: `runProposalReadinessHarness`, `runProposalPromptsHarness`, `runProposalRfpProfileHarness`, `runProposalGenerationHarness`
+- ✅ Ordering: ECP env + DuckDB ingest before proposal harnesses; creep harnesses remain dev-only at end
 **Test Strategy:** Dev load runs new harnesses without uncaught errors.  
 **Test Results:**
-- 🔄 Partial (MVP harnesses registered)  
-**Assigned:** Unassigned  
+- ✅ Proposal harness block registered; failures logged via `[dev-harness]`
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §5, [ECP integration](#ecp-integration-proposal-generation)  
 
 ---

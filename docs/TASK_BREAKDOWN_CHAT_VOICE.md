@@ -88,18 +88,19 @@ flowchart TD
 ### **ID:** BDA-183
 
 **Title:** Whisper worker WebGPU pipeline  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-182  
 **Priority:** Critical  
 **Description:** Add [`src/workers/whisper.worker.ts`](../src/workers/whisper.worker.ts): lazy `pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', { device: 'webgpu' })` (fallback log if WebGPU fails). Handle `load`, `transcribe` on 16 kHz mono Float32Array, `reset`, `dispose`. Emit load progress and partial/segment text. Configure remote model allow + browser cache consistent with [`scoper-cache.ts`](../src/lib/scoper-cache.ts) story.  
 **Completed Changes:**
-- 🔄 Worker message loop
-- 🔄 Single-chunk transcribe smoke path
-- 🔄 Error codes for load/transcribe failures
+- ✅ Worker message loop (RPC + progress/partial/segment/error events)
+- ✅ WebGPU → WASM fallback; `env.allowRemoteModels` + `useBrowserCache`
+- ✅ [`whisper-worker-harness.ts`](../src/services/whisper-worker-harness.ts) + dev chain in [`App.tsx`](../src/App.tsx)
 **Test Strategy:** Dev-only manual postMessage or BDA-192 harness: load + transcribe silence/noise chunk without throwing when WebGPU available.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b` + `vite build` — `whisper.worker-*.js` ~526 KB (lazy via harness; main index unchanged)
+- ✅ `runWhisperWorkerHarness` on dev load when WebGPU available (downloads model on first run)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Architecture; Xenova space reference
 
 ---

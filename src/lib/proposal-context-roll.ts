@@ -1,7 +1,7 @@
 import { getScoperClient } from '@/services/scoper-client'
+import type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
 
-/** RFP package classification — aligned with future `proposal-package-classifier` (BDA-156). */
-export type ProposalPackageKind = 'solicitation' | 'contract_framework' | 'unknown'
+export type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
 
 export type ProposalHandoffSectionRef = {
   volumeId: string

@@ -132,17 +132,19 @@ flowchart TD
 ### **ID:** BDA-156
 
 **Title:** Proposal package classifier  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** High  
 **Description:** New [`src/lib/proposal-package-classifier.ts`](../src/lib/proposal-package-classifier.ts): classify RFP/package as solicitation vs contract_framework (and related kinds); drive volume themes and warnings. Pure functions + tests via harness.  
 **Completed Changes:**
-- 🔄 `classifyProposalPackage(...)` from blocks/title/heuristics
-- 🔄 Export `ProposalPackageKind` type (align with plan)
+- ✅ `classifyProposalPackage()` — weighted filename + block/text heuristics
+- ✅ `ProposalPackageKind`, `packageWarnings`, scores; `runProposalPackageClassifierHarness()`
+- ✅ `proposal-context-roll` re-exports kind from classifier
 **Test Strategy:** Fixture: IT services RFP → solicitation; MSA-style doc → contract_framework; harness asserts kind.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Harness: IT RFP → solicitation; MSA → contract_framework + warning; sparse → unknown
+- ✅ `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream A; prior guardrails plans
 
 ---

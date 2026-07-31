@@ -1,3 +1,4 @@
+import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
@@ -14,6 +15,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
+  runProposalPackageClassifierHarness()
   runProposalContextRollHarness()
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()

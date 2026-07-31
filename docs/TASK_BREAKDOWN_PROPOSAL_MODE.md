@@ -242,17 +242,18 @@ sequenceDiagram
 ### **ID:** BDA-117
 
 **Title:** Harness for RFP profile build  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-116  
 **Priority:** Medium  
 **Description:** Export `runProposalRfpProfileHarness()` from build service or dedicated harness file: ingest sample RFP, set mode proposal, run profile build, assert volumes length and store update.  
 **Completed Changes:**
-- 🔄 Harness function
-- 🔄 Optional registration in [`App.tsx`](../src/App.tsx) dev chain
+- ✅ [`proposal-rfp-profile-harness.ts`](../src/services/proposal-rfp-profile-harness.ts) — service + store paths
+- ✅ Ingest `rfp-it-services.pdf` (fallback `minimal.pdf`); `setMode('proposal')` → `runProposalRequirementsProfile()`
+- ✅ Registered in [`App.tsx`](../src/App.tsx) dev chain
 **Test Strategy:** `pnpm dev` → harness passes in console.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Asserts volumes in store, `workspaceView: profiles`, no `proposalGenerationError`
+**Assigned:** Completed  
 **Context/Artifacts:** [`runContractKeywordReviewHarness`](../src/services/build-contract-keyword-review.ts)  
 
 ---

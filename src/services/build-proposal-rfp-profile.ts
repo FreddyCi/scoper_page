@@ -5,7 +5,6 @@ import {
   fetchDocumentBlocks,
   groupBlocksBySection,
 } from '@/services/document-blocks'
-import { ingestFile } from '@/services/ingest-router'
 
 export type BuildProposalRfpProfileOptions = {
   rfpDocId: string
@@ -137,67 +136,5 @@ export async function buildProposalRfpProfile(
       options.companyContext ?? '',
     ),
     built_at: new Date().toISOString(),
-  }
-}
-
-/** Dev harness — ingest sample PDF and assert ≥1 volume (BDA-116 / BDA-117) */
-async function ingestSamplePdf(url: string, filename: string) {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error(`proposal RFP profile harness: failed to load ${url} (${response.status})`)
-  }
-
-  const blob = await response.blob()
-  const file = new File([blob], filename, { type: 'application/pdf' })
-  return ingestFile(file, { ocrEnabled: false })
-}
-
-export async function runProposalRfpProfileHarness(): Promise<void> {
-  let ingested
-  try {
-    ingested = await ingestSamplePdf('/sample/rfp-it-services.pdf', 'rfp-it-services.pdf')
-  } catch {
-    ingested = await ingestSamplePdf('/sample/minimal.pdf', 'minimal.pdf')
-  }
-
-  const document: DocumentMeta = {
-    doc_id: ingested.doc_id,
-    filename: ingested.filename,
-    mime: ingested.mime,
-    role: 'unknown',
-    uploaded_at: new Date().toISOString(),
-  }
-
-  const profile = await buildProposalRfpProfile([document], {
-    rfpDocId: document.doc_id,
-    companyContext: 'Harness responder with 20+ chars of context.',
-  })
-
-  if (!profile || profile.volumes.length === 0) {
-    throw new Error('proposal RFP profile harness: expected at least one volume')
-  }
-
-  if (profile.rfp_doc_id !== document.doc_id) {
-    throw new Error('proposal RFP profile harness: rfp_doc_id mismatch')
-  }
-
-  if (profile.summary.length > PROPOSAL_SUMMARY_MAX) {
-    throw new Error('proposal RFP profile harness: summary exceeds max length')
-  }
-
-  for (const volume of profile.volumes) {
-    if (!volume.title.trim()) {
-      throw new Error('proposal RFP profile harness: volume title must be non-empty')
-    }
-    if (volume.status !== 'pending') {
-      throw new Error('proposal RFP profile harness: new volumes should be pending')
-    }
-  }
-
-  const missingDoc = await buildProposalRfpProfile([document], {
-    rfpDocId: 'missing-doc-id',
-  })
-  if (missingDoc != null) {
-    throw new Error('proposal RFP profile harness: unknown rfpDocId should return null')
   }
 }

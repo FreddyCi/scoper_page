@@ -19,7 +19,7 @@ import { runContractKeywordReviewHarness } from '@/services/build-contract-keywo
 import {
   runProposalGenerationHarness,
 } from '@/services/build-proposal-volumes'
-import { runProposalRfpProfileHarness } from '@/services/build-proposal-rfp-profile'
+import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'

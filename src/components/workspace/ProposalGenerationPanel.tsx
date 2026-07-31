@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { CheckIcon, CircleIcon, Loader2Icon } from 'lucide-react'
 
+import { AiSupportLoadingCard } from '@/components/ui/ai-support-loading-card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -74,6 +76,15 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
 
   const canBuildProfile = setup.hasRfp && setup.hasContext && !buildingProfile && !proposalGenerating
 
+  const profileBuildError =
+    proposalGenerationError && !setup.hasProfile && !proposalGenerating
+      ? proposalGenerationError
+      : null
+  const volumeGenerationError =
+    proposalGenerationError && setup.hasProfile && !proposalGenerating
+      ? proposalGenerationError
+      : null
+
   async function handleBuildProfile() {
     if (!canBuildProfile) return
     setBuildingProfile(true)
@@ -106,6 +117,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 items={rfpDocs}
                 value={evaluationDocId}
                 onChange={setEvaluationDocId}
+                disabled={buildingProfile || proposalGenerating}
               />
             )}
           </div>
@@ -118,6 +130,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               onChange={(event) => setCompanyContext(event.target.value)}
               placeholder="Certifications, past performance, team size, geographic coverage…"
               className="min-h-[7rem] resize-y text-sm"
+              disabled={buildingProfile || proposalGenerating}
             />
             <p className="text-muted-foreground text-xs">
               At least {PROPOSAL_CONTEXT_MIN_LENGTH} characters required before building the
@@ -131,39 +144,63 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             <GateRow ok={setup.hasProfile} label="Proposal profile built from RFP" />
           </ul>
 
-          {proposalGenerationError ? (
+          {profile && !buildingProfile ? (
+            <div
+              className="border-border/70 bg-primary/5 space-y-1 rounded-lg border px-3 py-2.5"
+              role="status"
+            >
+              <p className="text-foreground text-xs font-medium">Proposal profile ready</p>
+              <p className="text-muted-foreground text-xs leading-relaxed">{profile.summary}</p>
+              <p className="text-muted-foreground text-xs tabular-nums">
+                {profile.volumes.length} volume{profile.volumes.length === 1 ? '' : 's'} identified
+                from the RFP
+              </p>
+            </div>
+          ) : null}
+
+          {profileBuildError ? (
             <p className="text-destructive text-xs leading-relaxed" role="alert">
-              {proposalGenerationError}
+              {profileBuildError}
             </p>
           ) : null}
 
-          <Button
-            type="button"
-            className="w-full"
-            disabled={!canBuildProfile}
-            onClick={() => void handleBuildProfile()}
-          >
-            {buildingProfile ? (
-              <>
-                <Loader2Icon className="size-4 animate-spin" />
-                Building proposal profile…
-              </>
-            ) : (
-              'Build proposal profile'
-            )}
-          </Button>
+          {buildingProfile ? (
+            <AiSupportLoadingCard
+              label="Building profile"
+              buttonLabel="Build proposal profile"
+            />
+          ) : (
+            <Button
+              type="button"
+              className="w-full"
+              disabled={!canBuildProfile}
+              onClick={() => void handleBuildProfile()}
+            >
+              {setup.hasProfile ? 'Rebuild proposal profile' : 'Build proposal profile'}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
       {profile ? (
         <Card className="min-h-0 flex-1">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Proposal volumes</CardTitle>
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-base">Proposal volumes</CardTitle>
+              <Badge variant="secondary" className="tabular-nums">
+                {profile.volumes.length} volume{profile.volumes.length === 1 ? '' : 's'}
+              </Badge>
+            </div>
             <CardDescription className="text-xs leading-relaxed">
               {profile.summary}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
+            {volumeGenerationError ? (
+              <p className="text-destructive text-xs leading-relaxed" role="alert">
+                {volumeGenerationError}
+              </p>
+            ) : null}
             <ul className="scrollbar-none min-h-0 flex-1 space-y-2 overflow-y-auto">
               {profile.volumes.map((volume) => (
                 <li

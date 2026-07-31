@@ -17,6 +17,7 @@ type DocumentPickerSelectProps = {
   placeholder: string
   items: DocumentMeta[]
   className?: string
+  disabled?: boolean
 }
 
 /** Doc picker with truncated trigger label — avoids object-valued combobox JSON in the input */
@@ -27,6 +28,7 @@ export function DocumentPickerSelect({
   placeholder,
   items,
   className,
+  disabled,
 }: DocumentPickerSelectProps) {
   const selected = items.find((doc) => doc.doc_id === value)
   const triggerLabel = selected?.filename ?? placeholder
@@ -39,6 +41,7 @@ export function DocumentPickerSelect({
             id={id}
             type="button"
             variant="outline"
+            disabled={disabled}
             className={cn(
               'border-input bg-background h-9 w-full min-w-0 justify-between gap-2 px-3 font-normal shadow-xs',
               !value && 'text-muted-foreground',

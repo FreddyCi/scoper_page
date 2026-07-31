@@ -481,16 +481,19 @@ sequenceDiagram
 ### **ID:** BDA-131
 
 **Title:** Build proposal profile button UX  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-130, BDA-114  
 **Priority:** High  
 **Description:** **Build proposal profile** CTA → `runProposalRequirementsProfile()`; [`AiSupportLoadingCard`](../src/components/ui/ai-support-loading-card.tsx) while running; show profile summary + volume count on success; surface errors inline.  
 **Completed Changes:**
-- 🔄 Button states + loading
+- ✅ `AiSupportLoadingCard` while `buildingProfile`; inputs disabled during build/generate
+- ✅ Success block (summary + volume count) in setup card; badge count on volumes header
+- ✅ Profile vs volume generation errors routed inline (`!hasProfile` vs `hasProfile`)
+- ✅ Rebuild label when profile already exists
 **Test Strategy:** Click build with valid RFP; volumes appear in panel.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3 ProposalGenerationPanel  
 
 ---

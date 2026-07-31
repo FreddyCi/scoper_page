@@ -270,17 +270,18 @@ flowchart TD
 ### **ID:** BDA-163
 
 **Title:** ECP section markdown generator  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-162, BDA-127  
 **Priority:** Critical  
 **Description:** Refactor [`src/services/proposal-volume-ecp.ts`](../src/services/proposal-volume-ecp.ts): add `generateProposalSectionMarkdownViaEcp({ section, volume, packageKind, handoff, excerpts })` — **single** `scoper.send([{ role: 'user', content }])`, no chat thread. Keep volume-level API as thin wrapper or deprecate in favor of sectional only.  
 **Completed Changes:**
-- 🔄 Section API with isolated send
-- 🔄 Handoff block prepended/injected per plan
+- ✅ `generateProposalSectionMarkdownViaEcp` — `buildSectionPrompt`, optional find_clause, one send
+- ✅ `generateProposalVolumeMarkdownViaEcp` delegates to synthetic whole-volume section
+- ✅ `runProposalSectionEcpHarness` (sendOverride asserts single send)
 **Test Strategy:** Mock scoper; harness verifies one send per section call.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Async unit harness; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C2; BDA-127 ECP path
 
 ---

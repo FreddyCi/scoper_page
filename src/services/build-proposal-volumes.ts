@@ -1,6 +1,5 @@
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { buildVolumePrompt } from '@/lib/proposal-prompts'
-import { getProposalSetupState } from '@/lib/proposal-readiness'
 import type {
   BlockRecord,
   DocumentMeta,
@@ -8,9 +7,7 @@ import type {
   ProposalVolume,
 } from '@/lib/types'
 import { fetchDocumentBlocks, groupBlocksBySection } from '@/services/document-blocks'
-import { ingestFile } from '@/services/ingest-router'
 import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
-import { useSessionStore } from '@/store/session-store'
 
 export type BuildProposalVolumesOptions = {
   documents: DocumentMeta[]
@@ -97,7 +94,7 @@ async function generateVolumeBody(
   return stubVolumeMarkdown(volume, excerpts, companyContext)
 }
 
-/** Generate markdown for each volume sequentially; caller owns store busy flags. */
+/** Generate markdown for each volume sequentially; caller owns store busy flags. ECP path: BDA-127. */
 export async function buildProposalVolumes(
   options: BuildProposalVolumesOptions,
 ): Promise<ProposalRequirementsProfile> {
@@ -150,69 +147,4 @@ export async function buildProposalVolumes(
   }
 
   return profile
-}
-
-/** Dev harness — store actions after sample ingest (BDA-114 / BDA-119) */
-export async function runProposalGenerationHarness(): Promise<void> {
-  const response = await fetch('/sample/minimal.pdf')
-  if (!response.ok) {
-    throw new Error(`proposal generation harness: failed to load sample PDF (${response.status})`)
-  }
-
-  const blob = await response.blob()
-  const file = new File([blob], 'minimal.pdf', { type: 'application/pdf' })
-  const ingested = await ingestFile(file, { ocrEnabled: false })
-
-  const store = useSessionStore.getState()
-  store.resetSession()
-  store.setMode('proposal')
-  store.addDocument({
-    doc_id: ingested.doc_id,
-    filename: ingested.filename,
-    mime: ingested.mime,
-    role: 'unknown',
-    uploaded_at: new Date().toISOString(),
-  })
-  store.setEvaluationDocId(ingested.doc_id)
-  store.setCompanyContext('Harness roofing subcontractor with twenty years of experience.')
-
-  const beforeProfile = getProposalSetupState(useSessionStore.getState())
-  if (beforeProfile.readyToGenerate) {
-    throw new Error('proposal generation harness: should not be ready before profile build')
-  }
-
-  await store.runProposalRequirementsProfile()
-
-  const afterProfile = useSessionStore.getState()
-  if (!afterProfile.proposalRequirementsProfile?.volumes.length) {
-    throw new Error('proposal generation harness: profile build did not populate volumes')
-  }
-
-  const gated = getProposalSetupState(afterProfile)
-  if (!gated.readyToGenerate) {
-    throw new Error('proposal generation harness: expected readyToGenerate after profile build')
-  }
-
-  await store.runGenerateProposalVolumes()
-
-  const afterGenerate = useSessionStore.getState()
-  if (afterGenerate.proposalGenerating) {
-    throw new Error('proposal generation harness: proposalGenerating should be false after run')
-  }
-
-  const volumes = afterGenerate.proposalRequirementsProfile?.volumes ?? []
-  if (volumes.length === 0) {
-    throw new Error('proposal generation harness: expected volumes after generate')
-  }
-
-  for (const volume of volumes) {
-    if (volume.status !== 'draft' && volume.status !== 'error') {
-      throw new Error(`proposal generation harness: unexpected volume status ${volume.status}`)
-    }
-    if (volume.status === 'draft' && !volume.bodyMarkdown?.trim()) {
-      throw new Error('proposal generation harness: draft volume missing bodyMarkdown')
-    }
-  }
-
-  store.resetSession()
 }

@@ -261,18 +261,20 @@ sequenceDiagram
 ### **ID:** BDA-118
 
 **Title:** Build proposal volumes generation (MVP loop)  
-**Status:** Partial  
+**Status:** Done (MVP)  
 **Dependencies:** BDA-115, BDA-116, BDA-114  
 **Priority:** Critical  
 **Description:** Add [`src/services/build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts): sequential per-volume loop; patch store `bodyMarkdown` + status; mutex via `proposalGenerating`. **MVP shipped:** block excerpts + Scoper send + stub fallback. **Product target (BDA-127):** ECP `find_clause` + agent turn with RFP in `chatContextAttachments`.  
 **Completed Changes:**
-- ✅ Per-volume loop + `patchProposalVolume` + store `onProfileUpdate`
-- ✅ Error → volume status `error` + message; stub when WebGPU/model unavailable
-- 🔄 ECP retrieval + isolated `runAgentTurn` — **BDA-127**
+- ✅ `buildProposalVolumes` + `patchProposalVolume`; `onProfileUpdate` each `generating` → `draft`/`error`
+- ✅ `buildVolumePrompt` + excerpt heuristics; Scoper send after `ensureScoperEcpReadyBeforeAgentRun`; stub fallback
+- ✅ Store mutex in `runGenerateProposalVolumes` (harness asserts busy block + gating no-op)
+- ✅ [`proposal-generation-harness.ts`](../src/services/proposal-generation-harness.ts) — service update count + store E2E
+- ⏭️ ECP retrieval + isolated `runAgentTurn` — **BDA-127** (not part of MVP sign-off)
 **Test Strategy:** Harness with stub/WebGPU: each volume ends `draft` with non-empty markdown.  
 **Test Results:**
-- ✅ `runProposalGenerationHarness` passes on sample ingest (MVP path)
-**Assigned:** Partial — ECP completion in BDA-127  
+- ✅ `runProposalGenerationHarness` — 2× updates per volume, gating, mutex, draft bodies
+**Assigned:** Completed (MVP); ECP in BDA-127  
 **Context/Artifacts:** [ECP integration](#ecp-integration-proposal-generation), [`agent.ts`](../src/services/agent.ts), [`ecp/agent-run.ts`](../src/ecp/agent-run.ts)  
 
 ---

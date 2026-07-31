@@ -16,9 +16,7 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
-import {
-  runProposalGenerationHarness,
-} from '@/services/build-proposal-volumes'
+import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'

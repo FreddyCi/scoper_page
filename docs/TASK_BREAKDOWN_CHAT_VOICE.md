@@ -218,17 +218,19 @@ flowchart TD
 ### **ID:** BDA-189
 
 **Title:** ChatVoiceButton component  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-187  
 **Priority:** High  
 **Description:** Add [`src/components/chat/ChatVoiceButton.tsx`](../src/components/chat/ChatVoiceButton.tsx): mic toggle; states idle / loading model / listening; `aria-pressed`, `aria-label`; tooltip strings (Loading…, Start voice input, Stop listening, WebGPU required). Visual recording state (icon variant or ring).  
 **Completed Changes:**
-- 🔄 Toggle handlers call voice session start/stop
-- 🔄 Disabled when busy or no WebGPU
+- ✅ [`ChatVoiceButton.tsx`](../src/components/chat/ChatVoiceButton.tsx) — session start/stop, WebGPU probe, agent busy + prop disable
+- ✅ Red ring + `aria-pressed` while listening; spinner while starting/stopping
+- ✅ `runChatVoiceButtonLabelsHarness` for tooltip/aria strings
 **Test Strategy:** Keyboard focus + screen reader labels; toggle starts/stops capture.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Label harness on dev load
+- 👤 Manual toggle + SR (mount in composer BDA-190)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § UX table; shadcn Button patterns
 
 ---

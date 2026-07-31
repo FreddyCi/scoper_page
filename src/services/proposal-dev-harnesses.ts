@@ -1,3 +1,4 @@
+import { runChatVoiceButtonLabelsHarness } from '@/components/chat/ChatVoiceButton'
 import { runSpeechTranscriptCleanupHarness } from '@/lib/speech-transcript-cleanup'
 import { runWhisperProtocolHarness } from '@/lib/whisper-protocol'
 import { runWhisperClientCleanupHarness } from '@/services/whisper-client'
@@ -41,6 +42,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 export function runProposalUnitHarnesses(): void {
   runWhisperProtocolHarness()
   runWhisperClientCleanupHarness()
+  runChatVoiceButtonLabelsHarness()
   runSpeechTranscriptCleanupHarness()
   runChatVoiceCaptureHarness()
   runChatVoiceSessionMergeHarness()

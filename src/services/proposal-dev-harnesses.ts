@@ -5,11 +5,12 @@ import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-sect
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
-import { runAgentActivityHarness } from '@/lib/agent-activity'
+import { runAgentActivityHarness, runAgentActivityTranscriptHarness } from '@/lib/agent-activity'
 import { runContextUsageHarness } from '@/lib/context-usage'
 import { runMarkerShimmerHarness } from '@/components/ui/marker'
 import { runShimmerHarness } from '@/components/ui/shimmer'
 import { runAgentActivityStoreHarness } from '@/services/agent-activity-store-harness'
+import { runAgentActivityMarkersHarness } from '@/services/agent-activity-markers-harness'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
@@ -34,6 +35,7 @@ export function runProposalUnitHarnesses(): void {
   runShimmerHarness()
   runMarkerShimmerHarness()
   runAgentActivityHarness()
+  runAgentActivityTranscriptHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()
   runProposalSetupQualityGatesHarness()
@@ -56,6 +58,7 @@ export function runProposalUnitHarnesses(): void {
 /** Async proposal harnesses that need session + DuckDB state (BDA-150). */
 export async function runProposalAsyncUnitHarnesses(): Promise<void> {
   runAgentActivityStoreHarness()
+  runAgentActivityMarkersHarness()
   await runProposalStoreGeneratePreflightHarness()
   await runProposalSectionEcpHarness()
   await runCommandIngestProposalLandingHarness()

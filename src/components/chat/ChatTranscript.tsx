@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 
+import { AgentActivityMarkers } from '@/components/chat/AgentActivityMarkers'
 import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
 import {
   Message,
@@ -16,6 +17,7 @@ import {
   useMessageScroller,
 } from '@/components/ui/message-scroller'
 import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
+import { shouldShowAgentActivityStrip } from '@/lib/agent-activity'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -50,9 +52,28 @@ function ChatScrollFocus() {
 export function ChatTranscript() {
   const chatMessages = useSessionStore((s) => s.chatMessages)
   const chatModelStatus = useSessionStore((s) => s.chatModelStatus)
-  const statusLabel = MODEL_STATUS_COPY[chatModelStatus]
+  const chatGenerating = useSessionStore((s) => s.chatGenerating)
+  const proposalGenerating = useSessionStore((s) => s.proposalGenerating)
+  const contextPhase = useSessionStore((s) => s.contextPhase)
 
-  if (chatMessages.length === 0) {
+  const showActivityStrip = shouldShowAgentActivityStrip({
+    chatGenerating,
+    proposalGenerating,
+    contextPhase,
+  })
+
+  const statusLabel =
+    chatModelStatus === 'loading'
+      ? MODEL_STATUS_COPY.loading
+      : chatModelStatus === 'unavailable'
+        ? MODEL_STATUS_COPY.unavailable
+        : chatModelStatus === 'generating' && showActivityStrip
+          ? null
+          : MODEL_STATUS_COPY[chatModelStatus]
+
+  const hasMessages = chatMessages.length > 0
+
+  if (!hasMessages && !showActivityStrip) {
     return (
       <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm">
         Ask a question to start the agent conversation.
@@ -103,6 +124,16 @@ export function ChatTranscript() {
                   </MessageScrollerItem>
                 )
               })}
+
+              {showActivityStrip ? (
+                <MessageScrollerItem
+                  messageId="agent-activity-markers"
+                  scrollAnchor
+                  className="scroll-mt-2"
+                >
+                  <AgentActivityMarkers />
+                </MessageScrollerItem>
+              ) : null}
             </MessageScrollerContent>
           </MessageScrollerViewport>
           <MessageScrollerButton direction="end" />

@@ -504,16 +504,17 @@ flowchart TD
 ### **ID:** BDA-173
 
 **Title:** Agent activity markers in transcript  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-170, BDA-172  
 **Priority:** High  
 **Description:** New [`AgentActivityMarkers.tsx`](../src/components/chat/AgentActivityMarkers.tsx): render tail of `agentActivityLog` in [`ChatTranscript.tsx`](../src/components/chat/ChatTranscript.tsx) — status+shimmer (**Compacting conversation** / **Compacting proposal context**), border rows (ECP, section write), separators. Replace plain "Generating…" when busy. Show strip when `chatGenerating || proposalGenerating || contextPhase === 'compacting'` even without user chat message.  
 **Completed Changes:**
-- 🔄 Marker variants per plan
-- 🔄 ChatTranscript integration
+- ✅ `AgentActivityMarkers` — separator / border (ECP, section write, error) / status+shimmer rows
+- ✅ Transcript tail helpers + fallbacks when log empty (`agent-activity.ts`)
+- ✅ `ChatTranscript` integration; empty transcript shows activity during proposal/chat generate; hides top **Generating…** when strip visible
 **Test Strategy:** Proposal-only generate shows markers; chat generate shows ECP rows.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runAgentActivityTranscriptHarness` + `runAgentActivityMarkersHarness`; `pnpm build`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan F3–F4; [`ChatHistoryMarkers`](TASK_BREAKDOWN_PROPOSAL_MODE.md) stays separate for completed volumes
 

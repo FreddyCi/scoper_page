@@ -321,16 +321,18 @@ flowchart TD
 ### **ID:** BDA-194
 
 **Title:** Architecture doc voice section  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-190  
 **Priority:** Low  
 **Description:** Update [`docs/ARCHITECTURE.md`](ARCHITECTURE.md): workers diagram row for whisper worker; data flow bullet (mic → worker → composer text only); privacy note (audio not uploaded). Link this breakdown doc from Related documents.  
 **Completed Changes:**
-- 🔄 Diagram + module table row
+- ✅ Mermaid: `whisper.worker`, voice services, composer mic path
+- ✅ Data flow §5 + module table + offline privacy bullet for mic audio
+- ✅ Related docs link to this breakdown
 **Test Strategy:** Markdown links resolve.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Links relative to `docs/`
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Error handling and privacy
 
 ---

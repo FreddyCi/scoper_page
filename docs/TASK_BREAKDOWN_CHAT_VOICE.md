@@ -300,17 +300,20 @@ flowchart TD
 ### **ID:** BDA-193
 
 **Title:** Register voice dev harnesses  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-184, BDA-186  
 **Priority:** Medium  
 **Description:** Add [`src/services/whisper-client-harness.ts`](../src/services/whisper-client-harness.ts); register in [`App.tsx`](../src/App.tsx) dev chain or new `runChatVoiceUnitHarnesses()` called alongside proposal harnesses. Cleanup harness always runs; whisper load/transcribe skips when WebGPU unavailable (no `[dev-harness]` throw).  
 **Completed Changes:**
-- 🔄 `runSpeechTranscriptCleanupHarness` in unit chain
-- 🔄 Async whisper smoke behind WebGPU probe
+- ✅ [`whisper-client-harness.ts`](../src/services/whisper-client-harness.ts) — async WebGPU smoke (moved from client)
+- ✅ [`chat-voice-dev-harnesses.ts`](../src/services/chat-voice-dev-harnesses.ts) — `runChatVoiceUnitHarnesses` + `runChatVoiceAsyncHarnesses`
+- ✅ [`App.tsx`](../src/App.tsx) — unit after proposal unit; async after Scoper (GPU handoff order)
+- ✅ Voice harnesses removed from [`proposal-dev-harnesses.ts`](../src/services/proposal-dev-harnesses.ts)
 **Test Strategy:** `pnpm dev` console clean; intentional fail logs `[dev-harness]`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b`; skip logs when WebGPU off
+- 👤 `pnpm dev` console check
+**Assigned:** Completed  
 **Context/Artifacts:** [`proposal-dev-harnesses.ts`](../src/services/proposal-dev-harnesses.ts) pattern
 
 ---

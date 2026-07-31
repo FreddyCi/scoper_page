@@ -1,14 +1,3 @@
-import { runChatVoiceButtonLabelsHarness } from '@/components/chat/ChatVoiceButton'
-import { runChatComposerVoiceDraftHarness } from '@/lib/chat-composer-voice-draft'
-import { runChatVoiceGatingHarness } from '@/lib/chat-voice-gating'
-import { runSpeechTranscriptCleanupHarness } from '@/lib/speech-transcript-cleanup'
-import { runWhisperProtocolHarness } from '@/lib/whisper-protocol'
-import { runWhisperClientCleanupHarness } from '@/services/whisper-client'
-import {
-  runChatVoiceSessionHarness,
-  runChatVoiceSessionMergeHarness,
-} from '@/services/chat-voice-session'
-import { runChatVoiceCaptureHarness } from '@/services/chat-voice-capture'
 import { runProposalHistoryHarness } from '@/lib/proposal-history'
 import { runProposalSectionFindClauseHarness } from '@/lib/proposal-section-find-clause'
 import { runProposalSetupQualityGatesHarness } from '@/lib/proposal-setup-quality-gates'
@@ -42,14 +31,6 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
-  runWhisperProtocolHarness()
-  runWhisperClientCleanupHarness()
-  runChatVoiceButtonLabelsHarness()
-  runChatComposerVoiceDraftHarness()
-  runChatVoiceGatingHarness()
-  runSpeechTranscriptCleanupHarness()
-  runChatVoiceCaptureHarness()
-  runChatVoiceSessionMergeHarness()
   runPageContextManagerHarness()
   runContextUsageHarness()
   runShimmerHarness()
@@ -83,7 +64,6 @@ export async function runProposalAsyncUnitHarnesses(): Promise<void> {
   await runProposalStoreGeneratePreflightHarness()
   await runProposalSectionEcpHarness()
   await runCommandIngestProposalLandingHarness()
-  await runChatVoiceSessionHarness()
 }
 
 /**

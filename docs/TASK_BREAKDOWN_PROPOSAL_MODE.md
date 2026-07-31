@@ -126,17 +126,19 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 ### **ID:** BDA-114
 
 **Title:** Store actions for profile and generate  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-112, BDA-113, BDA-116, BDA-118  
 **Priority:** Critical  
 **Description:** Implement `runProposalRequirementsProfile()` and `runGenerateProposalVolumes()` on session store; delegate to build services; update volume statuses during generation. Guard: no-op if not `readyToGenerate` (except profile build only needs RFP + context).  
 **Completed Changes:**
-- 🔄 Actions + error handling
-- 🔄 `setChatGenerating` / busy flags coordinated if using agent
+- ✅ `runProposalRequirementsProfile` → `buildProposalRfpProfile`; gated on RFP + context
+- ✅ `runGenerateProposalVolumes` → `buildProposalVolumes` with per-volume store patches; `proposalGenerating` mutex
+- ✅ Supporting services: `proposal-prompts`, `build-proposal-rfp-profile`, `build-proposal-volumes`
+- ✅ Dev harnesses: `runProposalRfpProfileHarness`, `runProposalGenerationHarness`, `runProposalPromptsHarness` in `App.tsx`
 **Test Strategy:** Harness calls actions after mock ingest; profile and volumes populate in store.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm build` clean; generation harness exercises store actions end-to-end
+**Assigned:** Completed  
 **Context/Artifacts:** [`runContractKeywordReview`](../src/store/session-store.ts) pattern  
 
 ---

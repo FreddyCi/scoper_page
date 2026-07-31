@@ -35,6 +35,8 @@ import {
 import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getProposalSetupState } from '@/lib/proposal-readiness'
+import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
+import { buildProposalVolumes } from '@/services/build-proposal-volumes'
 import { getScoperClient } from '@/services/scoper-client'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
@@ -167,6 +169,8 @@ export type SessionState = {
   runRfpQualification: () => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
   clearProposalGeneration: () => void
+  runProposalRequirementsProfile: () => Promise<void>
+  runGenerateProposalVolumes: () => Promise<void>
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
   bumpCitationFocus: () => void
@@ -462,6 +466,80 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       proposalGenerating: false,
       proposalGenerationError: null,
     }),
+
+  runProposalRequirementsProfile: async () => {
+    const state = get()
+    const setup = getProposalSetupState({
+      documents: state.documents,
+      evaluationDocId: state.evaluationDocId,
+      companyContext: state.companyContext,
+      proposalRequirementsProfile: state.proposalRequirementsProfile,
+    })
+
+    if (!setup.hasRfp || !setup.hasContext) return
+    if (state.evaluationDocId == null) return
+
+    set({ proposalGenerationError: null })
+
+    try {
+      const profile = await buildProposalRfpProfile(state.documents, {
+        rfpDocId: state.evaluationDocId,
+        companyContext: state.companyContext,
+      })
+
+      if (!profile) {
+        set({
+          proposalRequirementsProfile: null,
+          proposalGenerationError: 'Could not build a proposal profile from the RFP.',
+        })
+        return
+      }
+
+      set({
+        proposalRequirementsProfile: profile,
+        proposalGenerationError: null,
+        workspaceView: 'profiles',
+      })
+    } catch (error) {
+      set({
+        proposalGenerationError:
+          error instanceof Error ? error.message : 'Proposal profile build failed',
+      })
+    }
+  },
+
+  runGenerateProposalVolumes: async () => {
+    const state = get()
+    const setup = getProposalSetupState({
+      documents: state.documents,
+      evaluationDocId: state.evaluationDocId,
+      companyContext: state.companyContext,
+      proposalRequirementsProfile: state.proposalRequirementsProfile,
+    })
+
+    if (!setup.readyToGenerate || state.proposalGenerating) return
+
+    const profile = state.proposalRequirementsProfile
+    if (!profile) return
+
+    set({ proposalGenerating: true, proposalGenerationError: null })
+
+    try {
+      await buildProposalVolumes({
+        documents: state.documents,
+        profile,
+        companyContext: state.companyContext,
+        onProfileUpdate: (updated) => set({ proposalRequirementsProfile: updated }),
+      })
+    } catch (error) {
+      set({
+        proposalGenerationError:
+          error instanceof Error ? error.message : 'Proposal volume generation failed',
+      })
+    } finally {
+      set({ proposalGenerating: false })
+    }
+  },
 
   setCreepProfiles: (creepProfiles) => set({ creepProfiles }),
 

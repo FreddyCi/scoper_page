@@ -16,6 +16,11 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
+import {
+  runProposalGenerationHarness,
+  runProposalPromptsHarness,
+} from '@/services/build-proposal-volumes'
+import { runProposalRfpProfileHarness } from '@/services/build-proposal-rfp-profile'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
@@ -53,6 +58,7 @@ function App() {
         await runEcpEnvironmentHarness()
         runSessionStoreHarness()
         runProposalReadinessHarness()
+        runProposalPromptsHarness()
         await runDuckdbHarness()
         await runBlockCommentsHarness()
         await runLiteParseHarness()
@@ -69,6 +75,8 @@ function App() {
         await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()
+        await runProposalRfpProfileHarness()
+        await runProposalGenerationHarness()
         await runContractKeywordReviewHarness()
         await runScoperHarness()
         await runDemoExtensionsHarness()

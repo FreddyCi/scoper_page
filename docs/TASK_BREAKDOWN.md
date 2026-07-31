@@ -1073,6 +1073,8 @@ flowchart LR
 - [PRD.md](PRD.md)
 - [PRD_TEMPLATE.md](PRD_TEMPLATE.md)
 - [TASK_BREAKDOWN_PROPOSAL_MODE.md](TASK_BREAKDOWN_PROPOSAL_MODE.md) — Generate Complete Proposal (replaces Scope Creep tab)
+- [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) — Sectional ECP / 8K UCW (BDA-152–180)
+- [TASK_BREAKDOWN_CHAT_VOICE.md](TASK_BREAKDOWN_CHAT_VOICE.md) — Chat mic / Whisper WebGPU (BDA-181–195)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 
@@ -1080,5 +1082,6 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.2 | 2026-07-31 | Link TASK_BREAKDOWN_CHAT_VOICE.md (BDA-181–195) |
 | v1.1 | 2026-07-30 | Link to TASK_BREAKDOWN_PROPOSAL_MODE.md (BDA-110–151) |
 | v1.0 | 2026-07-27 | Initial atomic breakdown from PRD + plan |

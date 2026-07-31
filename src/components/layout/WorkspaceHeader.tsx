@@ -1,7 +1,7 @@
 import {
   ClipboardCheckIcon,
-  FileStackIcon,
   FileTextIcon,
+  LayersIcon,
   MessageCircleMoreIcon,
   XIcon,
 } from 'lucide-react'
@@ -64,7 +64,7 @@ function WorkspaceModeToggle() {
           disabled={chatGenerating}
           className={MODE_TAB_TRIGGER_CLASS}
         >
-          <FileStackIcon className="size-3.5" />
+          <LayersIcon className="size-3.5" />
           <span className="sm:hidden">Proposal</span>
           <span className="hidden sm:inline">Generate Complete Proposal</span>
         </TabsTrigger>

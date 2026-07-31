@@ -7,6 +7,8 @@ import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
 import { runAgentActivityHarness } from '@/lib/agent-activity'
 import { runContextUsageHarness } from '@/lib/context-usage'
+import { runMarkerShimmerHarness } from '@/components/ui/marker'
+import { runShimmerHarness } from '@/components/ui/shimmer'
 import { runAgentActivityStoreHarness } from '@/services/agent-activity-store-harness'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
@@ -29,6 +31,8 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 export function runProposalUnitHarnesses(): void {
   runPageContextManagerHarness()
   runContextUsageHarness()
+  runShimmerHarness()
+  runMarkerShimmerHarness()
   runAgentActivityHarness()
   runProposalPackageClassifierHarness()
   runProposalContextQualityHarness()

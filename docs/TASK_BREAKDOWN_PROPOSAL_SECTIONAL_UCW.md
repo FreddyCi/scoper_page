@@ -485,16 +485,17 @@ flowchart TD
 ### **ID:** BDA-172
 
 **Title:** Add shimmer for Marker labels  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Medium  
 **Description:** If missing, add shadcn **shimmer** utility (`pnpm dlx shadcn@latest add shimmer`); wire [`MarkerContent`](../src/components/ui/marker.tsx) with shimmer class for streaming/compacting labels per [shadcn Marker docs](https://ui.shadcn.com/docs/components/base/marker).  
 **Completed Changes:**
-- 🔄 Shimmer component/tailwind plugin in repo
-- 🔄 Document class name for AgentActivityMarkers
+- ✅ Shimmer already via `@import "shadcn/tailwind.css"` in `index.css`; [`shimmer.tsx`](../src/components/ui/shimmer.tsx) exports `SHIMMER_CLASS` + `Shimmer` span
+- ✅ `MarkerContent` `shimmer` prop, `MARKER_SHIMMER_CLASS`, `markerShimmerContentClassName()` for AgentActivityMarkers
+- ✅ `AgentActivityEntry.shimmer` documented to use Marker shimmer
 **Test Strategy:** Visual: compacting label animates; a11y `role="status"` preserved.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runShimmerHarness` + `runMarkerShimmerHarness` in proposal unit harnesses; BDA-173 uses `MarkerContent shimmer`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan F3; existing `marker.tsx`
 

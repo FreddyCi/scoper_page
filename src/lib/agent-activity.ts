@@ -22,7 +22,7 @@ export type AgentActivityEntry = {
   label: string
   detail?: string
   at: string
-  /** Shimmer in transcript markers (BDA-172+). */
+  /** When true, render with {@link MarkerContent} `shimmer` / {@link MARKER_SHIMMER_CLASS} (BDA-172). */
   shimmer?: boolean
 }
 

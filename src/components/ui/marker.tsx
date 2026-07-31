@@ -4,6 +4,19 @@ import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+import { SHIMMER_CLASS } from "@/components/ui/shimmer"
+
+/**
+ * Class for live agent markers (`AgentActivityMarkers`, compacting status rows).
+ * Prefer {@link MarkerContent} `shimmer` prop instead of applying manually.
+ */
+export const MARKER_SHIMMER_CLASS = SHIMMER_CLASS
+
+/** Classes for {@link MarkerContent} when `AgentActivityEntry.shimmer` is true (BDA-172). */
+export function markerShimmerContentClassName(active = true): string | undefined {
+  if (!active) return undefined
+  return cn(SHIMMER_CLASS, "text-muted-foreground")
+}
 
 const markerVariants = cva(
   "group/marker relative flex min-h-4 w-full items-center gap-2 text-left text-sm text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [a]:underline [a]:underline-offset-3 [a]:hover:text-foreground",
@@ -55,17 +68,34 @@ function MarkerIcon({ className, ...props }: React.ComponentProps<"span">) {
   )
 }
 
-function MarkerContent({ className, ...props }: React.ComponentProps<"span">) {
+function MarkerContent({
+  className,
+  shimmer,
+  ...props
+}: React.ComponentProps<"span"> & {
+  /** Animated text sweep for streaming / compacting labels (pairs with `role="status"` on Marker). */
+  shimmer?: boolean
+}) {
   return (
     <span
       data-slot="marker-content"
+      data-shimmer={shimmer ? "true" : undefined}
       className={cn(
         "min-w-0 wrap-break-word group-data-[variant=separator]/marker:flex-none group-data-[variant=separator]/marker:text-center *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
+        shimmer && markerShimmerContentClassName(true),
         className
       )}
       {...props}
     />
   )
+}
+
+/** Dev harness — marker shimmer wiring (BDA-172) */
+export function runMarkerShimmerHarness(): void {
+  const shimmerClasses = markerShimmerContentClassName(true)
+  if (!shimmerClasses?.includes(SHIMMER_CLASS)) {
+    throw new Error('runMarkerShimmerHarness: expected shimmer utility class on marker content')
+  }
 }
 
 export { Marker, MarkerIcon, MarkerContent, markerVariants }

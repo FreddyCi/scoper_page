@@ -1,5 +1,9 @@
 import { runSpeechTranscriptCleanupHarness } from '@/lib/speech-transcript-cleanup'
 import { runWhisperProtocolHarness } from '@/lib/whisper-protocol'
+import {
+  runChatVoiceSessionHarness,
+  runChatVoiceSessionMergeHarness,
+} from '@/services/chat-voice-session'
 import { runChatVoiceCaptureHarness } from '@/services/chat-voice-capture'
 import { runProposalHistoryHarness } from '@/lib/proposal-history'
 import { runProposalSectionFindClauseHarness } from '@/lib/proposal-section-find-clause'
@@ -37,6 +41,7 @@ export function runProposalUnitHarnesses(): void {
   runWhisperProtocolHarness()
   runSpeechTranscriptCleanupHarness()
   runChatVoiceCaptureHarness()
+  runChatVoiceSessionMergeHarness()
   runPageContextManagerHarness()
   runContextUsageHarness()
   runShimmerHarness()
@@ -70,6 +75,7 @@ export async function runProposalAsyncUnitHarnesses(): Promise<void> {
   await runProposalStoreGeneratePreflightHarness()
   await runProposalSectionEcpHarness()
   await runCommandIngestProposalLandingHarness()
+  await runChatVoiceSessionHarness()
 }
 
 /**

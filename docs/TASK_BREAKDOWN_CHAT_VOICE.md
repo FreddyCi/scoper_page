@@ -174,17 +174,19 @@ flowchart TD
 ### **ID:** BDA-187
 
 **Title:** Streaming transcribe queue  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-184, BDA-185  
 **Priority:** High  
 **Description:** Extend whisper-client (or thin [`src/services/chat-voice-session.ts`](../src/services/chat-voice-session.ts)): while listening, queue capture chunks → serial/controlled parallel transcribe; merge segment text; emit `onPartial(text)` to UI. Call `reset` on mic start; `dispose` optional on mic stop to free GPU before chat send. Avoid transcribing while `chatGenerating || proposalGenerating`.  
 **Completed Changes:**
-- 🔄 Chunk scheduler + backpressure if worker busy
-- 🔄 Mutex with session store flags
+- ✅ [`chat-voice-session.ts`](../src/services/chat-voice-session.ts) — serial queue, overlap merge, `cleanSpeechTranscript` on emit
+- ✅ `startChatVoiceSession` / `stopChatVoiceSession`; blocks when agent/proposal busy; Whisper `reset` on start
+- ✅ `runChatVoiceSessionMergeHarness` + `runChatVoiceSessionHarness` (queued silence chunks)
 **Test Strategy:** Manual partial text updates in composer during long utterance.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b`; merge + queue harnesses on dev load
+- 👤 Manual long utterance in composer (BDA-189+)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § GPU contention
 
 ---

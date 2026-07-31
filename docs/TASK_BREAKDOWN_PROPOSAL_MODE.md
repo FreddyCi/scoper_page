@@ -86,16 +86,17 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 ### **ID:** BDA-112
 
 **Title:** Proposal readiness helper  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-110  
 **Priority:** High  
 **Description:** Add [`src/lib/proposal-readiness.ts`](../src/lib/proposal-readiness.ts) with `getProposalSetupState()` returning `{ hasRfp, hasContext, hasProfile, readyToGenerate }`. Pure function over session slice; unit-testable thresholds (context min length 20).  
 **Completed Changes:**
-- 🔄 Implement helper + minimal tests or harness assertion
+- ✅ Added `getProposalSetupState`, `PROPOSAL_CONTEXT_MIN_LENGTH`, slice/state types
+- ✅ `runProposalReadinessHarness()` in dev chain (`App.tsx`)
 **Test Strategy:** Harness or inline test: empty session → not ready; full slice → ready.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runProposalReadinessHarness` passes; `pnpm build` 0 TS errors
+**Assigned:** Completed  
 **Context/Artifacts:** Proposal plan §1 gating  
 
 ---

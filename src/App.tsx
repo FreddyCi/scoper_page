@@ -34,6 +34,7 @@ import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/litepars
 import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
+import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { runSessionStoreHarness } from '@/store/session-store'
 
@@ -51,6 +52,7 @@ function App() {
       try {
         await runEcpEnvironmentHarness()
         runSessionStoreHarness()
+        runProposalReadinessHarness()
         await runDuckdbHarness()
         await runBlockCommentsHarness()
         await runLiteParseHarness()

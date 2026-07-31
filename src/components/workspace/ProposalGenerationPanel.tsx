@@ -15,6 +15,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateList'
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
+import {
+  assembleProposalMarkdown,
+  hasExportableProposalContent,
+  proposalExportFilename,
+} from '@/lib/assemble-proposal-markdown'
+import { beginBlobSave } from '@/lib/download-blob'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
 import { cn } from '@/lib/utils'
 import {
@@ -43,6 +49,8 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
   const profile = useProposalRequirementsProfile()
 
   const [buildingProfile, setBuildingProfile] = useState(false)
+  const [exportingProposal, setExportingProposal] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const rfpDocs = useMemo(
     () => documents.filter((doc) => doc.mime === 'application/pdf' && doc.role !== 'supporting'),
@@ -73,6 +81,35 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
     generationProgress != null &&
     generationProgress.draftCount + generationProgress.errorCount === generationProgress.total &&
     generationProgress.total > 0
+
+  const canExportProposal = profile != null && hasExportableProposalContent(profile)
+
+  async function handleExportProposal() {
+    if (!profile || !canExportProposal || exportingProposal || proposalGenerating) return
+
+    setExportError(null)
+    setExportingProposal(true)
+
+    try {
+      const rfpDoc = documents.find((doc) => doc.doc_id === profile.rfp_doc_id)
+      const markdown = assembleProposalMarkdown(profile, { rfpFilename: rfpDoc?.filename })
+      const filename = proposalExportFilename(rfpDoc?.filename ?? 'proposal')
+      const writeBlob = await beginBlobSave({
+        filename,
+        mime: 'text/markdown',
+        extension: '.md',
+      })
+      const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+      await writeBlob(blob)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      const message = error instanceof Error ? error.message : 'Export failed'
+      setExportError(message)
+      console.error('[proposal-generation-panel] markdown export failed', error)
+    } finally {
+      setExportingProposal(false)
+    }
+  }
 
   async function handleBuildProfile() {
     if (!canBuildProfile) return
@@ -227,6 +264,12 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               </div>
             ) : null}
 
+            {exportError ? (
+              <p className="text-destructive shrink-0 text-xs leading-relaxed" role="alert">
+                {exportError}
+              </p>
+            ) : null}
+
             {proposalGenerating ? (
               <AiSupportLoadingCard
                 className="shrink-0"
@@ -234,19 +277,35 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 buttonLabel="Generate complete proposal"
               />
             ) : (
-              <Button
-                type="button"
-                className="w-full shrink-0"
-                disabled={!setup.readyToGenerate || buildingProfile}
-                title={
-                  !setup.readyToGenerate
-                    ? 'Complete RFP selection, responder context, and proposal profile first'
-                    : undefined
-                }
-                onClick={() => void runGenerateProposalVolumes()}
-              >
-                {allVolumesDraft ? 'Regenerate complete proposal' : 'Generate complete proposal'}
-              </Button>
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="sm:flex-1"
+                  disabled={!canExportProposal || exportingProposal || buildingProfile}
+                  title={
+                    !canExportProposal
+                      ? 'Generate at least one volume draft before exporting'
+                      : undefined
+                  }
+                  onClick={() => void handleExportProposal()}
+                >
+                  {exportingProposal ? 'Exporting…' : 'Export .md'}
+                </Button>
+                <Button
+                  type="button"
+                  className="sm:flex-1"
+                  disabled={!setup.readyToGenerate || buildingProfile}
+                  title={
+                    !setup.readyToGenerate
+                      ? 'Complete RFP selection, responder context, and proposal profile first'
+                      : undefined
+                  }
+                  onClick={() => void runGenerateProposalVolumes()}
+                >
+                  {allVolumesDraft ? 'Regenerate complete proposal' : 'Generate complete proposal'}
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

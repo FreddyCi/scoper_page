@@ -557,16 +557,17 @@ sequenceDiagram
 ### **ID:** BDA-135
 
 **Title:** Export assembled proposal markdown  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-134  
 **Priority:** Medium  
 **Description:** **Export .md** downloads single file: `# Volume: {title}` sections assembled from all drafts; reuse [`beginBlobSave`](../src/lib/download-blob.ts) pattern from split view exports.  
 **Completed Changes:**
-- 🔄 Assembler + download button
+- ✅ [`assemble-proposal-markdown.ts`](../src/lib/assemble-proposal-markdown.ts) — assembler, filename helper, `runAssembleProposalMarkdownHarness`
+- ✅ **Export .md** outline button + `beginBlobSave` in panel (enabled when any volume has `bodyMarkdown`)
 **Test Strategy:** Export after generate; file contains all volume headers and bodies.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3  
 
 ---

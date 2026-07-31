@@ -38,6 +38,7 @@ import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
+import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
 import { runSharePackHarness } from '@/services/share-pack-harness'
@@ -58,6 +59,7 @@ function App() {
         await runEcpEnvironmentHarness()
         runSessionStoreHarness()
         runProposalReadinessHarness()
+        runAssembleProposalMarkdownHarness()
         runProposalPromptsHarness()
         runChatStubProposalHarness()
         runProposalPanelSetupHarness()

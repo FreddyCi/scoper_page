@@ -4,6 +4,7 @@ import {
   ProposalContextOverflowError,
 } from '@/services/proposal-volume-ecp'
 import { createProposalContextTracker } from '@/lib/proposal-context-tracker'
+import { computeVolumeGenerationProgress } from '@/lib/proposal-volume-section'
 import type {
   BlockRecord,
   DocumentMeta,
@@ -11,6 +12,7 @@ import type {
   ProposalVolume,
 } from '@/lib/types'
 import { fetchDocumentBlocks, groupBlocksBySection } from '@/services/document-blocks'
+import { deriveProposalSectionsForVolume } from '@/services/derive-proposal-sections'
 import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 
 export type BuildProposalVolumesOptions = {
@@ -125,12 +127,26 @@ export async function buildProposalVolumes(
     effectiveMaxSeqLen: getScoperClient().getState().maxSeqLen,
   })
 
-  for (const volume of profile.volumes) {
+  for (const volumeSeed of profile.volumes) {
     contextTracker.reset()
+
+    const volume =
+      profile.volumes.find((entry) => entry.id === volumeSeed.id) ?? volumeSeed
+
+    const sections =
+      volume.sections && volume.sections.length > 0
+        ? volume.sections
+        : deriveProposalSectionsForVolume({
+            volume,
+            blocks,
+            packageKind: profile.packageKind,
+          })
 
     profile = patchProposalVolume(profile, volume.id, {
       status: 'generating',
       errorMessage: undefined,
+      sections,
+      generationProgress: computeVolumeGenerationProgress(sections),
     })
     options.onProfileUpdate(profile)
 

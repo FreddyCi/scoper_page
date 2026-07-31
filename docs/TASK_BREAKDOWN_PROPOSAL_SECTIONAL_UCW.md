@@ -228,17 +228,18 @@ flowchart TD
 ### **ID:** BDA-161
 
 **Title:** Derive proposal sections service  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-160, BDA-159  
 **Priority:** Critical  
 **Description:** New [`src/services/derive-proposal-sections.ts`](../src/services/derive-proposal-sections.ts): input volume + RFP `BlockRecord[]` + `packageKind`; output ordered `ProposalVolumeSection[]` (cap **8 sections/volume**, **6–12** themes for contract_framework). Use `groupBlocksBySection` / regex (Section N, insurance, bonds); fallback **1 section = whole volume**. Run at profile build or lazily at generate start; patch sections onto volume in store.  
 **Completed Changes:**
-- 🔄 Derivation + caps + fallback
-- 🔄 `compactFindClauseQuery` on each section query string
+- ✅ `deriveProposalSectionsForVolume`, `attachProposalSectionsToProfile`, `buildSectionFindClauseQuery`
+- ✅ Lazy attach in `build-proposal-volumes` before each volume generate
+- ✅ `runDeriveProposalSectionsHarness()`
 **Test Strategy:** Harness: multi-section RFP → >1 section; empty blocks → single section; count ≤ cap.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Harness passes; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan Workstream C1; [`document-search`](../src/services/document-search.ts)
 
 ---

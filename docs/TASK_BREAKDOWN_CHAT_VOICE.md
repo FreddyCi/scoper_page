@@ -152,17 +152,17 @@ flowchart TD
 ### **ID:** BDA-186
 
 **Title:** Speech transcript disfluency cleanup  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Medium  
 **Description:** Add [`src/lib/speech-transcript-cleanup.ts`](../src/lib/speech-transcript-cleanup.ts): `cleanSpeechTranscript(text)` — strip whole-word fillers (`um`, `uh`, `ah`, `er`, `hm`, `hmm`, `mmm`); collapse whitespace; preserve substrings (`umbrella`, `aha moment`). Add `runSpeechTranscriptCleanupHarness()` in same file or dedicated harness module.  
 **Completed Changes:**
-- 🔄 Filler regex with word boundaries
-- 🔄 Harness positive + guardrail cases
+- ✅ `cleanSpeechTranscript` with word-boundary filler removal + whitespace normalize
+- ✅ `runSpeechTranscriptCleanupHarness` registered in `runProposalUnitHarnesses`
 **Test Strategy:** Harness via `runProposalUnitHarnesses` or new `runChatVoiceUnitHarnesses`; `pnpm build`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `tsc -b`; harness cases pass on dev load
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Disfluency cleanup
 
 ---

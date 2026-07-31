@@ -258,17 +258,20 @@ flowchart TD
 ### **ID:** BDA-191
 
 **Title:** WebGPU and agent busy gating  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-189  
 **Priority:** High  
 **Description:** Hide or disable mic when `probeWebGpu()` false. Stop capture if user sends chat while listening. Disable mic during `chatGenerating`, `proposalGenerating`, markdown ingest. Optional: stop voice session when `sendChatPrompt` fires. Align with [`WebGpuBanner`](../src/components/layout/WebGpuBanner.tsx) messaging.  
 **Completed Changes:**
-- 🔄 Store subscription or props from composer
-- 🔄 Auto-stop mic on send
+- ✅ [`webgpu-user-messages.ts`](../src/lib/webgpu-user-messages.ts) + banner uses shared fallback
+- ✅ Mic hidden when WebGPU false; disabled while probing / busy / markdown ingest
+- ✅ Auto-stop on agent/proposal busy (store subscribe) + markdown ingest; send stops session + `disposeWhisper`
+- ✅ [`chat-voice-gating.ts`](../src/lib/chat-voice-gating.ts) harness
 **Test Strategy:** Generate chat → mic disabled; proposal batch → mic disabled; no dual GPU contention errors in console.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Gating harness on dev load
+- 👤 Manual GPU contention check in browser
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § GPU contention; BDA-180 chatGenerating checks
 
 ---

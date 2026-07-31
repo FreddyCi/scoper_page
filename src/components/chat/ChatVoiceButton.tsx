@@ -3,11 +3,14 @@ import { Loader2Icon, MicIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { shouldShowChatVoiceMic } from '@/lib/chat-voice-gating'
+import { WEBGPU_VOICE_INPUT_TOOLTIP } from '@/lib/webgpu-user-messages'
 import { cn } from '@/lib/utils'
 import {
   isChatVoiceSessionActive,
   startChatVoiceSession,
   stopChatVoiceSession,
+  subscribeChatVoiceSessionState,
   type ChatVoiceSessionState,
 } from '@/services/chat-voice-session'
 import { getWhisperClient } from '@/services/whisper-client'
@@ -25,7 +28,7 @@ export type ChatVoiceButtonLabelInput = {
 
 export function resolveChatVoiceButtonTooltip(input: ChatVoiceButtonLabelInput): string {
   if (input.webGpuAvailable === false) {
-    return 'WebGPU required'
+    return WEBGPU_VOICE_INPUT_TOOLTIP
   }
   if (input.visual === 'loading') {
     return 'Loading…'
@@ -95,6 +98,8 @@ export function ChatVoiceButton({
     }
   }, [])
 
+  useEffect(() => subscribeChatVoiceSessionState(setSessionState), [])
+
   useEffect(() => {
     return () => {
       if (isChatVoiceSessionActive()) {
@@ -111,6 +116,16 @@ export function ChatVoiceButton({
     : isLoading
       ? 'loading'
       : 'idle'
+
+  useEffect(() => {
+    if (!isListening) return
+    if (!agentBusy && !disabled) return
+
+    void (async () => {
+      await stopChatVoiceSession({ disposeWhisper: agentBusy })
+      onListeningChangeRef.current?.(false)
+    })()
+  }, [agentBusy, disabled, isListening])
 
   const labelInput: ChatVoiceButtonLabelInput = {
     visual,
@@ -157,6 +172,10 @@ export function ChatVoiceButton({
 
     onListeningChangeRef.current?.(true)
   }, [buttonDisabled, isListening, isLoading])
+
+  if (!shouldShowChatVoiceMic(webGpuAvailable)) {
+    return null
+  }
 
   return (
     <Tooltip>
@@ -208,7 +227,7 @@ export function runChatVoiceButtonLabelsHarness(): void {
     },
     {
       input: { visual: 'idle', webGpuAvailable: false, agentBusy: false },
-      tooltip: 'WebGPU required',
+      tooltip: WEBGPU_VOICE_INPUT_TOOLTIP,
     },
   ]
 

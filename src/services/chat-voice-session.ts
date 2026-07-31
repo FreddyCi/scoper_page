@@ -28,6 +28,17 @@ let mergedTranscript = ''
 const chunkQueue: ChatVoiceCaptureChunk[] = []
 let drainPromise: Promise<void> | null = null
 let listeners: ChatVoiceSessionListeners | null = null
+const sessionStateListeners = new Set<(state: ChatVoiceSessionState) => void>()
+
+export function subscribeChatVoiceSessionState(
+  listener: (state: ChatVoiceSessionState) => void,
+): () => void {
+  sessionStateListeners.add(listener)
+  listener(sessionState)
+  return () => {
+    sessionStateListeners.delete(listener)
+  }
+}
 
 function isAgentBusy(): boolean {
   const state = useSessionStore.getState()
@@ -37,6 +48,9 @@ function isAgentBusy(): boolean {
 function setSessionState(next: ChatVoiceSessionState) {
   sessionState = next
   listeners?.onStateChange?.(next)
+  for (const listener of sessionStateListeners) {
+    listener(next)
+  }
 }
 
 /** Merge overlapping ASR segment text into a running transcript (BDA-187). */
@@ -212,6 +226,15 @@ export async function stopChatVoiceSession(
 
   return finalText
 }
+
+let lastAgentBusy = false
+useSessionStore.subscribe((state) => {
+  const agentBusy = state.chatGenerating || state.proposalGenerating
+  if (listenActive && agentBusy && !lastAgentBusy) {
+    void stopChatVoiceSession({ disposeWhisper: true })
+  }
+  lastAgentBusy = agentBusy
+})
 
 /** Dev harness — merge helper + queue guard (BDA-187). */
 export function runChatVoiceSessionMergeHarness(): void {

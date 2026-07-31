@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AlertTriangleIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { resolveWebGpuUnavailableMessage } from '@/lib/webgpu-user-messages'
 import { getScoperClient } from '@/services/scoper-client'
 
 type WebGpuBannerProps = {
@@ -15,10 +16,7 @@ function resolveScoperBannerMessage(state: {
   lastError: string | null
 }): string | null {
   if (state.webGpuAvailable === false) {
-    return (
-      state.webGpuError ??
-      'WebGPU is unavailable. On-device chat is disabled; document parsing still works.'
-    )
+    return resolveWebGpuUnavailableMessage(state.webGpuError)
   }
   if (state.maxSeqLenNotice) {
     return state.maxSeqLenNotice

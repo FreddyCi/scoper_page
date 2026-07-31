@@ -644,11 +644,13 @@ sequenceDiagram
 **Priority:** Medium  
 **Description:** Wire `runProposalRfpProfileHarness` and `runProposalGenerationHarness` in [`App.tsx`](../src/App.tsx) dev chain; after **BDA-127**, register ECP proposal harness; keep creep harnesses optional/env-gated so CI unchanged.  
 **Completed Changes:**
-- ✅ `App.tsx`: `runProposalReadinessHarness`, `runProposalPromptsHarness`, `runProposalRfpProfileHarness`, `runProposalGenerationHarness`
-- ✅ Ordering: ECP env + DuckDB ingest before proposal harnesses; creep harnesses remain dev-only at end
+- ✅ [`proposal-dev-harnesses.ts`](../src/services/proposal-dev-harnesses.ts) — `runProposalUnitHarnesses`, `runProposalAsyncUnitHarnesses`, `runProposalIntegrationHarnesses` (profile + ECP generation)
+- ✅ `App.tsx` dev chain: unit harnesses early; integration after DuckDB ingest + `runEcpAgentRunHarness` (ECP before volume generate)
+- ✅ Registered: readiness, post-ingest, command landing, assemble export, prompts, chat stub, panel setup, RFP profile, generation (ECP audit), share-pack compat (via `runSharePackHarness`)
+- ✅ Legacy creep UI harnesses gated on `VITE_RUN_CREEP_HARNESS=true` (off by default)
 **Test Strategy:** Dev load runs new harnesses without uncaught errors.  
 **Test Results:**
-- ✅ Proposal harness block registered; failures logged via `[dev-harness]`
+- ✅ Proposal harness block registered; failures logged via `[dev-harness]`  
 **Assigned:** Completed  
 **Context/Artifacts:** Plan §5, [ECP integration](#ecp-integration-proposal-generation)  
 

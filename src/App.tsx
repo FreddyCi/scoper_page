@@ -16,9 +16,11 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
-import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
-import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
-import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
+import {
+  runProposalAsyncUnitHarnesses,
+  runProposalIntegrationHarnesses,
+  runProposalUnitHarnesses,
+} from '@/services/proposal-dev-harnesses'
 import { runScoperHarness } from '@/services/scoper-client'
 import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services/creep-profile-ui-harness'
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
@@ -37,14 +39,12 @@ import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/litepars
 import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
-import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
-import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
-import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
-import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
-import { runChatStubProposalHarness } from '@/lib/chat-stub'
-import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { runSessionStoreHarness } from '@/store/session-store'
+
+function shouldRunLegacyCreepHarnesses(): boolean {
+  return import.meta.env.VITE_RUN_CREEP_HARNESS === 'true'
+}
 
 function App() {
   useEffect(() => {
@@ -60,13 +60,8 @@ function App() {
       try {
         await runEcpEnvironmentHarness()
         runSessionStoreHarness()
-        runProposalReadinessHarness()
-        runProposalPostIngestHarness()
-        await runCommandIngestProposalLandingHarness()
-        runAssembleProposalMarkdownHarness()
-        runProposalPromptsHarness()
-        runChatStubProposalHarness()
-        runProposalPanelSetupHarness()
+        runProposalUnitHarnesses()
+        await runProposalAsyncUnitHarnesses()
         await runDuckdbHarness()
         await runBlockCommentsHarness()
         await runLiteParseHarness()
@@ -83,12 +78,11 @@ function App() {
         await runCompareScopeHarness()
         await runDocumentRoleHarness()
         await runBuildRfpProfilesHarness()
-        await runProposalRfpProfileHarness()
-        await runProposalGenerationHarness()
         await runContractKeywordReviewHarness()
         await runScoperHarness()
         await runDemoExtensionsHarness()
         await runEcpAgentRunHarness()
+        await runProposalIntegrationHarnesses()
         await runChatAgentHarness()
         await runChatCitationsHarness()
         await runChatCitationChipHarness()
@@ -100,8 +94,10 @@ function App() {
         await runCitationClickHarness()
         runResultsProfileUiHarness()
         runResultsProfileGridHarness()
-        runCreepProfileUiHarness()
-        runCreepProfileGridHarness()
+        if (shouldRunLegacyCreepHarnesses()) {
+          runCreepProfileUiHarness()
+          runCreepProfileGridHarness()
+        }
       } catch (error) {
         console.error('[dev-harness]', error)
       }

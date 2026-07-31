@@ -42,10 +42,17 @@ export type ProposalVolumeRowProps = {
   volume: ProposalVolume
   /** Muted preview until setup gates pass (`readyToGenerate`). */
   muted?: boolean
+  /** Emphasize the volume currently being generated. */
+  active?: boolean
   className?: string
 }
 
-export function ProposalVolumeRow({ volume, muted = false, className }: ProposalVolumeRowProps) {
+export function ProposalVolumeRow({
+  volume,
+  muted = false,
+  active = false,
+  className,
+}: ProposalVolumeRowProps) {
   const StatusIcon = STATUS_ICON[volume.status]
   const statusLabel = volumeStatusLabel(volume.status)
   const showLiveStatus = !muted || volume.status !== 'pending'
@@ -53,13 +60,16 @@ export function ProposalVolumeRow({ volume, muted = false, className }: Proposal
   return (
     <li
       className={cn(
-        'flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm',
-        muted
-          ? 'border-border/40 bg-muted/20 opacity-60 saturate-50'
-          : 'border-border/70 bg-workspace-muted/50',
+        'flex flex-col gap-1 rounded-lg border px-3 py-2 text-sm transition-colors',
+        active && 'border-primary/50 bg-primary/5 ring-primary/30 ring-1',
+        !active &&
+          (muted
+            ? 'border-border/40 bg-muted/20 opacity-60 saturate-50'
+            : 'border-border/70 bg-workspace-muted/50'),
         className,
       )}
       aria-disabled={muted ? true : undefined}
+      aria-current={active ? 'step' : undefined}
     >
       <div className="flex items-start gap-2.5">
         <StatusIcon

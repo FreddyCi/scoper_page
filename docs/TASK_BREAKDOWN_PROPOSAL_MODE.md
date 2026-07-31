@@ -520,16 +520,18 @@ sequenceDiagram
 ### **ID:** BDA-133
 
 **Title:** Generate complete proposal CTA  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-132, BDA-118, BDA-127  
 **Priority:** Critical  
 **Description:** Primary **Generate complete proposal** button calls `runGenerateProposalVolumes()`; disable while `proposalGenerating`; per-volume status spinners (`generating` → `draft` / `error`).  
 **Completed Changes:**
-- 🔄 CTA + progress UI
+- ✅ CTA → `runGenerateProposalVolumes()`; `AiSupportLoadingCard` replaces button while `proposalGenerating`
+- ✅ Live progress line (active volume + N of M complete); `ProposalVolumeRow` `active` ring + spinner on `generating`
+- ✅ Post-run status copy; **Regenerate complete proposal** when drafts exist
 **Test Strategy:** Full flow produces draft bodies for all volumes.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA (`runProposalGenerationHarness` covers store/service)  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3, BDA-127 (ECP-backed generation)  
 
 ---

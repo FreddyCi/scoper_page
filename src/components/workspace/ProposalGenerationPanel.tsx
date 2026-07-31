@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Loader2Icon } from 'lucide-react'
 
 import { AiSupportLoadingCard } from '@/components/ui/ai-support-loading-card'
 import { Badge } from '@/components/ui/badge'
@@ -60,6 +59,20 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
     proposalGenerationError && setup.hasProfile && !proposalGenerating
       ? proposalGenerationError
       : null
+
+  const generationProgress = useMemo(() => {
+    if (!profile) return null
+    const total = profile.volumes.length
+    const draftCount = profile.volumes.filter((v) => v.status === 'draft').length
+    const errorCount = profile.volumes.filter((v) => v.status === 'error').length
+    const activeVolume = profile.volumes.find((v) => v.status === 'generating')
+    return { total, draftCount, errorCount, activeVolume }
+  }, [profile])
+
+  const allVolumesDraft =
+    generationProgress != null &&
+    generationProgress.draftCount + generationProgress.errorCount === generationProgress.total &&
+    generationProgress.total > 0
 
   async function handleBuildProfile() {
     if (!canBuildProfile) return
@@ -173,6 +186,19 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 {volumeGenerationError}
               </p>
             ) : null}
+            {proposalGenerating && generationProgress ? (
+              <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status" aria-live="polite">
+                {generationProgress.activeVolume
+                  ? `Writing “${generationProgress.activeVolume.title}” — ${generationProgress.draftCount} of ${generationProgress.total} complete`
+                  : `Finishing proposal — ${generationProgress.draftCount} of ${generationProgress.total} complete`}
+              </p>
+            ) : allVolumesDraft && !proposalGenerating ? (
+              <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status">
+                {generationProgress!.errorCount > 0
+                  ? `${generationProgress!.draftCount} draft${generationProgress!.draftCount === 1 ? '' : 's'} ready, ${generationProgress!.errorCount} volume${generationProgress!.errorCount === 1 ? '' : 's'} failed — regenerate to retry errors.`
+                  : 'All volumes have draft content.'}
+              </p>
+            ) : null}
             <ul
               className={cn(
                 'scrollbar-none min-h-0 flex-1 space-y-2 overflow-y-auto',
@@ -186,6 +212,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   key={volume.id}
                   volume={volume}
                   muted={!setup.readyToGenerate && volume.status === 'pending'}
+                  active={volume.status === 'generating'}
                 />
               ))}
             </ul>
@@ -200,26 +227,27 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               </div>
             ) : null}
 
-            <Button
-              type="button"
-              className="w-full shrink-0"
-              disabled={!setup.readyToGenerate || proposalGenerating || buildingProfile}
-              title={
-                !setup.readyToGenerate
-                  ? 'Complete RFP selection, responder context, and proposal profile first'
-                  : undefined
-              }
-              onClick={() => void runGenerateProposalVolumes()}
-            >
-              {proposalGenerating ? (
-                <>
-                  <Loader2Icon className="size-4 animate-spin" />
-                  Generating complete proposal…
-                </>
-              ) : (
-                'Generate complete proposal'
-              )}
-            </Button>
+            {proposalGenerating ? (
+              <AiSupportLoadingCard
+                className="shrink-0"
+                label="Generating"
+                buttonLabel="Generate complete proposal"
+              />
+            ) : (
+              <Button
+                type="button"
+                className="w-full shrink-0"
+                disabled={!setup.readyToGenerate || buildingProfile}
+                title={
+                  !setup.readyToGenerate
+                    ? 'Complete RFP selection, responder context, and proposal profile first'
+                    : undefined
+                }
+                onClick={() => void runGenerateProposalVolumes()}
+              >
+                {allVolumesDraft ? 'Regenerate complete proposal' : 'Generate complete proposal'}
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (

@@ -122,7 +122,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
   }
 
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
+    <div className={cn('flex flex-col gap-4', className)}>
       <Card className="shrink-0">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Proposal setup</CardTitle>
@@ -205,7 +205,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
       </Card>
 
       {profile ? (
-        <Card className="min-h-0 flex-1">
+        <Card>
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-center gap-2">
               <CardTitle className="text-base">Proposal volumes</CardTitle>
@@ -217,7 +217,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               {profile.summary}
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex min-h-0 flex-1 flex-col gap-4">
+          <CardContent className="flex flex-col gap-4">
             {volumeGenerationError ? (
               <p className="text-destructive text-xs leading-relaxed" role="alert">
                 {volumeGenerationError}
@@ -238,7 +238,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             ) : null}
             <ul
               className={cn(
-                'scrollbar-none min-h-0 flex-1 space-y-2 overflow-y-auto',
+                'space-y-2',
                 !setup.readyToGenerate &&
                   profile.volumes.every((v) => v.status === 'pending') &&
                   'pointer-events-none',
@@ -310,7 +310,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
           </CardContent>
         </Card>
       ) : (
-        <div className="text-muted-foreground flex min-h-[12rem] flex-1 items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
+        <div className="text-muted-foreground flex min-h-[12rem] items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 text-center text-sm">
           Build a proposal profile to see solicitation-aligned volumes here.
         </div>
       )}

@@ -105,7 +105,9 @@ export function WorkspaceContent() {
             </ResizablePanel>
           </ResizablePanelGroup>
         ) : (
-          <ProposalGenerationPanel className="min-h-0 flex-1" />
+          <div className="scrollbar-none min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <ProposalGenerationPanel className="pb-1" />
+          </div>
         )}
       </div>
     )

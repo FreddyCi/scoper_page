@@ -60,7 +60,7 @@ export function QuickActionCards({ className }: { className?: string }) {
               <p className={featureCardDescriptionClass}>{action.description}</p>
             </div>
 
-            <div aria-hidden className={cn(featureCardInnerPanelClass, 'mt-5 min-h-[14rem] p-4')} />
+            <div aria-hidden className={cn(featureCardInnerPanelClass, 'mt-5 min-h-[11rem] p-4')} />
           </button>
         )
       })}

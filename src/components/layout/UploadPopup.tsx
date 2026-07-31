@@ -23,6 +23,10 @@ import {
   ProgressLabel,
   ProgressValue,
 } from '@/components/ui/progress'
+import {
+  featureCardAccent,
+  featureCardDescriptionClass,
+} from '@/components/workspace/feature-card-styles'
 import type { PendingUpload } from '@/hooks/use-upload-queue'
 import {
   formatUploadFileSize,
@@ -138,6 +142,7 @@ export function UploadPopup({
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const copy = UPLOAD_INTENT_COPY[intent]
+  const highlightAccent = featureCardAccent(intent === 'rfp' ? 0 : 2)
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
@@ -207,7 +212,7 @@ export function UploadPopup({
             </Button>
           </div>
 
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
             <div
               role="button"
               tabIndex={0}
@@ -240,23 +245,28 @@ export function UploadPopup({
                 }
               }}
               className={cn(
-                'rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors sm:py-14',
+                'rounded-[var(--radius-panel)] border border-dashed px-5 py-9 text-center transition-[border-color,background-color,box-shadow] sm:py-11',
                 isDragging
-                  ? 'border-foreground/35 bg-muted/70'
-                  : 'border-border hover:border-foreground/20 hover:bg-muted/30 bg-muted/15',
+                  ? 'border-violet-300/70 bg-violet-50/45 shadow-panel ring-2 ring-violet-200/35'
+                  : 'border-border/90 bg-workspace-muted/90 hover:border-violet-200/45 hover:bg-workspace',
               )}
             >
-              <div className="bg-surface text-foreground shadow-panel mx-auto flex size-14 items-center justify-center rounded-2xl border">
-                <UploadCloudIcon className="size-7" />
+              <div className="border-border/60 bg-surface text-foreground shadow-panel mx-auto flex size-11 items-center justify-center rounded-xl border">
+                <UploadCloudIcon className="text-violet-700/85 size-5" />
               </div>
-              <p className="text-foreground mt-5 text-base font-semibold">
+              <p className="text-foreground font-serif mt-4 text-sm font-medium tracking-tight">
                 {copy.dropTitle}
               </p>
-              <p className="text-muted-foreground mt-2 text-sm">{copy.dropHint}</p>
+              <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">{copy.dropHint}</p>
 
-              <div className="border-border/70 bg-surface/80 mx-auto mt-6 max-w-md rounded-xl border px-4 py-3 text-left">
+              <div
+                className={cn(
+                  'border-border/50 mx-auto mt-4 max-w-sm rounded-xl border px-3.5 py-2.5 text-left shadow-sm',
+                  highlightAccent,
+                )}
+              >
                 <p className="text-foreground text-xs font-semibold">{copy.highlight.label}</p>
-                <p className="text-muted-foreground mt-0.5 text-[11px] leading-snug">
+                <p className={cn(featureCardDescriptionClass, 'mt-0.5 text-left text-[11px]')}>
                   {copy.highlight.description}
                 </p>
               </div>

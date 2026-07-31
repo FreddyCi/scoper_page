@@ -13,7 +13,7 @@ export function featureCardAccent(index: number): string {
 }
 
 export const featureCardShellClass =
-  'flex min-h-[22rem] flex-col overflow-hidden rounded-[2rem] p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)] transition-transform duration-200 hover:-translate-y-0.5'
+  'flex min-h-[18rem] flex-col overflow-hidden rounded-[2rem] p-6 shadow-[0_24px_60px_-28px_rgba(15,23,42,0.35)] transition-transform duration-200 hover:-translate-y-0.5'
 
 export const featureCardInnerPanelClass =
   'border-border/40 bg-surface/95 flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border shadow-[0_8px_30px_-18px_rgba(15,23,42,0.25)] backdrop-blur-sm'

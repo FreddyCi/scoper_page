@@ -12,6 +12,7 @@ import {
   whisperTranscribeTransferables,
 } from '@/lib/whisper-protocol'
 import { WHISPER_ASR_MODEL_ID } from '@/lib/whisper-model'
+import { cleanSpeechTranscript } from '@/lib/speech-transcript-cleanup'
 import { probeWebGpu } from '@/lib/scoper-webgpu'
 
 type PendingRequest = {
@@ -44,12 +45,24 @@ export type WhisperTranscribeChunkOptions = {
   copyAudio?: boolean
 }
 
+export type WhisperClientOptions = {
+  /** Apply speech filler cleanup before partial/segment callbacks and transcribe results (default true). */
+  cleanTranscript?: boolean
+}
+
+/** Text passed to whisper client listeners / transcribe results (BDA-188). */
+export function whisperEmitText(text: string, cleanTranscript: boolean): string {
+  if (!cleanTranscript) return text
+  return cleanSpeechTranscript(text)
+}
+
 export class WhisperClient {
   private worker: Worker | null = null
   private workerInitPromise: Promise<Worker> | null = null
   private loadPromise: Promise<void> | null = null
   private readonly pending = new Map<string, PendingRequest>()
   private listeners: WhisperClientListeners = {}
+  private cleanTranscript: boolean
   private state: WhisperClientState = {
     status: 'idle',
     loadProgress: null,
@@ -57,6 +70,22 @@ export class WhisperClient {
     webGpuAvailable: null,
     webGpuError: null,
     modelId: WHISPER_ASR_MODEL_ID,
+  }
+
+  constructor(options: WhisperClientOptions = {}) {
+    this.cleanTranscript = options.cleanTranscript !== false
+  }
+
+  private formatEmitText(text: string): string {
+    return whisperEmitText(text, this.cleanTranscript)
+  }
+
+  getCleanTranscript(): boolean {
+    return this.cleanTranscript
+  }
+
+  setCleanTranscript(cleanTranscript: boolean): void {
+    this.cleanTranscript = cleanTranscript
   }
 
   private readonly handleMessage = (event: MessageEvent<WhisperWorkerOutbound>) => {
@@ -109,10 +138,10 @@ export class WhisperClient {
         return
       }
       case 'partial':
-        this.listeners.onPartial?.(message.text)
+        this.listeners.onPartial?.(this.formatEmitText(message.text))
         return
       case 'segment':
-        this.listeners.onSegment?.(message.text)
+        this.listeners.onSegment?.(this.formatEmitText(message.text))
         return
       case 'error': {
         const error = this.toError(message.message, message.code)
@@ -245,7 +274,10 @@ export class WhisperClient {
         whisperTranscribeTransferables(command),
       )
       this.setState({ status: 'ready', lastError: null })
-      return result
+      return {
+        ...result,
+        text: this.formatEmitText(result.text),
+      }
     } catch (error) {
       this.setState({
         status: 'error',
@@ -285,15 +317,35 @@ export class WhisperClient {
 
 let singletonClient: WhisperClient | null = null
 
-export function createWhisperClient(): WhisperClient {
-  return new WhisperClient()
+export function createWhisperClient(options: WhisperClientOptions = {}): WhisperClient {
+  return new WhisperClient(options)
 }
 
-export function getWhisperClient(): WhisperClient {
+export function getWhisperClient(options?: WhisperClientOptions): WhisperClient {
   if (!singletonClient) {
-    singletonClient = createWhisperClient()
+    singletonClient = createWhisperClient(options)
   }
   return singletonClient
+}
+
+/** Dev harness — cleanup on client emit path (BDA-188). */
+export function runWhisperClientCleanupHarness(): void {
+  const cases: { input: string; expected: string }[] = [
+    { input: 'um find the clause', expected: 'find the clause' },
+    { input: 'uh, find the', expected: 'find the' },
+  ]
+
+  for (const { input, expected } of cases) {
+    const cleaned = whisperEmitText(input, true)
+    if (cleaned !== expected) {
+      throw new Error(
+        `runWhisperClientCleanupHarness: expected ${JSON.stringify(expected)}, got ${JSON.stringify(cleaned)}`,
+      )
+    }
+    if (whisperEmitText(input, false) !== input) {
+      throw new Error('runWhisperClientCleanupHarness: cleanTranscript false should pass through')
+    }
+  }
 }
 
 /** Dev harness — client load + silence transcribe (BDA-184). */

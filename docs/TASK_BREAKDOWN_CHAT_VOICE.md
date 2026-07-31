@@ -194,16 +194,19 @@ flowchart TD
 ### **ID:** BDA-188
 
 **Title:** Wire cleanup into whisper emissions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-186, BDA-187  
 **Priority:** Medium  
 **Description:** Apply `cleanSpeechTranscript` to every partial/final string before UI callback (default on). Export option `cleanTranscript?: boolean` for future toggle.  
 **Completed Changes:**
-- 🔄 Cleanup applied in client emit path
+- ✅ [`whisper-client.ts`](../src/services/whisper-client.ts) — `WhisperClientOptions.cleanTranscript` (default on); `whisperEmitText`; partial/segment listeners + `transcribeChunk` result
+- ✅ `setCleanTranscript` / `getCleanTranscript` for runtime toggle
+- ✅ `runWhisperClientCleanupHarness` in unit harnesses
 **Test Strategy:** Harness + manual: spoken “um find the clause” → composer shows without leading fillers.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Sync harness (`um find the clause` → `find the clause`)
+- 👤 Manual composer (BDA-189+)
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-186, BDA-189
 
 ---

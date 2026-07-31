@@ -1,5 +1,6 @@
 import { runSpeechTranscriptCleanupHarness } from '@/lib/speech-transcript-cleanup'
 import { runWhisperProtocolHarness } from '@/lib/whisper-protocol'
+import { runWhisperClientCleanupHarness } from '@/services/whisper-client'
 import {
   runChatVoiceSessionHarness,
   runChatVoiceSessionMergeHarness,
@@ -39,6 +40,7 @@ import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-ha
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
   runWhisperProtocolHarness()
+  runWhisperClientCleanupHarness()
   runSpeechTranscriptCleanupHarness()
   runChatVoiceCaptureHarness()
   runChatVoiceSessionMergeHarness()

@@ -196,7 +196,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status">
                 {generationProgress!.errorCount > 0
                   ? `${generationProgress!.draftCount} draft${generationProgress!.draftCount === 1 ? '' : 's'} ready, ${generationProgress!.errorCount} volume${generationProgress!.errorCount === 1 ? '' : 's'} failed — regenerate to retry errors.`
-                  : 'All volumes have draft content.'}
+                  : 'All volumes have draft content — expand a row to preview markdown.'}
               </p>
             ) : null}
             <ul

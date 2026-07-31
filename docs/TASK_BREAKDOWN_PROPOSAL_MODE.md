@@ -539,16 +539,17 @@ sequenceDiagram
 ### **ID:** BDA-134
 
 **Title:** Volume markdown preview  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-133  
 **Priority:** Medium  
 **Description:** Accordion or expandable rows showing `bodyMarkdown` per volume (Streamdown or simple pre/markdown view consistent with workspace). Empty state before generation.  
 **Completed Changes:**
-- 🔄 Preview component
+- ✅ [`ProposalVolumeMarkdownPreview.tsx`](../src/components/workspace/ProposalVolumeMarkdownPreview.tsx) — Streamdown static render + pending/generating/empty copy
+- ✅ Expandable [`ProposalVolumeRow`](../src/components/workspace/ProposalVolumeRow.tsx) chevron + title toggle
 **Test Strategy:** After generate, expand volume → readable markdown.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** [`AnnotatedMarkdownView`](../src/components/workspace/AnnotatedMarkdownView.tsx) (optional reuse)  
 
 ---

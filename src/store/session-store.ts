@@ -253,10 +253,13 @@ const initialState = {
 }
 
 function workspaceViewAfterIngest(
-  _mode: WorkspaceMode,
+  mode: WorkspaceMode,
   currentView: WorkspaceView,
   hadDocuments: boolean,
 ): WorkspaceView {
+  if (mode === 'proposal') {
+    return 'profiles'
+  }
   if (currentView !== 'landing' && hadDocuments) {
     return currentView
   }

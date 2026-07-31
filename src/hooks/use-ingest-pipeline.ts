@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 
 import { ingestFiles, type IngestProgress } from '@/services/ingest-router'
 import type { IngestResult } from '@/lib/types'
+import { getProposalPostIngestPatch } from '@/lib/proposal-post-ingest'
 import { useSessionStore } from '@/store/session-store'
 
 export type IngestPipelineResult = {
@@ -34,14 +35,17 @@ export function useIngestPipeline() {
 
         if (mode === 'proposal') {
           const store = useSessionStore.getState()
-          if (!store.evaluationDocId) {
-            const rfpDoc =
-              documents.find((doc) => doc.mime === 'application/pdf') ?? documents[0]
-            if (rfpDoc) {
-              store.setEvaluationDocId(rfpDoc.doc_id)
-            }
+          const patch = getProposalPostIngestPatch(
+            {
+              evaluationDocId: store.evaluationDocId,
+              documents: store.documents,
+            },
+            results,
+          )
+          if (patch.evaluationDocId != null) {
+            store.setEvaluationDocId(patch.evaluationDocId)
           }
-          store.setWorkspaceView('profiles')
+          store.setWorkspaceView(patch.workspaceView)
         }
       }
 

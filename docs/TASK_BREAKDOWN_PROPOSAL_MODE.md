@@ -579,16 +579,18 @@ sequenceDiagram
 ### **ID:** BDA-140
 
 **Title:** Ingest pipeline proposal branch  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111, BDA-113  
 **Priority:** High  
 **Description:** [`use-ingest-pipeline.ts`](../src/hooks/use-ingest-pipeline.ts): replace `scope_creep` block with `proposal` — set `evaluationDocId` if unset, `setWorkspaceView('profiles')`, **no** `compareScope`.  
 **Completed Changes:**
-- 🔄 Branch logic
+- ✅ [`proposal-post-ingest.ts`](../src/lib/proposal-post-ingest.ts) — `getProposalPostIngestPatch` (batch PDF preference); `runProposalPostIngestHarness`
+- ✅ [`use-ingest-pipeline.ts`](../src/hooks/use-ingest-pipeline.ts) proposal branch; `runRfpQualification` skipped via store guard
+- ✅ [`session-store.ts`](../src/store/session-store.ts) `workspaceViewAfterIngest` → `profiles` when `mode === 'proposal'`
 **Test Strategy:** Upload in proposal mode → lands on profiles, not creep compare.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- 🔄 Pending manual QA  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §4  
 
 ---

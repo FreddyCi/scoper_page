@@ -445,16 +445,18 @@ flowchart TD
 ### **ID:** BDA-170
 
 **Title:** Store activity log and context phase  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-169  
 **Priority:** High  
 **Description:** Extend session store: `agentActivityLog: AgentActivityEntry[]`, `contextUsageSnapshot`, `contextPhase: 'idle' | 'generating' | 'find_clause' | 'soft_recall' | 'compacting'`; helpers `pushAgentActivity`, `clearAgentActivity` (clear on new chat thread / proposal batch start). Types in [`agent-activity.ts`](../src/lib/agent-activity.ts) or `types.ts`.  
 **Completed Changes:**
-- 🔄 Store slice + actions
-- 🔄 `AgentActivityKind` union per plan
+- ✅ [`agent-activity.ts`](../src/lib/agent-activity.ts): types, `appendAgentActivityEntry`, tail trim (`AGENT_ACTIVITY_LOG_MAX`), `runAgentActivityHarness`
+- ✅ Session store slice + `pushAgentActivity`, `clearAgentActivity`, `setContextPhase`, `setContextUsageSnapshot`
+- ✅ Clear on `clearChat`, `startNewChat`, proposal batch start (`runGenerateProposalVolumes`); phase `generating` → `idle` in finally
+- ✅ [`agent-activity-store-harness.ts`](../src/services/agent-activity-store-harness.ts); wired in proposal dev harnesses
 **Test Strategy:** Push/clear from harness; log length bounded (optional tail trim).  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runAgentActivityHarness` + `runAgentActivityStoreHarness` via `runProposalUnitHarnesses` / `runProposalAsyncUnitHarnesses`
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan F3; [`session-store.ts`](../src/store/session-store.ts)
 

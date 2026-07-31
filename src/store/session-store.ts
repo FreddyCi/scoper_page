@@ -41,6 +41,14 @@ import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
 import { buildProposalVolumes } from '@/services/build-proposal-volumes'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { getScoperClient } from '@/services/scoper-client'
+import {
+  appendAgentActivityEntry,
+  clearAgentActivityState,
+  createAgentActivityInitialState,
+  type AgentActivityEntry,
+  type ContextPhase,
+} from '@/lib/agent-activity'
+import type { ContextUsageResult } from '@/lib/context-usage'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
 const CHAT_STARTED_STORAGE_KEY = 'bda-chat-started'
@@ -156,6 +164,9 @@ export type SessionState = {
   uploadPopupOpen: boolean
   uploadIntent: UploadIntent
   ocrEnabled: boolean
+  agentActivityLog: AgentActivityEntry[]
+  contextUsageSnapshot: ContextUsageResult | null
+  contextPhase: ContextPhase
 
   setMode: (mode: WorkspaceMode) => void
   setDocuments: (documents: DocumentMeta[]) => void
@@ -221,6 +232,12 @@ export type SessionState = {
   setOcrEnabled: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
   resetSession: () => void
+  pushAgentActivity: (
+    entry: Omit<AgentActivityEntry, 'id' | 'at'> & { id?: string; at?: string },
+  ) => void
+  clearAgentActivity: () => void
+  setContextPhase: (phase: ContextPhase) => void
+  setContextUsageSnapshot: (snapshot: ContextUsageResult | null) => void
 }
 
 const initialState = {
@@ -256,6 +273,7 @@ const initialState = {
   uploadPopupOpen: false,
   uploadIntent: 'rfp' as UploadIntent,
   ocrEnabled: true,
+  ...createAgentActivityInitialState(),
 }
 
 function workspaceViewAfterIngest(
@@ -546,6 +564,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       proposalGenerating: true,
       proposalGenerationError: null,
       proposalHandoffState: null,
+      ...clearAgentActivityState(),
+      contextPhase: 'generating',
     })
 
     try {
@@ -565,9 +585,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           error instanceof Error ? error.message : 'Proposal volume generation failed',
       })
     } finally {
-      set({ proposalGenerating: false })
+      set({ proposalGenerating: false, contextPhase: 'idle' })
     }
   },
+
+  pushAgentActivity: (entry) =>
+    set((state) => ({
+      agentActivityLog: appendAgentActivityEntry(state.agentActivityLog, entry),
+    })),
+
+  clearAgentActivity: () => set(clearAgentActivityState()),
+
+  setContextPhase: (contextPhase) => set({ contextPhase }),
+
+  setContextUsageSnapshot: (contextUsageSnapshot) => set({ contextUsageSnapshot }),
 
   setCreepProfiles: (creepProfiles) => set({ creepProfiles }),
 
@@ -729,6 +760,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatContextAttachments: [],
       chatGenerating: false,
       chatModelStatus: 'idle',
+      ...clearAgentActivityState(),
     })
   },
 
@@ -787,6 +819,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       chatSidebarTab: 'agent',
       chatStarted: chatThreads.length > 0,
       chatCollapsed: false,
+      ...clearAgentActivityState(),
     })
   },
 

@@ -8,6 +8,7 @@ import { decryptSharePackFile } from '@/services/share-pack-export'
 import { fetchSharePackBytes } from '@/services/share-pack-link'
 import { fetchRfpProfilesFromDuckdb } from '@/services/rfp-profile-store'
 import { getScoperClient } from '@/services/scoper-client'
+import { clearAgentActivityState } from '@/lib/agent-activity'
 import { useSessionStore } from '@/store/session-store'
 
 import { writeReviewerNamePreference } from '@/lib/reviewer-profile'
@@ -120,6 +121,7 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     chatGenerating: false,
     chatModelStatus: 'idle',
     uploadPopupOpen: false,
+    ...clearAgentActivityState(),
   })
 }
 

@@ -12,6 +12,8 @@
 
 **Scope creep:** Removed from product UI and ingest auto-compare; [`compare-scope.ts`](../src/services/compare-scope.ts) and creep harnesses may remain for dev-only.
 
+**Volume generation (current):** The **sectional 8K UCW pipeline** (BDA-152–180) supersedes the original **one-Scoper-send-per-volume** MVP described in BDA-118/BDA-127. See [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) and architecture doc [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md).
+
 ---
 
 ## Task dependency graph
@@ -45,7 +47,9 @@ Copy: tab **Generate Complete Proposal** / short **Proposal**; subtitle *AI gene
 
 Proposal mode reuses the **Browser Doc Agent ECP stack** documented in [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) Phase 7–8 (BDA-060–062). Chat and proposal generation share retrieval governance; proposal runs must not weaken registry freeze, namespace allowlists, or param validation.
 
-### Per-volume generation flow (target)
+### Per-volume generation flow (BDA-127 — historical target)
+
+> **Superseded for shipped volume bodies by [sectional generation](#sectional-generation-and-context-roll-bda-164)** (BDA-164). One isolated Scoper send runs **per section**, not per volume. Diagram kept for traceability to the original ECP wiring task.
 
 ```mermaid
 sequenceDiagram
@@ -80,14 +84,51 @@ sequenceDiagram
 | Errors | Surface `EcpAgentRunDeniedError` and tool failures as per-volume `status: 'error'` + `errorMessage`; session `proposalGenerationError` for fatal loop errors. |
 | Busy flags | `proposalGenerating` on store only — do not set `chatGenerating` during proposal batch runs. |
 
-### MVP gap (current code)
+### Sectional generation and context roll (BDA-164+)
 
-[`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) today: DuckDB block excerpts + direct [`getScoperClient().send()`](../src/services/scoper-client.ts) after `ensureScoperEcpReadyBeforeAgentRun()`. **ECP `find_clause` and [`runAgentTurn`](../src/services/agent.ts) are not wired.** Close this gap in **BDA-127** before calling generation “ECP-complete.”
+Production path: [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) loops **volumes → sections** sequentially. Each section:
+
+1. **`rollProposalContext()`** — `resetConversation()` clears the 8K KV cache ([`proposal-context-roll.ts`](../src/lib/proposal-context-roll.ts)).
+2. **Inject handoff** — `buildProposalHandoffBlock()` prepends goal, completed/pending sections, topic memory (max 4 bullets), and `doNotRepeat` failures.
+3. **ECP `find_clause`** — via [`generateProposalSectionMarkdownViaEcp`](../src/services/proposal-volume-ecp.ts); RFP doc only; up to **6** matches per call.
+4. **One `scoper.send`** per section with section prompt + handoff + RFP attachment.
+5. **Validate** — `validateProposalVolumeDraft`; optional **review retrieve** (second `find_clause`) if validation fails and ECP budget allows (**max 2 ECP calls per section**).
+6. **Append** validated section markdown to `volume.bodyMarkdown`; update `proposalHandoffState` on session store.
+
+UCW policy (8192 default, 4096 fallback), fill tracking, chat-column activity, and Studio vs page comparison: **[`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md)**.
+
+```mermaid
+flowchart LR
+  Roll[rollProposalContext] --> FC[ECP find_clause]
+  FC --> Send[scoper.send one section]
+  Send --> Val[validate section]
+  Val --> Handoff[update handoff + profile]
+  Handoff --> Roll
+```
+
+| Topic | Where |
+|-------|--------|
+| Section list / package kind | [`derive-proposal-sections.ts`](../src/services/derive-proposal-sections.ts), profile `packageKind` |
+| Store batch entry | `runGenerateProposalVolumes` — no `chatGenerating` |
+| Activity + usage UI | BDA-170–174; [`agent-activity-bridge.ts`](../src/services/agent-activity-bridge.ts) |
+| Sectional task breakdown | [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) BDA-152–180 |
+
+### Implementation status (ECP + generation)
+
+| Era | Behavior |
+|-----|----------|
+| BDA-118 MVP | Block excerpts + direct Scoper send per volume (no ECP) |
+| BDA-127 | ECP `find_clause` + isolated send **per volume** ([`proposal-volume-ecp.ts`](../src/services/proposal-volume-ecp.ts)) |
+| **BDA-164 (current)** | **Sectional** loop: roll between sections, ECP per section, handoff block, section-level validation |
+
+Monolithic **one prompt per volume** is retained in code history only; new work should follow the sectional pipeline above.
 
 ### ECP harness expectations
 
-- Extend [`runProposalGenerationHarness`](../src/services/build-proposal-volumes.ts) (or add `runProposalEcpGenerationHarness`) to assert an **allow** audit entry for `find_clause` when RFP doc is attached (same bar as [`runEcpAgentRunHarness`](../src/ecp/agent-run.ts)).
-- Optional dev-only: parity check — ECP find_clause excerpts vs direct service for the same volume query on sample RFP.
+- [`runProposalGenerationHarness`](../src/services/proposal-generation-harness.ts) asserts **allow** audit entries for `@demo/document.find_clause` when the RFP is attached — expect **at least one allow per generated section** (not merely one per volume), same bar as [`runEcpAgentRunHarness`](../src/ecp/agent-run.ts).
+- Store path via `runGenerateProposalVolumes` should produce the same ECP audit pattern when integration harnesses run after ingest.
+- Sectional activity log (roll, find_clause, writing, validated): [`runAgentActivityEmissionsHarness`](../src/services/agent-activity-bridge.ts) and BDA-179 extensions.
+- Optional dev-only: parity check — ECP find_clause excerpts vs direct service for the same section query on sample RFP.
 
 **Profile build (BDA-116)** stays in-memory from [`fetchDocumentBlocks`](../src/services/document-blocks.ts) for v1; a future `@demo/document.build_proposal_profile` ECP capability is **out of scope** unless product requires audit parity for outline extraction.
 
@@ -748,11 +789,12 @@ sequenceDiagram
 |--------------|-------|
 | §1 Domain model and session API | BDA-110–114, BDA-112 |
 | §2 Build services + ECP generation | BDA-115–119, **BDA-127**, [ECP integration](#ecp-integration-proposal-generation) |
+| §2b Sectional 8K UCW (supersedes monolithic volume send) | [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) BDA-152–180, [PROPOSAL_CONTEXT_AND_SECTIONS.md](PROPOSAL_CONTEXT_AND_SECTIONS.md), **BDA-164** |
 | §3 UI replace Scope Creep | BDA-120–126, BDA-130–135 |
 | §4 Ingest wiring | BDA-140–141 |
 | §5 Compatibility | BDA-142, BDA-126, BDA-150 |
 | §6 Verification | BDA-151, BDA-117, BDA-119, BDA-127 harness |
-| ECP (main BDA-060–062) | BDA-127 — proposal consumes same `@demo/document.find_clause` path as chat |
+| ECP (main BDA-060–062) | BDA-127 — proposal consumes same `@demo/document.find_clause` path as chat; **BDA-164** — per-section ECP + rolls |
 
 ---
 
@@ -772,6 +814,8 @@ sequenceDiagram
 
 - [Proposal mode plan](/Users/christopherkruger/.cursor/plans/proposal_mode_replaces_creep_5bdbc4a0.plan.md)
 - [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) (BDA series)
+- [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) — sectional ECP, 8K UCW, chat context UX (BDA-152–180)
+- [PROPOSAL_CONTEXT_AND_SECTIONS.md](PROPOSAL_CONTEXT_AND_SECTIONS.md) — handoff, rolls, ECP budget, pipeline vs Studio
 - [TASK_BREAKDOWN_TEMPLATE.md](TASK_BREAKDOWN_TEMPLATE.md)
 
 **Change log:**
@@ -781,3 +825,4 @@ sequenceDiagram
 | v1.0 | 2026-07-30 | Initial atomic breakdown from proposal mode plan |
 | v1.1 | 2026-07-30 | ECP integration section; BDA-127; BDA-118 MVP vs ECP target; traceability to BDA-062 |
 | v1.2 | 2026-07-30 | BDA-151 QA appendix; `pnpm qa:proposal` static + automated sign-off |
+| v1.3 | 2026-07-30 | Sectional generation + context roll (BDA-164); cross-links to PROPOSAL_CONTEXT_AND_SECTIONS + sectional UCW breakdown; ECP harness per-section audit |

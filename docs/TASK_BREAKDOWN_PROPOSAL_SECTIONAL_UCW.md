@@ -565,15 +565,16 @@ flowchart TD
 ### **ID:** BDA-178
 
 **Title:** Cross-link proposal mode breakdown  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-177  
 **Priority:** Low  
 **Description:** Update [`TASK_BREAKDOWN_PROPOSAL_MODE.md`](TASK_BREAKDOWN_PROPOSAL_MODE.md): add § ECP + **sectional generation** + **context roll between sections**; link to this doc and `PROPOSAL_CONTEXT_AND_SECTIONS.md`; note MVP monolithic path superseded by BDA-164.  
 **Completed Changes:**
-- 🔄 Traceability row for sectional UCW plan
+- ✅ ECP section: sectional pipeline, handoff/roll, implementation status table, per-section harness expectations
+- ✅ Traceability row §2b + related docs + change log v1.3
 **Test Strategy:** Links resolve; ECP integration section mentions per-section audit count.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Markdown links to `PROPOSAL_CONTEXT_AND_SECTIONS.md` and sectional breakdown from proposal mode doc
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan Workstream E
 

@@ -687,7 +687,7 @@ export function SplitDocumentView({
         }
         exportError={exportError}
         ctaLabel={MODE_CTA[mode]}
-        ctaLoading={buildingProfiles}
+        ctaLoading={mode === 'rfp' && buildingProfiles}
         ctaLoadingLabel="Qualifying…"
         onCtaClick={handleCtaClick}
         exportLabel={exportStatusHint ? `Export PDF (${exportStatusHint})` : 'Export PDF'}

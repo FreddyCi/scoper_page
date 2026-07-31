@@ -401,17 +401,18 @@ sequenceDiagram
 ### **ID:** BDA-124
 
 **Title:** SplitDocumentView proposal CTA  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-111  
 **Priority:** Medium  
 **Description:** [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx): `MODE_CTA.proposal` → **Open proposal workspace** (navigate to profiles); remove `compareScope` CTA branch for proposal mode.  
 **Completed Changes:**
-- 🔄 CTA label + handler
-- 🔄 Delete or guard scope_creep compare click path
+- ✅ `MODE_CTA.proposal` = **Open proposal workspace**; `handleCtaClick` → `setWorkspaceView('profiles')`
+- ✅ No `compareScope` / scope creep path in split view footer
+- ✅ CTA loading spinner only for RFP qualify (`buildingProfiles`), not proposal navigation
 **Test Strategy:** Proposal mode + split view → CTA opens profiles; no compareScope invoke.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Verified in code; `pnpm build` clean
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §3, §4  
 
 ---

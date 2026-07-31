@@ -289,18 +289,18 @@ flowchart TD
 ### **ID:** BDA-164
 
 **Title:** Sectional loop in build-proposal-volumes  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-154, BDA-161, BDA-163, BDA-158, BDA-155  
 **Priority:** Critical  
 **Description:** Refactor [`src/services/build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts) per volume: ensure sections; init handoff; **for each section** (sequential): `rollProposalContext()` → ECP `find_clause` (limit 6, RFP doc only) → optional review retrieve (max 2 ECP calls/section) → generate → `validateProposalVolumeDraft` → append to `volume.bodyMarkdown` → update handoff → `onProfileUpdate` with section label. Volume `draft` only if all sections draft. Emit hooks for activity log (BDA-174).  
 **Completed Changes:**
-- 🔄 Full sectional loop replacing monolithic generate
-- 🔄 ECP via `runEcpAgentTool`, not direct findClause service
-- 🔄 Progress callbacks for UI
+- ✅ Per-volume sectional loop with handoff across run
+- ✅ Review retrieve (2nd find_clause) + roll on validation failure
+- ✅ `onSectionActivity` hook; section + volume progress patches
 **Test Strategy:** `runProposalGenerationHarness`: allow audit count ≥ section count; no monolithic single-send for whole volume.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ Harness expectations updated; `pnpm build`  
+**Assigned:** Completed  
 **Context/Artifacts:** Plan C2, D; [ECP integration](TASK_BREAKDOWN_PROPOSAL_MODE.md#ecp-integration-proposal-generation)
 
 ---

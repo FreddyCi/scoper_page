@@ -91,10 +91,15 @@ export async function runProposalGenerationHarness(): Promise<void> {
     },
   })
 
-  const expectedUpdates = profile.volumes.length * 2
-  if (profileUpdates !== expectedUpdates) {
+  const sectionCount = generated.volumes.reduce(
+    (sum, volume) => sum + (volume.sections?.length ?? 1),
+    0,
+  )
+
+  const minProfileUpdates = profile.volumes.length * 2
+  if (profileUpdates < minProfileUpdates) {
     throw new Error(
-      `proposal generation harness: expected ${expectedUpdates} onProfileUpdate calls, got ${profileUpdates}`,
+      `proposal generation harness: expected at least ${minProfileUpdates} onProfileUpdate calls, got ${profileUpdates}`,
     )
   }
 
@@ -104,8 +109,10 @@ export async function runProposalGenerationHarness(): Promise<void> {
     (entry) =>
       entry.capabilityId === DOCUMENT_CAPABILITIES.find_clause && entry.decision === 'allow',
   )
-  if (findClauseAllows.length < 1) {
-    throw new Error('proposal generation harness: expected ECP find_clause allow audit entry')
+  if (findClauseAllows.length < sectionCount) {
+    throw new Error(
+      `proposal generation harness: expected at least ${sectionCount} ECP find_clause allow entries, got ${findClauseAllows.length}`,
+    )
   }
 
   const store = useSessionStore.getState()
@@ -156,6 +163,11 @@ export async function runProposalGenerationHarness(): Promise<void> {
   clearEcpAgentAuditLog()
   await store.runGenerateProposalVolumes()
 
+  const afterGenerate = useSessionStore.getState()
+  if (afterGenerate.proposalGenerating) {
+    throw new Error('proposal generation harness: proposalGenerating should be false after run')
+  }
+
   const storeAllows = getEcpAgentAuditLog().filter(
     (entry) =>
       entry.capabilityId === DOCUMENT_CAPABILITIES.find_clause && entry.decision === 'allow',
@@ -164,9 +176,15 @@ export async function runProposalGenerationHarness(): Promise<void> {
     throw new Error('proposal generation harness: store generate should audit find_clause allow')
   }
 
-  const afterGenerate = useSessionStore.getState()
-  if (afterGenerate.proposalGenerating) {
-    throw new Error('proposal generation harness: proposalGenerating should be false after run')
+  const storeSectionCount =
+    afterGenerate.proposalRequirementsProfile?.volumes.reduce(
+      (sum, volume) => sum + (volume.sections?.length ?? 1),
+      0,
+    ) ?? 0
+  if (storeAllows.length < storeSectionCount && storeSectionCount > 1) {
+    throw new Error(
+      `proposal generation harness: store path expected ≥${storeSectionCount} find_clause allows, got ${storeAllows.length}`,
+    )
   }
 
   const volumes = afterGenerate.proposalRequirementsProfile?.volumes ?? []

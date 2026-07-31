@@ -62,7 +62,7 @@ async function ensureScoperLoadedForProposal(): Promise<void> {
   }
 }
 
-function excerptsFromFindResult(findResult: FindClauseResult): string[] {
+export function excerptsFromFindClauseResult(findResult: FindClauseResult): string[] {
   return findResult.matches
     .map((match) => match.citation.excerpt.trim())
     .filter((excerpt) => excerpt.length >= 20)
@@ -130,7 +130,7 @@ export async function generateProposalSectionMarkdownViaEcp(
       ecpReady: true,
     })) as FindClauseResult
 
-    const ecpExcerpts = excerptsFromFindResult(findResult)
+    const ecpExcerpts = excerptsFromFindClauseResult(findResult)
     excerpts =
       ecpExcerpts.length > 0 ? ecpExcerpts : (input.blockExcerptsFallback ?? [])
   }

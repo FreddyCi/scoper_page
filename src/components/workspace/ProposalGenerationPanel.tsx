@@ -268,7 +268,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             ) : null}
             <ul
               className={cn(
-                'space-y-2',
+                'grid grid-cols-1 gap-2 sm:grid-cols-2',
                 !setup.readyToGenerate &&
                   profile.volumes.every((v) => v.status === 'pending') &&
                   'pointer-events-none',

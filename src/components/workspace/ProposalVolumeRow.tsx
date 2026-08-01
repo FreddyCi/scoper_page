@@ -147,7 +147,7 @@ export function ProposalVolumeRow({
   return (
     <li
       className={cn(
-        'flex flex-col gap-0 rounded-lg border text-sm transition-colors',
+        'flex min-w-0 flex-col gap-0 rounded-lg border text-sm transition-colors',
         active && 'border-primary/50 bg-primary/5 ring-primary/30 ring-1',
         !active &&
           (muted

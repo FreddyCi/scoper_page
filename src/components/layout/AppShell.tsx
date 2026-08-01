@@ -8,6 +8,7 @@ import {
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
 import { ShareWorkspaceSheet } from '@/components/layout/ShareWorkspaceSheet'
+import { ProposalSetupFooterChecklist } from '@/components/layout/ProposalSetupFooterChecklist'
 import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
 import { UploadFab } from '@/components/layout/UploadFab'
 import { UploadQueueProvider } from '@/components/layout/UploadQueueProvider'
@@ -87,11 +88,14 @@ export function AppShell({ children }: AppShellProps) {
                     {children ?? <WorkspaceContent />}
                   </div>
 
-                  <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-between bg-transparent px-[var(--spacing-panel)] pt-0 pb-3 text-xs text-subtle-foreground">
-                    <div className="pointer-events-auto">
+                  <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-transparent px-[var(--spacing-panel)] pt-1 pb-3 text-xs text-subtle-foreground">
+                    <div className="pointer-events-auto justify-self-start">
                       <UploadFab />
                     </div>
-                    <div className="pointer-events-auto flex items-center gap-1">
+                    <div className="pointer-events-auto justify-self-center">
+                      <ProposalSetupFooterChecklist />
+                    </div>
+                    <div className="pointer-events-auto flex justify-self-end items-center gap-1">
                       <ShareWorkspaceSheet />
                       <Button
                       type="button"

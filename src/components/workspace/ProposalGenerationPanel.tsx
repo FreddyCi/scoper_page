@@ -182,6 +182,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 companyContext={companyContext}
                 packageWarnings={profile?.packageWarnings}
                 exportGate={exportGate}
+                checklist="hidden"
               />
 
               {profile && !buildingProfile ? (
@@ -250,7 +251,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               </Badge>
             </div>
             <CardDescription className="text-xs leading-relaxed">
-              {profile.summary}
+              Expand a row to preview section drafts after generation.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -289,21 +290,9 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </ul>
 
             {!setup.readyToGenerate ? (
-              <div className="shrink-0 space-y-2">
-                <p className="text-muted-foreground text-xs leading-relaxed">
-                  Complete every item below to enable generation. Volumes stay in preview until
-                  setup is valid.
-                </p>
-                <ProposalSetupGateList setup={setup} variant="compact" />
-              </div>
-            ) : exportGate && !exportGate.ok ? (
-              <ProposalSetupGateList
-                setup={setup}
-                companyContext={companyContext}
-                packageWarnings={profile.packageWarnings}
-                variant="compact"
-                exportGate={exportGate}
-              />
+              <p className="text-muted-foreground shrink-0 text-xs leading-relaxed">
+                Complete proposal setup above to enable generation.
+              </p>
             ) : null}
 
             {exportError ? (

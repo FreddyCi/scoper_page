@@ -5,6 +5,22 @@ import { getProposalContextGateState } from '@/lib/proposal-setup-quality-gates'
 import type { ProposalSetupState } from '@/lib/proposal-readiness'
 import { cn } from '@/lib/utils'
 
+function gateLabels(variant: 'default' | 'compact') {
+  return variant === 'compact'
+    ? {
+        rfp: 'RFP selected',
+        context: 'Responder context quality',
+        profile: 'Profile built',
+        export: 'Export-ready drafts',
+      }
+    : {
+        rfp: 'RFP document selected',
+        context: 'Responder context passes quality checks',
+        profile: 'Proposal profile built from RFP',
+        export: 'All volumes pass export quality checks',
+      }
+}
+
 function GateRow({ ok, label }: { ok: boolean; label: string }) {
   return (
     <li className="flex items-start gap-2 text-sm">
@@ -15,6 +31,64 @@ function GateRow({ ok, label }: { ok: boolean; label: string }) {
       )}
       <span className={cn(!ok && 'text-muted-foreground')}>{label}</span>
     </li>
+  )
+}
+
+export type ProposalSetupStep = {
+  id: 'rfp' | 'context' | 'profile' | 'export'
+  label: string
+  ok: boolean
+}
+
+export function buildProposalSetupSteps(
+  setup: ProposalSetupState,
+  companyContext: string,
+  exportGate: CanExportProposalProfileResult | null,
+  variant: 'default' | 'compact' = 'compact',
+): ProposalSetupStep[] {
+  const contextGate = getProposalContextGateState(companyContext, setup)
+  const labels = gateLabels(variant)
+  const steps: ProposalSetupStep[] = [
+    { id: 'rfp', label: labels.rfp, ok: setup.hasRfp },
+    { id: 'context', label: labels.context, ok: contextGate.ok },
+    { id: 'profile', label: labels.profile, ok: setup.hasProfile },
+  ]
+  if (exportGate != null) {
+    steps.push({ id: 'export', label: labels.export, ok: exportGate.ok })
+  }
+  return steps
+}
+
+type ProposalSetupGateChecklistProps = {
+  setup: ProposalSetupState
+  companyContext?: string
+  exportGate?: CanExportProposalProfileResult | null
+  variant?: 'default' | 'compact'
+  className?: string
+}
+
+/** Checklist rows only — vertical in setup notes. Footer uses {@link buildProposalSetupSteps} stepper. */
+export function ProposalSetupGateChecklist({
+  setup,
+  companyContext = '',
+  exportGate = null,
+  variant = 'default',
+  className,
+}: ProposalSetupGateChecklistProps) {
+  const steps = buildProposalSetupSteps(setup, companyContext, exportGate, variant)
+
+  return (
+    <ul
+      className={cn(
+        'border-border/70 space-y-2 rounded-lg border bg-muted/20 px-3 py-3',
+        className,
+      )}
+      aria-label="Requirements to generate and export proposal volumes"
+    >
+      {steps.map((step) => (
+        <GateRow key={step.id} ok={step.ok} label={step.label} />
+      ))}
+    </ul>
   )
 }
 
@@ -29,6 +103,8 @@ type ProposalSetupGateListProps = {
   variant?: 'default' | 'compact'
   /** Full-profile export quality gate (BDA-176). */
   exportGate?: CanExportProposalProfileResult | null
+  /** Checklist lives in workspace footer during proposal setup (BDA-112). */
+  checklist?: 'vertical' | 'hidden'
 }
 
 /** Gating conditions before proposal volume generation and export (BDA-112 / BDA-166 / BDA-176). */
@@ -39,38 +115,23 @@ export function ProposalSetupGateList({
   className,
   variant = 'default',
   exportGate = null,
+  checklist = 'vertical',
 }: ProposalSetupGateListProps) {
   const contextGate = getProposalContextGateState(companyContext, setup)
-
-  const labels =
-    variant === 'compact'
-      ? {
-          rfp: 'RFP selected',
-          context: 'Responder context quality',
-          profile: 'Profile built',
-          export: 'Export-ready drafts',
-        }
-      : {
-          rfp: 'RFP document selected',
-          context: 'Responder context passes quality checks',
-          profile: 'Proposal profile built from RFP',
-          export: 'All volumes pass export quality checks',
-        }
 
   const showExportGate = exportGate != null
   const showPackageWarnings = packageWarnings.length > 0
 
   return (
     <div className={cn('space-y-2', className)}>
-      <ul
-        className="border-border/70 space-y-2 rounded-lg border bg-muted/20 px-3 py-3"
-        aria-label="Requirements to generate and export proposal volumes"
-      >
-        <GateRow ok={setup.hasRfp} label={labels.rfp} />
-        <GateRow ok={contextGate.ok} label={labels.context} />
-        <GateRow ok={setup.hasProfile} label={labels.profile} />
-        {showExportGate ? <GateRow ok={exportGate.ok} label={labels.export} /> : null}
-      </ul>
+      {checklist === 'vertical' ? (
+        <ProposalSetupGateChecklist
+          setup={setup}
+          companyContext={companyContext}
+          exportGate={exportGate}
+          variant={variant}
+        />
+      ) : null}
 
       {setup.hasContext && !contextGate.ok && contextGate.blockingWarnings.length > 0 ? (
         <div className="space-y-1" role="note" aria-label="Responder context issues">

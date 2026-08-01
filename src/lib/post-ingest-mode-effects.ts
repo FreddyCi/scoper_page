@@ -24,10 +24,7 @@ export async function applyPostIngestModeEffects(results: IngestResult[]): Promi
         }
       }
     }
-
-    if (useSessionStore.getState().evaluationDocId) {
-      await store.runRfpQualification()
-    }
+    // Do not auto-run qualification or open RFP Analysis — user opens document view first.
   }
 
   if (mode === 'proposal') {

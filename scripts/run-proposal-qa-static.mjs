@@ -172,6 +172,19 @@ assert(
   'ARCHITECTURE.md must document whisper worker (BDA-194)',
 )
 
+assert(
+  existsSync(path.join(root, 'src/lib/scoper-dev-tools.ts')),
+  'scoper-dev-tools.ts must expose window.Scoper ECP audit helpers',
+)
+assert(
+  appTsx.includes('runScoperDevToolsHarness'),
+  'App dev chain must run runScoperDevToolsHarness',
+)
+assert(
+  architecture.includes('getEcpAgentAuditLog'),
+  'ARCHITECTURE.md must document Scoper.getEcpAgentAuditLog dev helper',
+)
+
 console.log('[qa:proposal] PASS BDA-195 chat voice wiring (composer, gates, harnesses, docs)')
 
 console.log(

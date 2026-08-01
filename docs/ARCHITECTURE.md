@@ -78,7 +78,7 @@ flowchart TB
 | Ingest | `src/services/ingest-router.ts`, `*-ingest.ts` |
 | RFP profiles | `src/services/build-rfp-profiles.ts` |
 | Scope creep | `src/services/compare-scope.ts` |
-| ECP | `src/ecp/` |
+| ECP | `src/ecp/` — dev: `Scoper.getEcpAgentAuditLog()` / `Scoper.printEcpAgentAuditLog()` on `window` |
 | Chat agent | `src/services/chat-agent.ts` |
 | Chat voice | `src/services/chat-voice-capture.ts`, `chat-voice-session.ts`, `whisper-client.ts`, `src/workers/whisper.worker.ts` |
 | Model cache | `src/lib/scoper-cache.ts` |

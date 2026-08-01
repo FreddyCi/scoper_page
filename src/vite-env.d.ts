@@ -8,3 +8,14 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+/** Development-only console helpers (see `src/lib/scoper-dev-tools.ts`). */
+interface ScoperDevGlobals {
+  getEcpAgentAuditLog: () => readonly import('@/ecp/agent-run').EcpAgentAuditEntry[]
+  clearEcpAgentAuditLog: () => void
+  printEcpAgentAuditLog: () => readonly import('@/ecp/agent-run').EcpAgentAuditEntry[]
+}
+
+interface Window {
+  Scoper?: ScoperDevGlobals
+}

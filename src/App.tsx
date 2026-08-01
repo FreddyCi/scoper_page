@@ -45,6 +45,7 @@ import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
 import { runSharePackHarness } from '@/services/share-pack-harness'
+import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
@@ -53,6 +54,7 @@ function shouldRunLegacyCreepHarnesses(): boolean {
 
 function App() {
   useEffect(() => {
+    exposeScoperDevGlobals()
     void initScoperEcpEnvironment().catch((error) => {
       console.error('[ecp-init]', error)
     })
@@ -62,6 +64,7 @@ function App() {
     if (!import.meta.env.DEV) return
 
     try {
+      runScoperDevToolsHarness()
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
       runProposalUnitHarnesses()

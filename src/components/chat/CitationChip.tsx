@@ -1,7 +1,6 @@
 import { CircleCheckIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { Button } from '@/components/ui/button'
 import {
   citationSourceLegend,
   citationSourceStyle,
@@ -13,9 +12,12 @@ import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 
-/** Floating pill toolbar — matches criterion row action cluster. */
-export const citationActionToolbarClass =
-  'bg-background/80 border-border/60 flex shrink-0 items-center rounded-md border p-0.5 shadow-sm'
+const SOURCE_ACCENT: Record<CitationSourceKind, string> = {
+  rfp: 'border-l-sky-500',
+  context: 'border-l-violet-500',
+  bidder: 'border-l-amber-500',
+  document: 'border-l-muted-foreground/40',
+}
 
 type CitationChipProps = {
   citation: CitationRef
@@ -24,79 +26,59 @@ type CitationChipProps = {
 
 function chipSnippet(citation: CitationRef): string {
   const excerpt = citation.excerpt.trim()
-  return excerpt.length > 48 ? `${excerpt.slice(0, 45).trimEnd()}…` : excerpt || 'View source'
-}
-
-type CitationIdentifiedToggleProps = {
-  citation: CitationRef
-  className?: string
-}
-
-/** Single-icon pill: circle-check toggles identified / opens source (same as criterion trailing menu). */
-export function CitationIdentifiedToggle({ citation, className }: CitationIdentifiedToggleProps) {
-  const [identified, setIdentified] = useState(false)
-
-  function handleToggle(event: React.MouseEvent) {
-    event.stopPropagation()
-    setIdentified((current) => !current)
-    focusCitation(citation)
-  }
-
-  return (
-    <div className={cn(citationActionToolbarClass, className)}>
-      <Button
-        type="button"
-        size="icon-xs"
-        variant="ghost"
-        aria-label={
-          identified
-            ? 'Identified — open passage in document'
-            : 'Not marked identified — click to open and mark'
-        }
-        aria-pressed={identified}
-        className={cn(
-          identified
-            ? 'text-emerald-600 hover:text-emerald-700'
-            : 'text-muted-foreground hover:text-emerald-600',
-        )}
-        onClick={handleToggle}
-      >
-        <CircleCheckIcon className="size-3.5" strokeWidth={2} />
-      </Button>
-    </div>
-  )
+  return excerpt.length > 72 ? `${excerpt.slice(0, 69).trimEnd()}…` : excerpt || 'View source'
 }
 
 export function CitationChip({ citation, className }: CitationChipProps) {
+  const [identified, setIdentified] = useState(false)
   const documents = useSessionStore((state) => state.documents)
   const evaluationDocId = useSessionStore((state) => state.evaluationDocId)
+  const kind = classifyCitationSource(citation.doc_id, documents, evaluationDocId)
   const source = citationSourceStyle(citation.doc_id, documents, evaluationDocId)
   const page = citation.page_num != null ? `Page ${citation.page_num}` : 'Source'
 
   return (
     <div
       className={cn(
-        'inline-flex max-w-full items-center gap-1',
+        'border-border/80 bg-background flex w-full max-w-full items-stretch overflow-hidden rounded-lg border border-l-4 shadow-sm',
+        SOURCE_ACCENT[kind],
+        identified && 'border-emerald-400/90 ring-1 ring-emerald-200/60',
         className,
       )}
     >
       <button
         type="button"
-        onClick={() => focusCitation(citation)}
+        aria-pressed={identified}
+        aria-label={identified ? 'Identified — click to unmark' : 'Mark as identified'}
+        onClick={() => setIdentified((current) => !current)}
         className={cn(
-          'inline-flex min-w-0 flex-1 items-center rounded-full border px-2.5 py-1 text-left text-xs font-medium transition-colors',
-          source.chipClass,
+          'border-border/60 hover:bg-muted/40 flex w-10 shrink-0 items-center justify-center border-r transition-colors',
+          identified ? 'bg-emerald-50/80' : 'bg-muted/20',
         )}
       >
-        <span className="truncate">
-          <span className="font-semibold">{source.label}</span>
-          <span className="opacity-60"> · </span>
-          {page}
-          <span className="opacity-60"> · </span>
-          {chipSnippet(citation)}
-        </span>
+        <CircleCheckIcon
+          className={cn(
+            'size-4 transition-colors',
+            identified ? 'text-emerald-600' : 'text-muted-foreground/45',
+          )}
+          strokeWidth={2}
+        />
       </button>
-      <CitationIdentifiedToggle citation={citation} />
+
+      <button
+        type="button"
+        onClick={() => focusCitation(citation)}
+        className={cn(
+          'hover:bg-muted/30 min-w-0 flex-1 px-2.5 py-2 text-left text-xs leading-snug transition-colors',
+          source.legendClass,
+        )}
+      >
+        <span className="text-foreground block truncate font-medium">
+          <span className={cn('font-semibold', source.legendClass)}>{source.label}</span>
+          <span className="text-muted-foreground font-normal"> · {page}</span>
+        </span>
+        <span className="text-muted-foreground mt-0.5 block truncate">{chipSnippet(citation)}</span>
+      </button>
     </div>
   )
 }
@@ -134,14 +116,13 @@ export function CitationChipList({ citations, className }: CitationChipListProps
   const showGroups = grouped.length > 1
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-3', className)}>
+      <p className="text-muted-foreground text-[11px] leading-relaxed">
+        <CircleCheckIcon className="mr-1 inline size-3.5 align-[-2px] text-emerald-600" aria-hidden />
+        Check when reviewed · click passage to open in document
+      </p>
+
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase text-emerald-800">
-          <span className={citationActionToolbarClass}>
-            <CircleCheckIcon className="mx-0.5 size-3.5 text-emerald-600" strokeWidth={2} aria-hidden />
-          </span>
-          Identified
-        </span>
         {citationSourceLegend().map((entry) => (
           <span
             key={entry.kind}
@@ -161,7 +142,7 @@ export function CitationChipList({ citations, className }: CitationChipListProps
               <p className={cn('text-[11px] font-semibold tracking-wide uppercase', style?.legendClass)}>
                 From {style?.label ?? kind}
               </p>
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <div className="flex flex-col gap-1.5">
                 {items.map((citation) => (
                   <CitationChip key={citation.block_id} citation={citation} />
                 ))}
@@ -170,7 +151,7 @@ export function CitationChipList({ citations, className }: CitationChipListProps
           )
         })
       ) : (
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="flex flex-col gap-1.5">
           {citations.map((citation) => (
             <CitationChip key={citation.block_id} citation={citation} />
           ))}

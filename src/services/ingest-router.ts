@@ -474,6 +474,8 @@ export async function runIngestHarness(): Promise<void> {
   if (blockCount !== ingested.block_count) {
     throw new Error('Ingest harness: DuckDB block count mismatch')
   }
+
+  useSessionStore.getState().commitIngestResults([ingested])
 }
 
 /** Dev harness — ingest sample markdown; verify DuckDB blocks with section_path (BDA-081) */

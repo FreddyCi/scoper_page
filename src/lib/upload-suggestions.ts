@@ -2,12 +2,7 @@ export type UploadIntent = 'rfp' | 'context'
 
 export const BIDDER_UPLOAD_PROMPT_KEY = 'scoper.bidder-upload-prompted'
 
-export function promptBidderUploadOnce(openUploadPopup: (intent: UploadIntent) => void): void {
-  if (sessionStorage.getItem(BIDDER_UPLOAD_PROMPT_KEY)) return
-  sessionStorage.setItem(BIDDER_UPLOAD_PROMPT_KEY, '1')
-  openUploadPopup('rfp')
-}
-
+/** Clears legacy session flag (auto upload prompt removed from UI). */
 export function clearBidderUploadPrompt(): void {
   sessionStorage.removeItem(BIDDER_UPLOAD_PROMPT_KEY)
 }

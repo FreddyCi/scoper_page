@@ -17,7 +17,6 @@ import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelec
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
-import { promptBidderUploadOnce } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleBidderResponse } from '@/services/load-sample-documents'
@@ -264,14 +263,6 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
     setRunning(true)
     try {
       await runRfpQualification()
-
-      const { documents, evaluationDocId: baselineId } = useSessionStore.getState()
-      const responseCount = documents.filter(
-        (doc) => doc.doc_id !== baselineId && doc.role !== 'supporting',
-      ).length
-      if (responseCount === 0) {
-        promptBidderUploadOnce(openUploadPopup)
-      }
     } catch (error) {
       console.error('[evaluation-panel] qualification failed', error)
     } finally {

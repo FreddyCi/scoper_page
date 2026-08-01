@@ -1,5 +1,6 @@
-import { getProposalPostIngestPatch } from '@/lib/proposal-post-ingest'
+import { getProposalPostIngestPatch, pickProposalEvaluationDocId } from '@/lib/proposal-post-ingest'
 import type { IngestResult } from '@/lib/types'
+import { setDocumentRole } from '@/services/document-roles'
 import { useSessionStore } from '@/store/session-store'
 
 /**
@@ -11,8 +12,22 @@ export async function applyPostIngestModeEffects(results: IngestResult[]): Promi
   const store = useSessionStore.getState()
   const { mode } = store
 
-  if (mode === 'rfp' && store.documents.length > 0 && store.evaluationDocId) {
-    await store.runRfpQualification()
+  if (mode === 'rfp' && store.documents.length > 0) {
+    if (store.evaluationDocId == null) {
+      const docId = pickProposalEvaluationDocId(store.documents, results)
+      if (docId) {
+        store.setEvaluationDocId(docId)
+        try {
+          await setDocumentRole(docId, 'baseline')
+        } catch (error) {
+          console.error('[post-ingest] set baseline role failed', error)
+        }
+      }
+    }
+
+    if (useSessionStore.getState().evaluationDocId) {
+      await store.runRfpQualification()
+    }
   }
 
   if (mode === 'proposal') {

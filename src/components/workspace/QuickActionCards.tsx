@@ -11,7 +11,9 @@ import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
 export function QuickActionCards({ className }: { className?: string }) {
+  const hasDocuments = useSessionStore((s) => s.documents.length > 0)
   const setMode = useSessionStore((s) => s.setMode)
+  const setWorkspaceView = useSessionStore((s) => s.setWorkspaceView)
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
 
   return (
@@ -36,6 +38,14 @@ export function QuickActionCards({ className }: { className?: string }) {
               if (disabled || !intent) return
               if (modeForAction) {
                 setMode(modeForAction)
+              }
+              if (hasDocuments && modeForAction === 'rfp') {
+                setWorkspaceView('split')
+                return
+              }
+              if (hasDocuments && modeForAction === 'proposal') {
+                setWorkspaceView('profiles')
+                return
               }
               openUploadPopup(intent)
             }}

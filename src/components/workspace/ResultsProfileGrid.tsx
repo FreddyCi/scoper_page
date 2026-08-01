@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ClipboardCheckIcon, SparklesIcon, UploadIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { ResultsProfileCard } from '@/components/workspace/ResultsProfileCard'
-import { promptBidderUploadOnce } from '@/lib/upload-suggestions'
 import type { CitationRef, RfpResultsProfile } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
@@ -34,11 +33,6 @@ function EmptyQualificationState() {
   const needsBidderUpload =
     hasBaseline && responseCount === 0 && !contractReviewProfile
   const needsQualificationRun = hasBaseline && responseCount > 0
-
-  useEffect(() => {
-    if (!needsBidderUpload) return
-    promptBidderUploadOnce(openUploadPopup)
-  }, [needsBidderUpload, openUploadPopup])
 
   async function handleLoadDemoResponse() {
     setDemoError(null)

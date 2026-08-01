@@ -76,7 +76,7 @@ export function ProposalSetupGateList({
         <div className="space-y-1" role="note" aria-label="Responder context issues">
           <p className="text-muted-foreground text-xs leading-relaxed">
             Edit <span className="text-foreground font-medium">Your company / capabilities</span>{' '}
-            above — weak context blocks proposal generation.
+            — weak context blocks proposal generation.
           </p>
           <ul className="text-muted-foreground list-disc space-y-1 pl-5 text-xs leading-relaxed">
             {contextGate.blockingWarnings.slice(0, 5).map((warning) => (

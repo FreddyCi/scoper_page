@@ -159,80 +159,84 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="proposal-rfp-doc">Solicitation RFP</Label>
-            {rfpDocs.length === 0 ? (
-              <p className="text-muted-foreground text-xs">Upload an RFP PDF to continue.</p>
-            ) : (
-              <DocumentPickerSelect
-                id="proposal-rfp-doc"
-                placeholder="Select RFP document…"
-                items={rfpDocs}
-                value={evaluationDocId}
-                onChange={setEvaluationDocId}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="proposal-rfp-doc">Solicitation RFP</Label>
+                {rfpDocs.length === 0 ? (
+                  <p className="text-muted-foreground text-xs">Upload an RFP PDF to continue.</p>
+                ) : (
+                  <DocumentPickerSelect
+                    id="proposal-rfp-doc"
+                    placeholder="Select RFP document…"
+                    items={rfpDocs}
+                    value={evaluationDocId}
+                    onChange={setEvaluationDocId}
+                    disabled={buildingProfile || proposalGenerating}
+                  />
+                )}
+              </div>
+
+              <ProposalSetupGateList
+                setup={setup}
+                companyContext={companyContext}
+                packageWarnings={profile?.packageWarnings}
+                exportGate={exportGate}
+              />
+
+              {profile && !buildingProfile ? (
+                <div
+                  className="border-border/70 bg-primary/5 space-y-1 rounded-lg border px-3 py-2.5"
+                  role="status"
+                >
+                  <p className="text-foreground text-xs font-medium">Proposal profile ready</p>
+                  <p className="text-muted-foreground text-xs leading-relaxed">{profile.summary}</p>
+                  <p className="text-muted-foreground text-xs tabular-nums">
+                    {profile.volumes.length} volume{profile.volumes.length === 1 ? '' : 's'}{' '}
+                    identified from the RFP
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex min-w-0 flex-col gap-2">
+              <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
+              <Textarea
+                id="proposal-company-context"
+                value={companyContext}
+                onChange={(event) => setCompanyContext(event.target.value)}
+                placeholder="Certifications, past performance, team size, geographic coverage…"
+                className="min-h-[7rem] flex-1 resize-y text-sm sm:min-h-[10rem]"
                 disabled={buildingProfile || proposalGenerating}
               />
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
-            <Textarea
-              id="proposal-company-context"
-              value={companyContext}
-              onChange={(event) => setCompanyContext(event.target.value)}
-              placeholder="Certifications, past performance, team size, geographic coverage…"
-              className="min-h-[7rem] resize-y text-sm"
-              disabled={buildingProfile || proposalGenerating}
-            />
-            <p className="text-muted-foreground text-xs">
-              At least {PROPOSAL_CONTEXT_MIN_LENGTH} characters required before building the
-              proposal profile.
-            </p>
-          </div>
-
-          <ProposalSetupGateList
-            setup={setup}
-            companyContext={companyContext}
-            packageWarnings={profile?.packageWarnings}
-            exportGate={exportGate}
-          />
-
-          {profile && !buildingProfile ? (
-            <div
-              className="border-border/70 bg-primary/5 space-y-1 rounded-lg border px-3 py-2.5"
-              role="status"
-            >
-              <p className="text-foreground text-xs font-medium">Proposal profile ready</p>
-              <p className="text-muted-foreground text-xs leading-relaxed">{profile.summary}</p>
-              <p className="text-muted-foreground text-xs tabular-nums">
-                {profile.volumes.length} volume{profile.volumes.length === 1 ? '' : 's'} identified
-                from the RFP
+              <p className="text-muted-foreground text-xs">
+                At least {PROPOSAL_CONTEXT_MIN_LENGTH} characters required before building the
+                proposal profile.
               </p>
+
+              {profileBuildError ? (
+                <p className="text-destructive text-xs leading-relaxed" role="alert">
+                  {profileBuildError}
+                </p>
+              ) : null}
+
+              {buildingProfile ? (
+                <AiSupportLoadingCard
+                  label="Building profile"
+                  buttonLabel="Build proposal profile"
+                />
+              ) : (
+                <Button
+                  type="button"
+                  className="w-full"
+                  disabled={!canBuildProfile}
+                  onClick={() => void handleBuildProfile()}
+                >
+                  {setup.hasProfile ? 'Rebuild proposal profile' : 'Build proposal profile'}
+                </Button>
+              )}
             </div>
-          ) : null}
-
-          {profileBuildError ? (
-            <p className="text-destructive text-xs leading-relaxed" role="alert">
-              {profileBuildError}
-            </p>
-          ) : null}
-
-          {buildingProfile ? (
-            <AiSupportLoadingCard
-              label="Building profile"
-              buttonLabel="Build proposal profile"
-            />
-          ) : (
-            <Button
-              type="button"
-              className="w-full"
-              disabled={!canBuildProfile}
-              onClick={() => void handleBuildProfile()}
-            >
-              {setup.hasProfile ? 'Rebuild proposal profile' : 'Build proposal profile'}
-            </Button>
-          )}
+          </div>
         </CardContent>
       </Card>
 

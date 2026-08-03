@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { DownloadIcon, InfoIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { DownloadIcon, InfoIcon, Maximize2Icon, Minimize2Icon } from 'lucide-react'
 
 import { AnnotatedMarkdownView } from '@/components/workspace/AnnotatedMarkdownView'
 import { CommentNavigator } from '@/components/workspace/CommentNavigator'
@@ -47,6 +47,9 @@ import {
 import { useSessionStore } from '@/store/session-store'
 
 type SplitPaneTab = 'read' | 'preview' | 'extract' | 'original' | 'profiles'
+
+/** Immersive PDF workspace — maximizes canvas for plan/drawing mark-up. */
+type PdfFocusLayout = 'normal' | 'page' | 'split'
 
 export type AnnotatedPdfFooterExportRequest = {
   commentMode: 'markup' | 'burned-in'
@@ -207,6 +210,7 @@ function SplitDocumentViewFooter({
   contextConvertLoading = false,
   onConvertToContextClick,
   contextConvertDescription,
+  compact = false,
 }: {
   statusLabel: string
   commentNavigator?: ReactNode
@@ -227,9 +231,15 @@ function SplitDocumentViewFooter({
   contextConvertLoading?: boolean
   onConvertToContextClick?: () => void
   contextConvertDescription?: string
+  compact?: boolean
 }) {
   return (
-    <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
+    <footer
+      className={cn(
+        'border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4',
+        compact ? 'py-2' : 'py-3',
+      )}
+    >
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <span
           className={cn(
@@ -428,7 +438,10 @@ export function SplitDocumentView({
     blockId: string
   } | null>(null)
   const { ratio, containerRef, onResizeStart } = useSplitPaneRatio(0.44)
+  const [pdfFocusLayout, setPdfFocusLayout] = useState<PdfFocusLayout>('normal')
+  const chatCollapsedBeforeFocusRef = useRef<boolean | null>(null)
   const mode = useSessionStore((state) => state.mode)
+  const setChatCollapsed = useSessionStore((state) => state.setChatCollapsed)
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
@@ -577,6 +590,86 @@ export function SplitDocumentView({
     void refreshDrawingMarkCount()
   }, [refreshDrawingMarkCount])
 
+  const isPdfLayout = layoutKind === 'pdf'
+  const pdfFocusActive = isPdfLayout && pdfFocusLayout !== 'normal'
+
+  const enterPdfFocus = useCallback(
+    (layout: Exclude<PdfFocusLayout, 'normal'>) => {
+      if (!isPdfLayout) return
+      const store = useSessionStore.getState()
+      chatCollapsedBeforeFocusRef.current = store.chatCollapsed
+      if (!store.chatCollapsed) {
+        setChatCollapsed(true)
+      }
+      setPdfFocusLayout(layout)
+      setActiveTab(layout === 'split' ? 'extract' : 'original')
+    },
+    [isPdfLayout, setChatCollapsed],
+  )
+
+  const exitPdfFocus = useCallback(() => {
+    setPdfFocusLayout('normal')
+    if (chatCollapsedBeforeFocusRef.current === false) {
+      setChatCollapsed(false)
+    }
+    chatCollapsedBeforeFocusRef.current = null
+  }, [setChatCollapsed])
+
+  useEffect(() => {
+    if (!pdfFocusActive) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        exitPdfFocus()
+      }
+    }
+
+    globalThis.document.addEventListener('keydown', onKeyDown)
+    return () => globalThis.document.removeEventListener('keydown', onKeyDown)
+  }, [exitPdfFocus, pdfFocusActive])
+
+  useEffect(() => {
+    if (!isPdfLayout && pdfFocusLayout !== 'normal') {
+      setPdfFocusLayout('normal')
+    }
+  }, [isPdfLayout, pdfFocusLayout])
+
+  const pdfOriginalPane = (
+    <DocumentViewer
+      document={document}
+      initialPage={initialPage}
+      theme="dark"
+      className="h-full min-h-0 flex-1 rounded-none border-0"
+    />
+  )
+
+  const pdfSplitPane = (
+    <div ref={containerRef} className="flex min-h-0 flex-1 overflow-hidden">
+      <div
+        className="bg-surface min-h-0 min-w-[14rem] overflow-hidden"
+        style={{ width: `${ratio * 100}%` }}
+      >
+        <ExtractedTextPane
+          docId={document.doc_id}
+          className="h-full border-0 shadow-none"
+          pendingCommentFocus={pendingCommentFocus}
+          onPendingCommentFocusHandled={() => setPendingCommentFocus(null)}
+        />
+      </div>
+
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize panes"
+        onPointerDown={onResizeStart}
+        className="bg-border hover:bg-muted-foreground/30 w-1 shrink-0 cursor-col-resize transition-colors"
+      />
+
+      <div className="min-h-0 min-w-[14rem] flex-1 overflow-hidden">{pdfOriginalPane}</div>
+    </div>
+  )
+
   function handleExportPdf(request: AnnotatedPdfFooterExportRequest = { commentMode: 'markup' }) {
     if (!canExportPdf || exportingPdf) return
 
@@ -691,9 +784,77 @@ export function SplitDocumentView({
     <div
       className={cn(
         'border-border bg-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-panel border shadow-panel',
+        pdfFocusActive && 'fixed inset-0 z-[100] rounded-none border-0 shadow-elevated',
         className,
       )}
     >
+      {pdfFocusActive ? (
+        <>
+          <div className="border-border/70 bg-surface flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={exitPdfFocus}>
+                <Minimize2Icon className="size-3.5" />
+                Exit full page
+              </Button>
+              <Tabs
+                value={pdfFocusLayout}
+                onValueChange={(value) => {
+                  if (value === 'page' || value === 'split') {
+                    setPdfFocusLayout(value)
+                  }
+                }}
+              >
+                <TabsList variant="segmented" aria-label="Full page layout">
+                  <TabsTrigger value="page">Full page</TabsTrigger>
+                  <TabsTrigger value="split">Split</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <span className="text-muted-foreground hidden text-xs sm:inline">Esc to exit</span>
+            </div>
+            <p className="text-muted-foreground min-w-0 truncate text-xs">{document.filename}</p>
+          </div>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {pdfFocusLayout === 'split' ? pdfSplitPane : pdfOriginalPane}
+          </div>
+
+          <SplitDocumentViewFooter
+            compact
+            statusLabel={statusLabel}
+            commentNavigator={
+              documentCommentsLoading || documentComments.length > 0 ? (
+                <CommentNavigator
+                  entries={documentComments}
+                  activeIndex={commentNavIndex}
+                  loading={documentCommentsLoading}
+                  variant={isMarkdown ? 'enhance' : 'review'}
+                  onIndexChange={navigateToComment}
+                />
+              ) : null
+            }
+            exportError={exportError}
+            ctaLabel={MODE_CTA[mode]}
+            ctaLoading={mode === 'rfp' && buildingProfiles}
+            ctaLoadingLabel="Qualifying…"
+            onCtaClick={handleCtaClick}
+            exportLabel={exportStatusHint ? `Export PDF (${exportStatusHint})` : 'Export PDF'}
+            exportLoading={exportingPdf}
+            exportDisabled={!canExportPdf && !canExportMarkdown}
+            onExportClick={canExportPdf ? handleExportPdf : undefined}
+            drawingMarkCount={drawingMarkCount}
+            onExportMenuOpenChange={() => {
+              void refreshDrawingMarkCount()
+            }}
+            markdownExportLoading={exportingMarkdown}
+            onExportMarkdownClick={canExportMarkdown ? handleExportMarkdown : undefined}
+            markdownExportDescription={markdownExportDescription}
+            contextConvertLoading={convertingToContext}
+            onConvertToContextClick={canConvertToContext ? handleConvertToContext : undefined}
+            contextConvertDescription={contextConvertDescription}
+          />
+        </>
+      ) : (
+      <>
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as SplitPaneTab)}
@@ -716,11 +877,37 @@ export function SplitDocumentView({
               <TabsTrigger value="profiles">Profiles</TabsTrigger>
             </TabsList>
             <ExtractViewHelpButton layoutKind={layoutKind} />
+            {isPdfLayout ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="hidden shrink-0 sm:inline-flex"
+                onClick={() => enterPdfFocus('page')}
+              >
+                <Maximize2Icon className="size-3.5" />
+                Full page
+              </Button>
+            ) : null}
           </div>
 
-          <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
-            {document.filename}
-          </p>
+          <div className="flex min-w-0 items-center gap-2">
+            {isPdfLayout ? (
+              <Button
+                type="button"
+                size="icon-sm"
+                variant="ghost"
+                className="sm:hidden"
+                aria-label="Full page view"
+                onClick={() => enterPdfFocus('page')}
+              >
+                <Maximize2Icon className="size-4" />
+              </Button>
+            ) : null}
+            <p className="text-muted-foreground hidden min-w-0 truncate text-xs sm:block">
+              {document.filename}
+            </p>
+          </div>
         </div>
 
         <TabsContent value="read" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -752,46 +939,12 @@ export function SplitDocumentView({
           )}
         </TabsContent>
 
-        <TabsContent value="extract" className="mt-0 flex min-h-0 flex-1 flex-col">
-          <div ref={containerRef} className="flex min-h-0 flex-1 overflow-hidden">
-            <div
-              className="bg-surface min-h-0 min-w-[16rem] overflow-hidden"
-              style={{ width: `${ratio * 100}%` }}
-            >
-              <ExtractedTextPane
-                docId={document.doc_id}
-                className="h-full border-0 shadow-none"
-                pendingCommentFocus={pendingCommentFocus}
-                onPendingCommentFocusHandled={() => setPendingCommentFocus(null)}
-              />
-            </div>
-
-            <div
-              role="separator"
-              aria-orientation="vertical"
-              aria-label="Resize panes"
-              onPointerDown={onResizeStart}
-              className="bg-border hover:bg-muted-foreground/30 w-1 shrink-0 cursor-col-resize transition-colors"
-            />
-
-            <div className="min-h-0 min-w-[16rem] flex-1 overflow-hidden">
-              <DocumentViewer
-                document={document}
-                initialPage={initialPage}
-                theme="dark"
-                className="h-full rounded-none border-0"
-              />
-            </div>
-          </div>
+        <TabsContent value="extract" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+          {pdfSplitPane}
         </TabsContent>
 
-        <TabsContent value="original" className="mt-0 min-h-0 flex-1 overflow-hidden">
-          <DocumentViewer
-            document={document}
-            initialPage={initialPage}
-            theme="dark"
-            className="h-full min-h-[20rem] rounded-none border-0"
-          />
+        <TabsContent value="original" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+          {pdfOriginalPane}
         </TabsContent>
 
         <TabsContent
@@ -838,6 +991,8 @@ export function SplitDocumentView({
         onConvertToContextClick={canConvertToContext ? handleConvertToContext : undefined}
         contextConvertDescription={contextConvertDescription}
       />
+      </>
+      )}
     </div>
   )
 }

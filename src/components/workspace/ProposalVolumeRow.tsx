@@ -270,6 +270,14 @@ export function ProposalVolumeRow({
     onGenerate(volume.id)
   }
 
+  const statusDetail =
+    sectionProgressLine ??
+    (muted && volume.status === 'pending'
+      ? 'Awaiting setup'
+      : hasBody
+        ? `${statusLabel} · Preview`
+        : statusLabel)
+
   return (
     <li
       className={cn(
@@ -284,7 +292,12 @@ export function ProposalVolumeRow({
       aria-disabled={muted ? true : undefined}
       aria-current={active ? 'step' : undefined}
     >
-      <div className="flex items-start gap-2 px-3 py-2">
+      <div
+        className={cn(
+          'flex items-start gap-2 px-3 pt-2',
+          showSectionList && !expanded ? 'pb-1' : 'pb-2',
+        )}
+      >
         <Button
           type="button"
           variant="ghost"
@@ -317,55 +330,41 @@ export function ProposalVolumeRow({
         />
 
         <div className="min-w-0 flex-1 overflow-hidden">
-          <div className="flex min-w-0 items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden">
-              <button
-                type="button"
-                className={cn(
-                  'min-w-0 max-w-full truncate text-left font-medium leading-snug hover:underline',
-                  muted ? 'text-muted-foreground' : 'text-foreground',
-                )}
-                title={volume.title}
-                onClick={() => setExpanded((open) => !open)}
-              >
-                {volume.title}
-              </button>
-              {volume.edited ? (
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase">
-                  Edited
-                </Badge>
-              ) : null}
-            </div>
+          <button
+            type="button"
+            className={cn(
+              'block w-full min-w-0 truncate text-left font-medium leading-snug hover:underline',
+              muted ? 'text-muted-foreground' : 'text-foreground',
+            )}
+            title={volume.title}
+            onClick={() => setExpanded((open) => !open)}
+          >
+            {volume.title}
+          </button>
+          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
             <span
               className={cn(
-                'max-w-[min(100%,11rem)] shrink-0 truncate text-right text-xs tabular-nums',
+                'min-w-0 truncate text-xs tabular-nums',
                 showLiveStatus ? 'text-muted-foreground' : 'text-muted-foreground/70',
               )}
-              title={
-                sectionProgressLine ??
-                (muted && volume.status === 'pending'
-                  ? 'Awaiting setup'
-                  : hasBody
-                    ? `${statusLabel} · Preview`
-                    : statusLabel)
-              }
+              title={statusDetail}
             >
-              {sectionProgressLine ??
-                (muted && volume.status === 'pending'
-                  ? 'Awaiting setup'
-                  : hasBody
-                    ? `${statusLabel} · Preview`
-                    : statusLabel)}
+              {statusDetail}
             </span>
+            {volume.edited ? (
+              <Badge
+                variant="secondary"
+                className="h-5 shrink-0 px-1.5 text-[10px] font-medium tracking-wide uppercase"
+              >
+                Edited
+              </Badge>
+            ) : null}
           </div>
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
             {volume.requirementSummary}
           </p>
           {analysisRefs.length > 0 ? (
             <ProposalVolumeAnalysisRefList analysisRefs={analysisRefs} />
-          ) : null}
-          {showSectionList && !expanded ? (
-            <ProposalVolumeSectionStatusList sections={sections} compact />
           ) : null}
           {volume.errorMessage ? (
             <p className="text-destructive mt-1 text-xs">{volume.errorMessage}</p>
@@ -387,8 +386,14 @@ export function ProposalVolumeRow({
         </div>
       </div>
 
+      {showSectionList && !expanded ? (
+        <div className="border-border/40 border-t px-3 py-2">
+          <ProposalVolumeSectionStatusList sections={sections} compact />
+        </div>
+      ) : null}
+
       {expanded ? (
-        <div className="border-border/50 border-t px-3 py-2.5 pl-11" id={previewId}>
+        <div className="border-border/50 border-t px-3 py-2.5" id={previewId}>
           {hasSections ? (
             <ProposalVolumeSectionStatusList sections={sections} />
           ) : null}

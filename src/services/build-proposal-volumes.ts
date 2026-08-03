@@ -24,6 +24,7 @@ import {
 import { computeVolumeGenerationProgress } from '@/lib/proposal-volume-section'
 import type {
   BlockRecord,
+  CitationRef,
   DocumentMeta,
   FindClauseResult,
   ProposalRequirementsProfile,
@@ -35,6 +36,7 @@ import { buildSectionReviewFindClauseQuery } from '@/lib/proposal-section-find-c
 import { deriveProposalSectionsForVolume } from '@/services/derive-proposal-sections'
 import {
   generateProposalSectionMarkdownViaEcp,
+  citationsFromFindClauseResult,
   excerptsFromFindClauseResult,
   ProposalContextOverflowError,
 } from '@/services/proposal-volume-ecp'
@@ -265,13 +267,26 @@ function appendVolumeSectionBody(existing: string | undefined, sectionMarkdown: 
   return `${existing.trim()}\n\n${chunk}`
 }
 
+function mergeSectionCitations(...lists: CitationRef[][]): CitationRef[] {
+  const seen = new Set<string>()
+  const merged: CitationRef[] = []
+  for (const list of lists) {
+    for (const citation of list) {
+      if (seen.has(citation.block_id)) continue
+      seen.add(citation.block_id)
+      merged.push(citation)
+    }
+  }
+  return merged
+}
+
 async function runReviewFindClause(
   section: ProposalVolumeSection,
   volume: ProposalVolume,
   rfpDoc: DocumentMeta,
   packageKind: ProposalRequirementsProfile['packageKind'],
   contextTracker: ReturnType<typeof createProposalContextTracker>,
-): Promise<string[]> {
+): Promise<{ excerpts: string[]; citations: CitationRef[] }> {
   const query = buildSectionReviewFindClauseQuery(volume, section.title, packageKind)
   contextTracker.recordSegment('ecp_tool', query)
 
@@ -281,7 +296,10 @@ async function runReviewFindClause(
     ecpReady: true,
   })) as FindClauseResult
 
-  return excerptsFromFindClauseResult(findResult)
+  return {
+    excerpts: excerptsFromFindClauseResult(findResult),
+    citations: citationsFromFindClauseResult(findResult),
+  }
 }
 
 async function generateSectionBody(
@@ -298,12 +316,13 @@ async function generateSectionBody(
     excerpts?: string[]
   },
   options: BuildProposalVolumeCallbacks,
-): Promise<{ markdown: string; ecpFindCount: number }> {
+): Promise<{ markdown: string; ecpFindCount: number; citations: CitationRef[] }> {
   let ecpFindCount = input.excerpts?.length ? 0 : 1
   let markdown = ''
+  let citations: CitationRef[] = []
 
   try {
-    markdown = await generateProposalSectionMarkdownViaEcp({
+    const generated = await generateProposalSectionMarkdownViaEcp({
       section: input.section,
       volume: input.volume,
       packageKind: input.packageKind,
@@ -315,6 +334,8 @@ async function generateSectionBody(
       contextTracker: input.contextTracker,
       handoffChunkIndex: input.handoffChunkIndex,
     })
+    markdown = generated.markdown
+    citations = generated.citations
   } catch (error) {
     if (
       error instanceof ProposalContextOverflowError ||
@@ -358,7 +379,7 @@ async function generateSectionBody(
       options.onSectionActivity,
     )
 
-    const reviewExcerpts = await runReviewFindClause(
+    const reviewRetrieve = await runReviewFindClause(
       input.section,
       input.volume,
       input.rfpDoc,
@@ -367,7 +388,7 @@ async function generateSectionBody(
     )
     ecpFindCount += 1
 
-    if (reviewExcerpts.length > 0) {
+    if (reviewRetrieve.excerpts.length > 0) {
       notifyProposalSectionRoll(
         {
           volumeId: input.volume.id,
@@ -379,18 +400,21 @@ async function generateSectionBody(
         options.onSectionActivity,
       )
 
-      markdown = await generateProposalSectionMarkdownViaEcp({
+      const regenerated = await generateProposalSectionMarkdownViaEcp({
         section: input.section,
         volume: input.volume,
         packageKind: input.packageKind,
         handoff: input.handoff,
         companyContext: input.companyContext,
         rfpDoc: input.rfpDoc,
-        excerpts: reviewExcerpts,
+        excerpts: reviewRetrieve.excerpts,
+        citations: reviewRetrieve.citations,
         blockExcerptsFallback: input.blockExcerpts,
         contextTracker: input.contextTracker,
         handoffChunkIndex: input.handoffChunkIndex,
       })
+      markdown = regenerated.markdown
+      citations = mergeSectionCitations(citations, regenerated.citations)
 
       validation = validateProposalVolumeDraft(markdown, {
         label: input.section.title,
@@ -410,7 +434,7 @@ async function generateSectionBody(
 
   syncContextUsageFromTracker(input.contextTracker)
 
-  return { markdown, ecpFindCount }
+  return { markdown, ecpFindCount, citations }
 }
 
 function ensureVolumeSections(
@@ -531,7 +555,7 @@ export async function buildProposalVolume(
         options.onSectionActivity,
       )
 
-      const { markdown: sectionMarkdown } = await generateSectionBody(
+      const { markdown: sectionMarkdown, citations: sectionCitations } = await generateSectionBody(
         {
           section,
           volume,
@@ -562,6 +586,7 @@ export async function buildProposalVolume(
           status: 'error',
           errorMessage: reason,
           bodyMarkdown: sectionMarkdown.trim() || undefined,
+          citations: sectionCitations.length > 0 ? sectionCitations : undefined,
         })
         notifyProposalSectionActivity(
           {
@@ -592,6 +617,7 @@ export async function buildProposalVolume(
         status: 'draft',
         bodyMarkdown: sectionMarkdown,
         errorMessage: undefined,
+        citations: sectionCitations.length > 0 ? sectionCitations : undefined,
       })
       nextProfile = patchProposalVolume(nextProfile, volume.id, {
         bodyMarkdown,

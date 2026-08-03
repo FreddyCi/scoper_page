@@ -381,16 +381,19 @@ flowchart TD
 ### **ID:** BDA-212
 
 **Title:** Persist section citations from ECP  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-196  
 **Priority:** High  
 **Description:** [`proposal-volume-ecp.ts`](../src/services/proposal-volume-ecp.ts): **`generateProposalSectionMarkdownViaEcp`** returns **`{ markdown, citations: CitationRef[] }`** from find_clause matches (not only excerpt strings). Thread through sectional build in **`build-proposal-volumes.ts`**; store **`citations?: CitationRef[]`** on **`ProposalVolumeSection`**. Aggregate to volume level optional for assemble.  
 **Completed Changes:**
-- 🔄 Return type + patch section  
+- ✅ **`ProposalSectionEcpResult`**, **`citationsFromFindClauseResult`**
+- ✅ Section patches in **`build-proposal-volumes.ts`** (draft + error)
+- ✅ **`runProposalSectionCitationsHarness`**
 **Test Strategy:** Harness: after generate, at least one section has citations when ECP returns matches.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runProposalSectionCitationsHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** [`excerptsFromFindClauseResult`](../src/services/proposal-volume-ecp.ts)  
 
 ---

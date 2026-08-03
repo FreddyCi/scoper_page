@@ -31,7 +31,7 @@ import {
   runProposalStoreGenerateSingleVolumeHarness,
   runProposalVolumeBodyEditHarness,
 } from '@/services/proposal-store-generate-harness'
-import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
+import { runProposalSectionEcpHarness, runProposalSectionCitationsHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
 import { runBuildProposalVolumeSiblingHandoffHarness } from '@/services/build-proposal-volumes'
@@ -65,6 +65,7 @@ export function runProposalUnitHarnesses(): void {
   runChatStubProposalHarness()
   runProposalPanelSetupHarness()
   runProposalVolumeBodyEditHarness()
+  runProposalSectionCitationsHarness()
 }
 
 /** Async proposal harnesses that need session + DuckDB state (BDA-150). */

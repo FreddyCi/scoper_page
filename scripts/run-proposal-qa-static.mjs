@@ -190,6 +190,16 @@ assert(
   'proposal-prompts must emit analysis findings header (BDA-210)',
 )
 
+const proposalVolumeEcp = read('src/services/proposal-volume-ecp.ts')
+assert(
+  proposalVolumeEcp.includes('ProposalSectionEcpResult'),
+  'proposal-volume-ecp must return markdown + citations (BDA-212)',
+)
+assert(
+  proposalVolumeEcp.includes('citationsFromFindClauseResult'),
+  'proposal-volume-ecp must map find_clause matches to CitationRef (BDA-212)',
+)
+
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
   'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',

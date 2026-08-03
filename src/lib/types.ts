@@ -91,6 +91,8 @@ export type ProposalVolumeSection = {
   edited?: boolean
   /** ISO timestamp of the last hand-edit save. */
   editedAt?: string
+  /** ECP find_clause matches used while drafting this section (BDA-212). */
+  citations?: CitationRef[]
 }
 
 /** Per-volume sectional progress for proposal panel UI (BDA-160). */

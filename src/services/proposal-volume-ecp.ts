@@ -20,6 +20,7 @@ import type {
   FindClauseResult,
   ProposalVolume,
   ProposalVolumeSection,
+  CitationRef,
 } from '@/lib/types'
 import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper-client'
 import type { ScoperGenerateResult } from '@/lib/scoper-protocol'
@@ -33,6 +34,8 @@ export type ProposalSectionEcpInput = {
   rfpDoc: DocumentMeta
   /** Pre-retrieved ECP excerpts; when empty, find_clause runs using section.findClauseQuery. */
   excerpts?: string[]
+  /** Citations aligned with pre-supplied excerpts (review retrieve). */
+  citations?: CitationRef[]
   blockExcerptsFallback?: string[]
   contextTracker?: ProposalContextTracker
   handoffChunkIndex?: number
@@ -49,6 +52,28 @@ export type ProposalVolumeEcpInput = {
   contextTracker?: ProposalContextTracker
 }
 
+export type ProposalSectionEcpResult = {
+  markdown: string
+  citations: CitationRef[]
+}
+
+const FIND_CLAUSE_EXCERPT_MIN_CHARS = 20
+const FIND_CLAUSE_PROMPT_MAX_MATCHES = 4
+
+function findClauseMatchesForPrompt(findResult: FindClauseResult): FindClauseResult['matches'] {
+  return findResult.matches
+    .filter((match) => match.citation.excerpt.trim().length >= FIND_CLAUSE_EXCERPT_MIN_CHARS)
+    .slice(0, FIND_CLAUSE_PROMPT_MAX_MATCHES)
+}
+
+export function excerptsFromFindClauseResult(findResult: FindClauseResult): string[] {
+  return findClauseMatchesForPrompt(findResult).map((match) => match.citation.excerpt.trim())
+}
+
+export function citationsFromFindClauseResult(findResult: FindClauseResult): CitationRef[] {
+  return findClauseMatchesForPrompt(findResult).map((match) => match.citation)
+}
+
 async function ensureScoperLoadedForProposal(): Promise<void> {
   const scoper = getScoperClient()
   const env = await scoper.probeEnvironment()
@@ -62,13 +87,6 @@ async function ensureScoperLoadedForProposal(): Promise<void> {
   if (scoper.getState().status !== 'ready') {
     await scoper.load()
   }
-}
-
-export function excerptsFromFindClauseResult(findResult: FindClauseResult): string[] {
-  return findResult.matches
-    .map((match) => match.citation.excerpt.trim())
-    .filter((excerpt) => excerpt.length >= 20)
-    .slice(0, 4)
 }
 
 function fallbackSectionMarkdown(
@@ -106,7 +124,7 @@ function fallbackSectionMarkdown(
  */
 export async function generateProposalSectionMarkdownViaEcp(
   input: ProposalSectionEcpInput,
-): Promise<string> {
+): Promise<ProposalSectionEcpResult> {
   if (!input.sendOverride) {
     await ensureScoperEcpReadyBeforeAgentRun()
   }
@@ -121,6 +139,7 @@ export async function generateProposalSectionMarkdownViaEcp(
 
   let findResult: FindClauseResult = { matches: [], summary: '' }
   let excerpts = input.excerpts ?? []
+  let citations = input.citations ?? []
 
   if (excerpts.length === 0) {
     const findQuery = input.section.findClauseQuery.trim()
@@ -133,8 +152,11 @@ export async function generateProposalSectionMarkdownViaEcp(
     })) as FindClauseResult
 
     const ecpExcerpts = excerptsFromFindClauseResult(findResult)
+    citations = citationsFromFindClauseResult(findResult)
     excerpts =
       ecpExcerpts.length > 0 ? ecpExcerpts : (input.blockExcerptsFallback ?? [])
+  } else if (input.citations?.length) {
+    citations = input.citations
   }
 
   const sectionPromptInput = {
@@ -185,7 +207,9 @@ export async function generateProposalSectionMarkdownViaEcp(
 
     contextTracker.recordSegment('active_turn', result.text)
     const text = result.text.trim()
-    if (text.length > 0) return text
+    if (text.length > 0) {
+      return { markdown: text, citations }
+    }
   } catch (error) {
     if (error instanceof ProposalContextOverflowError) {
       throw error
@@ -201,7 +225,10 @@ export async function generateProposalSectionMarkdownViaEcp(
     }
   }
 
-  return fallbackSectionMarkdown(input.section, input.volume, findResult, excerpts)
+  return {
+    markdown: fallbackSectionMarkdown(input.section, input.volume, findResult, excerpts),
+    citations,
+  }
 }
 
 /**
@@ -217,7 +244,7 @@ export async function generateProposalVolumeMarkdownViaEcp(
     status: 'pending',
   }
 
-  const markdown = await generateProposalSectionMarkdownViaEcp({
+  const { markdown } = await generateProposalSectionMarkdownViaEcp({
     section,
     volume: input.volume,
     packageKind: input.packageKind ?? 'solicitation',
@@ -256,7 +283,7 @@ export async function runProposalSectionEcpHarness(): Promise<void> {
     status: 'pending',
   }
 
-  const markdown = await generateProposalSectionMarkdownViaEcp({
+  const { markdown } = await generateProposalSectionMarkdownViaEcp({
     section,
     volume,
     packageKind: 'solicitation',
@@ -289,6 +316,42 @@ export async function runProposalSectionEcpHarness(): Promise<void> {
   }
   if (!markdown.includes('Harness section body')) {
     throw new Error('runProposalSectionEcpHarness: expected markdown from send override')
+  }
+}
+
+/** Dev harness — find_clause citations persist alongside excerpts (BDA-212). */
+export function runProposalSectionCitationsHarness(): void {
+  const findResult: FindClauseResult = {
+    matches: [
+      {
+        relevance: 'high',
+        citation: {
+          doc_id: 'rfp-1',
+          block_id: 'rfp-1:p2:i3',
+          page_num: 2,
+          excerpt: 'Section L.1 requires a detailed methodology and schedule.',
+        },
+      },
+      {
+        relevance: 'low',
+        citation: {
+          doc_id: 'rfp-1',
+          block_id: 'rfp-1:p2:i4',
+          excerpt: 'too short',
+        },
+      },
+    ],
+    summary: '',
+  }
+
+  const citations = citationsFromFindClauseResult(findResult)
+  if (citations.length !== 1 || citations[0]?.block_id !== 'rfp-1:p2:i3') {
+    throw new Error('runProposalSectionCitationsHarness: expected one citation from find_clause matches')
+  }
+
+  const excerpts = excerptsFromFindClauseResult(findResult)
+  if (excerpts.length !== 1 || !excerpts[0]?.includes('methodology')) {
+    throw new Error('runProposalSectionCitationsHarness: excerpt filter should mirror citations')
   }
 }
 

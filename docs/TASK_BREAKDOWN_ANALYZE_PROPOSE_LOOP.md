@@ -254,16 +254,20 @@ flowchart TD
 ### **ID:** BDA-206
 
 **Title:** Edited badge and regenerate confirm  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-200, BDA-205  
 **Priority:** Medium  
 **Description:** **Edited** badge on [`ProposalVolumeRow`](../src/components/workspace/ProposalVolumeRow.tsx) when `volume.edited`. Before **Regenerate**, if `edited`, confirm dialog (browser confirm or app dialog) explaining overwrite.  
 **Completed Changes:**
-- 🔄 Badge + confirm  
+- ✅ **Edited** **`Badge`** beside volume title when **`volume.edited`**
+- ✅ **`window.confirm`** before **Regenerate** on edited drafts
+- ✅ Static QA asserts in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** Manual: edit → Regenerate → cancel keeps text; confirm runs generate.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-206 asserts
+- 🔄 Manual checklist pending
+**Assigned:** Completed  
 **Context/Artifacts:** Unified plan Phase 2  
 
 ---

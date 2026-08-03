@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { ProposalVolumeMarkdownPreview } from '@/components/workspace/ProposalVolumeMarkdownPreview'
 import { formatVolumeSectionProgressLine } from '@/lib/proposal-volume-section'
 import type {
@@ -163,6 +164,21 @@ export function ProposalVolumeRow({
         ? 'Complete proposal setup to generate volumes'
         : undefined
 
+  const handleVolumeGenerate = () => {
+    if (!onGenerate) return
+
+    const isRegenerate = volume.status !== 'pending'
+    if (isRegenerate && volume.edited) {
+      const volumeLabel = volume.title.trim() || volume.id
+      const confirmed = window.confirm(
+        `Regenerate "${volumeLabel}"? This will replace your hand-edited draft with new model output.`,
+      )
+      if (!confirmed) return
+    }
+
+    onGenerate(volume.id)
+  }
+
   return (
     <li
       className={cn(
@@ -211,16 +227,23 @@ export function ProposalVolumeRow({
 
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <button
-              type="button"
-              className={cn(
-                'text-left font-medium leading-snug hover:underline',
-                muted ? 'text-muted-foreground' : 'text-foreground',
-              )}
-              onClick={() => setExpanded((open) => !open)}
-            >
-              {volume.title}
-            </button>
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                className={cn(
+                  'text-left font-medium leading-snug hover:underline',
+                  muted ? 'text-muted-foreground' : 'text-foreground',
+                )}
+                onClick={() => setExpanded((open) => !open)}
+              >
+                {volume.title}
+              </button>
+              {volume.edited ? (
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] font-medium tracking-wide uppercase">
+                  Edited
+                </Badge>
+              ) : null}
+            </div>
             <span
               className={cn(
                 'shrink-0 text-xs tabular-nums',
@@ -253,7 +276,7 @@ export function ProposalVolumeRow({
               disabled={volumeGenerateDisabled}
               title={volumeGenerateTitle}
               aria-label={`${volumeGenerateLabel} ${volume.title}`}
-              onClick={() => onGenerate(volume.id)}
+              onClick={handleVolumeGenerate}
             >
               {volumeGenerateLabel}
             </Button>

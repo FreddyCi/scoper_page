@@ -131,6 +131,14 @@ assert(
   volumeRow.includes('onGenerate?: (volumeId: string) => void'),
   'ProposalVolumeRow must accept onGenerate callback (BDA-202)',
 )
+assert(
+  volumeRow.includes('volume.edited') && volumeRow.includes('Edited'),
+  'ProposalVolumeRow must show Edited badge when volume.edited (BDA-206)',
+)
+assert(
+  volumeRow.includes('hand-edited draft'),
+  'ProposalVolumeRow must confirm before regenerating edited volumes (BDA-206)',
+)
 
 const proposalPanel = read('src/components/workspace/ProposalGenerationPanel.tsx')
 assert(

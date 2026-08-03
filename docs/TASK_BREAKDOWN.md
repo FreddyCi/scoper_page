@@ -1084,7 +1084,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1.4 | 2026-08-03 | Link TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md (BDA-220–241) |
+| v1.4 | 2026-08-03 | Link TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md (BDA-220–241); BDA-241 manual QA checklist, PRD v1.1 drawing markup goal |
 | v1.3 | 2026-08-02 | Analyze→propose loop doc cross-links (BDA-217) |
 | v1.2 | 2026-07-31 | Link TASK_BREAKDOWN_CHAT_VOICE.md (BDA-181–195) |
 | v1.1 | 2026-07-30 | Link to TASK_BREAKDOWN_PROPOSAL_MODE.md (BDA-110–151) |

@@ -498,17 +498,20 @@ flowchart TD
 ### **ID:** BDA-241
 
 **Title:** Manual checklist and doc cross-links  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-234, BDA-236, BDA-239, BDA-240  
 **Priority:** Medium  
 **Description:** Add **Manual test checklist** section below (Windows_Drawing.pdf). Update [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md) related docs + changelog. Update [`PRD.md`](PRD.md) secondary goals: drawing markup scoped (moves from implicit non-goal). Optional v1.1: `drawing-markup:1` PDF keyword in [`import-pdf-comments.ts`](../src/services/import-pdf-comments.ts).  
 **Completed Changes:**
-- 🔄 Checklist finalized
-- 🔄 TASK_BREAKDOWN.md v1.4 link
-- 🔄 PRD note
+- ✅ Manual checklist below (automated preflight + peer UI steps)
+- ✅ [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md) v1.4 changelog note; related doc link already present
+- ✅ [`PRD.md`](PRD.md) v1.1 — secondary goal, viewer bullets, scoped drawing non-goals, related breakdown link
+- ✅ [`QA_RESULTS.md`](QA_RESULTS.md) — BDA-241 automated sign-off table
+- ✅ [`README.md`](../README.md) — `pnpm qa:drawing-markup` in command table
+- ⏭️ `drawing-markup:1` PDF import keyword deferred (optional v1.1)
 **Test Strategy:** Peer executes checklist on sample drawing PDF.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm qa:drawing-markup` (BDA-240 static + tsc); manual UI **pending peer** on drawing PDF  
 **Assigned:** Unassigned  
 **Context/Artifacts:** This file; plan §Test strategy
 
@@ -516,18 +519,37 @@ flowchart TD
 
 ## Manual test checklist (BDA-241)
 
-Use a drawing PDF (e.g. `Windows_Drawing.pdf` — plan + elevation sheets).
+**Fixture:** A drawing PDF (e.g. `Windows_Drawing.pdf` — plan + elevation sheets). Any multi-page architectural PDF works; repo smoke uses [`public/sample/minimal.pdf`](../public/sample/minimal.pdf) for harnesses only.
 
-- [ ] Upload PDF; open **Preview / Original** in split view (dark canvas OK).
-- [ ] Default **View** mode: pan/zoom works; no drawing tools visible.
-- [ ] Toggle **Mark**: toolbar shows pen, highlighter, eraser, rect, ellipse, text, window stamp; brand colors and stroke widths work.
-- [ ] **Highlighter** on plan area (amber/yellow family); **pen** rose on elevation; marks persist after reload.
-- [ ] **Window stamp** click places icon; multiple stamps on one page.
-- [ ] **Eraser** removes a stroke; **undo/redo** behaves as expected.
-- [ ] Switch to citation **Adjust block** (Mark off, citation selected): block drag works; Mark mode disables block drag.
-- [ ] **Export PDF with drawing marks**: burned-in vectors visible in external viewer.
-- [ ] Export with **no** drawing marks: block-comment export behavior unchanged from baseline.
-- [ ] **Share pack** export/import: annotation count matches on marked document.
+**Automated preflight (before manual pass):**
+
+| Step | Command / action | Expected |
+|------|------------------|----------|
+| Static + types | `pnpm qa:drawing-markup` | Exit 0 |
+| Runtime harness | `pnpm dev` → DevTools console | No uncaught `[dev-harness]` from `runDrawingMarkupAsyncHarnesses` |
+
+**Manual UI (peer sign-off):**
+
+- [ ] Upload drawing PDF; open **Original** (or split **Preview**) — dark canvas OK.
+- [ ] Default **View**: pan/zoom works; row 2 markup toolbar hidden.
+- [ ] Toggle **Mark**: pen, highlighter, eraser, rect, ellipse, text, window stamp; brand swatches and stroke **2 \| 4 \| 8** px apply to new marks.
+- [ ] **Highlighter** on plan (amber/yellow family); **pen** rose on elevation; marks persist after full page reload (`pnpm dev` restart or browser refresh).
+- [ ] **Window stamp** click-place; multiple stamps on one page.
+- [ ] **Eraser** removes a stroke; toolbar **undo/redo** matches expectation.
+- [ ] **Adjust block** (View + citation selected): block drag/resize works; **Mark** disables block drag.
+- [ ] Footer **Export** → rose **Drawing marks** → **Export PDF with drawing marks**: open in Preview/Acrobat — vectors burned in.
+- [ ] Same menu → **Burned-in notes only** (or amber burned-in with no marks when applicable): drawing vectors omitted; block comments unchanged vs baseline.
+- [ ] **Share pack** export/import on marked doc: `pdf_drawing_annotations` count matches (see share drawer).
+
+**Sign-off**
+
+| Field | Value |
+|-------|-------|
+| Task | BDA-241 |
+| Automated | `pnpm qa:drawing-markup` + dev harness chain |
+| Manual UI | Pending peer on drawing PDF |
+| Executor | — |
+| Date | — |
 
 ---
 
@@ -555,8 +577,19 @@ Use a drawing PDF (e.g. `Windows_Drawing.pdf` — plan + elevation sheets).
 
 ---
 
+## Document metadata
+
+**Related documents:**
+
+- [Drawing PDF markup plan](/Users/christopherkruger/.cursor/plans/drawing_pdf_markup_6e60b292.plan.md)
+- [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) (index BDA-220–241)
+- [PRD.md](PRD.md) §2.2 secondary goals — Mark mode
+- [QA_RESULTS.md](QA_RESULTS.md) § Drawing PDF markup (BDA-241)
+- [TASK_BREAKDOWN_TEMPLATE.md](TASK_BREAKDOWN_TEMPLATE.md)
+
 **Change log:**
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.1 | 2026-08-03 | BDA-241 manual checklist + PRD/QA/README cross-links |
 | v1.0 | 2026-08-03 | Initial atomic breakdown BDA-220–BDA-241 from drawing_pdf_markup plan |

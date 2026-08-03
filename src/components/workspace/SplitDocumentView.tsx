@@ -171,7 +171,7 @@ function ExtractViewHelpButton({ layoutKind }: { layoutKind: ReturnType<typeof r
                 <li>Drag the blue highlight on the PDF to resize or move the extract region.</li>
                 <li>Use the comment icon on a block row to attach a review note.</li>
                 <li>When review notes exist, use the footer navigator to step through each note.</li>
-                <li>Use Export to download markdown/PDF or convert a PDF into a chat context tab.</li>
+                <li>Use Export to download markdown/PDF (toggleable markup, burned-in notes, drawing marks) or convert a PDF into a chat context tab.</li>
                 <li className="border-border/70 border-t pt-2">
                   <span className={cn('font-medium', styles.title)}>Blue highlight</span> = selected
                   block.{' '}

@@ -3,7 +3,7 @@
 
 **Author:** Scoper Page team  
 **Date:** 2026-07-27  
-**Version:** v1.0  
+**Version:** v1.1  
 **Status:** Draft  
 
 **Related plan:** [browser_doc_agent_demo_9dbcbc83.plan.md](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
@@ -42,6 +42,7 @@ Browser Doc Agent Demo is a **standalone, browser-only** web application that le
 
 * Word, Markdown, and Excel ingest (beyond PDF MVP)
 * User comments anchored to document blocks
+* **PDF drawing markup (Mark mode)** — pen, highlighter, shapes, text, and window stamp on plan/elevation PDFs; persisted in session; **burned-in** vector export and share pack v3 round-trip ([`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md))
 * IndexedDB session restore for chat KV cache (bitgpu) and workspace state
 * Model picker (Bonsai 1.7B default, 4B optional)
 * Voice input on composer (defer post-MVP)
@@ -58,6 +59,7 @@ This PRD **does not** define:
 * Legal verdicts or guaranteed compliance — outputs are **assistant flags**, not certified audits
 * DOCX/XLSX conversion via LiteParse native CLI (browser uses client-side parsers only)
 * Mobile-native apps or offline-first PWA install flow (offline after cache is acceptable, not a dedicated PWA product)
+* **Drawing markup (v1 scope limits):** AI window detection; multi-user realtime ink sync; full Adobe Acrobat ink compatibility; drawing tools on non-PDF previews; arbitrary color picker; native PDF Ink annotations for the drawing layer (burned-in vectors are primary)
 * Production SLA, multi-tenant hosting, or enterprise admin
 
 ---
@@ -141,6 +143,8 @@ This PRD **does not** define:
 **Key features:**
 * SplitDocumentView: light left (OCR/blocks) | dark right (PDF.js / doc preview) ([`Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png))
 * Bbox overlay on PDF from LiteParse `textItems` (scale `dpi/72`)
+* **View | Mark** toggle on PDF original pane: Mark mode drawing toolbar (brand palette, stroke widths); block citation drag disabled while marking
+* Annotated PDF export: toggleable block-comment markup, burned-in notes, optional **drawing marks** merge (rose export menu section when marks exist)
 * `focusCitation(ref)` scrolls and highlights both panes
 * Comment popover on selected block
 
@@ -556,6 +560,7 @@ type CitationRef = {
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| v1.1 | 2026-08-03 | — | Secondary goal: PDF Mark drawing markup; viewer + export notes; scoped non-goals for drawing v1 (BDA-241) |
 | v1.0 | 2026-07-27 | — | Initial PRD from browser_doc_agent_demo plan + UI refs |
 
 ---
@@ -571,4 +576,5 @@ type CitationRef = {
 **Related Documents:**
 - Template: [`docs/PRD_TEMPLATE.md`](PRD_TEMPLATE.md)
 - Plan: [`browser_doc_agent_demo_9dbcbc83.plan.md`](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
+- Drawing markup tasks: [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) (BDA-220–241)
 - Wireframes: [`docs/main.png`](main.png), [`docs/Screenshot 2026-07-27 at 2.49.33 PM.png`](Screenshot%202026-07-27%20at%202.49.33%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.51.53 PM.png`](Screenshot%202026-07-27%20at%202.51.53%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png)

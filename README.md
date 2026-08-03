@@ -44,6 +44,7 @@ See [`sample/README.md`](sample/README.md) for the full corpus (scope creep fixt
 | `pnpm preview:smoke` | Start preview and verify shell, WASM, sample PDF paths |
 | `pnpm lint` | Run oxlint |
 | `pnpm qa:automated` | MVP build + preview smoke (BDA-100) |
+| `pnpm qa:drawing-markup` | PDF Mark mode static wiring + `tsc` (BDA-240–241) |
 | `pnpm qa:v1` | Full v1 build + preview smoke incl. office fixtures (BDA-101) |
 | `node scripts/generate-sample-pdfs.mjs` | Regenerate RFP demo PDF + office corpus |
 

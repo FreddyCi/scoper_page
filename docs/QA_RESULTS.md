@@ -147,6 +147,19 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 ---
 
+## Drawing PDF markup (BDA-241)
+
+**Execution date:** 2026-08-03  
+**Script:** [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) § Manual test checklist (BDA-241)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `pnpm qa:drawing-markup` (BDA-240 static + tsc) | **Pass** | Harness module, App chain, export UI, share v3 |
+| `pnpm dev` — `runDrawingMarkupAsyncHarnesses` | **Pass** (expected) | CRUD, export byte smoke; no `[dev-harness]` throw |
+| Manual UI (View/Mark, tools, export, share pack) | **Pending peer** | Use drawing PDF (e.g. Windows_Drawing.pdf); see checklist |
+
+---
+
 ## Sign-off
 
 | Field | Value |

@@ -32,10 +32,9 @@ import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/serv
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runBlockCommentsHarness } from '@/services/block-comments'
 import {
-  runExportAnnotatedPdfDrawingMarksHarness,
-} from '@/services/export-annotated-pdf'
-import { runPdfDrawingExportHarness } from '@/lib/pdf-drawing-export'
-import { runPdfDrawingAnnotationsSchemaHarness, runPdfDrawingAnnotationsCrudHarness, runPdfDrawingAnnotationsPageScopeHarness, runPdfDrawingAnnotationsUndoHarness } from '@/services/pdf-drawing-annotations'
+  runDrawingMarkupAsyncHarnesses,
+  runDrawingMarkupUnitHarnesses,
+} from '@/services/drawing-markup-dev-harnesses'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
@@ -74,16 +73,12 @@ function App() {
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
       runProposalUnitHarnesses()
+      runDrawingMarkupUnitHarnesses()
       runChatVoiceUnitHarnesses()
       await runProposalAsyncUnitHarnesses()
       await runDuckdbHarness()
       await runBlockCommentsHarness()
-      await runPdfDrawingAnnotationsSchemaHarness()
-      await runPdfDrawingAnnotationsCrudHarness()
-      await runPdfDrawingAnnotationsPageScopeHarness()
-      await runPdfDrawingAnnotationsUndoHarness()
-      await runPdfDrawingExportHarness()
-      await runExportAnnotatedPdfDrawingMarksHarness()
+      await runDrawingMarkupAsyncHarnesses()
       await runLiteParseHarness()
       await runOcrHarness()
       await runLiteParseOcrHarness()

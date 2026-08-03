@@ -100,11 +100,11 @@ flowchart TD
 - ✅ `normalizePoint`, `denormalizePoint`, `viewportSizeFromPageViewport`
 - ✅ `normalizedStrokeBounds`, `normalizedGeometryBounds`, `distancePointToSegmentPx`
 - ✅ `hitTestStroke`, `hitTestNormalizedRect`, `hitTestNormalizedEllipse`, `hitTestPdfDrawingGeometry`
-- ✅ `runPdfDrawingGeometryHarness` in proposal unit harness chain
+- ✅ `runPdfDrawingGeometryHarness` in drawing markup unit harness chain
 **Test Strategy:** Small Node/vitest or dev harness: round-trip a point at multiple zoom scales; hit-test known segment.  
 **Test Results:**
 - ✅ `pnpm exec tsc --noEmit`
-- ✅ `runPdfDrawingGeometryHarness` (dev load via `runProposalUnitHarnesses`)
+- ✅ `runPdfDrawingGeometryHarness` (dev load via `runDrawingMarkupUnitHarnesses`)
 **Assigned:** Completed  
 **Context/Artifacts:** Plan §Canvas overlay; [`citation-bbox.ts`](../src/lib/citation-bbox.ts)
 
@@ -479,15 +479,17 @@ flowchart TD
 ### **ID:** BDA-240
 
 **Title:** Drawing markup dev harnesses  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-223, BDA-238  
 **Priority:** High  
 **Description:** Add runnable harness chain: CRUD round-trip; optional export byte smoke (BDA-237). Register npm script if consistent with `qa:proposal` (e.g. `qa:drawing-markup` or extend proposal-dev).  
 **Completed Changes:**
-- 🔄 Harness module + package.json script
+- ✅ [`drawing-markup-dev-harnesses.ts`](../src/services/drawing-markup-dev-harnesses.ts) — unit (geometry), async (schema/CRUD/page/undo/export/annotated PDF), share round-trip wrapper
+- ✅ [`App.tsx`](../src/App.tsx) + [`share-pack-harness.ts`](../src/services/share-pack-harness.ts) wired to consolidated runners; geometry moved off `proposal-dev-harnesses`
+- ✅ `pnpm qa:drawing-markup` → [`scripts/run-drawing-markup-qa-static.mjs`](../scripts/run-drawing-markup-qa-static.mjs) + `tsc --noEmit`
 **Test Strategy:** `pnpm run qa:drawing-markup` (or documented command) exits 0.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm qa:drawing-markup` (static + tsc); runtime CRUD/export on `pnpm dev` dev chain  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Test strategy
 

@@ -1,4 +1,11 @@
-import type { BlockRecord, DocumentMeta, ProposalRequirementsProfile, ProposalVolume } from '@/lib/types'
+import type {
+  BlockRecord,
+  DocumentMeta,
+  ProposalAnalysisRef,
+  ProposalRequirementsProfile,
+  ProposalVolume,
+  RfpResultsProfile,
+} from '@/lib/types'
 import {
   classifyProposalPackage,
   type ProposalPackageKind,
@@ -13,6 +20,8 @@ import {
 export type BuildProposalRfpProfileOptions = {
   rfpDocId: string
   companyContext?: string
+  /** RFP Analysis baseline — criteria mapped onto volumes as `analysisRefs` (BDA-208). */
+  baselineProfile?: RfpResultsProfile | null
 }
 
 const PROPOSAL_SUMMARY_MAX = 480
@@ -187,11 +196,96 @@ function deriveVolumesForPackage(
   ]
 }
 
+const MATCH_TOKEN_MIN_LENGTH = 3
+
+function tokenizeForVolumeMatch(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length >= MATCH_TOKEN_MIN_LENGTH),
+  )
+}
+
+function keywordOverlapScore(left: Set<string>, right: Set<string>): number {
+  let score = 0
+  for (const token of left) {
+    if (right.has(token)) {
+      score += 1
+    }
+  }
+  return score
+}
+
+function volumeMatchCorpus(volume: ProposalVolume): string {
+  return `${volume.title} ${volume.requirementSummary}`
+}
+
+function criterionMatchCorpus(criterion: RfpResultsProfile['criteria'][number]): string {
+  return `${criterion.label} ${criterion.detail ?? ''}`
+}
+
+/** Assign each baseline criterion to the best-matching proposal volume (BDA-208). */
+export function mapBaselineCriteriaToProposalVolumes(
+  volumes: ProposalVolume[],
+  baseline: RfpResultsProfile,
+): ProposalVolume[] {
+  if (volumes.length === 0 || baseline.criteria.length === 0) {
+    return volumes
+  }
+
+  const refsByVolumeId = new Map<string, ProposalAnalysisRef[]>()
+  for (const volume of volumes) {
+    refsByVolumeId.set(volume.id, [])
+  }
+
+  const catchAllVolume = volumes.find((volume) => volume.id === 'vol-complete-proposal')
+  const fallbackVolume = catchAllVolume ?? volumes[0]!
+
+  for (const criterion of baseline.criteria) {
+    const criterionTokens = tokenizeForVolumeMatch(criterionMatchCorpus(criterion))
+    let bestVolume = fallbackVolume
+    let bestScore = -1
+
+    for (const volume of volumes) {
+      const score = keywordOverlapScore(
+        criterionTokens,
+        tokenizeForVolumeMatch(volumeMatchCorpus(volume)),
+      )
+      if (score > bestScore) {
+        bestScore = score
+        bestVolume = volume
+      }
+    }
+
+    if (bestScore === 0 && catchAllVolume) {
+      bestVolume = catchAllVolume
+    }
+
+    const ref: ProposalAnalysisRef = {
+      criterionId: criterion.id,
+      label: criterion.label,
+      status: criterion.status,
+      citation: criterion.citation,
+    }
+    refsByVolumeId.get(bestVolume.id)!.push(ref)
+  }
+
+  return volumes.map((volume) => {
+    const analysisRefs = refsByVolumeId.get(volume.id)
+    if (!analysisRefs?.length) {
+      return volume
+    }
+    return { ...volume, analysisRefs }
+  })
+}
+
 function buildProfileSummary(
   filename: string,
   volumes: ProposalVolume[],
   companyContext: string,
   packageKind: ProposalPackageKind,
+  baselineProfile?: RfpResultsProfile | null,
 ): string {
   const titles = volumes.map((volume) => volume.title).join('; ')
   const kindNote =
@@ -204,7 +298,17 @@ function buildProfileSummary(
     companyContext.trim().length > 0
       ? ` Responder context provided (${companyContext.trim().length} chars).`
       : ''
-  const summary = `${volumes.length} proposal volume(s) derived from ${filename}: ${titles}.${kindNote}${contextNote}`
+  let baselineNote = ''
+  if (baselineProfile && baselineProfile.criteria.length > 0) {
+    const failCount = baselineProfile.criteria.filter((criterion) => criterion.status === 'fail').length
+    const warnCount = baselineProfile.criteria.filter((criterion) => criterion.status === 'warn').length
+    if (failCount > 0 || warnCount > 0) {
+      baselineNote = ` RFP Analysis: ${failCount} fail, ${warnCount} warn.`
+    } else {
+      baselineNote = ` RFP Analysis: ${baselineProfile.criteria.length} criteria linked.`
+    }
+  }
+  const summary = `${volumes.length} proposal volume(s) derived from ${filename}: ${titles}.${kindNote}${contextNote}${baselineNote}`
   return summary.length > PROPOSAL_SUMMARY_MAX
     ? `${summary.slice(0, PROPOSAL_SUMMARY_MAX - 1)}…`
     : summary
@@ -227,18 +331,22 @@ export async function buildProposalRfpProfile(
   })
 
   const volumes = deriveVolumesForPackage(blocks, classification.packageKind)
+  const volumesWithAnalysis = options.baselineProfile?.criteria.length
+    ? mapBaselineCriteriaToProposalVolumes(volumes, options.baselineProfile)
+    : volumes
 
   return {
     profile_id: `proposal-req-${options.rfpDocId}-${Date.now()}`,
     rfp_doc_id: options.rfpDocId,
-    volumes,
+    volumes: volumesWithAnalysis,
     packageKind: classification.packageKind,
     packageWarnings: [...classification.packageWarnings],
     summary: buildProfileSummary(
       rfpDoc.filename,
-      volumes,
+      volumesWithAnalysis,
       options.companyContext ?? '',
       classification.packageKind,
+      options.baselineProfile,
     ),
     built_at: new Date().toISOString(),
   }
@@ -277,5 +385,82 @@ export function runBuildProposalRfpProfilePackageHarness(): void {
   const contractVolumes = deriveVolumesForPackage([], 'contract_framework')
   if (contractVolumes.length < CONTRACT_FRAMEWORK_MIN_VOLUMES) {
     throw new Error('runBuildProposalRfpProfilePackageHarness: contract package should use theme volumes')
+  }
+}
+
+/** Dev harness — baseline criteria map to contract volumes (BDA-208). */
+export function runBuildProposalRfpProfileBaselineMappingHarness(): void {
+  const volumes = deriveContractFrameworkVolumes()
+  const baseline: RfpResultsProfile = {
+    profile_id: 'baseline-harness-insurance',
+    source_doc_id: 'msa-harness',
+    verdict: 'unlikely',
+    subject: { name: 'Harness bidder' },
+    summary: 'Insurance limits below required minimum.',
+    criteria: [
+      {
+        id: 'crit-insurance-limits',
+        label: 'General liability insurance limits',
+        status: 'fail',
+        detail: 'Additional insured and bonding endorsements required under Section 12.',
+      },
+    ],
+  }
+
+  const mapped = mapBaselineCriteriaToProposalVolumes(volumes, baseline)
+  const insuranceVolume = mapped.find((volume) => volume.title === 'Insurance and bonding')
+  if (!insuranceVolume) {
+    throw new Error(
+      'runBuildProposalRfpProfileBaselineMappingHarness: expected Insurance and bonding volume',
+    )
+  }
+
+  const insuranceRef = insuranceVolume.analysisRefs?.find(
+    (ref) => ref.criterionId === 'crit-insurance-limits',
+  )
+  if (!insuranceRef || insuranceRef.status !== 'fail') {
+    throw new Error(
+      'runBuildProposalRfpProfileBaselineMappingHarness: insurance criterion should map to insurance volume',
+    )
+  }
+
+  const summary = buildProfileSummary(
+    'master-services-agreement.pdf',
+    mapped,
+    'Harness responder context.',
+    'contract_framework',
+    baseline,
+  )
+  if (!summary.includes('RFP Analysis: 1 fail')) {
+    throw new Error(
+      'runBuildProposalRfpProfileBaselineMappingHarness: summary should include baseline fail count',
+    )
+  }
+
+  const catchAllVolumes = mapBaselineCriteriaToProposalVolumes(
+    [
+      {
+        id: 'vol-complete-proposal',
+        title: 'Complete proposal response',
+        requirementSummary: 'Address all contract themes.',
+        status: 'pending',
+      },
+    ],
+    {
+      ...baseline,
+      criteria: [
+        {
+          id: 'crit-unrelated',
+          label: 'ZZZ unique token alpha',
+          status: 'warn',
+        },
+      ],
+    },
+  )
+  const catchAllRef = catchAllVolumes[0]?.analysisRefs?.[0]
+  if (catchAllRef?.criterionId !== 'crit-unrelated') {
+    throw new Error(
+      'runBuildProposalRfpProfileBaselineMappingHarness: zero-overlap criterion should use catch-all volume',
+    )
   }
 }

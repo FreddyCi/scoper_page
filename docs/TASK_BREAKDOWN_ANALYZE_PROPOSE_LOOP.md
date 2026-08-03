@@ -296,16 +296,19 @@ flowchart TD
 ### **ID:** BDA-208
 
 **Title:** Map baseline criteria to volumes  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-207  
 **Priority:** High  
 **Description:** [`build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts): extend options with **`baselineProfile?: RfpResultsProfile | null`**. After `deriveVolumesForPackage`, assign each criterion to best-matching volume by keyword overlap on title + `requirementSummary`; unmatched attach to closest volume or catch-all **`vol-complete-proposal`**. Extend **`buildProfileSummary`** with fail/warn count when baseline present. Add **`runBuildProposalRfpProfile`* harness case with mock baseline.  
 **Completed Changes:**
-- 🔄 Mapping helper + profile fields  
+- ✅ **`mapBaselineCriteriaToProposalVolumes`**, **`baselineProfile`** option
+- ✅ Summary line with fail/warn counts
+- ✅ **`runBuildProposalRfpProfileBaselineMappingHarness`** (MSA insurance + catch-all)
 **Test Strategy:** Harness: MSA + baseline with insurance criterion → insurance volume gets ref.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runBuildProposalRfpProfileBaselineMappingHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-117 profile build  
 
 ---

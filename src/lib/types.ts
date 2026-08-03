@@ -175,6 +175,100 @@ export type CommentRecord = {
   created_at: string
 }
 
+/** Point in normalized page space (0–1), top-left origin, PDF media box at scale 1 (BDA-220). */
+export type PdfDrawingNormalizedPoint = {
+  x: number
+  y: number
+}
+
+/** Ink and shape tools for plan-sheet markup (drawing PDF markup). */
+export type PdfDrawingTool =
+  | 'pen'
+  | 'highlighter'
+  | 'rect'
+  | 'ellipse'
+  | 'text'
+  | 'stamp'
+
+/** Stamp variants; v1 supports window locations on floor plans. */
+export type PdfDrawingStampKind = 'window'
+
+export type PdfDrawingStrokeGeometry = {
+  kind: 'stroke'
+  points: PdfDrawingNormalizedPoint[]
+}
+
+export type PdfDrawingRectGeometry = {
+  kind: 'rect'
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type PdfDrawingEllipseGeometry = {
+  kind: 'ellipse'
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type PdfDrawingTextGeometry = {
+  kind: 'text'
+  x: number
+  y: number
+}
+
+export type PdfDrawingStampGeometry = {
+  kind: 'stamp'
+  x: number
+  y: number
+  stampKind: PdfDrawingStampKind
+  /** Normalized size as fraction of page width; render default if omitted. */
+  size?: number
+}
+
+/** Tool-specific geometry stored in DuckDB `geometry_json` (discriminated by `kind`). */
+export type PdfDrawingGeometry =
+  | PdfDrawingStrokeGeometry
+  | PdfDrawingRectGeometry
+  | PdfDrawingEllipseGeometry
+  | PdfDrawingTextGeometry
+  | PdfDrawingStampGeometry
+
+/** User-drawn markup on a PDF page (persisted in `pdf_drawing_annotations`). */
+export type PdfDrawingAnnotation = {
+  annotation_id: string
+  doc_id: string
+  page_num: number
+  tool: PdfDrawingTool
+  color: string
+  stroke_width?: number
+  opacity?: number
+  geometry: PdfDrawingGeometry
+  text_body?: string
+  author_initials: string
+  created_at: string
+  updated_at?: string
+}
+
+/** DuckDB row shape — geometry serialized in `geometry_json` (BDA-221). */
+export type PdfDrawingAnnotationRecord = {
+  annotation_id: string
+  doc_id: string
+  page_num: number
+  tool: PdfDrawingTool
+  color: string
+  stroke_width?: number
+  opacity?: number
+  geometry_json: string
+  text_body?: string
+  author_initials: string
+  created_at: string
+  updated_at?: string
+}
+
 export type ProfileMode = 'rfp' | 'proposal'
 
 /** DuckDB `results_profiles` row (criteria normalized in `profile_criteria`) */

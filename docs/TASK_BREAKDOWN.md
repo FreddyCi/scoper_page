@@ -1076,6 +1076,7 @@ flowchart LR
 - [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) — Sectional ECP / 8K UCW (BDA-152–180)
 - [TASK_BREAKDOWN_CHAT_VOICE.md](TASK_BREAKDOWN_CHAT_VOICE.md) — Chat mic / Whisper WebGPU (BDA-181–195)
 - [TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md) — Analyze → propose loop closure (BDA-196–218)
+- [TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) — PDF drawing markup / Mark mode (BDA-220–241)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 
@@ -1083,6 +1084,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.4 | 2026-08-03 | Link TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md (BDA-220–241) |
 | v1.3 | 2026-08-02 | Analyze→propose loop doc cross-links (BDA-217) |
 | v1.2 | 2026-07-31 | Link TASK_BREAKDOWN_CHAT_VOICE.md (BDA-181–195) |
 | v1.1 | 2026-07-30 | Link to TASK_BREAKDOWN_PROPOSAL_MODE.md (BDA-110–151) |

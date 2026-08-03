@@ -35,8 +35,8 @@ export function DevAppBootstrap({ children, onBootstrap }: DevAppBootstrapProps)
   if (!ready) {
     return (
       <AppBootScreen
-        message="Preparing workspace…"
-        detail="Running local checks and loading browser models. This only happens in development."
+        message="Loading Scoper…"
+        detail="Preparing workspace. Running local checks and loading browser models. This only happens in development."
       />
     )
   }

@@ -292,15 +292,16 @@ flowchart TD
 ### **ID:** BDA-231
 
 **Title:** PdfMarkupToolbar component  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-225  
 **Priority:** High  
 **Description:** New [`PdfMarkupToolbar.tsx`](../src/components/workspace/PdfMarkupToolbar.tsx): icon tool group (`size="icon-xs"`, active = `ring-1 ring-primary/50 bg-muted`); color swatches Amber `#F59E0B`, Rose `#E11D48`, Sky `#0EA5E9`, neutral gray; stroke width `2 | 4 | 8`. Controlled props: `tool`, `color`, `strokeWidth`, `onChange`, undo/redo callbacks.  
 **Completed Changes:**
-- 🔄 Toolbar UI matching workspace segmented/brand patterns
+- ✅ `PdfMarkupToolbar` with pen/highlighter/eraser/rect/ellipse/text/stamp tools, swatches, stroke widths, undo/redo
+- ✅ Exported `PdfMarkupTool`, color/stroke constants for BDA-234 wiring
 **Test Strategy:** Visual QA light + dark theme; active tool state obvious.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Component ready for integration in BDA-234; manual visual QA when wired  
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`brand-accent.ts`](../src/lib/brand-accent.ts); [`PdfViewerToolbar.tsx`](../src/components/workspace/PdfViewerToolbar.tsx)
 

@@ -455,15 +455,18 @@ flowchart TD
 ### **ID:** BDA-239
 
 **Title:** Footer export menu drawing marks  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-238  
 **Priority:** Medium  
 **Description:** [`SplitDocumentView`](../src/components/workspace/SplitDocumentView.tsx) footer: add **Export PDF with drawing marks** (or extend existing export menu with rose/neutral `BrandMenuSection`); wire to export with drawing layer. Keep existing toggleable markup / burned-in notes for block comments.  
 **Completed Changes:**
-- 🔄 Menu item + handler
+- ✅ Rose `BrandMenuSection` when doc has drawing marks (count refreshed on open)
+- ✅ **Export PDF with drawing marks** + **Burned-in notes only** → `includeDrawingMarks` true/false
+- ✅ Amber markup / burned-in paths unchanged; `handleExportPdf` forwards full export options
+- ✅ `rose` accent in [`brand-accent.ts`](../src/lib/brand-accent.ts)
 **Test Strategy:** Manual: export from split view; open in Preview/Acrobat.  
 **Test Results:**
-- 🔄 Pending implementation  
+- 🔄 Manual checklist (BDA-241)  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Export menu; [`BrandAccent`](../src/lib/brand-accent.ts) optional `rose`
 

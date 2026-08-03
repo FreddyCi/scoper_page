@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { DownloadIcon, InfoIcon } from 'lucide-react'
 
 import { AnnotatedMarkdownView } from '@/components/workspace/AnnotatedMarkdownView'
@@ -47,6 +47,11 @@ import {
 import { useSessionStore } from '@/store/session-store'
 
 type SplitPaneTab = 'read' | 'preview' | 'extract' | 'original' | 'profiles'
+
+export type AnnotatedPdfFooterExportRequest = {
+  commentMode: 'markup' | 'burned-in'
+  includeDrawingMarks?: boolean
+}
 
 type SplitDocumentViewProps = {
   document: DocumentMeta
@@ -194,6 +199,8 @@ function SplitDocumentViewFooter({
   exportLoading = false,
   exportDisabled = false,
   onExportClick,
+  drawingMarkCount = 0,
+  onExportMenuOpenChange,
   markdownExportLoading = false,
   onExportMarkdownClick,
   markdownExportDescription,
@@ -211,7 +218,9 @@ function SplitDocumentViewFooter({
   exportLabel?: string
   exportLoading?: boolean
   exportDisabled?: boolean
-  onExportClick?: (mode: 'markup' | 'burned-in') => void
+  onExportClick?: (request: AnnotatedPdfFooterExportRequest) => void
+  drawingMarkCount?: number
+  onExportMenuOpenChange?: (open: boolean) => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
   markdownExportDescription?: string
@@ -236,7 +245,11 @@ function SplitDocumentViewFooter({
       </div>
       <div className="flex items-center gap-2">
         {onExportClick || onExportMarkdownClick || onConvertToContextClick ? (
-          <DropdownMenu>
+          <DropdownMenu
+            onOpenChange={(open) => {
+              if (open) onExportMenuOpenChange?.(true)
+            }}
+          >
             <DropdownMenuTrigger
               disabled={
                 exportDisabled || exportLoading || markdownExportLoading || contextConvertLoading
@@ -322,7 +335,7 @@ function SplitDocumentViewFooter({
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
                       className={brandMenuItemClass('amber')}
-                      onClick={() => onExportClick('markup')}
+                      onClick={() => onExportClick({ commentMode: 'markup' })}
                     >
                       <MenuOptionContent
                         title="Toggleable markup"
@@ -332,12 +345,51 @@ function SplitDocumentViewFooter({
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className={brandMenuItemClass('amber')}
-                      onClick={() => onExportClick('burned-in')}
+                      onClick={() => onExportClick({ commentMode: 'burned-in' })}
                     >
                       <MenuOptionContent
                         title="Burned-in notes"
-                        description="Always-visible yellow boxes on the page for sharing outside PDF viewers."
+                        description={
+                          drawingMarkCount > 0
+                            ? 'Always-visible note boxes; includes drawing marks when this document has any.'
+                            : 'Always-visible yellow boxes on the page for sharing outside PDF viewers.'
+                        }
                         titleClassName={brandAccentStyles('amber').title}
+                      />
+                    </DropdownMenuItem>
+                  </div>
+                </BrandMenuSection>
+              ) : null}
+              {onExportClick && drawingMarkCount > 0 ? (
+                <BrandMenuSection accent="rose">
+                  <BrandMenuSectionHeader
+                    accent="rose"
+                    title="Drawing marks"
+                    description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — burned into the page on export.`}
+                  />
+                  <div className="flex flex-col gap-1 p-1.5 pt-0">
+                    <DropdownMenuItem
+                      className={brandMenuItemClass('rose')}
+                      onClick={() =>
+                        onExportClick({ commentMode: 'burned-in', includeDrawingMarks: true })
+                      }
+                    >
+                      <MenuOptionContent
+                        title="Export PDF with drawing marks"
+                        description="Burned-in review notes plus pen, shapes, text, and stamps from Mark mode."
+                        titleClassName={brandAccentStyles('rose').title}
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className={brandMenuItemClass('rose')}
+                      onClick={() =>
+                        onExportClick({ commentMode: 'burned-in', includeDrawingMarks: false })
+                      }
+                    >
+                      <MenuOptionContent
+                        title="Burned-in notes only"
+                        description="Same yellow note boxes without merging drawing marks into the file."
+                        titleClassName={brandAccentStyles('rose').title}
                       />
                     </DropdownMenuItem>
                   </div>
@@ -501,9 +553,34 @@ export function SplitDocumentView({
 
   const ocrEnabled = useSessionStore((state) => state.ocrEnabled)
 
-  function handleExportPdf(commentMode: 'markup' | 'burned-in' = 'markup') {
+  const [drawingMarkCount, setDrawingMarkCount] = useState(0)
+
+  const refreshDrawingMarkCount = useCallback(async () => {
+    if (!canExportPdf) {
+      setDrawingMarkCount(0)
+      return
+    }
+
+    try {
+      const { fetchPdfDrawingAnnotationsForDoc } = await import(
+        '@/services/pdf-drawing-annotations'
+      )
+      const rows = await fetchPdfDrawingAnnotationsForDoc(document.doc_id)
+      setDrawingMarkCount(rows.length)
+    } catch (error) {
+      console.error('[split-document-view] drawing mark count failed', error)
+      setDrawingMarkCount(0)
+    }
+  }, [canExportPdf, document.doc_id])
+
+  useEffect(() => {
+    void refreshDrawingMarkCount()
+  }, [refreshDrawingMarkCount])
+
+  function handleExportPdf(request: AnnotatedPdfFooterExportRequest = { commentMode: 'markup' }) {
     if (!canExportPdf || exportingPdf) return
 
+    const { commentMode, includeDrawingMarks } = request
     setExportError(null)
     setExportingPdf(true)
 
@@ -518,7 +595,7 @@ export function SplitDocumentView({
           mime: 'application/pdf',
           extension: '.pdf',
         })
-        const pdfBytes = await exportAnnotatedPdf(document, { commentMode })
+        const pdfBytes = await exportAnnotatedPdf(document, { commentMode, includeDrawingMarks })
         const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
         await writeBlob(blob)
       } catch (error) {
@@ -750,6 +827,10 @@ export function SplitDocumentView({
         exportLoading={exportingPdf}
         exportDisabled={!canExportPdf && !canExportMarkdown}
         onExportClick={canExportPdf ? handleExportPdf : undefined}
+        drawingMarkCount={drawingMarkCount}
+        onExportMenuOpenChange={() => {
+          void refreshDrawingMarkCount()
+        }}
         markdownExportLoading={exportingMarkdown}
         onExportMarkdownClick={canExportMarkdown ? handleExportMarkdown : undefined}
         markdownExportDescription={markdownExportDescription}

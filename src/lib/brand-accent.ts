@@ -1,4 +1,4 @@
-export type BrandAccent = 'sky' | 'violet' | 'amber' | 'neutral'
+export type BrandAccent = 'sky' | 'violet' | 'amber' | 'rose' | 'neutral'
 
 type BrandAccentStyles = {
   section: string
@@ -44,6 +44,17 @@ export const BRAND_ACCENT: Record<BrandAccent, BrandAccentStyles> = {
     trigger: 'border-amber-200/80 bg-amber-50/80 text-amber-950 hover:bg-amber-100/80',
     indicator: 'text-amber-800',
     dot: 'bg-amber-400',
+  },
+  rose: {
+    section: 'border-rose-200/80 bg-surface from-rose-50/70',
+    title: 'text-rose-950',
+    description: 'text-muted-foreground',
+    itemHover:
+      'focus:bg-rose-50/90 data-[highlighted]:bg-rose-50/90 focus:text-rose-950 data-[highlighted]:text-rose-950',
+    itemSelected: 'bg-rose-50/90 ring-1 ring-rose-200/80',
+    trigger: 'border-rose-200/80 bg-rose-50/80 text-rose-950 hover:bg-rose-100/80',
+    indicator: 'text-rose-800',
+    dot: 'bg-rose-400',
   },
   neutral: {
     section: 'border-border/80 bg-surface from-muted/30',

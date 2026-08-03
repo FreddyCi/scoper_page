@@ -244,6 +244,16 @@ assert(
   'share-table registry must include proposal volume sections (BDA-215)',
 )
 
+const shareImport = read('src/services/share-pack-import.ts')
+assert(
+  shareImport.includes('resolveProposalRequirementsProfile'),
+  'share-pack-import must hydrate proposal profile from share tables (BDA-216)',
+)
+assert(
+  shareImport.includes('proposalProfileFromShareRows'),
+  'share-pack-import must rebuild profile from proposal share rows (BDA-216)',
+)
+
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
   'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',

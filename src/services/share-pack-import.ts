@@ -1,11 +1,12 @@
 import { base64ToBytes } from '@/lib/share-crypto'
-import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
-import type { SharePackPayload } from '@/lib/share-table'
+import type { DocumentMeta, ProposalRequirementsProfile, WorkspaceMode } from '@/lib/types'
+import type { SharePackPayload, ShareSessionManifest } from '@/lib/share-table'
 import { SHARE_PACK_VERSION, type ShareTableId, type ShareTableRow } from '@/lib/share-table'
 import { cacheDocumentBytes, clearDocumentBytesCache } from '@/services/document-bytes-cache'
 import { assertShareTablesShape, importShareTableRows } from '@/services/share-pack-duckdb'
 import { decryptSharePackFile } from '@/services/share-pack-export'
 import { fetchSharePackBytes } from '@/services/share-pack-link'
+import { proposalProfileFromShareRows } from '@/services/proposal-share-store'
 import { fetchRfpProfilesFromDuckdb } from '@/services/rfp-profile-store'
 import { getScoperClient } from '@/services/scoper-client'
 import { clearAgentActivityState } from '@/lib/agent-activity'
@@ -34,15 +35,54 @@ function filterShareTablesForImport(
   tables: Record<ShareTableId, ShareTableRow[]>,
   mode: WorkspaceMode,
 ): Record<ShareTableId, ShareTableRow[]> {
-  if (mode !== 'proposal') return tables
+  if (mode === 'proposal') {
+    return {
+      ...tables,
+      scope_flags: [],
+      results_profiles: (tables.results_profiles ?? []).filter(
+        (row) => String(row.mode) !== 'scope_creep',
+      ),
+    }
+  }
 
   return {
     ...tables,
-    scope_flags: [],
-    results_profiles: (tables.results_profiles ?? []).filter(
-      (row) => String(row.mode) !== 'scope_creep',
-    ),
+    proposal_profiles: [],
+    proposal_volumes: [],
+    proposal_volume_sections: [],
   }
+}
+
+function resolveProposalRequirementsProfile(
+  tables: Record<ShareTableId, ShareTableRow[]>,
+  manifest: ShareSessionManifest,
+  mode: WorkspaceMode,
+): ProposalRequirementsProfile | null {
+  if (mode !== 'proposal') {
+    return null
+  }
+
+  const profileRows = tables.proposal_profiles ?? []
+  if (profileRows.length === 0) {
+    return null
+  }
+
+  const profileId =
+    manifest.proposalRequirementsProfileId ??
+    (profileRows.length === 1 ? String(profileRows[0]!.profile_id) : null)
+
+  if (!profileId) {
+    return null
+  }
+
+  return proposalProfileFromShareRows(
+    {
+      proposal_profiles: profileRows,
+      proposal_volumes: tables.proposal_volumes ?? [],
+      proposal_volume_sections: tables.proposal_volume_sections ?? [],
+    },
+    profileId,
+  )
 }
 
 function emptyShareTables(): Record<ShareTableId, ShareTableRow[]> {
@@ -97,6 +137,12 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
         null
       : null
 
+  const proposalRequirementsProfile = resolveProposalRequirementsProfile(
+    tablesToImport,
+    manifest,
+    mode,
+  )
+
   writeReviewerNamePreference(manifest.reviewerName)
   writeCompanyContextPreference(manifest.companyContext)
 
@@ -105,7 +151,7 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     documents,
     profiles,
     creepProfiles: [],
-    proposalRequirementsProfile: null,
+    proposalRequirementsProfile,
     proposalHandoffState: null,
     proposalGenerating: false,
     proposalGenerationError: null,
@@ -229,5 +275,73 @@ export async function runSharePackProposalCompatHarness(): Promise<void> {
   }
   if (state.companyContext !== 'Explicit proposal manifest context.') {
     throw new Error('runSharePackProposalCompatHarness: manifest context mismatch')
+  }
+
+  const proposalProfileId = 'share-import-prof'
+  tables.proposal_profiles = [
+    {
+      profile_id: proposalProfileId,
+      rfp_doc_id: 'rfp-harness',
+      summary: 'Imported proposal profile.',
+      built_at: new Date().toISOString(),
+      package_kind: 'solicitation',
+      package_warnings_json: '[]',
+    },
+  ]
+  tables.proposal_volumes = [
+    {
+      profile_id: proposalProfileId,
+      volume_id: 'vol-draft',
+      title: 'Technical approach',
+      requirement_summary: 'Methodology.',
+      solicitation_refs_json: null,
+      body_markdown: '## Approach\n\nImported draft body.',
+      status: 'draft',
+      error_message: null,
+      edited: 1,
+      edited_at: '2026-02-01T12:00:00.000Z',
+      generation_progress_json: null,
+      analysis_refs_json: null,
+    },
+    {
+      profile_id: proposalProfileId,
+      volume_id: 'vol-pending',
+      title: 'Management plan',
+      requirement_summary: 'Staffing.',
+      solicitation_refs_json: null,
+      body_markdown: null,
+      status: 'pending',
+      error_message: null,
+      edited: 0,
+      edited_at: null,
+      generation_progress_json: null,
+      analysis_refs_json: null,
+    },
+  ]
+  tables.proposal_volume_sections = []
+
+  const proposalWithProfilePayload: SharePackPayload = {
+    ...proposalPayload,
+    tables,
+    manifest: {
+      ...proposalPayload.manifest,
+      proposalRequirementsProfileId: proposalProfileId,
+    },
+  }
+
+  store.resetSession()
+  await applySharePackPayload(proposalWithProfilePayload)
+
+  state = useSessionStore.getState()
+  if (state.proposalRequirementsProfile?.profile_id !== proposalProfileId) {
+    throw new Error('runSharePackProposalCompatHarness: expected proposal profile from share tables')
+  }
+  const draftVolume = state.proposalRequirementsProfile.volumes.find((v) => v.id === 'vol-draft')
+  const pendingVolume = state.proposalRequirementsProfile.volumes.find((v) => v.id === 'vol-pending')
+  if (draftVolume?.status !== 'draft' || !draftVolume.edited) {
+    throw new Error('runSharePackProposalCompatHarness: draft volume status/edited not restored')
+  }
+  if (pendingVolume?.status !== 'pending') {
+    throw new Error('runSharePackProposalCompatHarness: pending volume status not restored')
   }
 }

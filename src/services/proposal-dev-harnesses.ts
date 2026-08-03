@@ -21,6 +21,7 @@ import {
   runBuildProposalRfpProfileBaselineMappingHarness,
   runBuildProposalRfpProfilePackageHarness,
 } from '@/services/build-proposal-rfp-profile'
+import { runBuildProposalVolumeSiblingHandoffHarness } from '@/services/build-proposal-volumes'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
@@ -33,6 +34,7 @@ import {
 } from '@/services/proposal-store-generate-harness'
 import { runProposalSectionEcpHarness, runProposalSectionCitationsHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
+import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
 import { runProposalShareStoreHarness } from '@/services/proposal-share-store'
 

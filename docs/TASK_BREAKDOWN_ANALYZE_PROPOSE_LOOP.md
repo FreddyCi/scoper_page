@@ -469,16 +469,19 @@ flowchart TD
 ### **ID:** BDA-216
 
 **Title:** Import proposal profile on share load  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-215  
 **Priority:** Medium  
 **Description:** [`share-pack-import.ts`](../src/services/share-pack-import.ts): hydrate **`proposalRequirementsProfile`** from tables instead of forcing `null`. [`share-pack-export.ts`](../src/services/share-pack-export.ts): include proposal tables when mode `proposal`. Update **`runSharePackProposalCompatHarness`**.  
 **Completed Changes:**
-- 🔄 Import/export wiring  
+- ✅ **`resolveProposalRequirementsProfile`** on share import (proposal mode)
+- ✅ RFP import clears proposal share tables; export sync unchanged (BDA-215)
+- ✅ **`runSharePackProposalCompatHarness`** asserts draft/pending volume restore
 **Test Strategy:** Share pack with drafts → import → panel shows same volume statuses.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runSharePackProposalCompatHarness` profile restore case
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** Unified plan Phase 5  
 
 ---

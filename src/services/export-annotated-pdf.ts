@@ -3,14 +3,16 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
 import { beginBlobSave } from '@/lib/download-blob'
+import { drawPdfDrawingAnnotationsOnPage } from '@/lib/pdf-drawing-export'
 import { addHighlightAnnotation, addTextNoteAnnotation } from '@/lib/pdf-export-annotations'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
-import type { Bbox, CommentRecord, DocumentMeta } from '@/lib/types'
+import type { Bbox, CommentRecord, DocumentMeta, PdfDrawingAnnotation } from '@/lib/types'
 import {
   fetchAnnotatedBlocksForExport,
   type AnnotatedBlockExport,
 } from '@/services/block-comments'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
+import { fetchPdfDrawingAnnotationsForDoc } from '@/services/pdf-drawing-annotations'
 
 export type ExportCommentMode = 'markup' | 'burned-in'
 
@@ -343,6 +345,31 @@ export { annotatedExportFilename }
 
 export type ExportAnnotatedPdfOptions = {
   commentMode?: ExportCommentMode
+  /**
+   * Burned-in export only — merge vector drawing marks (BDA-238).
+   * Default: true when the document has any `pdf_drawing_annotations` rows.
+   */
+  includeDrawingMarks?: boolean
+}
+
+function resolveIncludeDrawingMarks(
+  drawingAnnotationCount: number,
+  option: boolean | undefined,
+): boolean {
+  if (option !== undefined) return option
+  return drawingAnnotationCount > 0
+}
+
+function groupDrawingAnnotationsByPage(
+  annotations: readonly PdfDrawingAnnotation[],
+): Map<number, PdfDrawingAnnotation[]> {
+  const byPage = new Map<number, PdfDrawingAnnotation[]>()
+  for (const annotation of annotations) {
+    const bucket = byPage.get(annotation.page_num) ?? []
+    bucket.push(annotation)
+    byPage.set(annotation.page_num, bucket)
+  }
+  return byPage
 }
 
 /** Build a PDF copy with role metadata and review notes. */
@@ -362,6 +389,13 @@ export async function exportAnnotatedPdf(
   }
 
   const annotatedBlocks = await fetchAnnotatedBlocksForExport(document.doc_id)
+  const drawingAnnotations = await fetchPdfDrawingAnnotationsForDoc(document.doc_id)
+  const includeDrawingMarks = resolveIncludeDrawingMarks(
+    drawingAnnotations.length,
+    options.includeDrawingMarks,
+  )
+  const drawingsByPage = groupDrawingAnnotationsByPage(drawingAnnotations)
+
   const pdfDoc = await PDFDocument.load(bytes.slice(), { ignoreEncryption: true })
   const pages = pdfDoc.getPages()
 
@@ -397,6 +431,13 @@ export async function exportAnnotatedPdf(
 
       drawBurnedInPageAnnotations(page, pageHeight, entries, font, boldFont)
     }
+
+    if (includeDrawingMarks) {
+      for (const [pageNum, marks] of drawingsByPage) {
+        if (pageNum < 1 || pageNum > pages.length) continue
+        drawPdfDrawingAnnotationsOnPage(pages[pageNum - 1]!, marks, { font, boldFont })
+      }
+    }
   } else {
     for (const [pageNum, entries] of notesByPage) {
       if (pageNum < 1 || pageNum > pages.length) continue
@@ -424,7 +465,7 @@ export async function downloadAnnotatedPdf(
     extension: '.pdf',
   })
 
-  const pdfBytes = await exportAnnotatedPdf(document, { commentMode })
+  const pdfBytes = await exportAnnotatedPdf(document, options)
   const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
   await writeBlob(blob)
 }
@@ -466,5 +507,88 @@ export async function runAnnotatedPdfExportHarness(): Promise<void> {
 
   if (pdfBytes.byteLength < 100) {
     throw new Error('runAnnotatedPdfExportHarness failed: exported PDF too small')
+  }
+}
+
+/** Dev harness — burned-in export with vs without drawing marks (BDA-238). */
+export async function runExportAnnotatedPdfDrawingMarksHarness(): Promise<void> {
+  const { fetchDocumentBlocks } = await import('@/services/document-blocks')
+  const { insertBlockComment } = await import('@/services/block-comments')
+  const { insertPdfDrawingAnnotation } = await import('@/services/pdf-drawing-annotations')
+  const { ingestFile } = await import('@/services/ingest-router')
+
+  const response = await fetch('/sample/minimal.pdf')
+  if (!response.ok) {
+    throw new Error(
+      `runExportAnnotatedPdfDrawingMarksHarness: failed to load sample PDF (${response.status})`,
+    )
+  }
+
+  const blob = await response.blob()
+  const ingested = await ingestFile(
+    new File([blob], 'export-drawing-harness.pdf', { type: 'application/pdf' }),
+    { ocrEnabled: false },
+  )
+
+  const blocks = await fetchDocumentBlocks(ingested.doc_id)
+  const firstBlock = blocks[0]
+  if (!firstBlock) {
+    throw new Error('runExportAnnotatedPdfDrawingMarksHarness failed: expected blocks on sample PDF')
+  }
+
+  await insertBlockComment(firstBlock.block_id, 'Export harness review note.')
+
+  await insertPdfDrawingAnnotation({
+    doc_id: ingested.doc_id,
+    page_num: 1,
+    tool: 'rect',
+    color: '#0EA5E9',
+    stroke_width: 4,
+    geometry: { kind: 'rect', x: 0.15, y: 0.15, width: 0.25, height: 0.1 },
+  })
+
+  const document: DocumentMeta = {
+    doc_id: ingested.doc_id,
+    filename: ingested.filename,
+    mime: ingested.mime,
+    role: 'baseline',
+    uploaded_at: new Date().toISOString(),
+  }
+
+  const commentsOnly = await exportAnnotatedPdf(document, {
+    commentMode: 'burned-in',
+    includeDrawingMarks: false,
+  })
+  const withDrawingMarks = await exportAnnotatedPdf(document, {
+    commentMode: 'burned-in',
+    includeDrawingMarks: true,
+  })
+
+  if (commentsOnly.byteLength < 100 || withDrawingMarks.byteLength < 100) {
+    throw new Error('runExportAnnotatedPdfDrawingMarksHarness failed: exported PDF too small')
+  }
+
+  if (withDrawingMarks.byteLength <= commentsOnly.byteLength) {
+    throw new Error(
+      'runExportAnnotatedPdfDrawingMarksHarness failed: drawing layer should increase PDF size',
+    )
+  }
+
+  const defaultBurnedIn = await exportAnnotatedPdf(document, { commentMode: 'burned-in' })
+  if (defaultBurnedIn.byteLength !== withDrawingMarks.byteLength) {
+    throw new Error(
+      'runExportAnnotatedPdfDrawingMarksHarness failed: default includeDrawingMarks should match explicit true',
+    )
+  }
+
+  const markupBytes = await exportAnnotatedPdf(document, { commentMode: 'markup' })
+  const markupWithoutExplicitDrawing = await exportAnnotatedPdf(document, {
+    commentMode: 'markup',
+    includeDrawingMarks: true,
+  })
+  if (markupBytes.byteLength !== markupWithoutExplicitDrawing.byteLength) {
+    throw new Error(
+      'runExportAnnotatedPdfDrawingMarksHarness failed: markup mode must ignore drawing marks',
+    )
   }
 }

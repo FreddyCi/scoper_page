@@ -31,6 +31,9 @@ import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runBlockCommentsHarness } from '@/services/block-comments'
+import {
+  runExportAnnotatedPdfDrawingMarksHarness,
+} from '@/services/export-annotated-pdf'
 import { runPdfDrawingExportHarness } from '@/lib/pdf-drawing-export'
 import { runPdfDrawingAnnotationsSchemaHarness, runPdfDrawingAnnotationsCrudHarness, runPdfDrawingAnnotationsPageScopeHarness, runPdfDrawingAnnotationsUndoHarness } from '@/services/pdf-drawing-annotations'
 import { runDocumentRoleHarness } from '@/services/document-roles'
@@ -80,6 +83,7 @@ function App() {
       await runPdfDrawingAnnotationsPageScopeHarness()
       await runPdfDrawingAnnotationsUndoHarness()
       await runPdfDrawingExportHarness()
+      await runExportAnnotatedPdfDrawingMarksHarness()
       await runLiteParseHarness()
       await runOcrHarness()
       await runLiteParseOcrHarness()

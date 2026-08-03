@@ -435,16 +435,18 @@ flowchart TD
 ### **ID:** BDA-238
 
 **Title:** Merge drawing layer in export-annotated-pdf  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-237, BDA-223  
 **Priority:** Critical  
 **Description:** Extend [`export-annotated-pdf.ts`](../src/services/export-annotated-pdf.ts): load `pdf_drawing_annotations` for doc; on **burned-in** path, invoke BDA-237 after embed; optional checkbox **Include drawing marks** (default on when any marks exist). Block comment export unchanged when no drawing marks.  
 **Completed Changes:**
-- 🔄 Fetch + merge hook
-- 🔄 Option flag in export API
+- ✅ `fetchPdfDrawingAnnotationsForDoc` + page grouping on export
+- ✅ `includeDrawingMarks` on `ExportAnnotatedPdfOptions` (default when any rows exist)
+- ✅ Burned-in path calls `drawPdfDrawingAnnotationsOnPage` after block notes; markup unchanged
+- ✅ `downloadAnnotatedPdf` forwards full options
 **Test Strategy:** Export with block comments only vs with drawing marks; second file visually contains vectors.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runExportAnnotatedPdfDrawingMarksHarness` in dev App chain (size smoke + markup ignores drawings)  
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`export-annotated-pdf.ts`](../src/services/export-annotated-pdf.ts)
 

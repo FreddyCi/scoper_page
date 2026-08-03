@@ -113,16 +113,20 @@ flowchart TD
 ### **ID:** BDA-223
 
 **Title:** Annotation CRUD service + harness  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-221, BDA-222  
 **Priority:** Critical  
 **Description:** Implement [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts): insert, update, delete, list by `doc_id`, list by `doc_id` + `page_num`. Optional: delete-last for undo (or defer stack to BDA-227). Add dev harness (mirror [`block-comments`](../src/services/block-comments.ts) patterns) proving create → list → delete.  
 **Completed Changes:**
-- 🔄 CRUD functions + harness script or `proposal-dev` entry
+- ✅ `insertPdfDrawingAnnotation`, `updatePdfDrawingAnnotation`, `deletePdfDrawingAnnotation`
+- ✅ `fetchPdfDrawingAnnotationById`, `fetchPdfDrawingAnnotationsForDoc`, `fetchPdfDrawingAnnotationsForPage`
+- ✅ `runPdfDrawingAnnotationsCrudHarness` + dev chain in [`App.tsx`](../src/App.tsx)
+- ✅ Schema harness refactored to use `insertPdfDrawingAnnotation`
 **Test Strategy:** Run harness; `pnpm exec tsc --noEmit`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `runPdfDrawingAnnotationsCrudHarness` on dev app load
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Services; [`block-comments.ts`](../src/services/block-comments.ts)
 
 ---

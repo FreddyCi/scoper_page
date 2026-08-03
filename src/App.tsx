@@ -31,7 +31,7 @@ import { runCreepProfileGridHarness, runCreepProfileUiHarness } from '@/services
 import { runResultsProfileGridHarness, runResultsProfileUiHarness } from '@/services/results-profile-ui-harness'
 import { runCitationBridgeHarness, runCitationClickHarness } from '@/services/citation-bridge'
 import { runBlockCommentsHarness } from '@/services/block-comments'
-import { runPdfDrawingAnnotationsSchemaHarness } from '@/services/pdf-drawing-annotations'
+import { runPdfDrawingAnnotationsSchemaHarness, runPdfDrawingAnnotationsCrudHarness } from '@/services/pdf-drawing-annotations'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
@@ -75,6 +75,7 @@ function App() {
       await runDuckdbHarness()
       await runBlockCommentsHarness()
       await runPdfDrawingAnnotationsSchemaHarness()
+      await runPdfDrawingAnnotationsCrudHarness()
       await runLiteParseHarness()
       await runOcrHarness()
       await runLiteParseOcrHarness()

@@ -42,6 +42,7 @@ import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
 import {
   buildProposalVolume,
   buildProposalVolumes,
+  patchProposalVolume,
   type BuildProposalVolumeBatchState,
 } from '@/services/build-proposal-volumes'
 import { fetchDocumentBlocks } from '@/services/document-blocks'
@@ -191,6 +192,7 @@ export type SessionState = {
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
+  setProposalVolumeBody: (volumeId: string, markdown: string) => void
   clearProposalGeneration: () => void
   runProposalRequirementsProfile: () => Promise<void>
   runGenerateProposalVolumes: () => Promise<void>
@@ -496,6 +498,24 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   setProposalRequirementsProfile: (proposalRequirementsProfile) =>
     set({ proposalRequirementsProfile }),
+
+  setProposalVolumeBody: (volumeId, markdown) => {
+    const profile = get().proposalRequirementsProfile
+    if (!profile) return
+
+    if (!profile.volumes.some((volume) => volume.id === volumeId)) return
+
+    const editedAt = new Date().toISOString()
+    set({
+      proposalRequirementsProfile: patchProposalVolume(profile, volumeId, {
+        bodyMarkdown: markdown,
+        status: 'draft',
+        edited: true,
+        editedAt,
+        errorMessage: undefined,
+      }),
+    })
+  },
 
   clearProposalGeneration: () =>
     set({

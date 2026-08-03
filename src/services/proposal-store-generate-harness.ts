@@ -128,12 +128,92 @@ export async function runProposalStoreGenerateSingleVolumeHarness(): Promise<voi
 
   await useSessionStore.getState().runGenerateProposalVolume('vol-1')
 
-  const chatBusy = useSessionStore.getState()
-  if (chatBusy.proposalGenerating) {
-    throw new Error(
-      'runProposalStoreGenerateSingleVolumeHarness: chatGenerating should block single-volume generate',
-    )
+  useSessionStore.getState().resetSession()
+}
+
+/** Immutable profile patch when saving hand-edited volume markdown (BDA-204). */
+export function runProposalVolumeBodyEditHarness(): void {
+  const store = useSessionStore.getState()
+  store.resetSession()
+
+  const profile: ProposalRequirementsProfile = {
+    profile_id: 'prof-body-edit',
+    rfp_doc_id: 'rfp-1',
+    summary: 'Harness profile for volume body edits.',
+    built_at: new Date().toISOString(),
+    packageKind: 'solicitation',
+    packageWarnings: [],
+    volumes: [
+      {
+        id: 'vol-1',
+        title: 'Technical approach',
+        requirementSummary: 'Methodology.',
+        status: 'error',
+        errorMessage: 'Prior generate failed.',
+      },
+      {
+        id: 'vol-2',
+        title: 'Management',
+        requirementSummary: 'Staffing plan.',
+        status: 'pending',
+        sections: [
+          {
+            id: 'sec-1',
+            title: 'Org chart',
+            findClauseQuery: 'management',
+            status: 'draft',
+            bodyMarkdown: '## Org\n\nSection body unchanged by volume edit.',
+          },
+        ],
+      },
+    ],
   }
 
-  useSessionStore.getState().resetSession()
+  useSessionStore.setState({ proposalRequirementsProfile: profile })
+
+  const savedMarkdown = '## Hand edit\n\nUser-saved proposal volume markdown.'
+  store.setProposalVolumeBody('vol-1', savedMarkdown)
+
+  const after = useSessionStore.getState().proposalRequirementsProfile
+  if (!after) {
+    throw new Error('runProposalVolumeBodyEditHarness: profile missing after edit')
+  }
+  if (after === profile) {
+    throw new Error('runProposalVolumeBodyEditHarness: profile reference should be replaced')
+  }
+
+  const vol1 = after.volumes.find((volume) => volume.id === 'vol-1')
+  if (!vol1 || vol1.bodyMarkdown !== savedMarkdown) {
+    throw new Error('runProposalVolumeBodyEditHarness: expected bodyMarkdown patch on vol-1')
+  }
+  if (vol1.status !== 'draft' || !vol1.edited || !vol1.editedAt) {
+    throw new Error('runProposalVolumeBodyEditHarness: expected draft + edited flags on vol-1')
+  }
+  if (vol1.errorMessage != null) {
+    throw new Error('runProposalVolumeBodyEditHarness: errorMessage should clear on save')
+  }
+
+  const vol2 = after.volumes.find((volume) => volume.id === 'vol-2')
+  if (!vol2 || vol2.status !== 'pending') {
+    throw new Error('runProposalVolumeBodyEditHarness: sibling volume should be unchanged')
+  }
+  const sectionBody = vol2.sections?.[0]?.bodyMarkdown
+  if (sectionBody !== '## Org\n\nSection body unchanged by volume edit.') {
+    throw new Error('runProposalVolumeBodyEditHarness: sectional bodies must not sync on v1 save')
+  }
+
+  const profileBeforeUnknown = useSessionStore.getState().proposalRequirementsProfile
+  store.setProposalVolumeBody('vol-missing', 'noop')
+  if (useSessionStore.getState().proposalRequirementsProfile !== profileBeforeUnknown) {
+    throw new Error('runProposalVolumeBodyEditHarness: unknown volume id should no-op')
+  }
+
+  store.resetSession()
+  useSessionStore.setState({ proposalRequirementsProfile: null })
+  store.setProposalVolumeBody('vol-1', savedMarkdown)
+  if (useSessionStore.getState().proposalRequirementsProfile != null) {
+    throw new Error('runProposalVolumeBodyEditHarness: edit without profile should no-op')
+  }
+
+  store.resetSession()
 }

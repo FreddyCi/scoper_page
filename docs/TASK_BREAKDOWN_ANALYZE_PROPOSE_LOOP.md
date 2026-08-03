@@ -213,16 +213,18 @@ flowchart TD
 ### **ID:** BDA-204
 
 **Title:** setProposalVolumeBody store action  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-203  
 **Priority:** High  
 **Description:** **`setProposalVolumeBody(volumeId, markdown)`** in session store: patch `proposalRequirementsProfile` volume `bodyMarkdown`, `status: 'draft'`, `edited: true`, `editedAt` ISO, clear `errorMessage`. Optional: sync concatenated body if sections exist (v1: volume-level edit only unless sections are empty).  
 **Completed Changes:**
-- 🔄 Store patch helper  
+- ✅ **`setProposalVolumeBody`** via **`patchProposalVolume`** (sections untouched on v1 save)
+- ✅ **`runProposalVolumeBodyEditHarness`** in dev unit chain
 **Test Strategy:** Dev harness or unit assert: edit updates profile immutably.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runProposalVolumeBodyEditHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** [`session-store.ts`](../src/store/session-store.ts)  
 
 ---

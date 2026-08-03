@@ -17,8 +17,11 @@ type PdfPageCanvasProps = {
   editable?: boolean
   adjusting?: boolean
   onRegionCommit?: (bbox: Bbox) => void | Promise<void>
-  /** Normalized drawing marks for this page (read-only overlay until Mark mode tools, BDA-224+). */
+  /** Normalized drawing marks for this page (BDA-224+). */
   drawingAnnotations?: PdfDrawingAnnotation[]
+  /** When true, mount drawing overlay and disable citation region drag (BDA-233). */
+  markMode?: boolean
+  /** @deprecated Use markMode */
   markDrawingMode?: boolean
   markTool?: PdfMarkSessionTool
   markColor?: string
@@ -65,6 +68,7 @@ export function PdfPageCanvas({
   adjusting = false,
   onRegionCommit,
   drawingAnnotations = [],
+  markMode = false,
   markDrawingMode = false,
   markTool = 'pen',
   markColor,
@@ -78,6 +82,7 @@ export function PdfPageCanvas({
   onEraseAnnotation,
   className,
 }: PdfPageCanvasProps) {
+  const markModeActive = markMode || markDrawingMode
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)
   const [rendering, setRendering] = useState(false)
@@ -212,15 +217,9 @@ export function PdfPageCanvas({
       ? { width: canvasLayout.width, height: canvasLayout.height }
       : null
   const showDrawingOverlay =
-    drawingViewport != null &&
-    (drawingAnnotations.length > 0 ||
-      (markDrawingMode &&
-        (onStrokeCommit ||
-          onPenStrokeCommit ||
-          onShapeCommit ||
-          onTextCommit ||
-          onStampCommit ||
-          onEraseAnnotation)))
+    drawingViewport != null && (markModeActive || drawingAnnotations.length > 0)
+  /** Citation block adjust is mutually exclusive with mark mode (BDA-233). */
+  const citationRegionEditable = editable && !markModeActive
 
   return (
     <div className={cn('relative inline-block w-fit', className)}>
@@ -231,7 +230,7 @@ export function PdfPageCanvas({
           className="absolute inset-0"
           style={{ width: canvasLayout.width, height: canvasLayout.height }}
         >
-          {editable ? (
+          {citationRegionEditable ? (
             <PdfHighlightEditor
               rect={scaledHighlight}
               boundsWidth={canvasLayout.width}
@@ -261,13 +260,13 @@ export function PdfPageCanvas({
 
       {showDrawingOverlay && drawingViewport ? (
         <div
-          className="absolute inset-0"
+          className={cn('absolute inset-0', markModeActive && 'z-[1]')}
           style={{ width: drawingViewport.width, height: drawingViewport.height }}
         >
           <PdfDrawingOverlay
             annotations={drawingAnnotations}
             viewport={drawingViewport}
-            interactive={markDrawingMode}
+            interactive={markModeActive}
             activeTool={markTool}
             markColor={markColor}
             markStrokeWidth={markStrokeWidth}

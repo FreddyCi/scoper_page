@@ -330,16 +330,17 @@ flowchart TD
 ### **ID:** BDA-233
 
 **Title:** PdfPageCanvas overlay and mode gating  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-224, BDA-232  
 **Priority:** Critical  
 **Description:** [`PdfPageCanvas.tsx`](../src/components/workspace/PdfPageCanvas.tsx): mount `PdfDrawingOverlay` when `markMode`; when `markMode`, **disable** block region drag / citation adjust; when citation editable and not mark mode, keep existing behavior.  
 **Completed Changes:**
-- 🔄 Conditional overlay mount
-- 🔄 Strict mutual exclusion with citation editor
+- ✅ Overlay mounts whenever `markMode` (or persisted marks when view-only)
+- ✅ `citationRegionEditable = editable && !markMode`; drawing layer `z-[1]` in mark mode
+- ✅ `DocumentViewer` passes `markMode`; `canAdjustRegion` already excludes mark mode
 **Test Strategy:** Regression: citation adjust works with Mark off; with Mark on, no block drag.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Manual: Mark off + citation → drag adjust; Mark on → overlay interactive, no highlight editor  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Risks (tool conflict)
 

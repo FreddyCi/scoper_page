@@ -338,7 +338,7 @@ export function DocumentViewer({
               adjusting={adjustingRegion}
               onRegionCommit={handleRegionAdjust}
               drawingAnnotations={pageDrawingAnnotations}
-              markDrawingMode={markMode}
+              markMode={markMode}
               markTool={pdfMarkTool}
               markColor={markColor}
               markStrokeWidth={effectiveMarkStrokeWidth}

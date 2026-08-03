@@ -253,6 +253,17 @@ export async function deletePdfDrawingAnnotation(annotationId: string): Promise<
   return true
 }
 
+/** Re-insert a previously removed annotation with the same id (undo delete / redo insert). */
+export async function restorePdfDrawingAnnotation(
+  annotation: PdfDrawingAnnotation,
+): Promise<PdfDrawingAnnotation> {
+  const existing = await fetchPdfDrawingAnnotationById(annotation.annotation_id)
+  if (existing) return existing
+
+  await insertAnnotationRecord(pdfDrawingAnnotationToRecord(annotation))
+  return annotation
+}
+
 export async function fetchPdfDrawingAnnotationById(
   annotationId: string,
 ): Promise<PdfDrawingAnnotation | null> {
@@ -394,5 +405,94 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected one page-2 annotation')
   }
 
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
+}
+
+/** Dev harness — undo/redo stack (BDA-227). */
+export async function runPdfDrawingAnnotationsUndoHarness(): Promise<void> {
+  useSessionStore.getState().setReviewerName('Harness Reviewer')
+
+  const docId = 'pdf-draw-undo-harness-doc'
+  const duckdb = await getDuckdbClient()
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
+
+  const {
+    clearPdfDrawingHistory,
+    pdfDrawingCanRedo,
+    pdfDrawingCanUndo,
+    recordPdfDrawingInsert,
+    undoPdfDrawingHistory,
+    redoPdfDrawingHistory,
+    PDF_DRAWING_UNDO_MAX,
+    pdfDrawingUndoDepth,
+  } = await import('@/lib/pdf-drawing-history')
+
+  clearPdfDrawingHistory(docId)
+
+  const handlers = {
+    undoInsert: async (annotation) => {
+      await deletePdfDrawingAnnotation(annotation.annotation_id)
+    },
+    undoDelete: async (annotation) => {
+      await restorePdfDrawingAnnotation(annotation)
+    },
+    redoInsert: async (annotation) => {
+      await restorePdfDrawingAnnotation(annotation)
+    },
+    redoDelete: async (annotation) => {
+      await deletePdfDrawingAnnotation(annotation.annotation_id)
+    },
+  }
+
+  for (let index = 0; index < 3; index += 1) {
+    const saved = await insertPdfDrawingAnnotation({
+      doc_id: docId,
+      page_num: 1,
+      tool: 'pen',
+      color: '#F59E0B',
+      stroke_width: 4,
+      geometry: {
+        kind: 'stroke',
+        points: [{ x: 0.1 + index * 0.05, y: 0.1 }],
+      },
+    })
+    recordPdfDrawingInsert(docId, saved)
+  }
+
+  if (pdfDrawingUndoDepth(docId) !== 3) {
+    throw new Error('runPdfDrawingAnnotationsUndoHarness failed: undo depth after 3 inserts')
+  }
+
+  await undoPdfDrawingHistory(docId, handlers)
+  await undoPdfDrawingHistory(docId, handlers)
+  const afterUndo = await fetchPdfDrawingAnnotationsForDoc(docId)
+  if (afterUndo.length !== 1 || !pdfDrawingCanUndo(docId)) {
+    throw new Error('runPdfDrawingAnnotationsUndoHarness failed: expected 1 row after 2 undos')
+  }
+
+  await redoPdfDrawingHistory(docId, handlers)
+  if ((await fetchPdfDrawingAnnotationsForDoc(docId)).length !== 2) {
+    throw new Error('runPdfDrawingAnnotationsUndoHarness failed: expected 2 rows after redo')
+  }
+
+  if (!pdfDrawingCanRedo(docId)) {
+    throw new Error('runPdfDrawingAnnotationsUndoHarness failed: expected redo available')
+  }
+
+  for (let index = 0; index < PDF_DRAWING_UNDO_MAX + 5; index += 1) {
+    const saved = await insertPdfDrawingAnnotation({
+      doc_id: docId,
+      page_num: 1,
+      tool: 'pen',
+      color: '#000',
+      geometry: { kind: 'stroke', points: [{ x: 0.01 * index, y: 0.02 }] },
+    })
+    recordPdfDrawingInsert(docId, saved)
+  }
+  if (pdfDrawingUndoDepth(docId) > PDF_DRAWING_UNDO_MAX) {
+    throw new Error('runPdfDrawingAnnotationsUndoHarness failed: undo stack cap exceeded')
+  }
+
+  clearPdfDrawingHistory(docId)
   await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
 }

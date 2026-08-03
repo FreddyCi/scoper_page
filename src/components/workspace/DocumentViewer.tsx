@@ -82,7 +82,7 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
-  const { annotations: drawingAnnotations, commitStroke, eraseAnnotation } =
+  const { annotations: drawingAnnotations, commitStroke, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
     usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
@@ -145,6 +145,35 @@ export function DocumentViewer({
       pdf &&
       !pdfMarkDrawingMode,
   )
+
+  useEffect(() => {
+    if (!pdfMarkDrawingMode) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      const mod = event.metaKey || event.ctrlKey
+      if (!mod || event.key.toLowerCase() !== 'z') return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT')
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      if (event.shiftKey) {
+        void redoDrawingMark()
+      } else {
+        void undoDrawingMark()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [pdfMarkDrawingMode, redoDrawingMark, undoDrawingMark])
 
   const handleStrokeCommit = async (commit: PdfDrawingStrokeCommit) => {
     try {

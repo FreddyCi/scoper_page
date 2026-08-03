@@ -200,17 +200,22 @@ flowchart TD
 ### **ID:** BDA-227
 
 **Title:** Undo and redo stack  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-223, BDA-225  
 **Priority:** Medium  
 **Description:** Per doc/session undo/redo: stack of mutation ops (insert/delete ids) or soft-delete pattern; wire keyboard shortcuts if workspace already has pattern. Cap stack depth (e.g. 50) per plan risk table.  
 **Completed Changes:**
-- 🔄 Undo/redo API in service or hook
-- 🔄 Toolbar buttons (BDA-231 dependency for UI)
+- ✅ [`pdf-drawing-history.ts`](../src/lib/pdf-drawing-history.ts) — per-`doc_id` undo/redo stacks (cap 50)
+- ✅ `restorePdfDrawingAnnotation` + history recording on insert/erase in hook
+- ✅ `undoDrawingMark` / `redoDrawingMark` on `usePdfDrawingAnnotations`
+- ✅ Mark mode ⌘/Ctrl+Z and ⇧+Z in [`DocumentViewer`](../src/components/workspace/DocumentViewer.tsx)
+- ✅ `runPdfDrawingAnnotationsUndoHarness` (dev chain)
 **Test Strategy:** Draw 3 strokes → undo twice → redo once → DB matches.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `runPdfDrawingAnnotationsUndoHarness`
+- 🔄 Manual: mark mode + keyboard undo/redo after strokes
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Risks (cap undo stack)
 
 ---

@@ -1075,6 +1075,7 @@ flowchart LR
 - [TASK_BREAKDOWN_PROPOSAL_MODE.md](TASK_BREAKDOWN_PROPOSAL_MODE.md) — Generate Complete Proposal (replaces Scope Creep tab)
 - [TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) — Sectional ECP / 8K UCW (BDA-152–180)
 - [TASK_BREAKDOWN_CHAT_VOICE.md](TASK_BREAKDOWN_CHAT_VOICE.md) — Chat mic / Whisper WebGPU (BDA-181–195)
+- [TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md) — Analyze → propose loop closure (BDA-196–218)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 

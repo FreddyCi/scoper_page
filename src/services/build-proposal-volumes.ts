@@ -39,13 +39,29 @@ import { getScoperClient, ScoperWebGpuUnavailableError } from '@/services/scoper
 
 export type { ProposalSectionActivityEvent } from '@/lib/agent-activity'
 
-export type BuildProposalVolumesOptions = {
-  documents: DocumentMeta[]
-  profile: ProposalRequirementsProfile
+export type BuildProposalVolumeCallbacks = {
   companyContext: string
   onProfileUpdate: (profile: ProposalRequirementsProfile) => void
   onSectionActivity?: (event: ProposalSectionActivityEvent) => void
   onHandoffUpdate?: (handoff: ProposalHandoffState | null) => void
+}
+
+export type BuildProposalVolumesOptions = BuildProposalVolumeCallbacks & {
+  documents: DocumentMeta[]
+  profile: ProposalRequirementsProfile
+}
+
+/** Inputs for one volume run (batch or single-volume entry via BDA-196). */
+export type BuildProposalVolumeOptions = BuildProposalVolumeCallbacks & {
+  blocks: BlockRecord[]
+  rfpDoc: DocumentMeta
+}
+
+/** Mutable batch state shared across sequential volume runs (BDA-164 handoff roll). */
+export type BuildProposalVolumeBatchState = {
+  handoff: ProposalHandoffState
+  handoffChunkIndex: number
+  contextTracker: ReturnType<typeof createProposalContextTracker>
 }
 
 const PROPOSAL_SECTION_DRAFT_MIN_CHARS = Math.max(120, Math.floor(PROPOSAL_DRAFT_MIN_CHARS / 2))
@@ -189,7 +205,7 @@ async function generateSectionBody(
     contextTracker: ReturnType<typeof createProposalContextTracker>
     excerpts?: string[]
   },
-  options: BuildProposalVolumesOptions,
+  options: BuildProposalVolumeCallbacks,
 ): Promise<{ markdown: string; ecpFindCount: number }> {
   let ecpFindCount = input.excerpts?.length ? 0 : 1
   let markdown = ''
@@ -305,6 +321,256 @@ async function generateSectionBody(
   return { markdown, ecpFindCount }
 }
 
+function ensureVolumeSections(
+  profile: ProposalRequirementsProfile,
+  volumeId: string,
+  blocks: BlockRecord[],
+): ProposalRequirementsProfile {
+  const volume = profile.volumes.find((entry) => entry.id === volumeId)
+  if (!volume) return profile
+
+  if (volume.sections && volume.sections.length > 0) {
+    return profile
+  }
+
+  const sections = deriveProposalSectionsForVolume({
+    volume,
+    blocks,
+    packageKind: profile.packageKind,
+  })
+
+  return patchProposalVolume(profile, volumeId, { sections })
+}
+
+/**
+ * Generate markdown for one proposal volume via sectional ECP + Scoper (BDA-196).
+ * Mutates `batchState` handoff and chunk index for sequential full-profile runs.
+ */
+export async function buildProposalVolume(
+  profile: ProposalRequirementsProfile,
+  volumeId: string,
+  options: BuildProposalVolumeOptions,
+  batchState: BuildProposalVolumeBatchState,
+): Promise<ProposalRequirementsProfile> {
+  let nextProfile = ensureVolumeSections(profile, volumeId, options.blocks)
+
+  const volume = nextProfile.volumes.find((entry) => entry.id === volumeId)
+  if (!volume) {
+    throw new Error(`buildProposalVolume: volume not found (${volumeId})`)
+  }
+
+  batchState.contextTracker.reset()
+
+  const sections = volume.sections ?? []
+
+  nextProfile = patchProposalVolume(nextProfile, volume.id, {
+    status: 'generating',
+    errorMessage: undefined,
+    bodyMarkdown: undefined,
+    sections: sections.map((section) => ({
+      ...section,
+      status: 'pending',
+      bodyMarkdown: undefined,
+      errorMessage: undefined,
+    })),
+    generationProgress: computeVolumeGenerationProgress(sections),
+  })
+  options.onProfileUpdate(nextProfile)
+
+  const blockExcerpts = excerptsForVolume(options.blocks, volume)
+  let bodyMarkdown = ''
+  let volumeHadError = false
+  let volumeErrorMessage: string | undefined
+
+  try {
+    for (const sectionSeed of sections) {
+      const section =
+        nextProfile.volumes
+          .find((entry) => entry.id === volume.id)
+          ?.sections?.find((entry) => entry.id === sectionSeed.id) ?? sectionSeed
+
+      batchState.handoffChunkIndex += 1
+      notifyProposalSectionRoll(
+        {
+          volumeId: volume.id,
+          sectionId: section.id,
+          sectionTitle: section.title,
+        },
+        batchState.contextTracker,
+        options.onSectionActivity,
+      )
+
+      nextProfile = patchProposalVolumeSection(nextProfile, volume.id, section.id, {
+        status: 'generating',
+        errorMessage: undefined,
+      })
+      nextProfile = patchProposalVolume(nextProfile, volume.id, {
+        generationProgress: computeVolumeGenerationProgress(
+          nextProfile.volumes.find((entry) => entry.id === volume.id)?.sections,
+        ),
+      })
+      options.onProfileUpdate(nextProfile)
+
+      notifyProposalSectionActivity(
+        {
+          kind: 'find_clause',
+          volumeId: volume.id,
+          sectionId: section.id,
+          sectionTitle: section.title,
+        },
+        batchState.contextTracker,
+        options.onSectionActivity,
+      )
+
+      notifyProposalSectionActivity(
+        {
+          kind: 'writing',
+          volumeId: volume.id,
+          sectionId: section.id,
+          sectionTitle: section.title,
+        },
+        batchState.contextTracker,
+        options.onSectionActivity,
+      )
+
+      const { markdown: sectionMarkdown } = await generateSectionBody(
+        {
+          section,
+          volume,
+          rfpDoc: options.rfpDoc,
+          blockExcerpts,
+          companyContext: options.companyContext,
+          packageKind: nextProfile.packageKind,
+          handoff: batchState.handoff,
+          handoffChunkIndex: batchState.handoffChunkIndex,
+          contextTracker: batchState.contextTracker,
+        },
+        options,
+      )
+
+      const validation = validateProposalVolumeDraft(sectionMarkdown, {
+        label: section.title,
+        minChars: PROPOSAL_SECTION_DRAFT_MIN_CHARS,
+      })
+
+      if (!validation.ok) {
+        const reason = validation.reasons.join('; ')
+        batchState.handoff = recordProposalHandoffFailure(batchState.handoff, reason)
+        options.onHandoffUpdate?.(batchState.handoff)
+        volumeHadError = true
+        volumeErrorMessage = reason
+
+        nextProfile = patchProposalVolumeSection(nextProfile, volume.id, section.id, {
+          status: 'error',
+          errorMessage: reason,
+          bodyMarkdown: sectionMarkdown.trim() || undefined,
+        })
+        notifyProposalSectionActivity(
+          {
+            kind: 'section_error',
+            volumeId: volume.id,
+            sectionId: section.id,
+            sectionTitle: section.title,
+            message: reason,
+          },
+          batchState.contextTracker,
+          options.onSectionActivity,
+        )
+        options.onProfileUpdate(nextProfile)
+        break
+      }
+
+      batchState.handoff = applySectionCompletion(batchState.handoff, {
+        volumeId: volume.id,
+        sectionId: section.id,
+        title: section.title,
+        summary: summarizeSectionMarkdown(sectionMarkdown),
+      })
+      options.onHandoffUpdate?.(batchState.handoff)
+
+      bodyMarkdown = appendVolumeSectionBody(bodyMarkdown, sectionMarkdown)
+
+      nextProfile = patchProposalVolumeSection(nextProfile, volume.id, section.id, {
+        status: 'draft',
+        bodyMarkdown: sectionMarkdown,
+        errorMessage: undefined,
+      })
+      nextProfile = patchProposalVolume(nextProfile, volume.id, {
+        bodyMarkdown,
+        generationProgress: computeVolumeGenerationProgress(
+          nextProfile.volumes.find((entry) => entry.id === volume.id)?.sections,
+        ),
+      })
+      notifyProposalSectionActivity(
+        {
+          kind: 'validated',
+          volumeId: volume.id,
+          sectionId: section.id,
+          sectionTitle: section.title,
+        },
+        batchState.contextTracker,
+        options.onSectionActivity,
+      )
+      options.onProfileUpdate(nextProfile)
+    }
+
+    if (!volumeHadError) {
+      const withTitle =
+        bodyMarkdown.length > 0 && !bodyMarkdown.startsWith('#')
+          ? [`# ${volume.title}`, '', bodyMarkdown].join('\n')
+          : bodyMarkdown
+
+      nextProfile = patchProposalVolume(nextProfile, volume.id, {
+        status: 'draft',
+        bodyMarkdown: withTitle,
+        errorMessage: undefined,
+      })
+    } else {
+      nextProfile = patchProposalVolume(nextProfile, volume.id, {
+        status: 'error',
+        errorMessage: volumeErrorMessage,
+        bodyMarkdown: bodyMarkdown || undefined,
+      })
+    }
+  } catch (error) {
+    const message =
+      error instanceof ProposalContextOverflowError
+        ? error.message
+        : error instanceof EcpAgentRunDeniedError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : 'Volume generation failed'
+    nextProfile = patchProposalVolume(nextProfile, volume.id, {
+      status: 'error',
+      errorMessage: message,
+    })
+  }
+
+  options.onProfileUpdate(nextProfile)
+  return nextProfile
+}
+
+function enrichProfileVolumeSections(
+  profile: ProposalRequirementsProfile,
+  blocks: BlockRecord[],
+): ProposalRequirementsProfile {
+  return {
+    ...profile,
+    volumes: profile.volumes.map((volume) => {
+      const sections =
+        volume.sections && volume.sections.length > 0
+          ? volume.sections
+          : deriveProposalSectionsForVolume({
+              volume,
+              blocks,
+              packageKind: profile.packageKind,
+            })
+      return { ...volume, sections }
+    }),
+  }
+}
+
 /** Generate markdown for each volume sequentially via sectional ECP + Scoper (BDA-164). */
 export async function buildProposalVolumes(
   options: BuildProposalVolumesOptions,
@@ -316,232 +582,37 @@ export async function buildProposalVolumes(
 
   const blocks = await fetchDocumentBlocks(options.profile.rfp_doc_id)
 
-  let profile: ProposalRequirementsProfile = {
-    ...options.profile,
-    volumes: options.profile.volumes.map((volume) => {
-      const sections =
-        volume.sections && volume.sections.length > 0
-          ? volume.sections
-          : deriveProposalSectionsForVolume({
-              volume,
-              blocks,
-              packageKind: options.profile.packageKind,
-            })
-      return { ...volume, sections }
+  let profile = enrichProfileVolumeSections(options.profile, blocks)
+
+  const batchState: BuildProposalVolumeBatchState = {
+    handoff: createEmptyProposalHandoff({
+      activeGoal:
+        profile.summary.trim() ||
+        'Draft complete proposal volumes for the attached RFP',
+      packageKind: profile.packageKind,
+      pendingSections: collectPendingSectionRefs(profile.volumes),
+    }),
+    handoffChunkIndex: 0,
+    contextTracker: createProposalContextTracker({
+      effectiveMaxSeqLen: getScoperClient().getState().maxSeqLen,
     }),
   }
+  options.onHandoffUpdate?.(batchState.handoff)
 
-  let handoff = createEmptyProposalHandoff({
-    activeGoal:
-      profile.summary.trim() ||
-      'Draft complete proposal volumes for the attached RFP',
-    packageKind: profile.packageKind,
-    pendingSections: collectPendingSectionRefs(profile.volumes),
-  })
-  options.onHandoffUpdate?.(handoff)
-
-  let handoffChunkIndex = 0
-
-  const contextTracker = createProposalContextTracker({
-    effectiveMaxSeqLen: getScoperClient().getState().maxSeqLen,
-  })
-
-  for (const volumeSeed of profile.volumes) {
-    contextTracker.reset()
-
-    const volume =
-      profile.volumes.find((entry) => entry.id === volumeSeed.id) ?? volumeSeed
-
-    const sections = volume.sections ?? []
-
-    profile = patchProposalVolume(profile, volume.id, {
-      status: 'generating',
-      errorMessage: undefined,
-      bodyMarkdown: undefined,
-      sections: sections.map((section) => ({
-        ...section,
-        status: 'pending',
-        bodyMarkdown: undefined,
-        errorMessage: undefined,
-      })),
-      generationProgress: computeVolumeGenerationProgress(sections),
-    })
-    options.onProfileUpdate(profile)
-
-    const blockExcerpts = excerptsForVolume(blocks, volume)
-    let bodyMarkdown = ''
-    let volumeHadError = false
-    let volumeErrorMessage: string | undefined
-
-    try {
-      for (const sectionSeed of sections) {
-        const section =
-          profile.volumes
-            .find((entry) => entry.id === volume.id)
-            ?.sections?.find((entry) => entry.id === sectionSeed.id) ?? sectionSeed
-
-        handoffChunkIndex += 1
-        notifyProposalSectionRoll(
-          {
-            volumeId: volume.id,
-            sectionId: section.id,
-            sectionTitle: section.title,
-          },
-          contextTracker,
-          options.onSectionActivity,
-        )
-
-        profile = patchProposalVolumeSection(profile, volume.id, section.id, {
-          status: 'generating',
-          errorMessage: undefined,
-        })
-        profile = patchProposalVolume(profile, volume.id, {
-          generationProgress: computeVolumeGenerationProgress(
-            profile.volumes.find((entry) => entry.id === volume.id)?.sections,
-          ),
-        })
-        options.onProfileUpdate(profile)
-
-        notifyProposalSectionActivity(
-          {
-            kind: 'find_clause',
-            volumeId: volume.id,
-            sectionId: section.id,
-            sectionTitle: section.title,
-          },
-          contextTracker,
-          options.onSectionActivity,
-        )
-
-        notifyProposalSectionActivity(
-          {
-            kind: 'writing',
-            volumeId: volume.id,
-            sectionId: section.id,
-            sectionTitle: section.title,
-          },
-          contextTracker,
-          options.onSectionActivity,
-        )
-
-        const { markdown: sectionMarkdown } = await generateSectionBody(
-          {
-            section,
-            volume,
-            rfpDoc,
-            blockExcerpts,
-            companyContext: options.companyContext,
-            packageKind: profile.packageKind,
-            handoff,
-            handoffChunkIndex,
-            contextTracker,
-          },
-          options,
-        )
-
-        const validation = validateProposalVolumeDraft(sectionMarkdown, {
-          label: section.title,
-          minChars: PROPOSAL_SECTION_DRAFT_MIN_CHARS,
-        })
-
-        if (!validation.ok) {
-          const reason = validation.reasons.join('; ')
-          handoff = recordProposalHandoffFailure(handoff, reason)
-          options.onHandoffUpdate?.(handoff)
-          volumeHadError = true
-          volumeErrorMessage = reason
-
-          profile = patchProposalVolumeSection(profile, volume.id, section.id, {
-            status: 'error',
-            errorMessage: reason,
-            bodyMarkdown: sectionMarkdown.trim() || undefined,
-          })
-          notifyProposalSectionActivity(
-            {
-              kind: 'section_error',
-              volumeId: volume.id,
-              sectionId: section.id,
-              sectionTitle: section.title,
-              message: reason,
-            },
-            contextTracker,
-            options.onSectionActivity,
-          )
-          options.onProfileUpdate(profile)
-          break
-        }
-
-        handoff = applySectionCompletion(handoff, {
-          volumeId: volume.id,
-          sectionId: section.id,
-          title: section.title,
-          summary: summarizeSectionMarkdown(sectionMarkdown),
-        })
-        options.onHandoffUpdate?.(handoff)
-
-        bodyMarkdown = appendVolumeSectionBody(bodyMarkdown, sectionMarkdown)
-
-        profile = patchProposalVolumeSection(profile, volume.id, section.id, {
-          status: 'draft',
-          bodyMarkdown: sectionMarkdown,
-          errorMessage: undefined,
-        })
-        profile = patchProposalVolume(profile, volume.id, {
-          bodyMarkdown,
-          generationProgress: computeVolumeGenerationProgress(
-            profile.volumes.find((entry) => entry.id === volume.id)?.sections,
-          ),
-        })
-        notifyProposalSectionActivity(
-          {
-            kind: 'validated',
-            volumeId: volume.id,
-            sectionId: section.id,
-            sectionTitle: section.title,
-          },
-          contextTracker,
-          options.onSectionActivity,
-        )
-        options.onProfileUpdate(profile)
-      }
-
-      if (!volumeHadError) {
-        const withTitle =
-          bodyMarkdown.length > 0 && !bodyMarkdown.startsWith('#')
-            ? [`# ${volume.title}`, '', bodyMarkdown].join('\n')
-            : bodyMarkdown
-
-        profile = patchProposalVolume(profile, volume.id, {
-          status: 'draft',
-          bodyMarkdown: withTitle,
-          errorMessage: undefined,
-        })
-      } else {
-        profile = patchProposalVolume(profile, volume.id, {
-          status: 'error',
-          errorMessage: volumeErrorMessage,
-          bodyMarkdown: bodyMarkdown || undefined,
-        })
-      }
-    } catch (error) {
-      const message =
-        error instanceof ProposalContextOverflowError
-          ? error.message
-          : error instanceof EcpAgentRunDeniedError
-            ? error.message
-            : error instanceof Error
-              ? error.message
-              : 'Volume generation failed'
-      profile = patchProposalVolume(profile, volume.id, {
-        status: 'error',
-        errorMessage: message,
-      })
-    }
-
-    options.onProfileUpdate(profile)
+  const volumeOptions: BuildProposalVolumeOptions = {
+    blocks,
+    rfpDoc,
+    companyContext: options.companyContext,
+    onProfileUpdate: options.onProfileUpdate,
+    onSectionActivity: options.onSectionActivity,
+    onHandoffUpdate: options.onHandoffUpdate,
   }
 
-  syncContextUsageFromTracker(contextTracker)
+  for (const volumeSeed of profile.volumes) {
+    profile = await buildProposalVolume(profile, volumeSeed.id, volumeOptions, batchState)
+  }
+
+  syncContextUsageFromTracker(batchState.contextTracker)
 
   return profile
 }

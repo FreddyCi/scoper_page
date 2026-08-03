@@ -292,8 +292,12 @@ console.log(
 
 const shareTable = read('src/lib/share-table.ts')
 assert(
-  String(shareTable.match(/SHARE_PACK_VERSION = (\d+)/)?.[1]) === '2',
-  'share-table must use SHARE_PACK_VERSION 2 for proposal tables (BDA-215)',
+  String(shareTable.match(/SHARE_PACK_VERSION = (\d+)/)?.[1]) === '3',
+  'share-table must use SHARE_PACK_VERSION 3 for pdf_drawing_annotations (BDA-235)',
+)
+assert(
+  shareTable.includes("'pdf_drawing_annotations'"),
+  'share-table registry must include pdf_drawing_annotations (BDA-235)',
 )
 assert(
   shareTable.includes("'proposal_volume_sections'"),

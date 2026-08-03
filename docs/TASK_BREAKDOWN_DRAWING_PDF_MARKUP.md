@@ -372,17 +372,21 @@ flowchart TD
 ### **ID:** BDA-235
 
 **Title:** Share-table registry for annotations  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-221  
 **Priority:** High  
 **Description:** Register `pdf_drawing_annotations` in [`share-table.ts`](../src/lib/share-table.ts) with column list and export order consistent with other tables. Document whether **SHARE_PACK_VERSION** bump is required alongside existing v2 proposal tables.  
 **Completed Changes:**
-- 🔄 Registry entry + version note in this doc's changelog
+- ✅ Registry entry `pdf_drawing_annotations` (import order 7, after `comments`; FK `doc_id` → `documents`)
+- ✅ **`SHARE_PACK_VERSION` bumped 2 → 3** — new required `tables` key; v2 packs cannot import on v3 builds (by design)
+- ✅ `emptyShareTables()` + `runShareTableRegistryHarness()` (SELECT/INSERT column alignment)
 **Test Strategy:** Registry includes table; export SQL fragment generates valid INSERT shape.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runShareTableRegistryHarness` in share pack harness; static QA asserts v3 + registry id  
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`share-table.ts`](../src/lib/share-table.ts)
+
+**Share pack changelog:** v3 adds `pdf_drawing_annotations` table to encrypted payload (proposal tables remain; import order 8–10 unchanged relative to each other).
 
 ---
 

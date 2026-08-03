@@ -90,6 +90,7 @@ function emptyShareTables(): Record<ShareTableId, ShareTableRow[]> {
     documents: [],
     blocks: [],
     comments: [],
+    pdf_drawing_annotations: [],
     results_profiles: [],
     profile_criteria: [],
     scope_flags: [],

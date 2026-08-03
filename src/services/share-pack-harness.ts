@@ -1,6 +1,6 @@
 import { runIngestHarness } from '@/services/ingest-router'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
-import { validateShareTableRegistry } from '@/services/share-pack-duckdb'
+import { runShareTableRegistryHarness } from '@/services/share-pack-duckdb'
 import {
   decryptSharePackFile,
   exportEncryptedSharePack,
@@ -10,7 +10,7 @@ import { useSessionStore } from '@/store/session-store'
 
 /** Round-trip share pack export/import against harness-ingested workspace. */
 export async function runSharePackHarness(): Promise<void> {
-  validateShareTableRegistry()
+  runShareTableRegistryHarness()
 
   const store = useSessionStore.getState()
   store.resetSession()

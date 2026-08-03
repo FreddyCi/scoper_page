@@ -3,6 +3,7 @@ import {
   getShareTableById,
   getShareTablesInClearOrder,
   getShareTablesInImportOrder,
+  SHARE_TABLE_REGISTRY,
   type ShareTableDefinition,
   type ShareTableId,
   type ShareTableRow,
@@ -123,4 +124,33 @@ export function validateShareTableRegistry(): void {
     }
     ids.add(definition.id)
   }
+}
+
+function assertShareTableSelectCoversColumns(definition: ShareTableDefinition): void {
+  if (!definition.selectSql.includes(`FROM ${definition.tableName}`)) {
+    throw new Error(
+      `Share table ${definition.id}: selectSql must query FROM ${definition.tableName}`,
+    )
+  }
+
+  for (const column of definition.columns) {
+    if (!definition.selectSql.includes(column)) {
+      throw new Error(`Share table ${definition.id}: selectSql missing column ${column}`)
+    }
+  }
+
+  const placeholders = definition.columns.map(() => '?').join(', ')
+  const insertPreview = `INSERT OR REPLACE INTO ${definition.tableName} (${definition.columns.join(', ')}) VALUES (${placeholders})`
+  if (insertPreview.split('?').length - 1 !== definition.columns.length) {
+    throw new Error(`Share table ${definition.id}: INSERT placeholder count mismatch`)
+  }
+}
+
+/** Dev harness — registry ids and SELECT/INSERT column alignment (BDA-235). */
+export function runShareTableRegistryHarness(): void {
+  validateShareTableRegistry()
+  for (const definition of SHARE_TABLE_REGISTRY) {
+    assertShareTableSelectCoversColumns(definition)
+  }
+  getShareTableById('pdf_drawing_annotations')
 }

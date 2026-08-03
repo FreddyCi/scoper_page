@@ -54,6 +54,8 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setAnnotations([])
+
     void fetchPdfDrawingAnnotationsForPage(docId, pageNum)
       .then((rows) => {
         if (!cancelled) {

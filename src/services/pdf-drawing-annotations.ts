@@ -465,6 +465,48 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
   await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
 }
 
+/** Dev harness — annotations scoped by page_num (BDA-232). */
+export async function runPdfDrawingAnnotationsPageScopeHarness(): Promise<void> {
+  const docId = 'pdf-draw-page-scope-harness-doc'
+  const duckdb = await getDuckdbClient()
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
+
+  const pageEightStamp = await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 8,
+    tool: 'stamp',
+    color: '#0EA5E9',
+    stroke_width: 2,
+    geometry: { kind: 'stamp', x: 0.12, y: 0.34, stampKind: 'window' },
+  })
+
+  await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 9,
+    tool: 'text',
+    color: '#18181B',
+    geometry: { kind: 'text', x: 0.5, y: 0.5 },
+    text_body: 'P9',
+  })
+
+  const pageEight = await fetchPdfDrawingAnnotationsForPage(docId, 8)
+  const pageNine = await fetchPdfDrawingAnnotationsForPage(docId, 9)
+
+  if (pageEight.length !== 1 || pageEight[0]!.annotation_id !== pageEightStamp.annotation_id) {
+    throw new Error('runPdfDrawingAnnotationsPageScopeHarness failed: page 8 list')
+  }
+  if (pageNine.length !== 1 || pageNine[0]!.text_body !== 'P9' || pageNine[0]!.page_num !== 9) {
+    throw new Error('runPdfDrawingAnnotationsPageScopeHarness failed: page 9 list')
+  }
+
+  const docRows = await fetchPdfDrawingAnnotationsForDoc(docId)
+  if (docRows.length !== 2) {
+    throw new Error('runPdfDrawingAnnotationsPageScopeHarness failed: doc-wide count')
+  }
+
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])
+}
+
 /** Dev harness — undo/redo stack (BDA-227). */
 export async function runPdfDrawingAnnotationsUndoHarness(): Promise<void> {
   useSessionStore.getState().setReviewerName('Harness Reviewer')

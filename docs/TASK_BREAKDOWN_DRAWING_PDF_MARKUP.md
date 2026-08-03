@@ -310,15 +310,18 @@ flowchart TD
 ### **ID:** BDA-232
 
 **Title:** DocumentViewer markMode state  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-223, BDA-231  
 **Priority:** Critical  
 **Description:** [`DocumentViewer.tsx`](../src/components/workspace/DocumentViewer.tsx): `markMode` boolean; on page change fetch annotations for page; pass to canvas/overlay; on commit refresh list and persist. Load author initials from existing user/session pattern if available.  
 **Completed Changes:**
-- 🔄 State + data loading lifecycle
+- ✅ `markMode` alias over session `pdfMarkDrawingMode`; page-scoped `usePdfDrawingAnnotations` clears stale rows on page/doc change
+- ✅ Session `pdfMarkColor` / `pdfMarkStrokeWidth` / `PdfMarkSessionTool` (incl. eraser); commits persist via hook + `refresh` on failure
+- ✅ Author initials via `reviewerName` → `insertPdfDrawingAnnotation` (existing BDA-223 path)
+- ✅ `runPdfDrawingAnnotationsPageScopeHarness` (pages 8 vs 9)
 **Test Strategy:** Navigate pages 8→9; annotations scoped per page.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Page-scope harness; manual mark mode + page navigation shows per-page marks only  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Wire DocumentViewer
 

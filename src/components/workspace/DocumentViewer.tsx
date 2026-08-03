@@ -71,6 +71,10 @@ export function DocumentViewer({
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const pdfMarkDrawingMode = useSessionStore((state) => state.pdfMarkDrawingMode)
   const pdfMarkTool = useSessionStore((state) => state.pdfMarkTool)
+  const pdfMarkColor = useSessionStore((state) => state.pdfMarkColor)
+  const pdfMarkStrokeWidth = useSessionStore((state) => state.pdfMarkStrokeWidth)
+  /** Mark mode on the PDF original pane (session-backed; toolbar toggle in BDA-234). */
+  const markMode = pdfMarkDrawingMode
   const canvasAnchorRef = useRef<HTMLDivElement>(null)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
@@ -87,8 +91,18 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
-  const { annotations: drawingAnnotations, commitStroke, commitShape, commitText, commitStamp, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
-    usePdfDrawingAnnotations(document.doc_id, currentPage)
+  const {
+    annotations: drawingAnnotations,
+    loading: drawingAnnotationsLoading,
+    refresh: refreshDrawingAnnotations,
+    commitStroke,
+    commitShape,
+    commitText,
+    commitStamp,
+    eraseAnnotation,
+    undoDrawingMark,
+    redoDrawingMark,
+  } = usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
     : false
@@ -148,11 +162,11 @@ export function DocumentViewer({
       activeCitation.page_num === currentPage &&
       !loading &&
       pdf &&
-      !pdfMarkDrawingMode,
+      !markMode,
   )
 
   useEffect(() => {
-    if (!pdfMarkDrawingMode) return
+    if (!markMode) return
 
     function onKeyDown(event: KeyboardEvent) {
       const mod = event.metaKey || event.ctrlKey
@@ -178,65 +192,54 @@ export function DocumentViewer({
 
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [pdfMarkDrawingMode, redoDrawingMark, undoDrawingMark])
+  }, [markMode, redoDrawingMark, undoDrawingMark])
+
+  async function persistDrawingMark<T>(
+    action: () => Promise<T>,
+    errorLabel: string,
+  ): Promise<T | undefined> {
+    try {
+      return await action()
+    } catch (error) {
+      console.error(`[document-viewer] ${errorLabel}`, error)
+      await refreshDrawingAnnotations()
+      return undefined
+    }
+  }
 
   const handleStrokeCommit = async (commit: PdfDrawingStrokeCommit) => {
-    try {
-      await commitStroke(commit)
-    } catch (error) {
-      console.error('[document-viewer] drawing stroke commit failed', error)
-    }
+    await persistDrawingMark(() => commitStroke(commit), 'drawing stroke commit failed')
   }
 
   const handleShapeCommit = async (commit: PdfDrawingShapeCommit) => {
-    try {
-      await commitShape(commit)
-    } catch (error) {
-      console.error('[document-viewer] drawing shape commit failed', error)
-    }
+    await persistDrawingMark(() => commitShape(commit), 'drawing shape commit failed')
   }
 
   const handleTextCommit = async (commit: PdfDrawingTextCommit) => {
-    try {
-      await commitText(commit)
-    } catch (error) {
-      console.error('[document-viewer] drawing text commit failed', error)
-    }
+    await persistDrawingMark(() => commitText(commit), 'drawing text commit failed')
   }
 
   const handleStampCommit = async (commit: PdfDrawingStampCommit) => {
-    try {
-      await commitStamp(commit)
-    } catch (error) {
-      console.error('[document-viewer] drawing stamp commit failed', error)
-    }
+    await persistDrawingMark(() => commitStamp(commit), 'drawing stamp commit failed')
   }
 
   const handleEraseAnnotation = async (annotationId: string) => {
-    try {
-      await eraseAnnotation(annotationId)
-    } catch (error) {
-      console.error('[document-viewer] erase annotation failed', error)
-    }
+    await persistDrawingMark(
+      () => eraseAnnotation(annotationId),
+      'erase annotation failed',
+    )
   }
 
-  const markStrokeWidth = pdfMarkTool === 'highlighter' ? 8 : 4
-  const markColor =
+  const effectiveMarkStrokeWidth =
     pdfMarkTool === 'highlighter'
-      ? '#F59E0B'
-      : pdfMarkTool === 'pen'
-        ? '#E11D48'
-        : pdfMarkTool === 'rect' || pdfMarkTool === 'ellipse'
-          ? '#0EA5E9'
-          : pdfMarkTool === 'text'
-            ? '#18181B'
-            : pdfMarkTool === 'stamp'
-              ? '#0EA5E9'
-              : '#F59E0B'
+      ? Math.max(pdfMarkStrokeWidth, 8)
+      : pdfMarkStrokeWidth
+  const markColor = pdfMarkColor
+  const pageDrawingAnnotations = drawingAnnotationsLoading ? [] : drawingAnnotations
 
   const toolbarHint =
     adjustError ??
-    (pdfMarkDrawingMode
+    (markMode
       ? `Mark window locations on the plan · Page ${currentPage} of ${totalPages || '—'} · ${Math.round(scale * 100)}%`
       : canAdjustRegion
         ? adjustingRegion
@@ -334,30 +337,25 @@ export function DocumentViewer({
               editable={canAdjustRegion}
               adjusting={adjustingRegion}
               onRegionCommit={handleRegionAdjust}
-              drawingAnnotations={drawingAnnotations}
-              markDrawingMode={pdfMarkDrawingMode}
+              drawingAnnotations={pageDrawingAnnotations}
+              markDrawingMode={markMode}
               markTool={pdfMarkTool}
               markColor={markColor}
-              markStrokeWidth={markStrokeWidth}
+              markStrokeWidth={effectiveMarkStrokeWidth}
               onStrokeCommit={
-                pdfMarkDrawingMode &&
-                (pdfMarkTool === 'pen' || pdfMarkTool === 'highlighter')
+                markMode && (pdfMarkTool === 'pen' || pdfMarkTool === 'highlighter')
                   ? handleStrokeCommit
                   : undefined
               }
               onShapeCommit={
-                pdfMarkDrawingMode && (pdfMarkTool === 'rect' || pdfMarkTool === 'ellipse')
+                markMode && (pdfMarkTool === 'rect' || pdfMarkTool === 'ellipse')
                   ? handleShapeCommit
                   : undefined
               }
-              onTextCommit={
-                pdfMarkDrawingMode && pdfMarkTool === 'text' ? handleTextCommit : undefined
-              }
-              onStampCommit={
-                pdfMarkDrawingMode && pdfMarkTool === 'stamp' ? handleStampCommit : undefined
-              }
+              onTextCommit={markMode && pdfMarkTool === 'text' ? handleTextCommit : undefined}
+              onStampCommit={markMode && pdfMarkTool === 'stamp' ? handleStampCommit : undefined}
               onEraseAnnotation={
-                pdfMarkDrawingMode && pdfMarkTool === 'eraser' ? handleEraseAnnotation : undefined
+                markMode && pdfMarkTool === 'eraser' ? handleEraseAnnotation : undefined
               }
             />
           </div>

@@ -18,6 +18,7 @@ import type {
   PdfDrawingStrokeGeometry,
   PdfDrawingTextGeometry,
   PdfDrawingTool,
+  PdfMarkSessionTool,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -68,7 +69,7 @@ export type PdfDrawingOverlayProps = {
   viewport: PdfDrawingViewportSize
   className?: string
   interactive?: boolean
-  activeTool?: PdfDrawingTool | null
+  activeTool?: PdfMarkSessionTool | null
   markColor?: string
   markStrokeWidth?: number
   eraserRadiusPx?: number

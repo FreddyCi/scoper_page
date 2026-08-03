@@ -12,7 +12,7 @@ import type {
   DocumentMeta,
   DocumentRole,
   IngestResult,
-  PdfDrawingTool,
+  PdfMarkSessionTool,
   ProposalRequirementsProfile,
   RfpResultsProfile,
   ScopeCreepProfile,
@@ -20,6 +20,12 @@ import type {
   WorkspaceView,
 } from '@/lib/types'
 import { createChatThreadSnapshot } from '@/lib/chat-history'
+import {
+  PDF_MARKUP_COLOR_ROSE,
+  PDF_MARKUP_STROKE_WIDTHS,
+  type PdfMarkupStrokeWidth,
+  type PdfMarkupToolbarChange,
+} from '@/components/workspace/PdfMarkupToolbar'
 import {
   readReviewerNamePreference,
   writeReviewerNamePreference,
@@ -151,7 +157,9 @@ export type SessionState = {
   reviewerName: string
   /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
   pdfMarkDrawingMode: boolean
-  pdfMarkTool: PdfDrawingTool
+  pdfMarkTool: PdfMarkSessionTool
+  pdfMarkColor: string
+  pdfMarkStrokeWidth: PdfMarkupStrokeWidth
   creepProfiles: ScopeCreepProfile[]
   proposalRequirementsProfile: ProposalRequirementsProfile | null
   /** Rolling UCW handoff between sectional turns; cleared at each generate batch (BDA-165). */
@@ -194,7 +202,10 @@ export type SessionState = {
   setCompanyContext: (context: string) => void
   setReviewerName: (name: string) => void
   setPdfMarkDrawingMode: (enabled: boolean) => void
-  setPdfMarkTool: (tool: PdfDrawingTool) => void
+  setPdfMarkTool: (tool: PdfMarkSessionTool) => void
+  setPdfMarkColor: (color: string) => void
+  setPdfMarkStrokeWidth: (strokeWidth: PdfMarkupStrokeWidth) => void
+  applyPdfMarkupToolbarChange: (change: PdfMarkupToolbarChange) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
@@ -267,7 +278,9 @@ const initialState = {
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   pdfMarkDrawingMode: false,
-  pdfMarkTool: 'pen' as PdfDrawingTool,
+  pdfMarkTool: 'pen' as PdfMarkSessionTool,
+  pdfMarkColor: PDF_MARKUP_COLOR_ROSE,
+  pdfMarkStrokeWidth: 4 as PdfMarkupStrokeWidth,
   creepProfiles: [] as ScopeCreepProfile[],
   proposalRequirementsProfile: null as ProposalRequirementsProfile | null,
   proposalHandoffState: null as ProposalHandoffState | null,
@@ -429,6 +442,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setPdfMarkDrawingMode: (pdfMarkDrawingMode) => set({ pdfMarkDrawingMode }),
 
   setPdfMarkTool: (pdfMarkTool) => set({ pdfMarkTool }),
+
+  setPdfMarkColor: (pdfMarkColor) => set({ pdfMarkColor }),
+
+  setPdfMarkStrokeWidth: (pdfMarkStrokeWidth) => {
+    if (!PDF_MARKUP_STROKE_WIDTHS.includes(pdfMarkStrokeWidth)) return
+    set({ pdfMarkStrokeWidth })
+  },
+
+  applyPdfMarkupToolbarChange: (change) =>
+    set((state) => ({
+      pdfMarkTool: change.tool ?? state.pdfMarkTool,
+      pdfMarkColor: change.color ?? state.pdfMarkColor,
+      pdfMarkStrokeWidth: change.strokeWidth ?? state.pdfMarkStrokeWidth,
+    })),
 
   clearEvaluationSetup: () => {
     writeCompanyContextPreference('')

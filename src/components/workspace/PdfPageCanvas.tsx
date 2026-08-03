@@ -5,7 +5,7 @@ import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
 import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStampCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
-import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingTool } from '@/lib/types'
+import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfMarkSessionTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 type PdfPageCanvasProps = {
@@ -20,7 +20,7 @@ type PdfPageCanvasProps = {
   /** Normalized drawing marks for this page (read-only overlay until Mark mode tools, BDA-224+). */
   drawingAnnotations?: PdfDrawingAnnotation[]
   markDrawingMode?: boolean
-  markTool?: PdfDrawingTool
+  markTool?: PdfMarkSessionTool
   markColor?: string
   markStrokeWidth?: number
   eraserRadiusPx?: number

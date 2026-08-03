@@ -15,7 +15,7 @@ import type { PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 /** Mark tools including eraser (UI-only; not persisted as `PdfDrawingTool`). */
-export type PdfMarkupTool = PdfDrawingTool | 'eraser'
+export type PdfMarkupTool = import('@/lib/types').PdfMarkSessionTool
 
 export const PDF_MARKUP_COLOR_AMBER = '#F59E0B'
 export const PDF_MARKUP_COLOR_ROSE = '#E11D48'

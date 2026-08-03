@@ -134,16 +134,18 @@ flowchart TD
 ### **ID:** BDA-200
 
 **Title:** Volume row Generate Regenerate UI  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-199  
 **Priority:** High  
 **Description:** [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx): props `onGenerate?`, `generateDisabled?`, `generateDisabledReason?`. Compact outline button: **Generate** when `pending`, **Regenerate** when `draft` or `error`; hide/disable when `generating`. Do not attach to chevron/title expand. Respect `muted` when `!readyToGenerate`.  
 **Completed Changes:**
-- 🔄 Row action + a11y labels  
+- ✅ **`onGenerate`**, **`generateDisabled`**, **`generateDisabledReason`** on row props
+- ✅ Outline **Generate** / **Regenerate** below summary; hidden while **`generating`**
 **Test Strategy:** Manual: setup complete → Generate one row; busy state disables all generate actions.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- 👤 Manual after BDA-201 panel wiring
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-168 row; unified plan sequence diagram  
 
 ---

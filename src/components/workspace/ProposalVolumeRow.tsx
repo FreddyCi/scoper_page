@@ -120,6 +120,10 @@ export type ProposalVolumeRowProps = {
   /** Emphasize the volume currently being generated. */
   active?: boolean
   className?: string
+  /** Run sectional generation for this volume only (BDA-199). */
+  onGenerate?: (volumeId: string) => void
+  generateDisabled?: boolean
+  generateDisabledReason?: string
 }
 
 export function ProposalVolumeRow({
@@ -127,6 +131,9 @@ export function ProposalVolumeRow({
   muted = false,
   active = false,
   className,
+  onGenerate,
+  generateDisabled = false,
+  generateDisabledReason,
 }: ProposalVolumeRowProps) {
   const previewId = useId()
   const [expanded, setExpanded] = useState(false)
@@ -143,6 +150,18 @@ export function ProposalVolumeRow({
     (expanded || volume.status === 'generating' || volume.status === 'error')
   const showLiveStatus = !muted || volume.status !== 'pending'
   const hasBody = Boolean(volume.bodyMarkdown?.trim())
+
+  const showVolumeGenerateAction =
+    onGenerate != null &&
+    (volume.status === 'pending' || volume.status === 'draft' || volume.status === 'error')
+  const volumeGenerateLabel = volume.status === 'pending' ? 'Generate' : 'Regenerate'
+  const volumeGenerateDisabled = generateDisabled || muted || volume.status === 'generating'
+  const volumeGenerateTitle =
+    volumeGenerateDisabled && generateDisabledReason
+      ? generateDisabledReason
+      : volumeGenerateDisabled && muted
+        ? 'Complete proposal setup to generate volumes'
+        : undefined
 
   return (
     <li
@@ -224,6 +243,20 @@ export function ProposalVolumeRow({
           ) : null}
           {volume.errorMessage ? (
             <p className="text-destructive mt-1 text-xs">{volume.errorMessage}</p>
+          ) : null}
+          {showVolumeGenerateAction ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2 h-7 text-xs"
+              disabled={volumeGenerateDisabled}
+              title={volumeGenerateTitle}
+              aria-label={`${volumeGenerateLabel} ${volume.title}`}
+              onClick={() => onGenerate(volume.id)}
+            >
+              {volumeGenerateLabel}
+            </Button>
           ) : null}
         </div>
       </div>

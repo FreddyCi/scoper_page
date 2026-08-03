@@ -57,6 +57,14 @@ const TOC_OR_FAKE_SECTION_PATTERNS: { pattern: RegExp; reason: string }[] = [
     pattern: /^##\s+SECTION\s+\d+/im,
     reason: 'Body uses generic numbered SECTION headings instead of substantive prose.',
   },
+  {
+    pattern: /\([Vv]ol[-\w]*\/sec[-\w-]+\)/,
+    reason: 'Body echoes internal volume/section ids from the proposal handoff.',
+  },
+  {
+    pattern: /\b[A-Z0-9][\w\s.-]{12,}\.pdf\b/,
+    reason: 'Body includes raw source PDF filenames instead of proposal prose.',
+  },
 ]
 
 export type ValidateProposalDraftOptions = {
@@ -222,6 +230,12 @@ const HARNESS_BAD_STUB = `
 > Draft placeholder — connect the on-device model for full generation.
 `.trim()
 
+const HARNESS_BAD_HANDOFF_LEAK = `
+## Scope of Work
+
+Materials (Vol-0-scope/sec-3-materials-and-work-furnished-by-othe) must comply with Section 22.
+`.trim()
+
 /** Dev harness — export quality rules (BDA-158) */
 export function runProposalExportQualityHarness(): void {
   const good = validateProposalVolumeDraft(HARNESS_GOOD_DRAFT, { label: 'Technical' })
@@ -237,6 +251,11 @@ export function runProposalExportQualityHarness(): void {
   const leak = validateProposalVolumeDraft(HARNESS_BAD_LEAK)
   if (leak.ok) {
     throw new Error('runProposalExportQualityHarness: prompt leak should fail')
+  }
+
+  const handoffLeak = validateProposalVolumeDraft(HARNESS_BAD_HANDOFF_LEAK)
+  if (handoffLeak.ok) {
+    throw new Error('runProposalExportQualityHarness: handoff id leak should fail')
   }
 
   const stub = validateProposalVolumeDraft(HARNESS_BAD_STUB)

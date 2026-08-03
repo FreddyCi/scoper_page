@@ -95,10 +95,7 @@ function formatCompletedSections(completed: ProposalCompletedSection[]): string 
     return '  (none yet)'
   }
   return completed
-    .map(
-      (section) =>
-        `  • ${section.title} (${section.volumeId}/${section.sectionId}): ${section.summary}`,
-    )
+    .map((section) => `  • ${section.title}: ${section.summary}`)
     .join('\n')
 }
 
@@ -106,9 +103,7 @@ function formatPendingSections(pending: ProposalHandoffSectionRef[]): string {
   if (pending.length === 0) {
     return '  (none)'
   }
-  return pending
-    .map((section) => `  • ${section.title} (${section.volumeId}/${section.sectionId})`)
-    .join('\n')
+  return pending.map((section) => `  • ${section.title}`).join('\n')
 }
 
 export type BuildProposalHandoffBlockOpts = {
@@ -232,6 +227,10 @@ export function runProposalContextRollHarness(): void {
     if (!block.includes(snippet)) {
       throw new Error(`runProposalContextRollHarness: handoff block missing "${snippet}"`)
     }
+  }
+
+  if (block.includes('vol-1/s-1') || block.includes('sectionId')) {
+    throw new Error('runProposalContextRollHarness: handoff must not expose internal section ids')
   }
 
   rollProposalContext(() => {

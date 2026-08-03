@@ -18,6 +18,7 @@ export const PROPOSAL_GUARDRAIL_PHRASES = [
   'Do not copy table-of-contents lines, dot leaders, or trailing page numbers from the PDF.',
   'Write only the current section; do not repeat paragraphs already drafted for other sections in this volume.',
   'Do not include prompt labels, source filenames, or meta commentary in the markdown output.',
+  'Do not echo internal handoff identifiers (volume or section ids) in the draft.',
 ] as const
 
 /** Fixed system instructions for every proposal volume generation turn. */
@@ -127,6 +128,7 @@ export function buildProposalAnalysisRefsBlock(
   return [
     'RFP ANALYSIS FINDINGS (address gaps in this section where relevant):',
     ...lines,
+    'Only discuss a finding when it applies to the section title below; do not repeat certification or insurance language in unrelated sections.',
   ].join('\n')
 }
 

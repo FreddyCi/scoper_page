@@ -87,6 +87,10 @@ export type ProposalVolumeSection = {
   status: ProposalVolumeSectionStatus
   bodyMarkdown?: string
   errorMessage?: string
+  /** True when the user saved hand-edited markdown (BDA-203). */
+  edited?: boolean
+  /** ISO timestamp of the last hand-edit save. */
+  editedAt?: string
 }
 
 /** Per-volume sectional progress for proposal panel UI (BDA-160). */
@@ -110,6 +114,10 @@ export type ProposalVolume = {
   /** Populated when sectional generation is enabled (BDA-161+). */
   sections?: ProposalVolumeSection[]
   generationProgress?: ProposalVolumeGenerationProgress
+  /** True when the user saved hand-edited volume markdown (BDA-203). */
+  edited?: boolean
+  /** ISO timestamp of the last hand-edit save. */
+  editedAt?: string
 }
 
 /** RFP-derived outline used to generate responder proposal volumes */

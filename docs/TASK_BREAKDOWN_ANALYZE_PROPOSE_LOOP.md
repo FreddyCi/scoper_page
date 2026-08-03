@@ -196,16 +196,16 @@ flowchart TD
 ### **ID:** BDA-203
 
 **Title:** Edited flags on volume types  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** High  
 **Description:** Add optional **`edited?: boolean`** and **`editedAt?: string`** to **`ProposalVolume`** and **`ProposalVolumeSection`** in [`types.ts`](../src/lib/types.ts). No runtime behavior yet.  
 **Completed Changes:**
-- 🔄 Type fields  
+- ✅ **`edited`** / **`editedAt`** on **`ProposalVolume`** and **`ProposalVolumeSection`**
 **Test Strategy:** `tsc --noEmit`.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** Unified plan Phase 2  
 
 ---

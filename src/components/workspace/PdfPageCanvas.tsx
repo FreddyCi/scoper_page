@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
-import { PdfDrawingOverlay, type PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
+import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
 import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -27,6 +27,7 @@ type PdfPageCanvasProps = {
   onStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
   /** @deprecated Use onStrokeCommit */
   onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  onShapeCommit?: (commit: PdfDrawingShapeCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
   className?: string
 }
@@ -69,6 +70,7 @@ export function PdfPageCanvas({
   eraserRadiusPx,
   onStrokeCommit,
   onPenStrokeCommit,
+  onShapeCommit,
   onEraseAnnotation,
   className,
 }: PdfPageCanvasProps) {
@@ -208,7 +210,11 @@ export function PdfPageCanvas({
   const showDrawingOverlay =
     drawingViewport != null &&
     (drawingAnnotations.length > 0 ||
-      (markDrawingMode && (onStrokeCommit || onPenStrokeCommit || onEraseAnnotation)))
+      (markDrawingMode &&
+        (onStrokeCommit ||
+          onPenStrokeCommit ||
+          onShapeCommit ||
+          onEraseAnnotation)))
 
   return (
     <div className={cn('relative inline-block w-fit', className)}>
@@ -262,6 +268,7 @@ export function PdfPageCanvas({
             eraserRadiusPx={eraserRadiusPx}
             onStrokeCommit={onStrokeCommit}
             onPenStrokeCommit={onPenStrokeCommit}
+            onShapeCommit={onShapeCommit}
             onEraseAnnotation={onEraseAnnotation}
           />
         </div>

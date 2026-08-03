@@ -92,6 +92,31 @@ export function normalizedStrokeBounds(
   return normalizedPointsBounds(stroke.points)
 }
 
+/** Normalized axis-aligned box from drag start/end (BDA-228). */
+export function normalizedBoundsFromCorners(
+  start: PdfDrawingNormalizedPoint,
+  end: PdfDrawingNormalizedPoint,
+): PdfDrawingNormalizedBounds {
+  const x = Math.min(start.x, end.x)
+  const y = Math.min(start.y, end.y)
+  return {
+    x,
+    y,
+    width: Math.abs(end.x - start.x),
+    height: Math.abs(end.y - start.y),
+  }
+}
+
+export function isNormalizedBoundsLargeEnough(
+  bounds: PdfDrawingNormalizedBounds,
+  viewport: PdfDrawingViewportSize,
+  minDiagonalPx = 4,
+): boolean {
+  const widthPx = bounds.width * viewport.width
+  const heightPx = bounds.height * viewport.height
+  return Math.hypot(widthPx, heightPx) >= minDiagonalPx
+}
+
 export function normalizedGeometryBounds(
   geometry: PdfDrawingGeometry,
 ): PdfDrawingNormalizedBounds | null {
@@ -313,6 +338,11 @@ export function runPdfDrawingGeometryHarness(): void {
   }
   if (hitTestNormalizedRect({ x: 0.05, y: 0.05 }, rect)) {
     throw new Error('runPdfDrawingGeometryHarness failed: unexpected rect hit')
+  }
+
+  const box = normalizedBoundsFromCorners({ x: 0.2, y: 0.3 }, { x: 0.5, y: 0.7 })
+  if (box.x !== 0.2 || box.width !== 0.3 || !isNormalizedBoundsLargeEnough(box, smallViewport)) {
+    throw new Error('runPdfDrawingGeometryHarness failed: normalizedBoundsFromCorners')
   }
 
   const bounds = normalizedGeometryBounds(stroke)

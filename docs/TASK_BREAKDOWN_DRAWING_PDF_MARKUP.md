@@ -227,15 +227,19 @@ flowchart TD
 ### **ID:** BDA-228
 
 **Title:** Rectangle and ellipse tools  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-224  
 **Priority:** High  
 **Description:** Drag to define normalized bounding box / ellipse from corner drag; commit on pointer up. Render SVG `rect` / `ellipse` with stroke from active color/width.  
 **Completed Changes:**
-- 🔄 Drag-create interaction + geometry_json schema for rect/ellipse
+- ✅ `normalizedBoundsFromCorners` / `isNormalizedBoundsLargeEnough` in `pdf-drawing-geometry.ts`
+- ✅ `PdfDrawingOverlay`: drag-create draft + `onShapeCommit` for `rect` | `ellipse`
+- ✅ `usePdfDrawingAnnotations.commitShape`; `DocumentViewer` + `PdfPageCanvas` wiring
+- ✅ Dev `Scoper.setPdfMarkTool("rect"|"ellipse")`; sky `#0EA5E9` shape color
+- ✅ CRUD harness rect geometry round-trip
 **Test Strategy:** Draw rect on plan; export preview in overlay matches drag bounds after zoom change.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Unit harnesses (geometry + CRUD rect); manual: mark mode + rect/ellipse drag persists after zoom  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §In scope v1
 

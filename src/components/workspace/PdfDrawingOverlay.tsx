@@ -3,13 +3,17 @@ import { useCallback, useRef, useState } from 'react'
 import {
   denormalizePoint,
   findPdfDrawingAnnotationAtPointer,
+  isNormalizedBoundsLargeEnough,
   normalizePoint,
+  normalizedBoundsFromCorners,
   type PdfDrawingViewportSize,
 } from '@/lib/pdf-drawing-geometry'
 import type {
   PdfDrawingAnnotation,
+  PdfDrawingEllipseGeometry,
   PdfDrawingGeometry,
   PdfDrawingNormalizedPoint,
+  PdfDrawingRectGeometry,
   PdfDrawingStrokeGeometry,
   PdfDrawingTool,
 } from '@/lib/types'
@@ -35,6 +39,14 @@ export type PdfDrawingStrokeCommit = {
 /** @deprecated Use PdfDrawingStrokeCommit */
 export type PdfDrawingPenCommit = PdfDrawingStrokeCommit
 
+export type PdfDrawingShapeCommit = {
+  tool: 'rect' | 'ellipse'
+  color: string
+  stroke_width: number
+  opacity: number
+  geometry: PdfDrawingRectGeometry | PdfDrawingEllipseGeometry
+}
+
 export type PdfDrawingOverlayProps = {
   annotations: PdfDrawingAnnotation[]
   viewport: PdfDrawingViewportSize
@@ -47,6 +59,7 @@ export type PdfDrawingOverlayProps = {
   onStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
   /** @deprecated Use onStrokeCommit */
   onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  onShapeCommit?: (commit: PdfDrawingShapeCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
 }
 
@@ -244,6 +257,64 @@ function isStrokeTool(tool: PdfDrawingTool | null | undefined): tool is 'pen' | 
   return tool === 'pen' || tool === 'highlighter'
 }
 
+function isShapeTool(tool: PdfDrawingTool | null | undefined): tool is 'rect' | 'ellipse' {
+  return tool === 'rect' || tool === 'ellipse'
+}
+
+type DraftShape = {
+  start: PdfDrawingNormalizedPoint
+  end: PdfDrawingNormalizedPoint
+}
+
+function DraftShapeGraphic({
+  draft,
+  tool,
+  viewport,
+  color,
+  strokeWidth,
+}: {
+  draft: DraftShape
+  tool: 'rect' | 'ellipse'
+  viewport: PdfDrawingViewportSize
+  color: string
+  strokeWidth: number
+}) {
+  const bounds = normalizedBoundsFromCorners(draft.start, draft.end)
+  const topLeft = denormalizePoint({ x: bounds.x, y: bounds.y }, viewport)
+  const width = bounds.width * viewport.width
+  const height = bounds.height * viewport.height
+
+  if (tool === 'rect') {
+    return (
+      <rect
+        x={topLeft.x}
+        y={topLeft.y}
+        width={width}
+        height={height}
+        fill="none"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeOpacity={1}
+      />
+    )
+  }
+
+  const rx = width / 2
+  const ry = height / 2
+  return (
+    <ellipse
+      cx={topLeft.x + rx}
+      cy={topLeft.y + ry}
+      rx={rx}
+      ry={ry}
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeOpacity={1}
+    />
+  )
+}
+
 /** SVG layer for persisted PDF drawing marks + in-progress strokes (BDA-224–226). */
 export function PdfDrawingOverlay({
   annotations,
@@ -256,13 +327,15 @@ export function PdfDrawingOverlay({
   eraserRadiusPx = DEFAULT_ERASER_RADIUS_PX,
   onStrokeCommit,
   onPenStrokeCommit,
+  onShapeCommit,
   onEraseAnnotation,
 }: PdfDrawingOverlayProps) {
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
   const strokeToolActive =
     interactive && isStrokeTool(activeTool) && Boolean(commitStroke)
+  const shapeToolActive = interactive && isShapeTool(activeTool) && Boolean(onShapeCommit)
   const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
-  const pointerActive = strokeToolActive || eraserActive
+  const pointerActive = strokeToolActive || shapeToolActive || eraserActive
 
   const effectiveStrokeWidth =
     activeTool === 'highlighter'
@@ -272,6 +345,8 @@ export function PdfDrawingOverlay({
 
   const [draftPoints, setDraftPoints] = useState<PdfDrawingNormalizedPoint[]>([])
   const draftPointsRef = useRef<PdfDrawingNormalizedPoint[]>([])
+  const [draftShape, setDraftShape] = useState<DraftShape | null>(null)
+  const draftShapeRef = useRef<DraftShape | null>(null)
   const drawingPointerId = useRef<number | null>(null)
   const annotationsRef = useRef(annotations)
   annotationsRef.current = annotations
@@ -279,7 +354,9 @@ export function PdfDrawingOverlay({
   const resetDraft = useCallback(() => {
     drawingPointerId.current = null
     draftPointsRef.current = []
+    draftShapeRef.current = null
     setDraftPoints([])
+    setDraftShape(null)
   }, [])
 
   const eraseAtPointer = useCallback(
@@ -311,10 +388,19 @@ export function PdfDrawingOverlay({
         return
       }
 
+      if (shapeToolActive && isShapeTool(activeTool)) {
+        const nextShape: DraftShape = { start: point, end: point }
+        draftShapeRef.current = nextShape
+        setDraftShape(nextShape)
+        return
+      }
+
+      if (!strokeToolActive) return
+
       draftPointsRef.current = [point]
       setDraftPoints([point])
     },
-    [eraseAtPointer, eraserActive, pointerActive, viewport],
+    [activeTool, eraseAtPointer, eraserActive, pointerActive, shapeToolActive, strokeToolActive, viewport],
   )
 
   const handlePointerMove = useCallback(
@@ -325,6 +411,16 @@ export function PdfDrawingOverlay({
 
       if (eraserActive) {
         eraseAtPointer(point)
+        return
+      }
+
+      if (shapeToolActive && draftShapeRef.current) {
+        const nextShape: DraftShape = {
+          start: draftShapeRef.current.start,
+          end: point,
+        }
+        draftShapeRef.current = nextShape
+        setDraftShape(nextShape)
         return
       }
 
@@ -340,7 +436,29 @@ export function PdfDrawingOverlay({
         return next
       })
     },
-    [eraseAtPointer, eraserActive, strokeToolActive, viewport],
+    [eraseAtPointer, eraserActive, shapeToolActive, strokeToolActive, viewport],
+  )
+
+  const finishShape = useCallback(
+    async (shape: DraftShape) => {
+      if (!onShapeCommit || !isShapeTool(activeTool)) return
+      const bounds = normalizedBoundsFromCorners(shape.start, shape.end)
+      if (!isNormalizedBoundsLargeEnough(bounds, viewport)) return
+
+      const geometry: PdfDrawingRectGeometry | PdfDrawingEllipseGeometry =
+        activeTool === 'rect'
+          ? { kind: 'rect', ...bounds }
+          : { kind: 'ellipse', ...bounds }
+
+      await onShapeCommit({
+        tool: activeTool,
+        color: markColor,
+        stroke_width: markStrokeWidth,
+        opacity: 1,
+        geometry,
+      })
+    },
+    [activeTool, markColor, markStrokeWidth, onShapeCommit, viewport],
   )
 
   const finishStroke = useCallback(
@@ -370,11 +488,18 @@ export function PdfDrawingOverlay({
         return
       }
 
+      if (shapeToolActive && draftShapeRef.current) {
+        const shape = draftShapeRef.current
+        resetDraft()
+        void finishShape(shape)
+        return
+      }
+
       const points = draftPointsRef.current
       resetDraft()
       void finishStroke(points)
     },
-    [eraserActive, finishStroke, resetDraft],
+    [eraserActive, finishShape, finishStroke, resetDraft, shapeToolActive],
   )
 
   const handlePointerCancel = useCallback(
@@ -392,13 +517,13 @@ export function PdfDrawingOverlay({
     return null
   }
 
-  if (annotations.length === 0 && !pointerActive && draftPoints.length === 0) {
+  if (annotations.length === 0 && !pointerActive && draftPoints.length === 0 && !draftShape) {
     return null
   }
 
   const cursorClass = eraserActive
     ? 'cursor-cell'
-    : strokeToolActive
+    : strokeToolActive || shapeToolActive
       ? 'cursor-crosshair'
       : undefined
 
@@ -431,6 +556,16 @@ export function PdfDrawingOverlay({
           color={markColor}
           strokeWidth={effectiveStrokeWidth}
           opacity={draftOpacity}
+        />
+      ) : null}
+
+      {draftShape && isShapeTool(activeTool) ? (
+        <DraftShapeGraphic
+          draft={draftShape}
+          tool={activeTool}
+          viewport={viewport}
+          color={markColor}
+          strokeWidth={markStrokeWidth}
         />
       ) : null}
     </svg>

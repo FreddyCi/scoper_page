@@ -7,7 +7,7 @@ import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPrev
 import { SpreadsheetDocumentPreview } from '@/components/workspace/SpreadsheetDocumentPreview'
 import { isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
-import type { PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
+import type { PdfDrawingShapeCommit, PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { usePdfDrawingAnnotations } from '@/hooks/use-pdf-drawing-annotations'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox } from '@/lib/types'
@@ -82,7 +82,7 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
-  const { annotations: drawingAnnotations, commitStroke, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
+  const { annotations: drawingAnnotations, commitStroke, commitShape, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
     usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
@@ -183,6 +183,14 @@ export function DocumentViewer({
     }
   }
 
+  const handleShapeCommit = async (commit: PdfDrawingShapeCommit) => {
+    try {
+      await commitShape(commit)
+    } catch (error) {
+      console.error('[document-viewer] drawing shape commit failed', error)
+    }
+  }
+
   const handleEraseAnnotation = async (annotationId: string) => {
     try {
       await eraseAnnotation(annotationId)
@@ -193,7 +201,13 @@ export function DocumentViewer({
 
   const markStrokeWidth = pdfMarkTool === 'highlighter' ? 8 : 4
   const markColor =
-    pdfMarkTool === 'highlighter' ? '#F59E0B' : pdfMarkTool === 'pen' ? '#E11D48' : '#F59E0B'
+    pdfMarkTool === 'highlighter'
+      ? '#F59E0B'
+      : pdfMarkTool === 'pen'
+        ? '#E11D48'
+        : pdfMarkTool === 'rect' || pdfMarkTool === 'ellipse'
+          ? '#0EA5E9'
+          : '#F59E0B'
 
   const toolbarHint =
     adjustError ??
@@ -304,6 +318,11 @@ export function DocumentViewer({
                 pdfMarkDrawingMode &&
                 (pdfMarkTool === 'pen' || pdfMarkTool === 'highlighter')
                   ? handleStrokeCommit
+                  : undefined
+              }
+              onShapeCommit={
+                pdfMarkDrawingMode && (pdfMarkTool === 'rect' || pdfMarkTool === 'ellipse')
+                  ? handleShapeCommit
                   : undefined
               }
               onEraseAnnotation={

@@ -372,14 +372,30 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
     geometry: { kind: 'stroke', points: [{ x: 0.2, y: 0.2 }] },
   })
 
+  const rectMark = await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 1,
+    tool: 'rect',
+    color: '#0EA5E9',
+    stroke_width: 4,
+    geometry: { kind: 'rect', x: 0.1, y: 0.2, width: 0.3, height: 0.15 },
+  })
+  if (rectMark.geometry.kind !== 'rect' || rectMark.geometry.width !== 0.3) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: rect geometry round-trip')
+  }
+
   const docAnnotations = await fetchPdfDrawingAnnotationsForDoc(docId)
-  if (docAnnotations.length !== 2) {
-    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected 2 doc annotations')
+  if (docAnnotations.length !== 3) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected 3 doc annotations')
   }
 
   const pageOne = await fetchPdfDrawingAnnotationsForPage(docId, 1)
-  if (pageOne.length !== 1 || pageOne[0]!.annotation_id !== strokeA.annotation_id) {
+  if (pageOne.length !== 2) {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: page-scoped list mismatch')
+  }
+  const pageOneStroke = pageOne.find((row) => row.annotation_id === strokeA.annotation_id)
+  if (!pageOneStroke) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: missing stroke A on page 1')
   }
 
   const updated = await updatePdfDrawingAnnotation({
@@ -401,8 +417,11 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
   }
 
   const remaining = await fetchPdfDrawingAnnotationsForDoc(docId)
-  if (remaining.length !== 1 || remaining[0]!.page_num !== 2) {
-    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected one page-2 annotation')
+  if (remaining.length !== 2) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected rect + page-2 annotation')
+  }
+  if (!remaining.some((row) => row.geometry.kind === 'rect')) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected rect to remain')
   }
 
   await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])

@@ -153,16 +153,18 @@ flowchart TD
 ### **ID:** BDA-201
 
 **Title:** Wire panel to single-volume generate  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-200  
 **Priority:** High  
 **Description:** [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx): pass `onGenerate={() => runGenerateProposalVolume(volume.id)}`; `generateDisabled={!setup.readyToGenerate || proposalGenerating || buildingProfile}`. Keep **Generate complete proposal** unchanged; shared `proposalGenerating`.  
 **Completed Changes:**
-- 🔄 Panel wiring  
+- ✅ Store **`runGenerateProposalVolume`** wired per row with shared disable reasons
+- ✅ Static QA asserts in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** Static QA (BDA-202); manual full + single paths.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-201 asserts
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-130 panel  
 
 ---

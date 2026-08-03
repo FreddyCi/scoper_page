@@ -123,6 +123,14 @@ assert(
   proposalPanel.includes('canExportProposalProfile'),
   'ProposalGenerationPanel must gate export on canExportProposalProfile (BDA-176)',
 )
+assert(
+  proposalPanel.includes('runGenerateProposalVolume'),
+  'ProposalGenerationPanel must wire single-volume generate (BDA-201)',
+)
+assert(
+  proposalPanel.includes('onGenerate'),
+  'ProposalGenerationPanel must pass onGenerate to volume rows (BDA-201)',
+)
 
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),

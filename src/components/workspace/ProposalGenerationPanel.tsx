@@ -45,6 +45,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
   const setCompanyContext = useSessionStore((s) => s.setCompanyContext)
   const runProposalRequirementsProfile = useSessionStore((s) => s.runProposalRequirementsProfile)
   const runGenerateProposalVolumes = useSessionStore((s) => s.runGenerateProposalVolumes)
+  const runGenerateProposalVolume = useSessionStore((s) => s.runGenerateProposalVolume)
 
   const setup = useProposalSetupState()
   const profile = useProposalRequirementsProfile()
@@ -59,6 +60,22 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
   )
 
   const canBuildProfile = setup.hasRfp && setup.hasContext && !buildingProfile && !proposalGenerating
+
+  const volumeGenerateDisabled =
+    !setup.readyToGenerate || proposalGenerating || buildingProfile
+
+  const volumeGenerateDisabledReason = useMemo(() => {
+    if (buildingProfile) {
+      return 'Wait until the proposal profile finishes building.'
+    }
+    if (proposalGenerating) {
+      return 'Wait until the current generation job finishes.'
+    }
+    if (!setup.readyToGenerate) {
+      return 'Complete RFP selection, responder context, and proposal profile first.'
+    }
+    return undefined
+  }, [buildingProfile, proposalGenerating, setup.readyToGenerate])
 
   const profileBuildError =
     proposalGenerationError && !setup.hasProfile && !proposalGenerating
@@ -285,6 +302,9 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   volume={volume}
                   muted={!setup.readyToGenerate && volume.status === 'pending'}
                   active={volume.status === 'generating'}
+                  onGenerate={(volumeId) => void runGenerateProposalVolume(volumeId)}
+                  generateDisabled={volumeGenerateDisabled}
+                  generateDisabledReason={volumeGenerateDisabledReason}
                 />
               ))}
             </ul>

@@ -102,6 +102,14 @@ assert(
   'runGenerateProposalVolume must call buildProposalVolume (BDA-199)',
 )
 
+const profileBuildStart = sessionStore.indexOf('runProposalRequirementsProfile: async')
+assert(profileBuildStart >= 0, 'session-store must define runProposalRequirementsProfile')
+const profileBuildBody = sessionStore.slice(profileBuildStart, profileBuildStart + 1200)
+assert(
+  profileBuildBody.includes('baselineProfile: state.evaluationBaselineProfile'),
+  'runProposalRequirementsProfile must pass evaluation baseline into profile build (BDA-209)',
+)
+
 const buildVolumes = read('src/services/build-proposal-volumes.ts')
 assert(
   buildVolumes.includes('notifyProposalSectionRoll'),

@@ -542,6 +542,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const profile = await buildProposalRfpProfile(state.documents, {
         rfpDocId: state.evaluationDocId,
         companyContext: state.companyContext,
+        baselineProfile: state.evaluationBaselineProfile,
       })
 
       if (!profile) {

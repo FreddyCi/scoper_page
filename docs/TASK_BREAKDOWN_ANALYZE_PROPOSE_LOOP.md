@@ -316,16 +316,19 @@ flowchart TD
 ### **ID:** BDA-209
 
 **Title:** Pass baseline on profile build  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-208  
 **Priority:** High  
 **Description:** **`runProposalRequirementsProfile`** passes **`evaluationBaselineProfile: state.evaluationBaselineProfile`** into **`buildProposalRfpProfile`**. Null baseline: no `analysisRefs` (landing-only proposal).  
 **Completed Changes:**
-- 🔄 Store one-liner  
+- ✅ **`baselineProfile: state.evaluationBaselineProfile`** in **`runProposalRequirementsProfile`**
+- ✅ Static QA assert in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** Manual: run RFP qualification → switch proposal → rebuild profile → volumes show refs.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-209 assert
+- 🔄 Manual qualification → proposal profile rebuild pending
+**Assigned:** Completed  
 **Context/Artifacts:** [`selectCanSwitchToProposalMode`](../src/store/session-store.ts)  
 
 ---

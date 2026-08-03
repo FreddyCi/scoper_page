@@ -93,16 +93,20 @@ flowchart TD
 ### **ID:** BDA-198
 
 **Title:** Sibling handoff seeding  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-196  
 **Priority:** High  
 **Description:** When **`buildProposalVolume`** runs (single-volume entry), after `createEmptyProposalHandoff` for the target volume, seed **`completedSections`** from sibling volumes with `status === 'draft'` using **`summarizeSectionMarkdown`** on section bodies (summaries only, not full markdown). Full **`buildProposalVolumes`** batch may use per-volume isolated handoff inside each `buildProposalVolume` call — document whether batch run clears sibling seed per volume (only prior volumes in same batch count) vs session drafts from earlier runs. Prefer: seed from **current profile state** so mixed batch + single-volume workflows stay consistent.  
 **Completed Changes:**
-- 🔄 Handoff seed helper; unit-style assert in harness  
+- ✅ **`collectSiblingDraftCompletedSections`**, **`seedHandoffWithSiblingDrafts`**, **`createIsolatedVolumeProposalHandoff`**
+- ✅ **`BuildProposalVolumeBatchState.isolatedVolumeRun`** resets handoff before target volume generates
+- ✅ Full batch unchanged: shared handoff accumulates via **`applySectionCompletion`** (no `isolatedVolumeRun`)
+- ✅ **`runBuildProposalVolumeSiblingHandoffHarness`** in **`runProposalUnitHarnesses`**
 **Test Strategy:** Harness: two volumes draft, regenerate third — handoff block includes sibling summaries (dev log or exported handoff snapshot in harness).  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runBuildProposalVolumeSiblingHandoffHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** [`proposal-context-roll.ts`](../src/lib/proposal-context-roll.ts), unified plan cross-cutting table  
 
 ---

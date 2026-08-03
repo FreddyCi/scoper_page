@@ -27,7 +27,7 @@ import { runProposalStoreGeneratePreflightHarness } from '@/services/proposal-st
 import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
-import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
+import { runBuildProposalVolumeSiblingHandoffHarness } from '@/services/build-proposal-volumes'
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
@@ -53,6 +53,7 @@ export function runProposalUnitHarnesses(): void {
   runProposalPostIngestHarness()
   runAssembleProposalMarkdownHarness()
   runProposalPromptsHarness()
+  runBuildProposalVolumeSiblingHandoffHarness()
   runChatStubProposalHarness()
   runProposalPanelSetupHarness()
 }

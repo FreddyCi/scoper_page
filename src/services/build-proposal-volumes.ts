@@ -3,8 +3,11 @@ import { DOCUMENT_CAPABILITIES } from '@/ecp/extensions/document'
 import { createProposalContextTracker } from '@/lib/proposal-context-tracker'
 import {
   applySectionCompletion,
+  buildProposalHandoffBlock,
   createEmptyProposalHandoff,
   recordProposalHandoffFailure,
+  truncateTopicMemory,
+  type ProposalCompletedSection,
   type ProposalHandoffSectionRef,
   type ProposalHandoffState,
 } from '@/lib/proposal-context-roll'
@@ -62,6 +65,8 @@ export type BuildProposalVolumeBatchState = {
   handoff: ProposalHandoffState
   handoffChunkIndex: number
   contextTracker: ReturnType<typeof createProposalContextTracker>
+  /** Reset handoff to one volume + sibling draft summaries before generating (BDA-198). */
+  isolatedVolumeRun?: boolean
 }
 
 const PROPOSAL_SECTION_DRAFT_MIN_CHARS = Math.max(120, Math.floor(PROPOSAL_DRAFT_MIN_CHARS / 2))
@@ -113,6 +118,101 @@ function collectPendingSectionRefs(volumes: ProposalVolume[]): ProposalHandoffSe
   return refs
 }
 
+/** Short summary for handoff topic memory (BDA-154 / BDA-198). */
+export function summarizeSectionMarkdown(markdown: string): string {
+  const plain = markdown
+    .replace(/^#+\s+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return plain.slice(0, 220)
+}
+
+/** Completed-section snapshots from other volumes already in `draft` (section bodies only). */
+export function collectSiblingDraftCompletedSections(
+  profile: ProposalRequirementsProfile,
+  excludeVolumeId: string,
+): ProposalCompletedSection[] {
+  const completed: ProposalCompletedSection[] = []
+
+  for (const volume of profile.volumes) {
+    if (volume.id === excludeVolumeId || volume.status !== 'draft') {
+      continue
+    }
+
+    const sections = volume.sections ?? []
+    let seededFromSections = false
+
+    for (const section of sections) {
+      const body = section.bodyMarkdown?.trim()
+      if (!body) continue
+      seededFromSections = true
+      completed.push({
+        volumeId: volume.id,
+        sectionId: section.id,
+        title: section.title,
+        summary: summarizeSectionMarkdown(body),
+      })
+    }
+
+    if (!seededFromSections && volume.bodyMarkdown?.trim()) {
+      completed.push({
+        volumeId: volume.id,
+        sectionId: sections[0]?.id ?? `${volume.id}-body`,
+        title: volume.title,
+        summary: summarizeSectionMarkdown(volume.bodyMarkdown),
+      })
+    }
+  }
+
+  return completed
+}
+
+export function seedHandoffWithSiblingDrafts(
+  handoff: ProposalHandoffState,
+  profile: ProposalRequirementsProfile,
+  excludeVolumeId: string,
+): ProposalHandoffState {
+  const siblingSections = collectSiblingDraftCompletedSections(profile, excludeVolumeId)
+  if (siblingSections.length === 0) {
+    return handoff
+  }
+
+  let next = handoff
+  for (const completed of siblingSections) {
+    const topicLine = `${completed.title}: ${completed.summary}`.trim()
+    next = {
+      ...next,
+      completedSections: [...next.completedSections, completed],
+      topicMemory: truncateTopicMemory([
+        ...next.topicMemory,
+        ...(topicLine ? [topicLine] : []),
+      ]),
+    }
+  }
+  return next
+}
+
+/** Isolated handoff for single-volume generate: pending refs for target + sibling draft context (BDA-198). */
+export function createIsolatedVolumeProposalHandoff(
+  profile: ProposalRequirementsProfile,
+  volumeId: string,
+): ProposalHandoffState {
+  const volume = profile.volumes.find((entry) => entry.id === volumeId)
+  if (!volume) {
+    throw new Error(`createIsolatedVolumeProposalHandoff: volume not found (${volumeId})`)
+  }
+
+  const base = createEmptyProposalHandoff({
+    activeGoal:
+      profile.summary.trim() ||
+      'Draft complete proposal volumes for the attached RFP',
+    packageKind: profile.packageKind,
+    pendingSections: collectPendingSectionRefs([volume]),
+  })
+
+  return seedHandoffWithSiblingDrafts(base, profile, volumeId)
+}
+
 function excerptsForVolume(blocks: BlockRecord[], volume: ProposalVolume): string[] {
   const groups = groupBlocksBySection(blocks)
   const titleNeedle = volume.title.toLowerCase()
@@ -156,14 +256,6 @@ function stubSectionMarkdown(
     '### Draft response',
     excerptBlock,
   ].join('\n')
-}
-
-function summarizeSectionMarkdown(markdown: string): string {
-  const plain = markdown
-    .replace(/^#+\s+/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-  return plain.slice(0, 220)
 }
 
 function appendVolumeSectionBody(existing: string | undefined, sectionMarkdown: string): string {
@@ -357,6 +449,12 @@ export async function buildProposalVolume(
   const volume = nextProfile.volumes.find((entry) => entry.id === volumeId)
   if (!volume) {
     throw new Error(`buildProposalVolume: volume not found (${volumeId})`)
+  }
+
+  if (batchState.isolatedVolumeRun) {
+    batchState.handoff = createIsolatedVolumeProposalHandoff(nextProfile, volumeId)
+    batchState.handoffChunkIndex = 0
+    options.onHandoffUpdate?.(batchState.handoff)
   }
 
   batchState.contextTracker.reset()
@@ -615,4 +713,88 @@ export async function buildProposalVolumes(
   syncContextUsageFromTracker(batchState.contextTracker)
 
   return profile
+}
+
+/** Dev harness — sibling draft summaries seed isolated handoff (BDA-198). */
+export function runBuildProposalVolumeSiblingHandoffHarness(): void {
+  const siblingSummaryPhrase = 'Acme liability coverage meets $2M general aggregate.'
+  const profile: ProposalRequirementsProfile = {
+    profile_id: 'harness-sibling-handoff',
+    rfp_doc_id: 'doc-rfp',
+    packageKind: 'contract_framework',
+    packageWarnings: [],
+    built_at: new Date().toISOString(),
+    summary: 'Harness profile for sibling handoff seeding.',
+    volumes: [
+      {
+        id: 'vol-insurance',
+        title: 'Insurance and bonding',
+        requirementSummary: 'Insurance limits and bonding requirements.',
+        status: 'draft',
+        sections: [
+          {
+            id: 'sec-ins-1',
+            title: 'General liability',
+            findClauseQuery: 'insurance liability',
+            status: 'draft',
+            bodyMarkdown: `## General liability\n\n${siblingSummaryPhrase}`,
+          },
+        ],
+      },
+      {
+        id: 'vol-payment',
+        title: 'Payment and invoicing',
+        requirementSummary: 'Payment terms.',
+        status: 'draft',
+        sections: [
+          {
+            id: 'sec-pay-1',
+            title: 'Invoicing cadence',
+            findClauseQuery: 'payment invoice',
+            status: 'draft',
+            bodyMarkdown: '## Invoicing\n\nNet 30 with milestone billing.',
+          },
+        ],
+      },
+      {
+        id: 'vol-indemnity',
+        title: 'Indemnification and liability',
+        requirementSummary: 'Indemnity caps.',
+        status: 'pending',
+        sections: [
+          {
+            id: 'sec-ind-1',
+            title: 'Mutual indemnity',
+            findClauseQuery: 'indemnification',
+            status: 'pending',
+          },
+        ],
+      },
+    ],
+  }
+
+  const handoff = createIsolatedVolumeProposalHandoff(profile, 'vol-indemnity')
+
+  if (handoff.completedSections.length < 2) {
+    throw new Error(
+      'runBuildProposalVolumeSiblingHandoffHarness: expected completed sections from two sibling volumes',
+    )
+  }
+  if (handoff.pendingSections.length !== 1 || handoff.pendingSections[0]?.volumeId !== 'vol-indemnity') {
+    throw new Error(
+      'runBuildProposalVolumeSiblingHandoffHarness: pending sections should be target volume only',
+    )
+  }
+
+  const block = buildProposalHandoffBlock(handoff, 1)
+  if (!block.includes(siblingSummaryPhrase.slice(0, 40))) {
+    throw new Error(
+      'runBuildProposalVolumeSiblingHandoffHarness: handoff block missing sibling summary excerpt',
+    )
+  }
+  if (!block.includes('General liability') || !block.includes('Invoicing cadence')) {
+    throw new Error(
+      'runBuildProposalVolumeSiblingHandoffHarness: handoff block missing sibling section titles',
+    )
+  }
 }

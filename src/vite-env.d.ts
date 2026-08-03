@@ -15,6 +15,7 @@ interface ScoperDevGlobals {
   clearEcpAgentAuditLog: () => void
   printEcpAgentAuditLog: () => readonly import('@/ecp/agent-run').EcpAgentAuditEntry[]
   setPdfMarkDrawingMode: (enabled: boolean) => void
+  setPdfMarkTool: (tool: import('@/lib/types').PdfDrawingTool) => void
 }
 
 interface Window {

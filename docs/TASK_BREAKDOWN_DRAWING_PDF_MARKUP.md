@@ -179,17 +179,20 @@ flowchart TD
 ### **ID:** BDA-226
 
 **Title:** Highlighter and eraser tools  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-225  
 **Priority:** High  
 **Description:** **Highlighter:** same as pen with default opacity ~0.35 and wider default width. **Eraser:** pointer hit-test (BDA-222) against page annotations; delete matched row(s).  
 **Completed Changes:**
-- 🔄 Highlighter opacity in model + render
-- 🔄 Eraser delete on hit
+- ✅ Highlighter stroke commit (`opacity` 0.35, min width 8px) + render
+- ✅ Eraser drag/delete via `findPdfDrawingAnnotationAtPointer` + `deletePdfDrawingAnnotation`
+- ✅ `pdfMarkTool` session state; dev `Scoper.setPdfMarkTool("highlighter"|"eraser")`
 **Test Strategy:** Draw highlighter over plan; erase segment; DB count decreases.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ Geometry harness covers annotation hit lookup
+- 🔄 Manual: mark mode + highlighter/eraser via Scoper dev globals
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Toolbar layout
 
 ---

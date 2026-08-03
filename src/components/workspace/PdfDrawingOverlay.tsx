@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react'
 
 import {
   denormalizePoint,
+  findPdfDrawingAnnotationAtPointer,
   normalizePoint,
   type PdfDrawingViewportSize,
 } from '@/lib/pdf-drawing-geometry'
@@ -16,28 +17,37 @@ import { cn } from '@/lib/utils'
 
 const DEFAULT_STAMP_PX = 24
 const DEFAULT_STROKE_WIDTH = 4
+const DEFAULT_HIGHLIGHTER_WIDTH = 8
+const DEFAULT_HIGHLIGHTER_OPACITY = 0.35
 const DEFAULT_TEXT_PX = 14
 const DEFAULT_PEN_COLOR = '#F59E0B'
+const DEFAULT_ERASER_RADIUS_PX = 12
 const MIN_POINT_DISTANCE_PX = 1.5
 
-export type PdfDrawingPenCommit = {
-  tool: 'pen'
+export type PdfDrawingStrokeCommit = {
+  tool: 'pen' | 'highlighter'
   color: string
   stroke_width: number
   opacity: number
   geometry: PdfDrawingStrokeGeometry
 }
 
+/** @deprecated Use PdfDrawingStrokeCommit */
+export type PdfDrawingPenCommit = PdfDrawingStrokeCommit
+
 export type PdfDrawingOverlayProps = {
   annotations: PdfDrawingAnnotation[]
   viewport: PdfDrawingViewportSize
   className?: string
-  /** When true, pen tool accepts pointer input (BDA-225). */
   interactive?: boolean
   activeTool?: PdfDrawingTool | null
   markColor?: string
   markStrokeWidth?: number
-  onPenStrokeCommit?: (commit: PdfDrawingPenCommit) => void | Promise<void>
+  eraserRadiusPx?: number
+  onStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  /** @deprecated Use onStrokeCommit */
+  onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  onEraseAnnotation?: (annotationId: string) => void | Promise<void>
 }
 
 function stampSizePx(
@@ -132,7 +142,7 @@ function AnnotationGraphic({
   const strokeWidth = annotation.stroke_width ?? DEFAULT_STROKE_WIDTH
   const opacity =
     annotation.tool === 'highlighter'
-      ? (annotation.opacity ?? 0.35)
+      ? (annotation.opacity ?? DEFAULT_HIGHLIGHTER_OPACITY)
       : (annotation.opacity ?? 1)
   const color = annotation.color
   const geometry = annotation.geometry
@@ -230,7 +240,11 @@ function pointerToNormalized(
   return normalizePoint(event.clientX - rect.left, event.clientY - rect.top, viewport)
 }
 
-/** SVG layer for persisted PDF drawing marks + in-progress pen strokes (BDA-224–225). */
+function isStrokeTool(tool: PdfDrawingTool | null | undefined): tool is 'pen' | 'highlighter' {
+  return tool === 'pen' || tool === 'highlighter'
+}
+
+/** SVG layer for persisted PDF drawing marks + in-progress strokes (BDA-224–226). */
 export function PdfDrawingOverlay({
   annotations,
   viewport,
@@ -239,12 +253,28 @@ export function PdfDrawingOverlay({
   activeTool = null,
   markColor = DEFAULT_PEN_COLOR,
   markStrokeWidth = DEFAULT_STROKE_WIDTH,
+  eraserRadiusPx = DEFAULT_ERASER_RADIUS_PX,
+  onStrokeCommit,
   onPenStrokeCommit,
+  onEraseAnnotation,
 }: PdfDrawingOverlayProps) {
-  const penActive = interactive && activeTool === 'pen' && Boolean(onPenStrokeCommit)
+  const commitStroke = onStrokeCommit ?? onPenStrokeCommit
+  const strokeToolActive =
+    interactive && isStrokeTool(activeTool) && Boolean(commitStroke)
+  const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
+  const pointerActive = strokeToolActive || eraserActive
+
+  const effectiveStrokeWidth =
+    activeTool === 'highlighter'
+      ? Math.max(markStrokeWidth, DEFAULT_HIGHLIGHTER_WIDTH)
+      : markStrokeWidth
+  const draftOpacity = activeTool === 'highlighter' ? DEFAULT_HIGHLIGHTER_OPACITY : 1
+
   const [draftPoints, setDraftPoints] = useState<PdfDrawingNormalizedPoint[]>([])
   const draftPointsRef = useRef<PdfDrawingNormalizedPoint[]>([])
   const drawingPointerId = useRef<number | null>(null)
+  const annotationsRef = useRef(annotations)
+  annotationsRef.current = annotations
 
   const resetDraft = useCallback(() => {
     drawingPointerId.current = null
@@ -252,24 +282,54 @@ export function PdfDrawingOverlay({
     setDraftPoints([])
   }, [])
 
+  const eraseAtPointer = useCallback(
+    (point: PdfDrawingNormalizedPoint) => {
+      if (!onEraseAnnotation) return
+      const hit = findPdfDrawingAnnotationAtPointer(
+        point,
+        annotationsRef.current,
+        viewport,
+        eraserRadiusPx,
+      )
+      if (hit) {
+        void onEraseAnnotation(hit.annotation_id)
+      }
+    },
+    [eraserRadiusPx, onEraseAnnotation, viewport],
+  )
+
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
-      if (!penActive || event.button !== 0) return
+      if (!pointerActive || event.button !== 0) return
       event.preventDefault()
       event.currentTarget.setPointerCapture(event.pointerId)
       drawingPointerId.current = event.pointerId
       const point = pointerToNormalized(event, viewport)
+
+      if (eraserActive) {
+        eraseAtPointer(point)
+        return
+      }
+
       draftPointsRef.current = [point]
       setDraftPoints([point])
     },
-    [penActive, viewport],
+    [eraseAtPointer, eraserActive, pointerActive, viewport],
   )
 
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
-      if (!penActive || drawingPointerId.current !== event.pointerId) return
+      if (drawingPointerId.current !== event.pointerId) return
       event.preventDefault()
       const point = pointerToNormalized(event, viewport)
+
+      if (eraserActive) {
+        eraseAtPointer(point)
+        return
+      }
+
+      if (!strokeToolActive) return
+
       setDraftPoints((previous) => {
         const last = previous[previous.length - 1]
         if (!shouldAppendPoint(last, point, viewport)) {
@@ -280,21 +340,21 @@ export function PdfDrawingOverlay({
         return next
       })
     },
-    [penActive, viewport],
+    [eraseAtPointer, eraserActive, strokeToolActive, viewport],
   )
 
   const finishStroke = useCallback(
     async (points: PdfDrawingNormalizedPoint[]) => {
-      if (points.length === 0 || !onPenStrokeCommit) return
-      await onPenStrokeCommit({
-        tool: 'pen',
+      if (points.length === 0 || !commitStroke || !isStrokeTool(activeTool)) return
+      await commitStroke({
+        tool: activeTool,
         color: markColor,
-        stroke_width: markStrokeWidth,
-        opacity: 1,
+        stroke_width: effectiveStrokeWidth,
+        opacity: activeTool === 'highlighter' ? DEFAULT_HIGHLIGHTER_OPACITY : 1,
         geometry: { kind: 'stroke', points },
       })
     },
-    [markColor, markStrokeWidth, onPenStrokeCommit],
+    [activeTool, commitStroke, effectiveStrokeWidth, markColor],
   )
 
   const handlePointerUp = useCallback(
@@ -304,11 +364,17 @@ export function PdfDrawingOverlay({
       if (event.currentTarget.hasPointerCapture(event.pointerId)) {
         event.currentTarget.releasePointerCapture(event.pointerId)
       }
+
+      if (eraserActive) {
+        resetDraft()
+        return
+      }
+
       const points = draftPointsRef.current
       resetDraft()
       void finishStroke(points)
     },
-    [finishStroke, resetDraft],
+    [eraserActive, finishStroke, resetDraft],
   )
 
   const handlePointerCancel = useCallback(
@@ -326,25 +392,31 @@ export function PdfDrawingOverlay({
     return null
   }
 
-  if (annotations.length === 0 && !penActive && draftPoints.length === 0) {
+  if (annotations.length === 0 && !pointerActive && draftPoints.length === 0) {
     return null
   }
+
+  const cursorClass = eraserActive
+    ? 'cursor-cell'
+    : strokeToolActive
+      ? 'cursor-crosshair'
+      : undefined
 
   return (
     <svg
       className={cn(
         'absolute inset-0 touch-none',
-        penActive ? 'pointer-events-auto cursor-crosshair' : 'pointer-events-none',
+        pointerActive ? cn('pointer-events-auto', cursorClass) : 'pointer-events-none',
         className,
       )}
       width={viewport.width}
       height={viewport.height}
       viewBox={`0 0 ${viewport.width} ${viewport.height}`}
-      aria-hidden={!penActive}
-      onPointerDown={penActive ? handlePointerDown : undefined}
-      onPointerMove={penActive ? handlePointerMove : undefined}
-      onPointerUp={penActive ? handlePointerUp : undefined}
-      onPointerCancel={penActive ? handlePointerCancel : undefined}
+      aria-hidden={!pointerActive}
+      onPointerDown={pointerActive ? handlePointerDown : undefined}
+      onPointerMove={pointerActive ? handlePointerMove : undefined}
+      onPointerUp={pointerActive ? handlePointerUp : undefined}
+      onPointerCancel={pointerActive ? handlePointerCancel : undefined}
     >
       {annotations.map((annotation) => (
         <g key={annotation.annotation_id} data-annotation-id={annotation.annotation_id}>
@@ -357,8 +429,8 @@ export function PdfDrawingOverlay({
           points={draftPoints}
           viewport={viewport}
           color={markColor}
-          strokeWidth={markStrokeWidth}
-          opacity={1}
+          strokeWidth={effectiveStrokeWidth}
+          opacity={draftOpacity}
         />
       ) : null}
     </svg>

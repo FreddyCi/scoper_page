@@ -12,6 +12,7 @@ import type {
   DocumentMeta,
   DocumentRole,
   IngestResult,
+  PdfDrawingTool,
   ProposalRequirementsProfile,
   RfpResultsProfile,
   ScopeCreepProfile,
@@ -150,6 +151,7 @@ export type SessionState = {
   reviewerName: string
   /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
   pdfMarkDrawingMode: boolean
+  pdfMarkTool: PdfDrawingTool
   creepProfiles: ScopeCreepProfile[]
   proposalRequirementsProfile: ProposalRequirementsProfile | null
   /** Rolling UCW handoff between sectional turns; cleared at each generate batch (BDA-165). */
@@ -192,6 +194,7 @@ export type SessionState = {
   setCompanyContext: (context: string) => void
   setReviewerName: (name: string) => void
   setPdfMarkDrawingMode: (enabled: boolean) => void
+  setPdfMarkTool: (tool: PdfDrawingTool) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
@@ -264,6 +267,7 @@ const initialState = {
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   pdfMarkDrawingMode: false,
+  pdfMarkTool: 'pen' as PdfDrawingTool,
   creepProfiles: [] as ScopeCreepProfile[],
   proposalRequirementsProfile: null as ProposalRequirementsProfile | null,
   proposalHandoffState: null as ProposalHandoffState | null,
@@ -423,6 +427,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   setPdfMarkDrawingMode: (pdfMarkDrawingMode) => set({ pdfMarkDrawingMode }),
+
+  setPdfMarkTool: (pdfMarkTool) => set({ pdfMarkTool }),
 
   clearEvaluationSetup: () => {
     writeCompanyContextPreference('')

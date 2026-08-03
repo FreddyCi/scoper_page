@@ -1,6 +1,7 @@
 import type { PageViewport } from 'pdfjs-dist'
 
 import type {
+  PdfDrawingAnnotation,
   PdfDrawingEllipseGeometry,
   PdfDrawingGeometry,
   PdfDrawingNormalizedPoint,
@@ -240,6 +241,33 @@ export function hitTestPdfDrawingGeometry(
   }
 }
 
+function eraserHitRadiusPx(annotation: PdfDrawingAnnotation, eraserRadiusPx: number): number {
+  const strokeWidth = annotation.stroke_width ?? 4
+  return Math.max(eraserRadiusPx, strokeWidth / 2 + 4)
+}
+
+/** Topmost annotation at pointer (last in paint order wins). */
+export function findPdfDrawingAnnotationAtPointer(
+  pointer: PdfDrawingNormalizedPoint,
+  annotations: readonly PdfDrawingAnnotation[],
+  viewport: PdfDrawingViewportSize,
+  eraserRadiusPx = 12,
+): PdfDrawingAnnotation | null {
+  for (let index = annotations.length - 1; index >= 0; index -= 1) {
+    const annotation = annotations[index]!
+    const hitRadiusPx = eraserHitRadiusPx(annotation, eraserRadiusPx)
+    if (
+      hitTestPdfDrawingGeometry(pointer, annotation.geometry, viewport, {
+        hitRadiusPx,
+        shapePadding: 0.005,
+      })
+    ) {
+      return annotation
+    }
+  }
+  return null
+}
+
 /** Dev harness — normalized round-trip and eraser hit-test smoke (BDA-222). */
 export function runPdfDrawingGeometryHarness(): void {
   const point = { x: 0.25, y: 0.5 }
@@ -290,5 +318,21 @@ export function runPdfDrawingGeometryHarness(): void {
   const bounds = normalizedGeometryBounds(stroke)
   if (!bounds || bounds.width < 0.79 || bounds.height < 0.79) {
     throw new Error('runPdfDrawingGeometryHarness failed: stroke bounds')
+  }
+
+  const sampleAnnotation: PdfDrawingAnnotation = {
+    annotation_id: 'harness-ann',
+    doc_id: 'doc',
+    page_num: 1,
+    tool: 'pen',
+    color: '#000',
+    stroke_width: 4,
+    geometry: stroke,
+    author_initials: 'T',
+    created_at: new Date().toISOString(),
+  }
+  const hit = findPdfDrawingAnnotationAtPointer(midPointer, [sampleAnnotation], smallViewport, 12)
+  if (!hit || hit.annotation_id !== 'harness-ann') {
+    throw new Error('runPdfDrawingGeometryHarness failed: annotation hit lookup')
   }
 }

@@ -7,7 +7,7 @@ import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPrev
 import { SpreadsheetDocumentPreview } from '@/components/workspace/SpreadsheetDocumentPreview'
 import { isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
-import type { PdfDrawingPenCommit } from '@/components/workspace/PdfDrawingOverlay'
+import type { PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { usePdfDrawingAnnotations } from '@/hooks/use-pdf-drawing-annotations'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox } from '@/lib/types'
@@ -65,6 +65,7 @@ export function DocumentViewer({
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
   const pdfMarkDrawingMode = useSessionStore((state) => state.pdfMarkDrawingMode)
+  const pdfMarkTool = useSessionStore((state) => state.pdfMarkTool)
   const canvasAnchorRef = useRef<HTMLDivElement>(null)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
@@ -81,10 +82,8 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
-  const { annotations: drawingAnnotations, commitPenStroke } = usePdfDrawingAnnotations(
-    document.doc_id,
-    currentPage,
-  )
+  const { annotations: drawingAnnotations, commitStroke, eraseAnnotation } =
+    usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
     : false
@@ -147,13 +146,25 @@ export function DocumentViewer({
       !pdfMarkDrawingMode,
   )
 
-  const handlePenStrokeCommit = async (commit: PdfDrawingPenCommit) => {
+  const handleStrokeCommit = async (commit: PdfDrawingStrokeCommit) => {
     try {
-      await commitPenStroke(commit)
+      await commitStroke(commit)
     } catch (error) {
-      console.error('[document-viewer] pen stroke commit failed', error)
+      console.error('[document-viewer] drawing stroke commit failed', error)
     }
   }
+
+  const handleEraseAnnotation = async (annotationId: string) => {
+    try {
+      await eraseAnnotation(annotationId)
+    } catch (error) {
+      console.error('[document-viewer] erase annotation failed', error)
+    }
+  }
+
+  const markStrokeWidth = pdfMarkTool === 'highlighter' ? 8 : 4
+  const markColor =
+    pdfMarkTool === 'highlighter' ? '#F59E0B' : pdfMarkTool === 'pen' ? '#E11D48' : '#F59E0B'
 
   const toolbarHint =
     adjustError ??
@@ -257,10 +268,18 @@ export function DocumentViewer({
               onRegionCommit={handleRegionAdjust}
               drawingAnnotations={drawingAnnotations}
               markDrawingMode={pdfMarkDrawingMode}
-              markTool="pen"
-              markColor="#F59E0B"
-              markStrokeWidth={4}
-              onPenStrokeCommit={pdfMarkDrawingMode ? handlePenStrokeCommit : undefined}
+              markTool={pdfMarkTool}
+              markColor={markColor}
+              markStrokeWidth={markStrokeWidth}
+              onStrokeCommit={
+                pdfMarkDrawingMode &&
+                (pdfMarkTool === 'pen' || pdfMarkTool === 'highlighter')
+                  ? handleStrokeCommit
+                  : undefined
+              }
+              onEraseAnnotation={
+                pdfMarkDrawingMode && pdfMarkTool === 'eraser' ? handleEraseAnnotation : undefined
+              }
             />
           </div>
         )}

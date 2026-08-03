@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
-import { PdfDrawingOverlay, type PdfDrawingPenCommit } from '@/components/workspace/PdfDrawingOverlay'
+import { PdfDrawingOverlay, type PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
 import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -23,7 +23,11 @@ type PdfPageCanvasProps = {
   markTool?: PdfDrawingTool
   markColor?: string
   markStrokeWidth?: number
-  onPenStrokeCommit?: (commit: PdfDrawingPenCommit) => void | Promise<void>
+  eraserRadiusPx?: number
+  onStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  /** @deprecated Use onStrokeCommit */
+  onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
+  onEraseAnnotation?: (annotationId: string) => void | Promise<void>
   className?: string
 }
 
@@ -62,7 +66,10 @@ export function PdfPageCanvas({
   markTool = 'pen',
   markColor,
   markStrokeWidth,
+  eraserRadiusPx,
+  onStrokeCommit,
   onPenStrokeCommit,
+  onEraseAnnotation,
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -200,7 +207,8 @@ export function PdfPageCanvas({
       : null
   const showDrawingOverlay =
     drawingViewport != null &&
-    (drawingAnnotations.length > 0 || (markDrawingMode && onPenStrokeCommit))
+    (drawingAnnotations.length > 0 ||
+      (markDrawingMode && (onStrokeCommit || onPenStrokeCommit || onEraseAnnotation)))
 
   return (
     <div className={cn('relative inline-block w-fit', className)}>
@@ -251,7 +259,10 @@ export function PdfPageCanvas({
             activeTool={markTool}
             markColor={markColor}
             markStrokeWidth={markStrokeWidth}
+            eraserRadiusPx={eraserRadiusPx}
+            onStrokeCommit={onStrokeCommit}
             onPenStrokeCommit={onPenStrokeCommit}
+            onEraseAnnotation={onEraseAnnotation}
           />
         </div>
       ) : null}

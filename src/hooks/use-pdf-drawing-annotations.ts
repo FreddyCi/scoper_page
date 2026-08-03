@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import type { PdfDrawingPenCommit } from '@/components/workspace/PdfDrawingOverlay'
+import type { PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
 import {
+  deletePdfDrawingAnnotation,
   fetchPdfDrawingAnnotationsForPage,
   insertPdfDrawingAnnotation,
 } from '@/services/pdf-drawing-annotations'
@@ -41,8 +42,8 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     }
   }, [docId, pageNum])
 
-  const commitPenStroke = useCallback(
-    async (commit: PdfDrawingPenCommit) => {
+  const commitStroke = useCallback(
+    async (commit: PdfDrawingStrokeCommit) => {
       const saved = await insertPdfDrawingAnnotation({
         doc_id: docId,
         page_num: pageNum,
@@ -58,5 +59,15 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     [docId, pageNum],
   )
 
-  return { annotations, loading, refresh, commitPenStroke }
+  const eraseAnnotation = useCallback(async (annotationId: string) => {
+    const removed = await deletePdfDrawingAnnotation(annotationId)
+    if (removed) {
+      setAnnotations((previous) =>
+        previous.filter((annotation) => annotation.annotation_id !== annotationId),
+      )
+    }
+    return removed
+  }, [])
+
+  return { annotations, loading, refresh, commitStroke, eraseAnnotation }
 }

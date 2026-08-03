@@ -3,6 +3,7 @@ import {
   getEcpAgentAuditLog,
   type EcpAgentAuditEntry,
 } from '@/ecp/agent-run'
+import type { PdfDrawingTool } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
 
 export type ScoperDevGlobals = {
@@ -13,6 +14,8 @@ export type ScoperDevGlobals = {
   printEcpAgentAuditLog: () => readonly EcpAgentAuditEntry[]
   /** Toggle PDF mark-drawing mode until toolbar ships (BDA-225). */
   setPdfMarkDrawingMode: (enabled: boolean) => void
+  /** Switch mark tool: pen | highlighter | eraser (BDA-226). */
+  setPdfMarkTool: (tool: PdfDrawingTool) => void
 }
 
 let devGlobalsAnnounced = false
@@ -37,6 +40,9 @@ export function exposeScoperDevGlobals(): void {
     setPdfMarkDrawingMode(enabled: boolean) {
       useSessionStore.getState().setPdfMarkDrawingMode(enabled)
     },
+    setPdfMarkTool(tool: PdfDrawingTool) {
+      useSessionStore.getState().setPdfMarkTool(tool)
+    },
   }
 
   window.Scoper = { ...window.Scoper, ...api }
@@ -44,7 +50,7 @@ export function exposeScoperDevGlobals(): void {
   if (!devGlobalsAnnounced) {
     devGlobalsAnnounced = true
     console.debug(
-      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog() · Scoper.setPdfMarkDrawingMode(true|false)',
+      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog() · Scoper.setPdfMarkDrawingMode(true|false) · Scoper.setPdfMarkTool("pen"|"highlighter"|"eraser")',
     )
   }
 }

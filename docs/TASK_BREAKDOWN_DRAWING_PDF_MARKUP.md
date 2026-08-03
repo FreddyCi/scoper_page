@@ -416,15 +416,17 @@ flowchart TD
 ### **ID:** BDA-237
 
 **Title:** pdf-drawing-export pdf-lib renderer  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-222, BDA-220  
 **Priority:** Critical  
 **Description:** Create [`pdf-drawing-export.ts`](../src/lib/pdf-drawing-export.ts): given `PDFPage` + annotations for that page, draw paths (pen/highlighter), rects, ellipses, text, stamp icons using same transform as [`liteParseBboxToPdfUserSpace`](../src/lib/citation-bbox.ts) / page media box.  
 **Completed Changes:**
-- 🔄 Per-tool draw functions
+- ✅ `drawPdfDrawingAnnotationsOnPage` + normalized → PDF user-space helpers
+- ✅ Per-tool renderers: stroke, rect, ellipse, text, window stamp
+- ✅ `runPdfDrawingExportHarness` (rect + stamp → PDF bytes smoke)
 **Test Strategy:** Unit/harness: single-page PDF + one rect → output bytes length / operator smoke.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runPdfDrawingExportHarness` in dev App chain  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Export behavior
 

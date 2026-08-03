@@ -234,6 +234,62 @@ assert(
   'ProposalGenerationPanel must call drafted-only assemble (BDA-214)',
 )
 
+console.log('[qa:proposal] BDA-218 analyze→propose loop static checks')
+
+assert(
+  sessionStore.includes('setProposalVolumeBody'),
+  'session-store must define setProposalVolumeBody (BDA-204)',
+)
+
+const buildRfpProfile = read('src/services/build-proposal-rfp-profile.ts')
+assert(
+  buildRfpProfile.includes('mapBaselineCriteriaToProposalVolumes'),
+  'build-proposal-rfp-profile must map baseline criteria to volumes (BDA-208)',
+)
+assert(
+  buildRfpProfile.includes('analysisRefs'),
+  'build-proposal-rfp-profile must attach analysisRefs on volumes (BDA-208)',
+)
+
+assert(
+  assembleProposal.includes("'drafted-only'"),
+  'assemble-proposal-markdown must support drafted-only export mode (BDA-213)',
+)
+
+const analyzeLoopHarnessPath = path.join(root, 'src/services/analyze-propose-loop-harness.ts')
+assert(
+  existsSync(analyzeLoopHarnessPath),
+  'analyze-propose-loop-harness.ts must exist (BDA-218)',
+)
+const analyzeLoopHarness = read('src/services/analyze-propose-loop-harness.ts')
+assert(
+  analyzeLoopHarness.includes('runAnalyzeProposeLoopHarness'),
+  'analyze-propose-loop-harness must export consolidated loop runner (BDA-218)',
+)
+assert(
+  analyzeLoopHarness.includes('runAnalyzeProposeEditedSiblingHarness'),
+  'analyze-propose-loop-harness must assert edited sibling survives generate patch (BDA-218)',
+)
+
+const proposalDevHarnesses = read('src/services/proposal-dev-harnesses.ts')
+assert(
+  proposalDevHarnesses.includes('runAnalyzeProposeLoopHarness'),
+  'proposal-dev-harnesses must run consolidated analyze→propose loop harness (BDA-218)',
+)
+
+const proposalContextDoc = read('docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')
+assert(
+  proposalContextDoc.includes('Analyze → propose loop'),
+  'PROPOSAL_CONTEXT_AND_SECTIONS must document analyze→propose loop (BDA-218)',
+)
+
+console.log(
+  '[qa:proposal] PASS BDA-218 analyze→propose loop (BDA-204/208/213 asserts, harness wiring)',
+)
+console.log(
+  '[qa:proposal] Manual UI: TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md § BDA-218 manual checklist',
+)
+
 const shareTable = read('src/lib/share-table.ts')
 assert(
   String(shareTable.match(/SHARE_PACK_VERSION = (\d+)/)?.[1]) === '2',

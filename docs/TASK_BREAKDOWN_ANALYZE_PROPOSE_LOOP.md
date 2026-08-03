@@ -511,16 +511,21 @@ flowchart TD
 ### **ID:** BDA-218
 
 **Title:** Full loop harness and manual QA  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-202, BDA-206, BDA-211, BDA-214  
 **Priority:** Critical  
 **Description:** Consolidate harness coverage: single-volume mutate only; edited body survives sibling regenerate; profile with baseline has **`analysisRefs`**; partial export + Sources. Document manual script in this file (analyze → chips → generate one → edit → partial export → full export when ready). Extend **`pnpm qa:proposal`** static checks for BDA-204, BDA-208, BDA-213 as string asserts.  
 **Completed Changes:**
-- 🔄 Harness + QA appendix below  
+- ✅ **`runAnalyzeProposeLoopHarness`** in [`analyze-propose-loop-harness.ts`](../src/services/analyze-propose-loop-harness.ts) — baseline **`analysisRefs`**, sibling handoff, **`setProposalVolumeBody`**, section citations, partial export + **`### Sources`**, share round-trip, edited-sibling + single-volume patch asserts
+- ✅ **`runProposalUnitHarnesses`** delegates loop coverage via **`runAnalyzeProposeLoopHarness`**
+- ✅ **`scripts/run-proposal-qa-static.mjs`** — BDA-204/208/213 string asserts + harness wiring (BDA-218)
+- ✅ Manual checklist below (BDA-180 pattern)  
 **Test Strategy:** `pnpm qa:proposal`; manual checklist pass.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `node scripts/run-proposal-qa-static.mjs` — BDA-218 PASS
+- ✅ `pnpm exec tsc --noEmit`
+- 🔄 Manual UI checklist (§ below) — run before release  
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-180 manual QA pattern  
 
 #### Manual UI checklist (BDA-218)

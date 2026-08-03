@@ -15,13 +15,9 @@ import { runAgentActivityEmissionsHarness } from '@/services/agent-activity-brid
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
 import { runProposalContextRollHarness } from '@/lib/proposal-context-roll'
 import { runProposalContextTrackerHarness } from '@/lib/proposal-context-tracker'
-import { runAssembleProposalMarkdownHarness } from '@/lib/assemble-proposal-markdown'
 import { runDeriveProposalSectionsHarness } from '@/services/derive-proposal-sections'
-import {
-  runBuildProposalRfpProfileBaselineMappingHarness,
-  runBuildProposalRfpProfilePackageHarness,
-} from '@/services/build-proposal-rfp-profile'
-import { runBuildProposalVolumeSiblingHandoffHarness } from '@/services/build-proposal-volumes'
+import { runAnalyzeProposeLoopHarness } from '@/services/analyze-propose-loop-harness'
+import { runBuildProposalRfpProfilePackageHarness } from '@/services/build-proposal-rfp-profile'
 import { runChatStubProposalHarness } from '@/lib/chat-stub'
 import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-effects'
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
@@ -30,13 +26,11 @@ import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
 import {
   runProposalStoreGeneratePreflightHarness,
   runProposalStoreGenerateSingleVolumeHarness,
-  runProposalVolumeBodyEditHarness,
 } from '@/services/proposal-store-generate-harness'
-import { runProposalSectionEcpHarness, runProposalSectionCitationsHarness } from '@/services/proposal-volume-ecp'
+import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
-import { runProposalShareStoreHarness } from '@/services/proposal-share-store'
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
@@ -58,17 +52,12 @@ export function runProposalUnitHarnesses(): void {
   runProposalContextTrackerHarness()
   runProposalReadinessHarness()
   runBuildProposalRfpProfilePackageHarness()
-  runBuildProposalRfpProfileBaselineMappingHarness()
   runDeriveProposalSectionsHarness()
   runProposalPostIngestHarness()
-  runAssembleProposalMarkdownHarness()
   runProposalPromptsHarness()
-  runBuildProposalVolumeSiblingHandoffHarness()
+  runAnalyzeProposeLoopHarness()
   runChatStubProposalHarness()
   runProposalPanelSetupHarness()
-  runProposalVolumeBodyEditHarness()
-  runProposalSectionCitationsHarness()
-  runProposalShareStoreHarness()
 }
 
 /** Async proposal harnesses that need session + DuckDB state (BDA-150). */

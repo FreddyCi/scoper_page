@@ -25,6 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { brandAccentStyles } from '@/lib/brand-accent'
 import {
   isMarkdownDocument,
+  isSpreadsheetDocument,
+  isWordDocument,
   readLayoutKind,
   usesReadPreviewLayout,
 } from '@/lib/document-preview'
@@ -194,8 +196,10 @@ function SplitDocumentViewFooter({
   onExportClick,
   markdownExportLoading = false,
   onExportMarkdownClick,
+  markdownExportDescription,
   contextConvertLoading = false,
   onConvertToContextClick,
+  contextConvertDescription,
 }: {
   statusLabel: string
   commentNavigator?: ReactNode
@@ -210,8 +214,10 @@ function SplitDocumentViewFooter({
   onExportClick?: (mode: 'markup' | 'burned-in') => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
+  markdownExportDescription?: string
   contextConvertLoading?: boolean
   onConvertToContextClick?: () => void
+  contextConvertDescription?: string
 }) {
   return (
     <footer className="border-border bg-surface flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3">
@@ -263,7 +269,10 @@ function SplitDocumentViewFooter({
                   <BrandMenuSectionHeader
                     accent="sky"
                     title="Export Markdown"
-                    description="PDF annotations, form fields, and Scoper review notes."
+                    description={
+                      markdownExportDescription ??
+                      'PDF annotations, form fields, and Scoper review notes.'
+                    }
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
@@ -284,7 +293,10 @@ function SplitDocumentViewFooter({
                   <BrandMenuSectionHeader
                     accent="violet"
                     title="Convert to context"
-                    description="Parse this PDF to markdown and add it as a supporting context tab in chat."
+                    description={
+                      contextConvertDescription ??
+                      'Parse this PDF to markdown and add it as a supporting context tab in chat.'
+                    }
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
@@ -463,6 +475,21 @@ export function SplitDocumentView({
   }, [blocks, blocks.length, blocksLoading, document.doc_id, document.filename, usesReadLayout, selectedCitation])
 
   const canExportPdf = document.mime === 'application/pdf'
+  const canExportMarkdown =
+    canExportPdf || isWordDocument(document) || isSpreadsheetDocument(document)
+  const canConvertToContext = canExportMarkdown
+
+  const markdownExportDescription =
+    layoutKind === 'word'
+      ? 'Headings and paragraphs exported from Word (mammoth, browser-only).'
+      : layoutKind === 'spreadsheet'
+        ? 'Sheets as markdown tables — Excel, CSV, ODS, or Google export.'
+        : undefined
+
+  const contextConvertDescription =
+    layoutKind === 'word' || layoutKind === 'spreadsheet'
+      ? 'Export to markdown and add a supporting context tab for chat (same as PDF convert).'
+      : undefined
   const exportStatusHint =
     commentedBlockIds.size > 0
       ? isMarkdown
@@ -507,17 +534,17 @@ export function SplitDocumentView({
   }
 
   function handleExportMarkdown() {
-    if (!canExportPdf || exportingMarkdown) return
+    if (!canExportMarkdown || exportingMarkdown) return
 
     setExportError(null)
     setExportingMarkdown(true)
 
     void (async () => {
       try {
-        const { exportPdfMarkdownBlob } = await import('@/services/export-pdf-markdown')
-        const { blob, filename } = await exportPdfMarkdownBlob(document, {
+        const { exportDocumentMarkdownBlob } = await import('@/services/export-document-markdown')
+        const { blob, filename } = await exportDocumentMarkdownBlob(document, {
           ocrEnabled,
-          includeScoperComments: true,
+          includeScoperComments: document.mime === 'application/pdf',
         })
         const writeBlob = await beginBlobSave({
           filename,
@@ -538,17 +565,19 @@ export function SplitDocumentView({
   }
 
   function handleConvertToContext() {
-    if (!canExportPdf || convertingToContext) return
+    if (!canConvertToContext || convertingToContext) return
 
     setExportError(null)
     setConvertingToContext(true)
 
     void (async () => {
       try {
-        const { convertPdfToContextDocument } = await import('@/services/convert-pdf-to-context')
-        await convertPdfToContextDocument(document, {
+        const { convertDocumentToContextDocument } = await import(
+          '@/services/convert-document-to-context'
+        )
+        await convertDocumentToContextDocument(document, {
           ocrEnabled,
-          includeScoperComments: true,
+          includeScoperComments: document.mime === 'application/pdf',
         })
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Context conversion failed'
@@ -719,12 +748,14 @@ export function SplitDocumentView({
         onCtaClick={handleCtaClick}
         exportLabel={exportStatusHint ? `Export PDF (${exportStatusHint})` : 'Export PDF'}
         exportLoading={exportingPdf}
-        exportDisabled={!canExportPdf}
+        exportDisabled={!canExportPdf && !canExportMarkdown}
         onExportClick={canExportPdf ? handleExportPdf : undefined}
         markdownExportLoading={exportingMarkdown}
-        onExportMarkdownClick={canExportPdf ? handleExportMarkdown : undefined}
+        onExportMarkdownClick={canExportMarkdown ? handleExportMarkdown : undefined}
+        markdownExportDescription={markdownExportDescription}
         contextConvertLoading={convertingToContext}
-        onConvertToContextClick={canExportPdf ? handleConvertToContext : undefined}
+        onConvertToContextClick={canConvertToContext ? handleConvertToContext : undefined}
+        contextConvertDescription={contextConvertDescription}
       />
     </div>
   )

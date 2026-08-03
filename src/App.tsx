@@ -44,6 +44,7 @@ import { runLiteParseHarness, runLiteParseOcrHarness } from '@/services/litepars
 import { runOcrHarness } from '@/services/ocr-client'
 import { runConvertPdfToContextHarness } from '@/services/convert-pdf-to-context-harness'
 import { runExportPdfMarkdownHarness } from '@/services/export-pdf-markdown-harness'
+import { runExportDocumentMarkdownHarness } from '@/services/export-document-markdown-harness'
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
@@ -77,6 +78,7 @@ function App() {
       await runLiteParseOcrHarness()
       await runIngestHarness()
       await runExportPdfMarkdownHarness()
+      await runExportDocumentMarkdownHarness()
       await runConvertPdfToContextHarness()
       await runSharePackHarness()
       await runMarkdownIngestHarness()

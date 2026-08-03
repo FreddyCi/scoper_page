@@ -17,7 +17,7 @@ import { resolveDocumentRoleForIngest } from '@/services/document-roles'
 import { getLiteParseClient } from '@/services/liteparse-client'
 import { parseMarkdownToBlocks } from '@/services/markdown-ingest'
 import { parseDocxToBlocks } from '@/services/docx-ingest'
-import { parseXlsxToBlocks } from '@/services/xlsx-ingest'
+import { parseCsvToBlocks, parseXlsxToBlocks } from '@/services/xlsx-ingest'
 import { importPdfMarkupComments, readScoperExportMetadata } from '@/services/import-pdf-comments'
 import { useSessionStore } from '@/store/session-store'
 
@@ -92,9 +92,11 @@ function detectIngestFormat(file: File): IngestFormat {
     mime === 'application/vnd.ms-excel' ||
     mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
     mime === ODS_MIME ||
+    mime === 'text/csv' ||
     extension === 'xls' ||
     extension === 'xlsx' ||
-    extension === 'ods'
+    extension === 'ods' ||
+    extension === 'csv'
   ) {
     return 'excel'
   }
@@ -345,9 +347,12 @@ async function ingestExcel(
     bytes.byteOffset + bytes.byteLength,
   )
   reportFileProgress(options, fileIndex, totalFiles, file.name, 40, 'Parsing spreadsheet')
-  const blocks = parseXlsxToBlocks(docId, arrayBuffer)
+  const isCsv = getFileExtension(file.name) === 'csv'
+  const blocks = isCsv
+    ? parseCsvToBlocks(docId, arrayBuffer)
+    : parseXlsxToBlocks(docId, arrayBuffer)
   const mime = resolveMime(file)
-  const spreadsheetMime = resolveSpreadsheetMime(mime, file.name)
+  const spreadsheetMime = isCsv ? 'text/csv' : resolveSpreadsheetMime(mime, file.name)
 
   const role = await resolveDocumentRoleForIngest(
     docId,

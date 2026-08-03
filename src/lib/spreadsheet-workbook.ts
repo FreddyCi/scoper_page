@@ -20,6 +20,12 @@ export function readSpreadsheetWorkbook(bytes: ArrayBuffer): XLSX.WorkBook {
   return XLSX.read(bytes, { type: 'array', cellDates: true })
 }
 
+/** Parse UTF-8 `.csv` via SheetJS (single sheet). */
+export function readSpreadsheetWorkbookFromCsv(bytes: ArrayBuffer): XLSX.WorkBook {
+  const text = new TextDecoder('utf-8').decode(bytes)
+  return XLSX.read(text, { type: 'string', cellDates: true })
+}
+
 export function workbookSheetGrid(
   workbook: XLSX.WorkBook,
   sheetIndex: number,

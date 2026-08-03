@@ -4,6 +4,7 @@ import type { BlockRecord } from '@/lib/types'
 import {
   cellDisplayText,
   readSpreadsheetWorkbook,
+  readSpreadsheetWorkbookFromCsv,
 } from '@/lib/spreadsheet-workbook'
 
 function rowRangeLabel(range: XLSX.Range, row: number): string {
@@ -17,8 +18,7 @@ function rowRangeLabel(range: XLSX.Range, row: number): string {
 }
 
 /** SheetJS workbook → row blocks with sheet + cell-range section_path (BDA-081) */
-export function parseXlsxToBlocks(docId: string, bytes: ArrayBuffer): BlockRecord[] {
-  const workbook = readSpreadsheetWorkbook(bytes)
+export function workbookToBlocks(docId: string, workbook: XLSX.WorkBook): BlockRecord[] {
   const blocks: BlockRecord[] = []
 
   for (const [sheetIndex, sheetName] of workbook.SheetNames.entries()) {
@@ -54,8 +54,16 @@ export function parseXlsxToBlocks(docId: string, bytes: ArrayBuffer): BlockRecor
   }
 
   if (blocks.length === 0) {
-    throw new Error('Excel workbook contains no extractable cells')
+    throw new Error('Spreadsheet contains no extractable cells')
   }
 
   return blocks
+}
+
+export function parseXlsxToBlocks(docId: string, bytes: ArrayBuffer): BlockRecord[] {
+  return workbookToBlocks(docId, readSpreadsheetWorkbook(bytes))
+}
+
+export function parseCsvToBlocks(docId: string, bytes: ArrayBuffer): BlockRecord[] {
+  return workbookToBlocks(docId, readSpreadsheetWorkbookFromCsv(bytes))
 }

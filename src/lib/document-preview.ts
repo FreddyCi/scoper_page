@@ -16,8 +16,9 @@ export function isSpreadsheetDocument(
   doc: Pick<DocumentMeta, 'mime' | 'filename'>,
 ): boolean {
   if (SPREADSHEET_MIMES.has(doc.mime)) return true
+  if (doc.mime === 'text/csv') return true
   const extension = doc.filename.split('.').pop()?.toLowerCase()
-  return extension === 'xlsx' || extension === 'xls' || extension === 'ods'
+  return extension === 'xlsx' || extension === 'xls' || extension === 'ods' || extension === 'csv'
 }
 
 export function spreadsheetFormatLabel(doc: Pick<DocumentMeta, 'mime' | 'filename'>): string {

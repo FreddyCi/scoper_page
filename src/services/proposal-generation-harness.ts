@@ -255,6 +255,62 @@ async function runContractMsaGenerationSlice(
   assertVolumeOutcomes(generated.volumes, 'proposal generation harness: MSA slice')
 }
 
+/** Store single-volume generate touches one volume only (BDA-202). */
+async function assertStoreSingleVolumeGenerateIsolation(
+  store: ReturnType<typeof useSessionStore.getState>,
+): Promise<void> {
+  const profile = useSessionStore.getState().proposalRequirementsProfile
+  if (!profile || profile.volumes.length < 2) {
+    throw new Error(
+      'proposal generation harness: need at least two profile volumes for single-volume isolation (BDA-202)',
+    )
+  }
+
+  if (!profile.volumes.every((volume) => volume.status === 'pending')) {
+    throw new Error(
+      'proposal generation harness: expected all volumes pending before single-volume generate (BDA-202)',
+    )
+  }
+
+  const targetId = profile.volumes[0]!.id
+  const otherIds = profile.volumes.slice(1).map((volume) => volume.id)
+
+  clearEcpAgentAuditLog()
+  useSessionStore.getState().clearAgentActivity()
+
+  await store.runGenerateProposalVolume(targetId)
+
+  const afterSingle = useSessionStore.getState()
+  if (afterSingle.proposalGenerating) {
+    throw new Error(
+      'proposal generation harness: proposalGenerating should be false after single-volume generate (BDA-202)',
+    )
+  }
+
+  const updated = afterSingle.proposalRequirementsProfile
+  if (!updated) {
+    throw new Error(
+      'proposal generation harness: profile missing after single-volume generate (BDA-202)',
+    )
+  }
+
+  const targetVolume = updated.volumes.find((volume) => volume.id === targetId)
+  if (!targetVolume || targetVolume.status === 'pending') {
+    throw new Error(
+      `proposal generation harness: target volume ${targetId} should leave pending after single-volume generate (BDA-202)`,
+    )
+  }
+
+  for (const id of otherIds) {
+    const other = updated.volumes.find((volume) => volume.id === id)
+    if (!other || other.status !== 'pending') {
+      throw new Error(
+        `proposal generation harness: volume ${id} should stay pending after single-volume generate, got ${other?.status ?? 'missing'} (BDA-202)`,
+      )
+    }
+  }
+}
+
 /**
  * End-to-end proposal harness (BDA-119, BDA-179): ingest → profile → gated generate (ECP + Scoper/stub).
  */
@@ -367,6 +423,8 @@ export async function runProposalGenerationHarness(): Promise<void> {
   if (!getProposalSetupState(afterProfile).readyToGenerate) {
     throw new Error('proposal generation harness: expected readyToGenerate after profile build')
   }
+
+  await assertStoreSingleVolumeGenerateIsolation(store)
 
   useSessionStore.setState({ proposalGenerating: true })
   await store.runGenerateProposalVolumes()

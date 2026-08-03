@@ -117,6 +117,20 @@ assert(
   generationHarness.includes('assertContextUsageWithinContextSize'),
   'proposal-generation-harness must assert context usage budget (BDA-179)',
 )
+assert(
+  generationHarness.includes('runGenerateProposalVolume'),
+  'proposal-generation-harness must exercise single-volume store generate (BDA-202)',
+)
+assert(
+  generationHarness.includes('should stay pending after single-volume generate'),
+  'proposal-generation-harness must assert sibling volumes stay pending (BDA-202)',
+)
+
+const volumeRow = read('src/components/workspace/ProposalVolumeRow.tsx')
+assert(
+  volumeRow.includes('onGenerate?: (volumeId: string) => void'),
+  'ProposalVolumeRow must accept onGenerate callback (BDA-202)',
+)
 
 const proposalPanel = read('src/components/workspace/ProposalGenerationPanel.tsx')
 assert(

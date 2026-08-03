@@ -172,16 +172,19 @@ flowchart TD
 ### **ID:** BDA-202
 
 **Title:** Phase 1 harness and static QA  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-201  
 **Priority:** High  
 **Description:** Extend [`proposal-generation-harness.ts`](../src/services/proposal-generation-harness.ts) or [`proposal-store-generate-harness.ts`](../src/services/proposal-store-generate-harness.ts): after profile build, **`runGenerateProposalVolume(oneId)`** — assert only that volume leaves `pending`, others unchanged. Add [`run-proposal-qa-static.mjs`](../scripts/run-proposal-qa-static.mjs) asserts: `runGenerateProposalVolume`, panel/`ProposalVolumeRow` `onGenerate`.  
 **Completed Changes:**
-- 🔄 Harness + static script  
+- ✅ **`assertStoreSingleVolumeGenerateIsolation`** in **`proposal-generation-harness.ts`** (after profile build, before full batch)
+- ✅ Static QA: harness isolation string, **`ProposalVolumeRow`** / panel wiring (BDA-201 asserts retained)
 **Test Strategy:** `pnpm qa:proposal`; `pnpm exec tsc --noEmit`.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-202 asserts
+- 🔄 Full **`runProposalGenerationHarness`** isolation step runs in dev async chain (ECP)
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-179 QA patterns  
 
 ---

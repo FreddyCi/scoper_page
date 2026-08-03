@@ -19,8 +19,9 @@ import {
   fetchPdfDrawingAnnotationsForPage,
   insertPdfDrawingAnnotation,
   restorePdfDrawingAnnotation,
+  updatePdfDrawingAnnotation,
 } from '@/services/pdf-drawing-annotations'
-import type { PdfDrawingAnnotation } from '@/lib/types'
+import type { PdfDrawingAnnotation, PdfDrawingGeometry } from '@/lib/types'
 
 const historyHandlers = {
   undoInsert: async (annotation: PdfDrawingAnnotation) => {
@@ -172,6 +173,38 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     [bumpHistory, docId],
   )
 
+  const eraseAnnotations = useCallback(
+    async (annotationIds: readonly string[]) => {
+      const uniqueIds = [...new Set(annotationIds)]
+      if (uniqueIds.length === 0) return 0
+      let removedCount = 0
+      for (const annotationId of uniqueIds) {
+        const removed = await eraseAnnotation(annotationId)
+        if (removed) removedCount += 1
+      }
+      return removedCount
+    },
+    [eraseAnnotation],
+  )
+
+  const moveDrawingMark = useCallback(
+    async (annotationId: string, geometry: PdfDrawingGeometry) => {
+      const updated = await updatePdfDrawingAnnotation({
+        annotation_id: annotationId,
+        geometry,
+      })
+      if (updated) {
+        setAnnotations((previous) =>
+          previous.map((annotation) =>
+            annotation.annotation_id === annotationId ? updated : annotation,
+          ),
+        )
+      }
+      return updated
+    },
+    [],
+  )
+
   const undoDrawingMark = useCallback(async () => {
     const op = await undoPdfDrawingHistory(docId, historyHandlers)
     if (!op) return false
@@ -199,6 +232,8 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     commitText,
     commitStamp,
     eraseAnnotation,
+    eraseAnnotations,
+    moveDrawingMark,
     undoDrawingMark,
     redoDrawingMark,
     canUndoDrawingMark: pdfDrawingCanUndo(docId),

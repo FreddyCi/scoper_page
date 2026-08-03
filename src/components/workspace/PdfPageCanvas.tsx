@@ -5,7 +5,7 @@ import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
 import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStampCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
-import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfMarkSessionTool } from '@/lib/types'
+import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingGeometry, PdfMarkSessionTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 type PdfPageCanvasProps = {
@@ -34,6 +34,12 @@ type PdfPageCanvasProps = {
   onTextCommit?: (commit: PdfDrawingTextCommit) => void | Promise<void>
   onStampCommit?: (commit: PdfDrawingStampCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
+  selectedAnnotationIds?: readonly string[]
+  onSelectionChange?: (annotationIds: string[]) => void
+  onMoveAnnotation?: (
+    annotationId: string,
+    geometry: PdfDrawingGeometry,
+  ) => void | Promise<void>
   className?: string
 }
 
@@ -80,6 +86,9 @@ export function PdfPageCanvas({
   onTextCommit,
   onStampCommit,
   onEraseAnnotation,
+  selectedAnnotationIds,
+  onSelectionChange,
+  onMoveAnnotation,
   className,
 }: PdfPageCanvasProps) {
   const markModeActive = markMode || markDrawingMode
@@ -277,6 +286,9 @@ export function PdfPageCanvas({
             onTextCommit={onTextCommit}
             onStampCommit={onStampCommit}
             onEraseAnnotation={onEraseAnnotation}
+            selectedAnnotationIds={selectedAnnotationIds}
+            onSelectionChange={onSelectionChange}
+            onMoveAnnotation={onMoveAnnotation}
           />
         </div>
       ) : null}

@@ -293,6 +293,99 @@ export function findPdfDrawingAnnotationAtPointer(
   return null
 }
 
+const TEXT_MARQUEE_WIDTH_N = 0.12
+const TEXT_MARQUEE_HEIGHT_N = 0.05
+const STAMP_MARQUEE_SIZE_N = 0.04
+
+/** Axis-aligned bounds used for marquee selection (expands point anchors). */
+export function normalizedAnnotationMarqueeBounds(
+  annotation: PdfDrawingAnnotation,
+): PdfDrawingNormalizedBounds {
+  const geometry = annotation.geometry
+  const base = normalizedGeometryBounds(geometry)
+  if (!base) {
+    return { x: 0, y: 0, width: 0, height: 0 }
+  }
+
+  if (geometry.kind === 'stroke' || geometry.kind === 'rect' || geometry.kind === 'ellipse') {
+    return base
+  }
+
+  if (geometry.kind === 'text') {
+    return {
+      x: base.x,
+      y: base.y,
+      width: TEXT_MARQUEE_WIDTH_N,
+      height: TEXT_MARQUEE_HEIGHT_N,
+    }
+  }
+
+  const stampSize = geometry.size != null && geometry.size > 0 ? geometry.size : STAMP_MARQUEE_SIZE_N
+  return {
+    x: base.x,
+    y: base.y,
+    width: stampSize,
+    height: stampSize,
+  }
+}
+
+function normalizedRectsIntersect(
+  a: PdfDrawingNormalizedBounds,
+  b: PdfDrawingNormalizedBounds,
+): boolean {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  )
+}
+
+/** Annotations whose marquee bounds intersect `marquee` (normalized top-left box). */
+export function findPdfDrawingAnnotationsInMarquee(
+  marquee: PdfDrawingNormalizedBounds,
+  annotations: readonly PdfDrawingAnnotation[],
+): PdfDrawingAnnotation[] {
+  return annotations.filter((annotation) =>
+    normalizedRectsIntersect(normalizedAnnotationMarqueeBounds(annotation), marquee),
+  )
+}
+
+export function translatePdfDrawingGeometry(
+  geometry: PdfDrawingGeometry,
+  deltaX: number,
+  deltaY: number,
+): PdfDrawingGeometry {
+  switch (geometry.kind) {
+    case 'stroke':
+      return {
+        kind: 'stroke',
+        points: geometry.points.map((point) => ({
+          x: point.x + deltaX,
+          y: point.y + deltaY,
+        })),
+      }
+    case 'rect':
+    case 'ellipse':
+      return {
+        ...geometry,
+        x: geometry.x + deltaX,
+        y: geometry.y + deltaY,
+      }
+    case 'text':
+    case 'stamp':
+      return {
+        ...geometry,
+        x: geometry.x + deltaX,
+        y: geometry.y + deltaY,
+      }
+    default: {
+      const _exhaustive: never = geometry
+      return _exhaustive
+    }
+  }
+}
+
 /** Dev harness — normalized round-trip and eraser hit-test smoke (BDA-222). */
 export function runPdfDrawingGeometryHarness(): void {
   const point = { x: 0.25, y: 0.5 }
@@ -364,5 +457,18 @@ export function runPdfDrawingGeometryHarness(): void {
   const hit = findPdfDrawingAnnotationAtPointer(midPointer, [sampleAnnotation], smallViewport, 12)
   if (!hit || hit.annotation_id !== 'harness-ann') {
     throw new Error('runPdfDrawingGeometryHarness failed: annotation hit lookup')
+  }
+
+  const moved = translatePdfDrawingGeometry(rect, 0.05, 0.05)
+  if (moved.kind !== 'rect' || moved.x !== 0.25) {
+    throw new Error('runPdfDrawingGeometryHarness failed: translate rect')
+  }
+
+  const marqueeHits = findPdfDrawingAnnotationsInMarquee(
+    { x: 0, y: 0, width: 0.5, height: 0.5 },
+    [sampleAnnotation],
+  )
+  if (marqueeHits.length !== 1) {
+    throw new Error('runPdfDrawingGeometryHarness failed: marquee select')
   }
 }

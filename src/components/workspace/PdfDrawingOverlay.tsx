@@ -3,9 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   denormalizePoint,
   findPdfDrawingAnnotationAtPointer,
+  findPdfDrawingAnnotationsInMarquee,
   isNormalizedBoundsLargeEnough,
   normalizePoint,
+  normalizedAnnotationMarqueeBounds,
   normalizedBoundsFromCorners,
+  translatePdfDrawingGeometry,
   type PdfDrawingViewportSize,
 } from '@/lib/pdf-drawing-geometry'
 import type {
@@ -29,6 +32,7 @@ const DEFAULT_TEXT_PX = 14
 const DEFAULT_PEN_COLOR = '#F59E0B'
 const DEFAULT_ERASER_RADIUS_PX = 12
 const MIN_POINT_DISTANCE_PX = 1.5
+const MIN_MARQUEE_DRAG_PX = 4
 
 export type PdfDrawingStrokeCommit = {
   tool: 'pen' | 'highlighter'
@@ -79,6 +83,12 @@ export type PdfDrawingOverlayProps = {
   onTextCommit?: (commit: PdfDrawingTextCommit) => void | Promise<void>
   onStampCommit?: (commit: PdfDrawingStampCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
+  selectedAnnotationIds?: readonly string[]
+  onSelectionChange?: (annotationIds: string[]) => void
+  onMoveAnnotation?: (
+    annotationId: string,
+    geometry: PdfDrawingGeometry,
+  ) => void | Promise<void>
 }
 
 function stampSizePx(
@@ -289,6 +299,81 @@ type TextEditorState = {
   value: string
 }
 
+type MoveDragState = {
+  annotationId: string
+  startPointer: PdfDrawingNormalizedPoint
+  baseGeometry: PdfDrawingGeometry
+  previewGeometry: PdfDrawingGeometry
+}
+
+type MarqueeDragState = {
+  start: PdfDrawingNormalizedPoint
+  end: PdfDrawingNormalizedPoint
+  additive: boolean
+}
+
+function SelectionOutline({
+  annotation,
+  viewport,
+}: {
+  annotation: PdfDrawingAnnotation
+  viewport: PdfDrawingViewportSize
+}) {
+  const bounds = normalizedAnnotationMarqueeBounds(annotation)
+  const topLeft = denormalizePoint({ x: bounds.x, y: bounds.y }, viewport)
+  return (
+    <rect
+      x={topLeft.x}
+      y={topLeft.y}
+      width={bounds.width * viewport.width}
+      height={bounds.height * viewport.height}
+      fill="rgba(14, 165, 233, 0.08)"
+      stroke="#0EA5E9"
+      strokeWidth={1.5}
+      strokeDasharray="5 4"
+      pointerEvents="none"
+    />
+  )
+}
+
+function MarqueeGraphic({
+  marquee,
+  viewport,
+}: {
+  marquee: MarqueeDragState
+  viewport: PdfDrawingViewportSize
+}) {
+  const bounds = normalizedBoundsFromCorners(marquee.start, marquee.end)
+  const topLeft = denormalizePoint({ x: bounds.x, y: bounds.y }, viewport)
+  return (
+    <rect
+      x={topLeft.x}
+      y={topLeft.y}
+      width={bounds.width * viewport.width}
+      height={bounds.height * viewport.height}
+      fill="rgba(14, 165, 233, 0.12)"
+      stroke="#0EA5E9"
+      strokeWidth={1.5}
+      strokeDasharray="5 4"
+      pointerEvents="none"
+    />
+  )
+}
+
+function pointerDragDistancePx(
+  start: PdfDrawingNormalizedPoint,
+  end: PdfDrawingNormalizedPoint,
+  viewport: PdfDrawingViewportSize,
+): number {
+  const a = denormalizePoint(start, viewport)
+  const b = denormalizePoint(end, viewport)
+  return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+function toggleIdInList(ids: readonly string[], id: string): string[] {
+  return ids.includes(id) ? ids.filter((entry) => entry !== id) : [...ids, id]
+}
+
 function PdfDrawingTextEditor({
   state,
   viewport,
@@ -408,6 +493,9 @@ export function PdfDrawingOverlay({
   onTextCommit,
   onStampCommit,
   onEraseAnnotation,
+  selectedAnnotationIds = [],
+  onSelectionChange,
+  onMoveAnnotation,
 }: PdfDrawingOverlayProps) {
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
   const strokeToolActive =
@@ -416,8 +504,16 @@ export function PdfDrawingOverlay({
   const textToolActive = interactive && activeTool === 'text' && Boolean(onTextCommit)
   const stampToolActive = interactive && activeTool === 'stamp' && Boolean(onStampCommit)
   const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
+  const handActive = interactive && activeTool === 'hand' && Boolean(onMoveAnnotation)
+  const selectActive = interactive && activeTool === 'select' && Boolean(onSelectionChange)
   const pointerActive =
-    strokeToolActive || shapeToolActive || textToolActive || stampToolActive || eraserActive
+    strokeToolActive ||
+    shapeToolActive ||
+    textToolActive ||
+    stampToolActive ||
+    eraserActive ||
+    handActive ||
+    selectActive
 
   const effectiveStrokeWidth =
     activeTool === 'highlighter'
@@ -431,6 +527,12 @@ export function PdfDrawingOverlay({
   const draftShapeRef = useRef<DraftShape | null>(null)
   const drawingPointerId = useRef<number | null>(null)
   const [textEditor, setTextEditor] = useState<TextEditorState | null>(null)
+  const [moveDrag, setMoveDrag] = useState<MoveDragState | null>(null)
+  const moveDragRef = useRef<MoveDragState | null>(null)
+  const [draftMarquee, setDraftMarquee] = useState<MarqueeDragState | null>(null)
+  const draftMarqueeRef = useRef<MarqueeDragState | null>(null)
+  const selectedIdsRef = useRef(selectedAnnotationIds)
+  selectedIdsRef.current = selectedAnnotationIds
   const annotationsRef = useRef(annotations)
   annotationsRef.current = annotations
 
@@ -444,9 +546,20 @@ export function PdfDrawingOverlay({
     drawingPointerId.current = null
     draftPointsRef.current = []
     draftShapeRef.current = null
+    moveDragRef.current = null
+    draftMarqueeRef.current = null
     setDraftPoints([])
     setDraftShape(null)
+    setMoveDrag(null)
+    setDraftMarquee(null)
   }, [])
+
+  const applySelection = useCallback(
+    (nextIds: string[]) => {
+      onSelectionChange?.(nextIds)
+    },
+    [onSelectionChange],
+  )
 
   const eraseAtPointer = useCallback(
     (point: PdfDrawingNormalizedPoint) => {
@@ -529,6 +642,58 @@ export function PdfDrawingOverlay({
         return
       }
 
+      if (selectActive) {
+        event.preventDefault()
+        const hit = findPdfDrawingAnnotationAtPointer(
+          point,
+          annotationsRef.current,
+          viewport,
+          eraserRadiusPx,
+        )
+        if (hit) {
+          const current = selectedIdsRef.current
+          if (event.shiftKey) {
+            applySelection(toggleIdInList(current, hit.annotation_id))
+          } else {
+            applySelection([hit.annotation_id])
+          }
+          return
+        }
+
+        event.currentTarget.setPointerCapture(event.pointerId)
+        drawingPointerId.current = event.pointerId
+        const nextMarquee: MarqueeDragState = {
+          start: point,
+          end: point,
+          additive: event.shiftKey,
+        }
+        draftMarqueeRef.current = nextMarquee
+        setDraftMarquee(nextMarquee)
+        return
+      }
+
+      if (handActive) {
+        const hit = findPdfDrawingAnnotationAtPointer(
+          point,
+          annotationsRef.current,
+          viewport,
+          eraserRadiusPx,
+        )
+        if (!hit) return
+        event.preventDefault()
+        event.currentTarget.setPointerCapture(event.pointerId)
+        drawingPointerId.current = event.pointerId
+        const nextMove: MoveDragState = {
+          annotationId: hit.annotation_id,
+          startPointer: point,
+          baseGeometry: hit.geometry,
+          previewGeometry: hit.geometry,
+        }
+        moveDragRef.current = nextMove
+        setMoveDrag(nextMove)
+        return
+      }
+
       event.preventDefault()
       event.currentTarget.setPointerCapture(event.pointerId)
       drawingPointerId.current = event.pointerId
@@ -552,9 +717,13 @@ export function PdfDrawingOverlay({
     },
     [
       activeTool,
+      applySelection,
       eraseAtPointer,
       eraserActive,
+      eraserRadiusPx,
+      handActive,
       pointerActive,
+      selectActive,
       shapeToolActive,
       stampToolActive,
       strokeToolActive,
@@ -570,6 +739,29 @@ export function PdfDrawingOverlay({
       if (drawingPointerId.current !== event.pointerId) return
       event.preventDefault()
       const point = pointerToNormalized(event, viewport)
+
+      if (moveDragRef.current) {
+        const drag = moveDragRef.current
+        const deltaX = point.x - drag.startPointer.x
+        const deltaY = point.y - drag.startPointer.y
+        const nextMove: MoveDragState = {
+          ...drag,
+          previewGeometry: translatePdfDrawingGeometry(drag.baseGeometry, deltaX, deltaY),
+        }
+        moveDragRef.current = nextMove
+        setMoveDrag(nextMove)
+        return
+      }
+
+      if (draftMarqueeRef.current) {
+        const nextMarquee: MarqueeDragState = {
+          ...draftMarqueeRef.current,
+          end: point,
+        }
+        draftMarqueeRef.current = nextMarquee
+        setDraftMarquee(nextMarquee)
+        return
+      }
 
       if (eraserActive) {
         eraseAtPointer(point)
@@ -645,6 +837,36 @@ export function PdfDrawingOverlay({
         event.currentTarget.releasePointerCapture(event.pointerId)
       }
 
+      if (moveDragRef.current && onMoveAnnotation) {
+        const drag = moveDragRef.current
+        resetDraft()
+        void onMoveAnnotation(drag.annotationId, drag.previewGeometry)
+        return
+      }
+
+      if (draftMarqueeRef.current && selectActive) {
+        const marquee = draftMarqueeRef.current
+        const dragPx = pointerDragDistancePx(marquee.start, marquee.end, viewport)
+        resetDraft()
+        if (dragPx >= MIN_MARQUEE_DRAG_PX) {
+          const bounds = normalizedBoundsFromCorners(marquee.start, marquee.end)
+          if (isNormalizedBoundsLargeEnough(bounds, viewport, 2)) {
+            const hits = findPdfDrawingAnnotationsInMarquee(bounds, annotationsRef.current)
+            const hitIds = hits.map((annotation) => annotation.annotation_id)
+            if (marquee.additive) {
+              const merged = new Set(selectedIdsRef.current)
+              for (const id of hitIds) merged.add(id)
+              applySelection([...merged])
+            } else {
+              applySelection(hitIds)
+            }
+          }
+        } else if (!marquee.additive) {
+          applySelection([])
+        }
+        return
+      }
+
       if (eraserActive) {
         resetDraft()
         return
@@ -657,11 +879,27 @@ export function PdfDrawingOverlay({
         return
       }
 
-      const points = draftPointsRef.current
+      if (strokeToolActive) {
+        const points = draftPointsRef.current
+        resetDraft()
+        void finishStroke(points)
+        return
+      }
+
       resetDraft()
-      void finishStroke(points)
     },
-    [eraserActive, finishShape, finishStroke, resetDraft, shapeToolActive],
+    [
+      applySelection,
+      eraserActive,
+      finishShape,
+      finishStroke,
+      onMoveAnnotation,
+      resetDraft,
+      selectActive,
+      shapeToolActive,
+      strokeToolActive,
+      viewport,
+    ],
   )
 
   const handlePointerCancel = useCallback(
@@ -684,20 +922,39 @@ export function PdfDrawingOverlay({
     !pointerActive &&
     draftPoints.length === 0 &&
     !draftShape &&
-    !textEditor
+    !draftMarquee &&
+    !moveDrag &&
+    !textEditor &&
+    selectedAnnotationIds.length === 0
   ) {
     return null
   }
 
-  const cursorClass = eraserActive
-    ? 'cursor-cell'
-    : textToolActive
-      ? 'cursor-text'
-      : stampToolActive
-        ? 'cursor-copy'
-        : strokeToolActive || shapeToolActive
-          ? 'cursor-crosshair'
-          : undefined
+  const movePreviewById = moveDrag
+    ? { [moveDrag.annotationId]: moveDrag.previewGeometry }
+    : null
+
+  const displayAnnotations = annotations.map((annotation) => {
+    const preview = movePreviewById?.[annotation.annotation_id]
+    if (!preview) return annotation
+    return { ...annotation, geometry: preview }
+  })
+
+  const selectedSet = new Set(selectedAnnotationIds)
+
+  const cursorClass = handActive
+    ? 'cursor-grab active:cursor-grabbing'
+    : selectActive
+      ? 'cursor-crosshair'
+      : eraserActive
+        ? 'cursor-cell'
+        : textToolActive
+          ? 'cursor-text'
+          : stampToolActive
+            ? 'cursor-copy'
+            : strokeToolActive || shapeToolActive
+              ? 'cursor-crosshair'
+              : undefined
 
   const svgPointerActive = pointerActive && !textEditor
 
@@ -717,11 +974,25 @@ export function PdfDrawingOverlay({
         onPointerUp={svgPointerActive ? handlePointerUp : undefined}
         onPointerCancel={svgPointerActive ? handlePointerCancel : undefined}
       >
-      {annotations.map((annotation) => (
+      {displayAnnotations.map((annotation) => (
         <g key={annotation.annotation_id} data-annotation-id={annotation.annotation_id}>
           <AnnotationGraphic annotation={annotation} viewport={viewport} />
         </g>
       ))}
+
+      {selectActive
+        ? displayAnnotations
+            .filter((annotation) => selectedSet.has(annotation.annotation_id))
+            .map((annotation) => (
+              <SelectionOutline
+                key={`sel-${annotation.annotation_id}`}
+                annotation={annotation}
+                viewport={viewport}
+              />
+            ))
+        : null}
+
+      {draftMarquee ? <MarqueeGraphic marquee={draftMarquee} viewport={viewport} /> : null}
 
       {draftPoints.length > 0 ? (
         <StrokeGraphic

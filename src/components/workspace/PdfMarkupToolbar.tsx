@@ -1,11 +1,14 @@
 import {
+  BoxSelectIcon,
   CircleIcon,
   EraserIcon,
   Grid2X2Icon,
+  HandIcon,
   HighlighterIcon,
   PencilIcon,
   Redo2Icon,
   SquareIcon,
+  Trash2Icon,
   TypeIcon,
   Undo2Icon,
 } from 'lucide-react'
@@ -47,6 +50,8 @@ export type PdfMarkupToolbarProps = {
   onRedo?: () => void
   canUndo?: boolean
   canRedo?: boolean
+  selectionCount?: number
+  onDeleteSelection?: () => void
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -58,6 +63,8 @@ type MarkupToolDef = {
 }
 
 const MARKUP_TOOLS: MarkupToolDef[] = [
+  { id: 'hand', label: 'Hand (move marks)', icon: HandIcon },
+  { id: 'select', label: 'Select', icon: BoxSelectIcon },
   { id: 'pen', label: 'Pen', icon: PencilIcon },
   { id: 'highlighter', label: 'Highlighter', icon: HighlighterIcon },
   { id: 'eraser', label: 'Eraser', icon: EraserIcon },
@@ -92,11 +99,18 @@ export function PdfMarkupToolbar({
   onRedo,
   canUndo = false,
   canRedo = false,
+  selectionCount = 0,
+  onDeleteSelection,
   theme = 'light',
   className,
 }: PdfMarkupToolbarProps) {
   const isDark = theme === 'dark'
-  const showStrokeWidth = tool !== 'eraser' && tool !== 'text' && tool !== 'stamp'
+  const showStrokeWidth =
+    tool !== 'eraser' &&
+    tool !== 'text' &&
+    tool !== 'stamp' &&
+    tool !== 'hand' &&
+    tool !== 'select'
 
   return (
     <div
@@ -197,10 +211,22 @@ export function PdfMarkupToolbar({
         </>
       ) : null}
 
-      {onUndo || onRedo ? (
+      {onUndo || onRedo || (tool === 'select' && onDeleteSelection) ? (
         <>
           <ToolbarDivider isDark={isDark} />
           <div className="ml-auto flex items-center gap-0.5">
+            {tool === 'select' && onDeleteSelection ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant="ghost"
+                aria-label="Delete selected marks"
+                disabled={selectionCount <= 0}
+                onClick={() => onDeleteSelection()}
+              >
+                <Trash2Icon className="size-3.5" />
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="icon-xs"

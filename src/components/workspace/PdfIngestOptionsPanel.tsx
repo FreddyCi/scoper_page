@@ -26,7 +26,7 @@ export function PdfIngestOptionsPanel({ disabled = false, className }: PdfIngest
           className="text-muted-foreground cursor-pointer text-xs leading-relaxed font-normal"
         >
           Preview only (skip text extract) — for plan/drawing PDFs you mark in{' '}
-          <span className="text-foreground font-medium">Original</span>. Skips LiteParse; much
+          <span className="text-foreground font-medium">Original</span>. Skips Parsing; much
           faster than full parse.
         </Label>
         <Switch

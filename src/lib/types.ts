@@ -191,7 +191,7 @@ export type PdfDrawingTool =
   | 'stamp'
 
 /** UI mark tools including eraser (not stored on annotation rows). */
-export type PdfMarkSessionTool = PdfDrawingTool | 'eraser'
+export type PdfMarkSessionTool = PdfDrawingTool | 'eraser' | 'hand' | 'select'
 
 /** Stamp variants; v1 supports window locations on floor plans. */
 export type PdfDrawingStampKind = 'window'

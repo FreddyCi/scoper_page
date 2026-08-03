@@ -16,7 +16,7 @@ import type {
 } from '@/components/workspace/PdfDrawingOverlay'
 import { usePdfDrawingAnnotations } from '@/hooks/use-pdf-drawing-annotations'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
-import type { Bbox } from '@/lib/types'
+import type { Bbox, PdfDrawingGeometry } from '@/lib/types'
 import { blockToCitation } from '@/lib/types'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
 import { redefineBlockRegion } from '@/services/block-adjust'
@@ -88,6 +88,7 @@ export function DocumentViewer({
   const [scale, setScale] = useState(1.25)
   const [adjustingRegion, setAdjustingRegion] = useState(false)
   const [adjustError, setAdjustError] = useState<string | null>(null)
+  const [selectedDrawingAnnotationIds, setSelectedDrawingAnnotationIds] = useState<string[]>([])
 
   const totalPages = pdf?.numPages ?? 0
   const activeCitation =
@@ -103,6 +104,8 @@ export function DocumentViewer({
     commitText,
     commitStamp,
     eraseAnnotation,
+    eraseAnnotations,
+    moveDrawingMark,
     undoDrawingMark,
     redoDrawingMark,
     canUndoDrawingMark,
@@ -171,6 +174,10 @@ export function DocumentViewer({
   )
 
   useEffect(() => {
+    setSelectedDrawingAnnotationIds([])
+  }, [currentPage, document.doc_id])
+
+  useEffect(() => {
     if (!markMode) return
 
     function onKeyDown(event: KeyboardEvent) {
@@ -233,7 +240,53 @@ export function DocumentViewer({
       () => eraseAnnotation(annotationId),
       'erase annotation failed',
     )
+    setSelectedDrawingAnnotationIds((previous) =>
+      previous.filter((id) => id !== annotationId),
+    )
   }
+
+  const handleMoveAnnotation = async (annotationId: string, geometry: PdfDrawingGeometry) => {
+    await persistDrawingMark(
+      () => moveDrawingMark(annotationId, geometry),
+      'move annotation failed',
+    )
+  }
+
+  const handleDeleteSelectedMarks = async () => {
+    if (selectedDrawingAnnotationIds.length === 0) return
+    const ids = [...selectedDrawingAnnotationIds]
+    await persistDrawingMark(
+      () => eraseAnnotations(ids),
+      'delete selected marks failed',
+    )
+    setSelectedDrawingAnnotationIds([])
+  }
+
+  useEffect(() => {
+    if (!markMode || pdfMarkTool !== 'select' || selectedDrawingAnnotationIds.length === 0) {
+      return
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT')
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      void handleDeleteSelectedMarks()
+    }
+
+    globalThis.document.addEventListener('keydown', onKeyDown)
+    return () => globalThis.document.removeEventListener('keydown', onKeyDown)
+  }, [handleDeleteSelectedMarks, markMode, pdfMarkTool, selectedDrawingAnnotationIds.length])
 
   const effectiveMarkStrokeWidth =
     pdfMarkTool === 'highlighter'
@@ -329,6 +382,10 @@ export function DocumentViewer({
             }}
             canUndo={canUndoDrawingMark}
             canRedo={canRedoDrawingMark}
+            selectionCount={selectedDrawingAnnotationIds.length}
+            onDeleteSelection={() => {
+              void handleDeleteSelectedMarks()
+            }}
           />
         }
         onPageChange={updatePage}
@@ -380,6 +437,15 @@ export function DocumentViewer({
               onStampCommit={markMode && pdfMarkTool === 'stamp' ? handleStampCommit : undefined}
               onEraseAnnotation={
                 markMode && pdfMarkTool === 'eraser' ? handleEraseAnnotation : undefined
+              }
+              selectedAnnotationIds={
+                markMode && pdfMarkTool === 'select' ? selectedDrawingAnnotationIds : undefined
+              }
+              onSelectionChange={
+                markMode && pdfMarkTool === 'select' ? setSelectedDrawingAnnotationIds : undefined
+              }
+              onMoveAnnotation={
+                markMode && pdfMarkTool === 'hand' ? handleMoveAnnotation : undefined
               }
             />
           </div>

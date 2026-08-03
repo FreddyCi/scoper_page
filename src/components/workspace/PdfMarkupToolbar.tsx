@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 /** Mark tools including eraser (UI-only; not persisted as `PdfDrawingTool`). */
@@ -59,20 +60,74 @@ export type PdfMarkupToolbarProps = {
 type MarkupToolDef = {
   id: PdfMarkupTool
   label: string
+  /** Extra line in hover tooltip; omit for single-line tips. */
+  hint?: string
   icon: typeof PencilIcon
 }
 
 const MARKUP_TOOLS: MarkupToolDef[] = [
-  { id: 'hand', label: 'Hand (move marks)', icon: HandIcon },
-  { id: 'select', label: 'Select', icon: BoxSelectIcon },
-  { id: 'pen', label: 'Pen', icon: PencilIcon },
-  { id: 'highlighter', label: 'Highlighter', icon: HighlighterIcon },
-  { id: 'eraser', label: 'Eraser', icon: EraserIcon },
-  { id: 'rect', label: 'Rectangle', icon: SquareIcon },
-  { id: 'ellipse', label: 'Ellipse', icon: CircleIcon },
-  { id: 'text', label: 'Text label', icon: TypeIcon },
-  { id: 'stamp', label: 'Window stamp', icon: Grid2X2Icon },
+  {
+    id: 'hand',
+    label: 'Hand',
+    hint: 'Drag a mark to move it on the page.',
+    icon: HandIcon,
+  },
+  {
+    id: 'select',
+    label: 'Select',
+    hint: 'Click or drag a box to select marks. Delete or Backspace removes the selection.',
+    icon: BoxSelectIcon,
+  },
+  { id: 'pen', label: 'Pen', hint: 'Draw freehand lines.', icon: PencilIcon },
+  {
+    id: 'highlighter',
+    label: 'Highlighter',
+    hint: 'Draw semi-transparent strokes.',
+    icon: HighlighterIcon,
+  },
+  {
+    id: 'eraser',
+    label: 'Eraser',
+    hint: 'Drag over marks to erase them.',
+    icon: EraserIcon,
+  },
+  {
+    id: 'rect',
+    label: 'Rectangle',
+    hint: 'Drag to draw a rectangle outline.',
+    icon: SquareIcon,
+  },
+  {
+    id: 'ellipse',
+    label: 'Ellipse',
+    hint: 'Drag to draw an ellipse outline.',
+    icon: CircleIcon,
+  },
+  {
+    id: 'text',
+    label: 'Text label',
+    hint: 'Click the drawing, type a short label, then press Enter or click away. Uses the selected color.',
+    icon: TypeIcon,
+  },
+  {
+    id: 'stamp',
+    label: 'Window stamp',
+    hint: 'Click the plan to place a window marker (grid icon). One stamp per click—for marking window locations on elevations or floor plans.',
+    icon: Grid2X2Icon,
+  },
 ]
+
+function MarkupToolTooltipContent({ entry }: { entry: MarkupToolDef }) {
+  if (!entry.hint) {
+    return entry.label
+  }
+  return (
+    <>
+      <span className="block font-medium">{entry.label}</span>
+      <span className="text-background/85 mt-0.5 block font-normal leading-snug">{entry.hint}</span>
+    </>
+  )
+}
 
 function ToolbarDivider({ isDark }: { isDark: boolean }) {
   return (
@@ -133,18 +188,27 @@ export function PdfMarkupToolbar({
           const Icon = entry.icon
           const active = tool === entry.id
           return (
-            <Button
-              key={entry.id}
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              aria-label={entry.label}
-              aria-pressed={active}
-              className={toolButtonClass(active, isDark)}
-              onClick={() => onChange({ tool: entry.id })}
-            >
-              <Icon className="size-3.5" />
-            </Button>
+            <Tooltip key={entry.id}>
+              <TooltipTrigger
+                delay={300}
+                render={
+                  <Button
+                    type="button"
+                    size="icon-xs"
+                    variant="ghost"
+                    aria-label={entry.hint ? `${entry.label}. ${entry.hint}` : entry.label}
+                    aria-pressed={active}
+                    className={toolButtonClass(active, isDark)}
+                    onClick={() => onChange({ tool: entry.id })}
+                  >
+                    <Icon className="size-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom" className="max-w-[15rem] text-left">
+                <MarkupToolTooltipContent entry={entry} />
+              </TooltipContent>
+            </Tooltip>
           )
         })}
       </div>
@@ -216,37 +280,61 @@ export function PdfMarkupToolbar({
           <ToolbarDivider isDark={isDark} />
           <div className="ml-auto flex items-center gap-0.5">
             {tool === 'select' && onDeleteSelection ? (
-              <Button
-                type="button"
-                size="icon-xs"
-                variant="ghost"
-                aria-label="Delete selected marks"
-                disabled={selectionCount <= 0}
-                onClick={() => onDeleteSelection()}
-              >
-                <Trash2Icon className="size-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  delay={300}
+                  render={
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label="Delete selected marks"
+                      disabled={selectionCount <= 0}
+                      onClick={() => onDeleteSelection()}
+                    >
+                      <Trash2Icon className="size-3.5" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="bottom">Delete selected marks</TooltipContent>
+              </Tooltip>
             ) : null}
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              aria-label="Undo markup"
-              disabled={!canUndo}
-              onClick={() => onUndo?.()}
-            >
-              <Undo2Icon className="size-3.5" />
-            </Button>
-            <Button
-              type="button"
-              size="icon-xs"
-              variant="ghost"
-              aria-label="Redo markup"
-              disabled={!canRedo}
-              onClick={() => onRedo?.()}
-            >
-              <Redo2Icon className="size-3.5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger
+                delay={300}
+                render={
+                  <Button
+                    type="button"
+                    size="icon-xs"
+                    variant="ghost"
+                    aria-label="Undo markup"
+                    disabled={!canUndo}
+                    onClick={() => onUndo?.()}
+                  >
+                    <Undo2Icon className="size-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Undo (⌘Z)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger
+                delay={300}
+                render={
+                  <Button
+                    type="button"
+                    size="icon-xs"
+                    variant="ghost"
+                    aria-label="Redo markup"
+                    disabled={!canRedo}
+                    onClick={() => onRedo?.()}
+                  >
+                    <Redo2Icon className="size-3.5" />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">Redo (⌘⇧Z)</TooltipContent>
+            </Tooltip>
           </div>
         </>
       ) : null}

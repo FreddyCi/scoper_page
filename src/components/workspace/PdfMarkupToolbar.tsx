@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
+import { PDF_MARKUP_TOOL_SHORTCUT_LABEL } from '@/lib/pdf-markup-tool-shortcuts'
 
 /** Mark tools including eraser (UI-only; not persisted as `PdfDrawingTool`). */
 export type PdfMarkupTool = import('@/lib/types').PdfMarkSessionTool
@@ -69,61 +70,63 @@ const MARKUP_TOOLS: MarkupToolDef[] = [
   {
     id: 'hand',
     label: 'Hand',
-    hint: 'Drag a mark to move it on the page.',
+    hint: 'Drag a mark to move it on the page. Shortcut: H',
     icon: HandIcon,
   },
   {
     id: 'select',
     label: 'Select',
-    hint: 'Click or drag a box to select marks. Delete or Backspace removes the selection.',
+    hint: 'Click or drag a box to select marks. Delete removes the selection. Shortcut: V',
     icon: BoxSelectIcon,
   },
-  { id: 'pen', label: 'Pen', hint: 'Draw freehand lines.', icon: PencilIcon },
+  { id: 'pen', label: 'Pen', hint: 'Draw freehand lines. Shortcut: P', icon: PencilIcon },
   {
     id: 'highlighter',
     label: 'Highlighter',
-    hint: 'Draw semi-transparent strokes.',
+    hint: 'Draw semi-transparent strokes. Shortcut: L',
     icon: HighlighterIcon,
   },
   {
     id: 'eraser',
     label: 'Eraser',
-    hint: 'Drag over marks to erase them.',
+    hint: 'Drag over marks to erase them. Shortcut: E',
     icon: EraserIcon,
   },
   {
     id: 'rect',
     label: 'Rectangle',
-    hint: 'Drag to draw a rectangle outline.',
+    hint: 'Drag to draw a rectangle outline. Shortcut: R',
     icon: SquareIcon,
   },
   {
     id: 'ellipse',
     label: 'Ellipse',
-    hint: 'Drag to draw an ellipse outline.',
+    hint: 'Drag to draw an ellipse outline. Shortcut: C',
     icon: CircleIcon,
   },
   {
     id: 'text',
     label: 'Text label',
-    hint: 'Click the drawing, type a short label, then press Enter or click away. Uses the selected color.',
+    hint: 'Click, type, Enter to finish. Move with Hand (H). Shortcut: T',
     icon: TypeIcon,
   },
   {
     id: 'stamp',
     label: 'Window stamp',
-    hint: 'Click the plan to place a window marker (grid icon). One stamp per click—for marking window locations on elevations or floor plans.',
+    hint: 'Click to place a window marker on the plan. Shortcut: W',
     icon: Grid2X2Icon,
   },
 ]
 
 function MarkupToolTooltipContent({ entry }: { entry: MarkupToolDef }) {
+  const shortcut = PDF_MARKUP_TOOL_SHORTCUT_LABEL[entry.id]
+  const title = shortcut ? `${entry.label} (${shortcut})` : entry.label
   if (!entry.hint) {
-    return entry.label
+    return title
   }
   return (
     <>
-      <span className="block font-medium">{entry.label}</span>
+      <span className="block font-medium">{title}</span>
       <span className="text-background/85 mt-0.5 block font-normal leading-snug">{entry.hint}</span>
     </>
   )

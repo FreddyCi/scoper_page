@@ -9,6 +9,7 @@ import {
   normalizedAnnotationMarqueeBounds,
   normalizedBoundsFromCorners,
   translatePdfDrawingGeometry,
+  PDF_DRAWING_TEXT_LABEL_FONT_PX,
   type PdfDrawingViewportSize,
 } from '@/lib/pdf-drawing-geometry'
 import type {
@@ -28,7 +29,7 @@ const DEFAULT_STAMP_PX = 24
 const DEFAULT_STROKE_WIDTH = 4
 const DEFAULT_HIGHLIGHTER_WIDTH = 8
 const DEFAULT_HIGHLIGHTER_OPACITY = 0.35
-const DEFAULT_TEXT_PX = 14
+const DEFAULT_TEXT_PX = PDF_DRAWING_TEXT_LABEL_FONT_PX
 const DEFAULT_PEN_COLOR = '#F59E0B'
 const DEFAULT_ERASER_RADIUS_PX = 12
 const MIN_POINT_DISTANCE_PX = 1.5
@@ -319,7 +320,7 @@ function SelectionOutline({
   annotation: PdfDrawingAnnotation
   viewport: PdfDrawingViewportSize
 }) {
-  const bounds = normalizedAnnotationMarqueeBounds(annotation)
+  const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
   const topLeft = denormalizePoint({ x: bounds.x, y: bounds.y }, viewport)
   return (
     <rect
@@ -851,7 +852,11 @@ export function PdfDrawingOverlay({
         if (dragPx >= MIN_MARQUEE_DRAG_PX) {
           const bounds = normalizedBoundsFromCorners(marquee.start, marquee.end)
           if (isNormalizedBoundsLargeEnough(bounds, viewport, 2)) {
-            const hits = findPdfDrawingAnnotationsInMarquee(bounds, annotationsRef.current)
+            const hits = findPdfDrawingAnnotationsInMarquee(
+              bounds,
+              annotationsRef.current,
+              viewport,
+            )
             const hitIds = hits.map((annotation) => annotation.annotation_id)
             if (marquee.additive) {
               const merged = new Set(selectedIdsRef.current)

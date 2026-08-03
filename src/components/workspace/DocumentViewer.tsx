@@ -24,6 +24,10 @@ import { focusCitation } from '@/services/citation-bridge'
 import { useSessionStore } from '@/store/session-store'
 import type { DocumentMeta } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import {
+  isPdfMarkupShortcutTarget,
+  pdfMarkupToolForKey,
+} from '@/lib/pdf-markup-tool-shortcuts'
 
 type DocumentViewerProps = {
   document: DocumentMeta
@@ -76,6 +80,7 @@ export function DocumentViewer({
   const pdfMarkStrokeWidth = useSessionStore((state) => state.pdfMarkStrokeWidth)
   const setPdfMarkDrawingMode = useSessionStore((state) => state.setPdfMarkDrawingMode)
   const applyPdfMarkupToolbarChange = useSessionStore((state) => state.applyPdfMarkupToolbarChange)
+  const setPdfMarkTool = useSessionStore((state) => state.setPdfMarkTool)
   /** Mark mode on the PDF original pane (session-backed; toolbar toggle in BDA-234). */
   const markMode = pdfMarkDrawingMode
   const canvasAnchorRef = useRef<HTMLDivElement>(null)
@@ -205,6 +210,24 @@ export function DocumentViewer({
     globalThis.document.addEventListener('keydown', onKeyDown)
     return () => globalThis.document.removeEventListener('keydown', onKeyDown)
   }, [markMode, redoDrawingMark, undoDrawingMark])
+
+  useEffect(() => {
+    if (!markMode) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return
+      if (isPdfMarkupShortcutTarget(event.target)) return
+
+      const tool = pdfMarkupToolForKey(event.key)
+      if (!tool) return
+
+      event.preventDefault()
+      setPdfMarkTool(tool)
+    }
+
+    globalThis.document.addEventListener('keydown', onKeyDown)
+    return () => globalThis.document.removeEventListener('keydown', onKeyDown)
+  }, [markMode, setPdfMarkTool])
 
   async function persistDrawingMark<T>(
     action: () => Promise<T>,

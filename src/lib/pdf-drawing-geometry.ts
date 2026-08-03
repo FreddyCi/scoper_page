@@ -7,6 +7,7 @@ import type {
   PdfDrawingNormalizedPoint,
   PdfDrawingRectGeometry,
   PdfDrawingStrokeGeometry,
+  PdfDrawingTextGeometry,
 } from '@/lib/types'
 
 /** Display size of the rendered PDF page (CSS pixels), e.g. canvas layout or `PageViewport`. */
@@ -166,7 +167,7 @@ export function distancePointToSegmentPx(
 
 export function hitTestNormalizedRect(
   pointer: PdfDrawingNormalizedPoint,
-  rect: PdfDrawingRectGeometry,
+  rect: PdfDrawingRectGeometry | PdfDrawingNormalizedBounds,
   padding = 0,
 ): boolean {
   return (
@@ -175,6 +176,77 @@ export function hitTestNormalizedRect(
     pointer.y >= rect.y - padding &&
     pointer.y <= rect.y + rect.height + padding
   )
+}
+
+/** @deprecated Use hitTestNormalizedRect — kept for ellipse-only call sites. */
+export function hitTestNormalizedBounds(
+  pointer: PdfDrawingNormalizedPoint,
+  bounds: PdfDrawingNormalizedBounds,
+  padding = 0,
+): boolean {
+  return hitTestNormalizedRect(pointer, bounds, padding)
+}
+
+export const PDF_DRAWING_TEXT_LABEL_FONT_PX = 14
+const PDF_DRAWING_STAMP_DEFAULT_PX = 24
+
+/** Estimated label box for hit-testing and selection (matches overlay `text` rendering). */
+export function normalizedTextLabelBounds(
+  geometry: PdfDrawingTextGeometry,
+  textBody: string | undefined,
+  viewport: PdfDrawingViewportSize,
+  fontSizePx = PDF_DRAWING_TEXT_LABEL_FONT_PX,
+): PdfDrawingNormalizedBounds {
+  const label = textBody?.trim() ?? ''
+  const charWidthPx = fontSizePx * 0.58
+  const widthPx = Math.max(label.length * charWidthPx + 6, fontSizePx * 1.5)
+  const heightPx = fontSizePx * 1.35
+  const widthN = Math.min(widthPx / viewport.width, Math.max(0, 1 - geometry.x))
+  const heightN = Math.min(heightPx / viewport.height, Math.max(0, 1 - geometry.y))
+  return {
+    x: geometry.x,
+    y: geometry.y,
+    width: widthN,
+    height: heightN,
+  }
+}
+
+export function normalizedStampBounds(
+  geometry: Extract<PdfDrawingGeometry, { kind: 'stamp' }>,
+  viewport: PdfDrawingViewportSize,
+  defaultSizePx = PDF_DRAWING_STAMP_DEFAULT_PX,
+): PdfDrawingNormalizedBounds {
+  const sizePx =
+    geometry.size != null && geometry.size > 0 ? geometry.size * viewport.width : defaultSizePx
+  const sizeN = sizePx / viewport.width
+  return {
+    x: geometry.x,
+    y: geometry.y,
+    width: Math.min(sizeN, Math.max(0, 1 - geometry.x)),
+    height: Math.min(sizePx / viewport.height, Math.max(0, 1 - geometry.y)),
+  }
+}
+
+export function hitTestPdfDrawingAnnotation(
+  pointer: PdfDrawingNormalizedPoint,
+  annotation: PdfDrawingAnnotation,
+  viewport: PdfDrawingViewportSize,
+  options: PdfDrawingHitTestOptions = {},
+): boolean {
+  const geometry = annotation.geometry
+  const shapePadding = options.shapePadding ?? 0
+
+  if (geometry.kind === 'text') {
+    const bounds = normalizedTextLabelBounds(geometry, annotation.text_body, viewport)
+    return hitTestNormalizedRect(pointer, bounds, shapePadding)
+  }
+
+  if (geometry.kind === 'stamp') {
+    const bounds = normalizedStampBounds(geometry, viewport)
+    return hitTestNormalizedRect(pointer, bounds, shapePadding)
+  }
+
+  return hitTestPdfDrawingGeometry(pointer, geometry, viewport, options)
 }
 
 export function hitTestNormalizedEllipse(
@@ -282,7 +354,7 @@ export function findPdfDrawingAnnotationAtPointer(
     const annotation = annotations[index]!
     const hitRadiusPx = eraserHitRadiusPx(annotation, eraserRadiusPx)
     if (
-      hitTestPdfDrawingGeometry(pointer, annotation.geometry, viewport, {
+      hitTestPdfDrawingAnnotation(pointer, annotation, viewport, {
         hitRadiusPx,
         shapePadding: 0.005,
       })
@@ -293,13 +365,10 @@ export function findPdfDrawingAnnotationAtPointer(
   return null
 }
 
-const TEXT_MARQUEE_WIDTH_N = 0.12
-const TEXT_MARQUEE_HEIGHT_N = 0.05
-const STAMP_MARQUEE_SIZE_N = 0.04
-
 /** Axis-aligned bounds used for marquee selection (expands point anchors). */
 export function normalizedAnnotationMarqueeBounds(
   annotation: PdfDrawingAnnotation,
+  viewport: PdfDrawingViewportSize,
 ): PdfDrawingNormalizedBounds {
   const geometry = annotation.geometry
   const base = normalizedGeometryBounds(geometry)
@@ -312,21 +381,14 @@ export function normalizedAnnotationMarqueeBounds(
   }
 
   if (geometry.kind === 'text') {
-    return {
-      x: base.x,
-      y: base.y,
-      width: TEXT_MARQUEE_WIDTH_N,
-      height: TEXT_MARQUEE_HEIGHT_N,
-    }
+    return normalizedTextLabelBounds(geometry, annotation.text_body, viewport)
   }
 
-  const stampSize = geometry.size != null && geometry.size > 0 ? geometry.size : STAMP_MARQUEE_SIZE_N
-  return {
-    x: base.x,
-    y: base.y,
-    width: stampSize,
-    height: stampSize,
+  if (geometry.kind === 'stamp') {
+    return normalizedStampBounds(geometry, viewport)
   }
+
+  return { x: base.x, y: base.y, width: 0, height: 0 }
 }
 
 function normalizedRectsIntersect(
@@ -345,9 +407,10 @@ function normalizedRectsIntersect(
 export function findPdfDrawingAnnotationsInMarquee(
   marquee: PdfDrawingNormalizedBounds,
   annotations: readonly PdfDrawingAnnotation[],
+  viewport: PdfDrawingViewportSize,
 ): PdfDrawingAnnotation[] {
   return annotations.filter((annotation) =>
-    normalizedRectsIntersect(normalizedAnnotationMarqueeBounds(annotation), marquee),
+    normalizedRectsIntersect(normalizedAnnotationMarqueeBounds(annotation, viewport), marquee),
   )
 }
 
@@ -467,8 +530,29 @@ export function runPdfDrawingGeometryHarness(): void {
   const marqueeHits = findPdfDrawingAnnotationsInMarquee(
     { x: 0, y: 0, width: 0.5, height: 0.5 },
     [sampleAnnotation],
+    smallViewport,
   )
   if (marqueeHits.length !== 1) {
     throw new Error('runPdfDrawingGeometryHarness failed: marquee select')
+  }
+
+  const textAnnotation: PdfDrawingAnnotation = {
+    annotation_id: 'harness-text',
+    doc_id: 'doc',
+    page_num: 1,
+    tool: 'text',
+    color: '#000',
+    geometry: { kind: 'text', x: 0.2, y: 0.2 },
+    text_body: 'Window A1',
+    author_initials: 'T',
+    created_at: new Date().toISOString(),
+  }
+  const textMidPointer = normalizePoint(110, 130, smallViewport)
+  if (!hitTestPdfDrawingAnnotation(textMidPointer, textAnnotation, smallViewport)) {
+    throw new Error('runPdfDrawingGeometryHarness failed: text label hit box')
+  }
+  const textFarPointer = normalizePoint(350, 130, smallViewport)
+  if (hitTestPdfDrawingAnnotation(textFarPointer, textAnnotation, smallViewport)) {
+    throw new Error('runPdfDrawingGeometryHarness failed: unexpected text label hit')
   }
 }

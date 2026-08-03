@@ -12,7 +12,7 @@
 
 **Scope creep:** Removed from product UI and ingest auto-compare; [`compare-scope.ts`](../src/services/compare-scope.ts) and creep harnesses may remain for dev-only.
 
-**Volume generation (current):** The **sectional 8K UCW pipeline** (BDA-152–180) supersedes the original **one-Scoper-send-per-volume** MVP described in BDA-118/BDA-127. See [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) and architecture doc [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md).
+**Volume generation (current):** The **sectional 8K UCW pipeline** (BDA-152–180) supersedes the original **one-Scoper-send-per-volume** MVP described in BDA-118/BDA-127. See [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) and [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md). **Analyze→propose loop** features (per-volume generate, analysis refs, editable drafts, partial export) are documented in the same architecture doc and tracked in [`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md) (BDA-196–218).
 
 ---
 

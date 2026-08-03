@@ -1083,6 +1083,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.3 | 2026-08-02 | Analyze→propose loop doc cross-links (BDA-217) |
 | v1.2 | 2026-07-31 | Link TASK_BREAKDOWN_CHAT_VOICE.md (BDA-181–195) |
 | v1.1 | 2026-07-30 | Link to TASK_BREAKDOWN_PROPOSAL_MODE.md (BDA-110–151) |
 | v1.0 | 2026-07-27 | Initial atomic breakdown from PRD + plan |

@@ -493,16 +493,17 @@ flowchart TD
 ### **ID:** BDA-217
 
 **Title:** Document analyze propose loop  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-202  
 **Priority:** Medium  
 **Description:** Add section to [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md) or [`TASK_BREAKDOWN_PROPOSAL_MODE.md`](TASK_BREAKDOWN_PROPOSAL_MODE.md): per-volume generate, sibling handoff, analysis refs, partial export. Link this breakdown from [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md). Optional one paragraph in [`ARCHITECTURE.md`](ARCHITECTURE.md) workspace modes.  
 **Completed Changes:**
-- 🔄 Docs links  
+- ✅ **Analyze → propose loop** section in **`PROPOSAL_CONTEXT_AND_SECTIONS.md`**
+- ✅ Cross-links in **`TASK_BREAKDOWN_PROPOSAL_MODE.md`**, **`ARCHITECTURE.md`**, **`TASK_BREAKDOWN.md`** (v1.3 changelog)
 **Test Strategy:** Peer read; links resolve.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ Doc links added (relative paths within `docs/`)
+**Assigned:** Completed  
 **Context/Artifacts:** Unified plan Docs section  
 
 ---

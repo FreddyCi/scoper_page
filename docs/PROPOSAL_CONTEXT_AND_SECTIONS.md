@@ -1,8 +1,8 @@
 # Proposal context window and sectional generation
 
 **Audience:** Engineers working on proposal mode, ECP, or chat context UX  
-**Last updated:** 2026-07-30  
-**Implements:** BDA-154, BDA-164, BDA-169–174 (see [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md))
+**Last updated:** 2026-08-02  
+**Implements:** BDA-154, BDA-164, BDA-169–174 (see [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md)); analyze→propose loop BDA-196–218 ([`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md))
 
 This document describes how **Scoper Page** generates proposal volumes in the browser with a **small unified context window (UCW)**—default **8K tokens** on Bonsai 1.7B—and a **section-by-section** pipeline with **mandatory KV rolls** between sections. It contrasts that design with **Scoper Studio** (larger server-side context and Turso-backed rolls).
 
@@ -134,6 +134,54 @@ Non-goals for the sectional UCW plan: 32K bitgpu in the page app, Turso roll per
 
 ---
 
+## Analyze → propose loop (BDA-196–218)
+
+Full task list: [`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md).
+
+### RFP Analysis handoff into proposal profile
+
+When the user runs **RFP qualification** before switching to **Proposal**, `evaluationBaselineProfile` criteria are mapped onto proposal volumes during [`buildProposalRfpProfile`](../src/services/build-proposal-rfp-profile.ts) (`analysisRefs` on each volume). Volume rows show criterion chips; clicks call [`focusCitation`](../src/services/citation-bridge.ts). Section user prompts prepend a capped **RFP ANALYSIS FINDINGS** block ([`buildProposalAnalysisRefsBlock`](../src/lib/proposal-prompts.ts)).
+
+### Per-volume generate (without full batch)
+
+[`runGenerateProposalVolume(volumeId)`](../src/store/session-store.ts) calls [`buildProposalVolume`](../src/services/build-proposal-volumes.ts) with **`isolatedVolumeRun: true`**. Only the target volume’s sections are generated; sibling volumes stay in their prior statuses. The same `proposalGenerating` mutex blocks concurrent full-batch and single-volume runs.
+
+**Isolated handoff:** Before generating the target volume, handoff is reset and **sibling volumes already in `draft`** seed `completedSections` via short summaries ([`createIsolatedVolumeProposalHandoff`](../src/services/build-proposal-volumes.ts)), so regeneration does not ignore prior volume context.
+
+### Editable drafts
+
+Users can hand-edit volume markdown in the panel ([`setProposalVolumeBody`](../src/store/session-store.ts)); saves set `edited` / `editedAt`. **Regenerate** on an edited volume prompts for confirmation. Validation warnings from [`validateProposalVolumeDraft`](../src/lib/proposal-export-quality.ts) are non-blocking on save.
+
+### Section citations and export
+
+Each sectional ECP run persists **`citations`** on [`ProposalVolumeSection`](../src/lib/types.ts) ([`generateProposalSectionMarkdownViaEcp`](../src/services/proposal-volume-ecp.ts)). [`assembleProposalMarkdown`](../src/lib/assemble-proposal-markdown.ts) appends a per-volume **Sources** section (page + excerpt).
+
+| Export mode | Gate | Contents |
+|-------------|------|----------|
+| **Complete** (`exportMode: 'complete'`) | [`canExportProposalProfile`](../src/lib/proposal-export-quality.ts) | All volumes in profile |
+| **Drafted only** (`exportMode: 'drafted-only'`) | ≥1 volume `draft` with body | Draft volumes only + partial header note |
+
+UI: **Export drafted volumes** when the full gate fails but drafts exist ([`ProposalGenerationPanel`](../src/components/workspace/ProposalGenerationPanel.tsx)).
+
+### Share pack (proposal snapshot)
+
+Share pack **v2** ([`SHARE_PACK_VERSION`](../src/lib/share-table.ts)) includes DuckDB tables `proposal_profiles`, `proposal_volumes`, `proposal_volume_sections` (bodies, edited flags, analysis refs, section citations). Export syncs the in-memory profile before table export; import hydrates `proposalRequirementsProfile` ([`proposal-share-store.ts`](../src/services/proposal-share-store.ts), [`share-pack-import.ts`](../src/services/share-pack-import.ts)).
+
+```mermaid
+flowchart LR
+  Analysis[RFP Analysis baseline] --> ProfileBuild[buildProposalRfpProfile]
+  ProfileBuild --> Volumes[volumes + analysisRefs]
+  Volumes --> OneVol[runGenerateProposalVolume]
+  Volumes --> Full[runGenerateProposalVolumes]
+  OneVol --> Drafts[section ECP + citations]
+  Full --> Drafts
+  Drafts --> Edit[setProposalVolumeBody]
+  Drafts --> Partial[Export drafted volumes]
+  Drafts --> Complete[Export complete .md]
+```
+
+---
+
 ## Key modules (quick index)
 
 | Concern | Module |
@@ -141,6 +189,10 @@ Non-goals for the sectional UCW plan: 32K bitgpu in the page app, Turso roll per
 | UCW thresholds | `src/lib/page-context-manager.ts` |
 | Handoff + roll | `src/lib/proposal-context-roll.ts` |
 | Section loop | `src/services/build-proposal-volumes.ts` |
+| Single-volume generate | `buildProposalVolume`, `runGenerateProposalVolume` |
+| Analysis → volume mapping | `src/services/build-proposal-rfp-profile.ts` |
+| Partial / Sources export | `src/lib/assemble-proposal-markdown.ts` |
+| Proposal share tables | `src/services/proposal-share-store.ts`, `src/lib/share-table.ts` |
 | Section ECP + send | `src/services/proposal-volume-ecp.ts` |
 | Fill tracking | `src/lib/proposal-context-tracker.ts`, `src/lib/context-usage.ts` |
 | Store generate | `src/store/session-store.ts` → `runGenerateProposalVolumes` |
@@ -154,3 +206,4 @@ Non-goals for the sectional UCW plan: 32K bitgpu in the page app, Turso roll per
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — overall SPA layers  
 - [`TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md`](TASK_BREAKDOWN_PROPOSAL_SECTIONAL_UCW.md) — task IDs BDA-152–180  
 - [`TASK_BREAKDOWN_PROPOSAL_MODE.md`](TASK_BREAKDOWN_PROPOSAL_MODE.md) — original proposal mode MVP (monolithic path superseded by BDA-164 for volume bodies)
+- [`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md) — per-volume generate, edits, analysis refs, partial export (BDA-196–218)

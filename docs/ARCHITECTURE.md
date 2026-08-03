@@ -64,7 +64,7 @@ flowchart TB
 ## Data flow
 
 1. **Upload** — User drops PDF, DOCX, MD, or XLSX. `ingest-router` picks parser, writes `documents` + `blocks` rows to DuckDB (in-memory for the tab session).
-2. **Profiles** — RFP mode runs `build_rfp_profiles`; Scope Creep mode tags roles (baseline / change / supporting) and runs `compare_scope` / `flag_creep`.
+2. **Profiles** — **RFP Analysis** mode runs `build_rfp_profiles` into qualification cards. **Proposal** mode builds a solicitation-aligned volume profile (`buildProposalRfpProfile`), optionally mapping RFP Analysis criteria onto volumes; generation is sectional ECP + optional per-volume runs (see [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md)). Legacy scope-creep compare paths are dev-only.
 3. **Citations** — Criteria, flags, and chat tool results emit `CitationRef` objects. `focusCitation()` drives split view: OCR text pane + PDF.js original with bbox highlight.
 4. **Chat** — User messages go through ECP-governed `find_clause` (and future tools). bitgpu streams Bonsai 1.7B from jsDelivr; weights cached in Cache Storage (`scoper-model-v1`).
 5. **Voice input (optional)** — Mic toggle in the chat composer captures audio locally (`getUserMedia`), resamples to 16 kHz chunks, and transcribes in `whisper.worker` via Transformers.js (WebGPU with WASM fallback). Partial text merges into the **composer draft only**; the user reviews and taps **Send** — same `sendChatPrompt` path as typed chat. Whisper weights load lazily on first mic use; stopping voice or sending chat can `dispose` the Whisper worker to avoid WebGPU contention with Scoper.
@@ -98,6 +98,6 @@ After first load:
 - Product spec: [`PRD.md`](PRD.md)
 - Tasks: [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md)
 - Chat voice (Whisper WebGPU): [`TASK_BREAKDOWN_CHAT_VOICE.md`](TASK_BREAKDOWN_CHAT_VOICE.md)
-- Proposal sectional UCW: [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md)
+- Proposal sectional UCW + analyze→propose loop: [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md) · [`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md)
 - MVP QA: [`QA_SCRIPT.md`](QA_SCRIPT.md) · [`QA_RESULTS.md`](QA_RESULTS.md)
 - Full v1 QA: [`QA_V1_SCRIPT.md`](QA_V1_SCRIPT.md) · [`QA_V1_RESULTS.md`](QA_V1_RESULTS.md)

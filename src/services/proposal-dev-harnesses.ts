@@ -5,6 +5,7 @@ import { runProposalVolumeSectionTypesHarness } from '@/lib/proposal-volume-sect
 import { runProposalExportQualityHarness } from '@/lib/proposal-export-quality'
 import { runProposalContextQualityHarness } from '@/lib/proposal-context-quality'
 import { runProposalPackageClassifierHarness } from '@/lib/proposal-package-classifier'
+import { runPdfDrawingGeometryHarness } from '@/lib/pdf-drawing-geometry'
 import { runAgentActivityHarness, runAgentActivityTranscriptHarness } from '@/lib/agent-activity'
 import { runContextUsageHarness } from '@/lib/context-usage'
 import { runMarkerShimmerHarness } from '@/components/ui/marker'
@@ -34,6 +35,7 @@ import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-ha
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
+  runPdfDrawingGeometryHarness()
   runPageContextManagerHarness()
   runContextUsageHarness()
   runShimmerHarness()

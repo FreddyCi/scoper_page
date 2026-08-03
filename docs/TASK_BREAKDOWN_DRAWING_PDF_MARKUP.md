@@ -92,16 +92,20 @@ flowchart TD
 ### **ID:** BDA-222
 
 **Title:** Normalized page geometry helpers  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-220  
 **Priority:** Critical  
 **Description:** Create [`pdf-drawing-geometry.ts`](../src/lib/pdf-drawing-geometry.ts): normalize/denormalize between viewport pixels and **0–1 page media box** coordinates; reuse viewport helpers from [`citation-bbox.ts`](../src/lib/citation-bbox.ts) where applicable. Add **eraser hit-test** (distance to polyline / shape bounds). Unit-testable pure functions.  
 **Completed Changes:**
-- 🔄 `normalizePoint`, `denormalizePoint`, stroke bounds, hit-test helpers
+- ✅ `normalizePoint`, `denormalizePoint`, `viewportSizeFromPageViewport`
+- ✅ `normalizedStrokeBounds`, `normalizedGeometryBounds`, `distancePointToSegmentPx`
+- ✅ `hitTestStroke`, `hitTestNormalizedRect`, `hitTestNormalizedEllipse`, `hitTestPdfDrawingGeometry`
+- ✅ `runPdfDrawingGeometryHarness` in proposal unit harness chain
 **Test Strategy:** Small Node/vitest or dev harness: round-trip a point at multiple zoom scales; hit-test known segment.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `runPdfDrawingGeometryHarness` (dev load via `runProposalUnitHarnesses`)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Canvas overlay; [`citation-bbox.ts`](../src/lib/citation-bbox.ts)
 
 ---

@@ -356,16 +356,20 @@ flowchart TD
 ### **ID:** BDA-211
 
 **Title:** Analysis criterion chips on rows  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-209  
 **Priority:** Medium  
 **Description:** [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx): compact chips for linked **`analysisRefs`** (status color/icon). Click → **`selectCitation`** / document focus via [`citation-bridge.ts`](../src/services/citation-bridge.ts) or existing **`focusCitation`** path.  
 **Completed Changes:**
-- 🔄 Chips UI  
+- ✅ **`ProposalVolumeAnalysisRefList`** chips (fail/warn/pass styling)
+- ✅ Citation present → **`focusCitation`**
+- ✅ Static QA assert in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** Manual: chip opens split/doc highlight.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-211 assert
+- 🔄 Manual split-view highlight pending
+**Assigned:** Completed  
 **Context/Artifacts:** Chat citation chips UX  
 
 ---

@@ -1,11 +1,13 @@
 import { useId, useState } from 'react'
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   CheckCircle2Icon,
   ChevronDownIcon,
   ChevronRightIcon,
   CircleDashedIcon,
   Loader2Icon,
+  XCircleIcon,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -13,11 +15,14 @@ import { Badge } from '@/components/ui/badge'
 import { ProposalVolumeMarkdownPreview } from '@/components/workspace/ProposalVolumeMarkdownPreview'
 import { formatVolumeSectionProgressLine } from '@/lib/proposal-volume-section'
 import type {
+  CriterionStatus,
+  ProposalAnalysisRef,
   ProposalVolume,
   ProposalVolumeSection,
   ProposalVolumeStatus,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { focusCitation } from '@/services/citation-bridge'
 
 const STATUS_ICON: Record<ProposalVolumeStatus, typeof CircleDashedIcon> = {
   pending: CircleDashedIcon,
@@ -31,6 +36,89 @@ const STATUS_ICON_CLASS: Record<ProposalVolumeStatus, string> = {
   generating: 'text-primary animate-spin',
   draft: 'text-emerald-600',
   error: 'text-destructive',
+}
+
+const ANALYSIS_STATUS_ICON: Record<CriterionStatus, typeof CheckCircle2Icon> = {
+  pass: CheckCircle2Icon,
+  warn: AlertTriangleIcon,
+  fail: XCircleIcon,
+}
+
+const ANALYSIS_STATUS_CHIP_CLASS: Record<CriterionStatus, string> = {
+  pass: 'border-emerald-500/35 bg-emerald-500/5 text-emerald-900 dark:text-emerald-100',
+  warn: 'border-amber-500/35 bg-amber-500/5 text-amber-950 dark:text-amber-100',
+  fail: 'border-rose-500/35 bg-rose-500/5 text-rose-950 dark:text-rose-100',
+}
+
+function analysisRefRank(status: CriterionStatus): number {
+  switch (status) {
+    case 'fail':
+      return 0
+    case 'warn':
+      return 1
+    default:
+      return 2
+  }
+}
+
+function ProposalAnalysisRefChip({ analysisRef }: { analysisRef: ProposalAnalysisRef }) {
+  const StatusIcon = ANALYSIS_STATUS_ICON[analysisRef.status]
+  const clickable = Boolean(analysisRef.citation)
+
+  return (
+    <button
+      type="button"
+      disabled={!clickable}
+      title={
+        clickable
+          ? `View source for ${analysisRef.label}`
+          : `${analysisRef.label} (${analysisRef.status}) — no citation`
+      }
+      aria-label={
+        clickable
+          ? `View RFP Analysis source: ${analysisRef.label}`
+          : `RFP Analysis: ${analysisRef.label} (${analysisRef.status})`
+      }
+      onClick={() => {
+        if (analysisRef.citation) {
+          focusCitation(analysisRef.citation)
+        }
+      }}
+      className={cn(
+        'inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] leading-snug font-medium',
+        ANALYSIS_STATUS_CHIP_CLASS[analysisRef.status],
+        clickable
+          ? 'hover:bg-background/80 cursor-pointer'
+          : 'cursor-default opacity-90',
+      )}
+    >
+      <StatusIcon className="size-3 shrink-0" aria-hidden />
+      <span className="truncate">{analysisRef.label}</span>
+    </button>
+  )
+}
+
+function ProposalVolumeAnalysisRefList({ analysisRefs }: { analysisRefs: ProposalAnalysisRef[] }) {
+  if (analysisRefs.length === 0) {
+    return null
+  }
+
+  const sorted = [...analysisRefs].sort(
+    (left, right) => analysisRefRank(left.status) - analysisRefRank(right.status),
+  )
+
+  return (
+    <ul
+      className="mt-1.5 flex flex-wrap gap-1"
+      aria-label="RFP Analysis criteria linked to this volume"
+    >
+      {sorted.map((analysisRef) => (
+        <li key={analysisRef.criterionId} className="min-w-0 max-w-full">
+          <ProposalAnalysisRefChip analysisRef={analysisRef} />
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 function volumeStatusLabel(status: ProposalVolumeStatus): string {
@@ -151,6 +239,7 @@ export function ProposalVolumeRow({
     (expanded || volume.status === 'generating' || volume.status === 'error')
   const showLiveStatus = !muted || volume.status !== 'pending'
   const hasBody = Boolean(volume.bodyMarkdown?.trim())
+  const analysisRefs = volume.analysisRefs ?? []
 
   const showVolumeGenerateAction =
     onGenerate != null &&
@@ -261,6 +350,9 @@ export function ProposalVolumeRow({
           <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
             {volume.requirementSummary}
           </p>
+          {analysisRefs.length > 0 ? (
+            <ProposalVolumeAnalysisRefList analysisRefs={analysisRefs} />
+          ) : null}
           {showSectionList && !expanded ? (
             <ProposalVolumeSectionStatusList sections={sections} compact />
           ) : null}

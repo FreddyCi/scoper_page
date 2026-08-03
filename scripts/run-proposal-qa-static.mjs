@@ -147,6 +147,10 @@ assert(
   volumeRow.includes('hand-edited draft'),
   'ProposalVolumeRow must confirm before regenerating edited volumes (BDA-206)',
 )
+assert(
+  volumeRow.includes('focusCitation') && volumeRow.includes('analysisRefs'),
+  'ProposalVolumeRow must render analysis ref chips with citation focus (BDA-211)',
+)
 
 const proposalPanel = read('src/components/workspace/ProposalGenerationPanel.tsx')
 assert(

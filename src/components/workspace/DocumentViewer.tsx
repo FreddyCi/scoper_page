@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
+import { PdfMarkupToolbar, type PdfMarkupStrokeWidth } from '@/components/workspace/PdfMarkupToolbar'
 import { PdfViewerToolbar } from '@/components/workspace/PdfViewerToolbar'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
@@ -73,6 +74,8 @@ export function DocumentViewer({
   const pdfMarkTool = useSessionStore((state) => state.pdfMarkTool)
   const pdfMarkColor = useSessionStore((state) => state.pdfMarkColor)
   const pdfMarkStrokeWidth = useSessionStore((state) => state.pdfMarkStrokeWidth)
+  const setPdfMarkDrawingMode = useSessionStore((state) => state.setPdfMarkDrawingMode)
+  const applyPdfMarkupToolbarChange = useSessionStore((state) => state.applyPdfMarkupToolbarChange)
   /** Mark mode on the PDF original pane (session-backed; toolbar toggle in BDA-234). */
   const markMode = pdfMarkDrawingMode
   const canvasAnchorRef = useRef<HTMLDivElement>(null)
@@ -102,6 +105,8 @@ export function DocumentViewer({
     eraseAnnotation,
     undoDrawingMark,
     redoDrawingMark,
+    canUndoDrawingMark,
+    canRedoDrawingMark,
   } = usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
@@ -307,6 +312,25 @@ export function DocumentViewer({
         theme={theme}
         hint={toolbarHint}
         hintTone={adjustError ? 'error' : 'muted'}
+        markMode={markMode}
+        onMarkModeChange={setPdfMarkDrawingMode}
+        markToolbar={
+          <PdfMarkupToolbar
+            theme={theme}
+            tool={pdfMarkTool}
+            color={pdfMarkColor}
+            strokeWidth={pdfMarkStrokeWidth as PdfMarkupStrokeWidth}
+            onChange={applyPdfMarkupToolbarChange}
+            onUndo={() => {
+              void undoDrawingMark()
+            }}
+            onRedo={() => {
+              void redoDrawingMark()
+            }}
+            canUndo={canUndoDrawingMark}
+            canRedo={canRedoDrawingMark}
+          />
+        }
         onPageChange={updatePage}
         onScaleChange={setScale}
       />

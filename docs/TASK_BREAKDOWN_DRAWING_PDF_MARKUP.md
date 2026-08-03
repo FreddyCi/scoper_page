@@ -349,16 +349,17 @@ flowchart TD
 ### **ID:** BDA-234
 
 **Title:** View Mark segmented toggle  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-231, BDA-232  
 **Priority:** High  
 **Description:** Extend [`PdfViewerToolbar.tsx`](../src/components/workspace/PdfViewerToolbar.tsx): row 1 unchanged; **View | Mark** segmented control; row 2 shows `PdfMarkupToolbar` only in Mark mode; hint line e.g. `Mark window locations on the plan · Page N of M · Z%`.  
 **Completed Changes:**
-- 🔄 Segmented toggle wired to DocumentViewer
-- 🔄 Hint slot copy
+- ✅ Segmented **View | Mark** on row 1 (`TabsList variant="segmented"`)
+- ✅ Row 2 `PdfMarkupToolbar` when Mark mode; wired to session + undo/redo in `DocumentViewer`
+- ✅ Mark hint includes page count and zoom %
 **Test Strategy:** Toggle Mark; toolbar row 2 appears/disappears; hint updates page/zoom.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Manual: toggle Mark shows/hides markup row; tools/colors/undo wired  
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx) TabsList segmented pattern
 

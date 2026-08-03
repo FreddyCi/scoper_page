@@ -393,16 +393,17 @@ flowchart TD
 ### **ID:** BDA-236
 
 **Title:** Share pack export import rows  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-235, BDA-223  
 **Priority:** High  
 **Description:** Wire [`share-pack-export.ts`](../src/services/share-pack-export.ts) / import path to include drawing annotation rows for shared docs; mirror [`block-comments`](../src/services/block-comments.ts) filtering by doc ids in pack.  
 **Completed Changes:**
-- 🔄 Export includes annotations
-- 🔄 Import merges without duplicate ids
+- ✅ `filterShareTablesByDocumentIds` on export + import (annotations by `doc_id`, comments by shared `block_id`)
+- ✅ Import dedupes `annotation_id` / `comment_id` via `INSERT OR REPLACE`
+- ✅ `runSharePackDrawingAnnotationsHarness` (orphan doc excluded; round-trip count matches)
 **Test Strategy:** Harness: mark doc → export pack → fresh DB import → annotation count matches.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `runSharePackDrawingAnnotationsHarness` in share pack harness chain  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Share pack
 

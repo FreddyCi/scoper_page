@@ -19,7 +19,7 @@ import {
 } from '@/lib/share-table'
 import { downloadBlob } from '@/lib/download-blob'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
-import { countShareTableRows, exportShareTables } from '@/services/share-pack-duckdb'
+import { countShareTableRows, exportShareTables, filterShareTablesByDocumentIds } from '@/services/share-pack-duckdb'
 import { syncProposalProfileToDuckdb, clearProposalShareTables } from '@/services/proposal-share-store'
 import { createShareId, putLocalSharePack } from '@/services/share-pack-storage'
 import { buildShareLink, uploadSharePackToApi } from '@/services/share-pack-link'
@@ -77,10 +77,12 @@ async function buildSharePackPayload(): Promise<SharePackPayload> {
   }
 
   const tables = await exportShareTables()
+  const sharedDocIds = new Set(state.documents.map((document) => document.doc_id))
+  const scopedTables = filterShareTablesByDocumentIds(tables, sharedDocIds)
 
   return {
     manifest: buildManifest(),
-    tables,
+    tables: scopedTables,
     documents: await collectDocumentPayloads(),
   }
 }

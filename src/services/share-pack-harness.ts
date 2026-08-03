@@ -5,7 +5,7 @@ import {
   decryptSharePackFile,
   exportEncryptedSharePack,
 } from '@/services/share-pack-export'
-import { applySharePackPayload, runSharePackProposalCompatHarness } from '@/services/share-pack-import'
+import { applySharePackPayload, runSharePackDrawingAnnotationsHarness, runSharePackProposalCompatHarness } from '@/services/share-pack-import'
 import { useSessionStore } from '@/store/session-store'
 
 /** Round-trip share pack export/import against harness-ingested workspace. */
@@ -51,4 +51,5 @@ export async function runSharePackHarness(): Promise<void> {
   }
 
   await runSharePackProposalCompatHarness()
+  await runSharePackDrawingAnnotationsHarness()
 }

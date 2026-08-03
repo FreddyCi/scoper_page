@@ -3,8 +3,14 @@ import type { DocumentMeta, ProposalRequirementsProfile, WorkspaceMode } from '@
 import type { SharePackPayload, ShareSessionManifest } from '@/lib/share-table'
 import { SHARE_PACK_VERSION, type ShareTableId, type ShareTableRow } from '@/lib/share-table'
 import { cacheDocumentBytes, clearDocumentBytesCache } from '@/services/document-bytes-cache'
-import { assertShareTablesShape, importShareTableRows } from '@/services/share-pack-duckdb'
-import { decryptSharePackFile } from '@/services/share-pack-export'
+import { assertShareTablesShape, filterShareTablesByDocumentIds, importShareTableRows } from '@/services/share-pack-duckdb'
+import { getDuckdbClient } from '@/services/duckdb-client'
+import {
+  fetchPdfDrawingAnnotationsForDoc,
+  insertPdfDrawingAnnotation,
+} from '@/services/pdf-drawing-annotations'
+import { decryptSharePackFile, exportEncryptedSharePack } from '@/services/share-pack-export'
+import { runIngestHarness } from '@/services/ingest-router'
 import { fetchSharePackBytes } from '@/services/share-pack-link'
 import { proposalProfileFromShareRows } from '@/services/proposal-share-store'
 import { fetchRfpProfilesFromDuckdb } from '@/services/rfp-profile-store'
@@ -123,7 +129,9 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
   const tables = assertShareTablesShape(payload.tables)
   const manifest = payload.manifest
   const mode = normalizeSharePackMode(String(manifest.mode))
-  const tablesToImport = filterShareTablesForImport(tables, mode)
+  const sharedDocIds = new Set(payload.documents.map((document) => document.doc_id))
+  const scopedTables = filterShareTablesByDocumentIds(tables, sharedDocIds)
+  const tablesToImport = filterShareTablesForImport(scopedTables, mode)
 
   getScoperClient().resetConversation()
   hydrateDocumentBytes(payload)
@@ -345,4 +353,78 @@ export async function runSharePackProposalCompatHarness(): Promise<void> {
   if (pendingVolume?.status !== 'pending') {
     throw new Error('runSharePackProposalCompatHarness: pending volume status not restored')
   }
+}
+
+/** Dev harness — pdf drawing annotations round-trip in share pack (BDA-236). */
+export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
+  useSessionStore.getState().resetSession()
+  await runIngestHarness()
+
+  const docId = useSessionStore.getState().documents[0]?.doc_id
+  if (!docId) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: missing ingested document')
+  }
+
+  const duckdb = await getDuckdbClient()
+  const orphanDocId = 'share-pack-orphan-drawing-doc'
+  await duckdb.query(
+    `INSERT OR REPLACE INTO documents (doc_id, filename, mime, role, uploaded_at)
+     VALUES (?, ?, ?, ?, ?)`,
+    [orphanDocId, 'orphan.pdf', 'application/pdf', 'unknown', new Date().toISOString()],
+  )
+
+  await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 1,
+    tool: 'stamp',
+    color: '#0EA5E9',
+    stroke_width: 2,
+    geometry: { kind: 'stamp', x: 0.2, y: 0.3, stampKind: 'window' },
+  })
+  await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 2,
+    tool: 'text',
+    color: '#18181B',
+    geometry: { kind: 'text', x: 0.4, y: 0.5 },
+    text_body: 'W-12',
+  })
+  await insertPdfDrawingAnnotation({
+    doc_id: orphanDocId,
+    page_num: 1,
+    tool: 'pen',
+    color: '#E11D48',
+    stroke_width: 4,
+    geometry: { kind: 'stroke', points: [{ x: 0.1, y: 0.1 }] },
+  })
+
+  const summary = await exportEncryptedSharePack()
+  const payload = await decryptSharePackFile(summary.encryptedBytes, summary.keyBase64Url)
+
+  const exportedMarks = payload.tables.pdf_drawing_annotations ?? []
+  if (exportedMarks.length !== 2) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: expected two exported annotations')
+  }
+  if (exportedMarks.some((row) => String(row.doc_id) === orphanDocId)) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: orphan doc annotations must be excluded')
+  }
+
+  useSessionStore.getState().resetSession()
+  await applySharePackPayload(payload)
+
+  const imported = await fetchPdfDrawingAnnotationsForDoc(docId)
+  if (imported.length !== 2) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: imported annotation count mismatch')
+  }
+  if (!imported.some((row) => row.text_body === 'W-12')) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: text label not restored')
+  }
+
+  const orphanRemaining = await fetchPdfDrawingAnnotationsForDoc(orphanDocId)
+  if (orphanRemaining.length !== 0) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: orphan annotations should not import')
+  }
+
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [orphanDocId])
+  await duckdb.query('DELETE FROM documents WHERE doc_id = ?', [orphanDocId])
 }

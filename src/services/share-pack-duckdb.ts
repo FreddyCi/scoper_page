@@ -38,6 +38,67 @@ export async function exportShareTables(): Promise<Record<ShareTableId, ShareTab
   return tables
 }
 
+/** Keep rows scoped to documents bundled in the share pack (BDA-236). */
+export function filterShareTablesByDocumentIds(
+  tables: Record<ShareTableId, ShareTableRow[]>,
+  docIds: ReadonlySet<string>,
+): Record<ShareTableId, ShareTableRow[]> {
+  const documents = (tables.documents ?? []).filter((row) => docIds.has(String(row.doc_id)))
+  const docIdSet = new Set(documents.map((row) => String(row.doc_id)))
+
+  const blocks = (tables.blocks ?? []).filter((row) => docIdSet.has(String(row.doc_id)))
+  const blockIds = new Set(blocks.map((row) => String(row.block_id)))
+
+  const comments = (tables.comments ?? []).filter((row) => blockIds.has(String(row.block_id)))
+
+  const pdf_drawing_annotations = (tables.pdf_drawing_annotations ?? []).filter((row) =>
+    docIdSet.has(String(row.doc_id)),
+  )
+
+  const results_profiles = (tables.results_profiles ?? []).filter((row) =>
+    docIdSet.has(String(row.doc_id)),
+  )
+  const profileIds = new Set(results_profiles.map((row) => String(row.profile_id)))
+  const profile_criteria = (tables.profile_criteria ?? []).filter((row) =>
+    profileIds.has(String(row.profile_id)),
+  )
+
+  const scope_flags = (tables.scope_flags ?? []).filter(
+    (row) =>
+      docIdSet.has(String(row.baseline_doc_id)) && docIdSet.has(String(row.candidate_doc_id)),
+  )
+
+  return {
+    ...tables,
+    documents,
+    blocks,
+    comments,
+    pdf_drawing_annotations,
+    results_profiles,
+    profile_criteria,
+    scope_flags,
+  }
+}
+
+const SHARE_TABLE_DEDUPE_KEY: Partial<Record<ShareTableId, string>> = {
+  comments: 'comment_id',
+  pdf_drawing_annotations: 'annotation_id',
+}
+
+function dedupeShareTableRows(
+  definition: ShareTableDefinition,
+  rows: ShareTableRow[],
+): ShareTableRow[] {
+  const keyColumn = SHARE_TABLE_DEDUPE_KEY[definition.id]
+  if (!keyColumn) return rows
+
+  const byKey = new Map<string, ShareTableRow>()
+  for (const row of rows) {
+    byKey.set(String(row[keyColumn]), row)
+  }
+  return [...byKey.values()]
+}
+
 export async function clearShareTables(duckdb?: DuckdbClient): Promise<void> {
   const client = duckdb ?? (await getDuckdbClient())
   for (const definition of getShareTablesInClearOrder()) {
@@ -53,7 +114,7 @@ export async function importShareTableRows(
   await clearShareTables(client)
 
   for (const definition of getShareTablesInImportOrder()) {
-    const rows = tables[definition.id] ?? []
+    const rows = dedupeShareTableRows(definition, tables[definition.id] ?? [])
     for (const row of rows) {
       await insertShareTableRow(client, definition, row)
     }

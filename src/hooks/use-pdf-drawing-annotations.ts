@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { PdfDrawingShapeCommit, PdfDrawingStrokeCommit } from '@/components/workspace/PdfDrawingOverlay'
+import type {
+  PdfDrawingShapeCommit,
+  PdfDrawingStrokeCommit,
+  PdfDrawingTextCommit,
+} from '@/components/workspace/PdfDrawingOverlay'
 import {
   pdfDrawingCanRedo,
   pdfDrawingCanUndo,
@@ -111,6 +115,24 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     [bumpHistory, docId, pageNum],
   )
 
+  const commitText = useCallback(
+    async (commit: PdfDrawingTextCommit) => {
+      const saved = await insertPdfDrawingAnnotation({
+        doc_id: docId,
+        page_num: pageNum,
+        tool: 'text',
+        color: commit.color,
+        geometry: commit.geometry,
+        text_body: commit.text_body,
+      })
+      recordPdfDrawingInsert(docId, saved)
+      setAnnotations((previous) => [...previous, saved])
+      bumpHistory()
+      return saved
+    },
+    [bumpHistory, docId, pageNum],
+  )
+
   const eraseAnnotation = useCallback(
     async (annotationId: string) => {
       const target = annotationsRef.current.find(
@@ -153,6 +175,7 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     refresh,
     commitStroke,
     commitShape,
+    commitText,
     eraseAnnotation,
     undoDrawingMark,
     redoDrawingMark,

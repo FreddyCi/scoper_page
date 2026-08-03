@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import {
   denormalizePoint,
@@ -15,6 +15,7 @@ import type {
   PdfDrawingNormalizedPoint,
   PdfDrawingRectGeometry,
   PdfDrawingStrokeGeometry,
+  PdfDrawingTextGeometry,
   PdfDrawingTool,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,13 @@ export type PdfDrawingShapeCommit = {
   geometry: PdfDrawingRectGeometry | PdfDrawingEllipseGeometry
 }
 
+export type PdfDrawingTextCommit = {
+  tool: 'text'
+  color: string
+  text_body: string
+  geometry: PdfDrawingTextGeometry
+}
+
 export type PdfDrawingOverlayProps = {
   annotations: PdfDrawingAnnotation[]
   viewport: PdfDrawingViewportSize
@@ -60,6 +68,7 @@ export type PdfDrawingOverlayProps = {
   /** @deprecated Use onStrokeCommit */
   onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
   onShapeCommit?: (commit: PdfDrawingShapeCommit) => void | Promise<void>
+  onTextCommit?: (commit: PdfDrawingTextCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
 }
 
@@ -266,6 +275,65 @@ type DraftShape = {
   end: PdfDrawingNormalizedPoint
 }
 
+type TextEditorState = {
+  anchor: PdfDrawingNormalizedPoint
+  value: string
+}
+
+function PdfDrawingTextEditor({
+  state,
+  viewport,
+  color,
+  onChange,
+  onCommit,
+  onCancel,
+}: {
+  state: TextEditorState
+  viewport: PdfDrawingViewportSize
+  color: string
+  onChange: (value: string) => void
+  onCommit: () => void
+  onCancel: () => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const pixel = denormalizePoint(state.anchor, viewport)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [state.anchor.x, state.anchor.y])
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={state.value}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        event.stopPropagation()
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          onCommit()
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          onCancel()
+        }
+      }}
+      onBlur={() => {
+        onCommit()
+      }}
+      className="border-border bg-surface text-foreground pointer-events-auto absolute z-10 min-w-[6rem] max-w-[min(16rem,40vw)] rounded border px-1.5 py-0.5 text-sm font-semibold shadow-panel outline-none ring-2 ring-sky-500/40"
+      style={{
+        left: pixel.x,
+        top: pixel.y,
+        color,
+        fontSize: DEFAULT_TEXT_PX,
+      }}
+      placeholder="Label…"
+      aria-label="Drawing text label"
+    />
+  )
+}
+
 function DraftShapeGraphic({
   draft,
   tool,
@@ -328,14 +396,17 @@ export function PdfDrawingOverlay({
   onStrokeCommit,
   onPenStrokeCommit,
   onShapeCommit,
+  onTextCommit,
   onEraseAnnotation,
 }: PdfDrawingOverlayProps) {
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
   const strokeToolActive =
     interactive && isStrokeTool(activeTool) && Boolean(commitStroke)
   const shapeToolActive = interactive && isShapeTool(activeTool) && Boolean(onShapeCommit)
+  const textToolActive = interactive && activeTool === 'text' && Boolean(onTextCommit)
   const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
-  const pointerActive = strokeToolActive || shapeToolActive || eraserActive
+  const pointerActive =
+    strokeToolActive || shapeToolActive || textToolActive || eraserActive
 
   const effectiveStrokeWidth =
     activeTool === 'highlighter'
@@ -348,8 +419,15 @@ export function PdfDrawingOverlay({
   const [draftShape, setDraftShape] = useState<DraftShape | null>(null)
   const draftShapeRef = useRef<DraftShape | null>(null)
   const drawingPointerId = useRef<number | null>(null)
+  const [textEditor, setTextEditor] = useState<TextEditorState | null>(null)
   const annotationsRef = useRef(annotations)
   annotationsRef.current = annotations
+
+  useEffect(() => {
+    if (!textToolActive) {
+      setTextEditor(null)
+    }
+  }, [textToolActive])
 
   const resetDraft = useCallback(() => {
     drawingPointerId.current = null
@@ -375,13 +453,49 @@ export function PdfDrawingOverlay({
     [eraserRadiusPx, onEraseAnnotation, viewport],
   )
 
+  const commitTextEditor = useCallback(async () => {
+    if (!textEditor || !onTextCommit) {
+      setTextEditor(null)
+      return
+    }
+    const trimmed = textEditor.value.trim()
+    if (!trimmed) {
+      setTextEditor(null)
+      return
+    }
+    const geometry: PdfDrawingTextGeometry = {
+      kind: 'text',
+      x: textEditor.anchor.x,
+      y: textEditor.anchor.y,
+    }
+    setTextEditor(null)
+    await onTextCommit({
+      tool: 'text',
+      color: markColor,
+      text_body: trimmed,
+      geometry,
+    })
+  }, [markColor, onTextCommit, textEditor])
+
+  const cancelTextEditor = useCallback(() => {
+    setTextEditor(null)
+  }, [])
+
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       if (!pointerActive || event.button !== 0) return
+      const point = pointerToNormalized(event, viewport)
+
+      if (textToolActive) {
+        if (textEditor) return
+        event.preventDefault()
+        setTextEditor({ anchor: point, value: '' })
+        return
+      }
+
       event.preventDefault()
       event.currentTarget.setPointerCapture(event.pointerId)
       drawingPointerId.current = event.pointerId
-      const point = pointerToNormalized(event, viewport)
 
       if (eraserActive) {
         eraseAtPointer(point)
@@ -400,7 +514,17 @@ export function PdfDrawingOverlay({
       draftPointsRef.current = [point]
       setDraftPoints([point])
     },
-    [activeTool, eraseAtPointer, eraserActive, pointerActive, shapeToolActive, strokeToolActive, viewport],
+    [
+      activeTool,
+      eraseAtPointer,
+      eraserActive,
+      pointerActive,
+      shapeToolActive,
+      strokeToolActive,
+      textEditor,
+      textToolActive,
+      viewport,
+    ],
   )
 
   const handlePointerMove = useCallback(
@@ -517,32 +641,42 @@ export function PdfDrawingOverlay({
     return null
   }
 
-  if (annotations.length === 0 && !pointerActive && draftPoints.length === 0 && !draftShape) {
+  if (
+    annotations.length === 0 &&
+    !pointerActive &&
+    draftPoints.length === 0 &&
+    !draftShape &&
+    !textEditor
+  ) {
     return null
   }
 
   const cursorClass = eraserActive
     ? 'cursor-cell'
-    : strokeToolActive || shapeToolActive
-      ? 'cursor-crosshair'
-      : undefined
+    : textToolActive
+      ? 'cursor-text'
+      : strokeToolActive || shapeToolActive
+        ? 'cursor-crosshair'
+        : undefined
+
+  const svgPointerActive = pointerActive && !textEditor
 
   return (
-    <svg
-      className={cn(
-        'absolute inset-0 touch-none',
-        pointerActive ? cn('pointer-events-auto', cursorClass) : 'pointer-events-none',
-        className,
-      )}
-      width={viewport.width}
-      height={viewport.height}
-      viewBox={`0 0 ${viewport.width} ${viewport.height}`}
-      aria-hidden={!pointerActive}
-      onPointerDown={pointerActive ? handlePointerDown : undefined}
-      onPointerMove={pointerActive ? handlePointerMove : undefined}
-      onPointerUp={pointerActive ? handlePointerUp : undefined}
-      onPointerCancel={pointerActive ? handlePointerCancel : undefined}
-    >
+    <div className={cn('absolute inset-0', className)}>
+      <svg
+        className={cn(
+          'absolute inset-0 touch-none',
+          svgPointerActive ? cn('pointer-events-auto', cursorClass) : 'pointer-events-none',
+        )}
+        width={viewport.width}
+        height={viewport.height}
+        viewBox={`0 0 ${viewport.width} ${viewport.height}`}
+        aria-hidden={!svgPointerActive}
+        onPointerDown={svgPointerActive ? handlePointerDown : undefined}
+        onPointerMove={svgPointerActive ? handlePointerMove : undefined}
+        onPointerUp={svgPointerActive ? handlePointerUp : undefined}
+        onPointerCancel={svgPointerActive ? handlePointerCancel : undefined}
+      >
       {annotations.map((annotation) => (
         <g key={annotation.annotation_id} data-annotation-id={annotation.annotation_id}>
           <AnnotationGraphic annotation={annotation} viewport={viewport} />
@@ -568,6 +702,20 @@ export function PdfDrawingOverlay({
           strokeWidth={markStrokeWidth}
         />
       ) : null}
-    </svg>
+      </svg>
+
+      {textEditor ? (
+        <PdfDrawingTextEditor
+          state={textEditor}
+          viewport={viewport}
+          color={markColor}
+          onChange={(value) => setTextEditor((previous) => (previous ? { ...previous, value } : null))}
+          onCommit={() => {
+            void commitTextEditor()
+          }}
+          onCancel={cancelTextEditor}
+        />
+      ) : null}
+    </div>
   )
 }

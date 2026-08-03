@@ -248,15 +248,18 @@ flowchart TD
 ### **ID:** BDA-229
 
 **Title:** Text label tool  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-224  
 **Priority:** Medium  
 **Description:** Click to place text anchor; capture `text_body` (inline input or small popover); store in annotation row. Render SVG `<text>` with readable size scaled by zoom.  
 **Completed Changes:**
-- 🔄 Text placement + edit commit
+- ✅ Click-to-place inline label editor on `PdfDrawingOverlay` (`onTextCommit`)
+- ✅ `usePdfDrawingAnnotations.commitText` persists `text_body` + `{ kind: 'text', x, y }`
+- ✅ `DocumentViewer` / `PdfPageCanvas` wiring; dev `Scoper.setPdfMarkTool("text")`
+- ✅ CRUD harness `W-12` text round-trip
 **Test Strategy:** Place label "W-12"; reload; text persists at normalized position.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Unit harness (CRUD text); manual: click → type → Enter/blur persists after page reload  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Data model (`text_body`)
 

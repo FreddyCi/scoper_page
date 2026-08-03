@@ -2,12 +2,33 @@
 /**
  * Static pre-checks for proposal mode sign-off (BDA-151, BDA-180) — no browser.
  */
-import { readFileSync, existsSync } from 'node:fs'
-import { execSync } from 'node:child_process'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+
+function listSourceFiles(dir, files = []) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === 'node_modules') continue
+    const fullPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      listSourceFiles(fullPath, files)
+      continue
+    }
+    if (/\.(tsx?|jsx?|mjs|cjs)$/.test(entry.name)) {
+      files.push(fullPath)
+    }
+  }
+  return files
+}
+
+function sourceFilesContaining(needle) {
+  const srcRoot = path.join(root, 'src')
+  return listSourceFiles(srcRoot)
+    .filter((filePath) => readFileSync(filePath, 'utf8').includes(needle))
+    .map((filePath) => path.relative(root, filePath))
+}
 
 function read(relPath) {
   return readFileSync(path.join(root, relPath), 'utf8')
@@ -36,13 +57,7 @@ assert(
   'WorkspaceContent must not mount CreepProfileGrid',
 )
 
-const scopeCreepHits = execSync('rg -l scope_creep src || true', {
-  cwd: root,
-  encoding: 'utf8',
-})
-  .trim()
-  .split('\n')
-  .filter(Boolean)
+const scopeCreepHits = sourceFilesContaining('scope_creep')
 
 const allowedLegacy = new Set([
   'src/services/share-pack-import.ts',
@@ -198,6 +213,25 @@ assert(
 assert(
   proposalVolumeEcp.includes('citationsFromFindClauseResult'),
   'proposal-volume-ecp must map find_clause matches to CitationRef (BDA-212)',
+)
+
+const assembleProposal = read('src/lib/assemble-proposal-markdown.ts')
+assert(
+  assembleProposal.includes('exportMode'),
+  'assemble-proposal-markdown must support export modes (BDA-213)',
+)
+assert(
+  assembleProposal.includes('### Sources'),
+  'assemble-proposal-markdown must append per-volume Sources (BDA-213)',
+)
+
+assert(
+  proposalPanel.includes('Export drafted volumes'),
+  'ProposalGenerationPanel must offer partial export when full gate fails (BDA-214)',
+)
+assert(
+  proposalPanel.includes("'drafted-only'"),
+  'ProposalGenerationPanel must call drafted-only assemble (BDA-214)',
 )
 
 assert(

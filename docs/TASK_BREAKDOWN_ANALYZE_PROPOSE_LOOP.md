@@ -401,16 +401,19 @@ flowchart TD
 ### **ID:** BDA-213
 
 **Title:** Assemble Sources and export modes  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-212  
 **Priority:** High  
 **Description:** [`assemble-proposal-markdown.ts`](../src/lib/assemble-proposal-markdown.ts): **`exportMode: 'complete' | 'drafted-only'`** on options; skip `pending` volumes in drafted-only; header note partial draft. Append per-volume **Sources** from section citations (page + excerpt). Extend **`runAssembleProposalMarkdownHarness`**.  
 **Completed Changes:**
-- 🔄 Assemble options  
+- ✅ **`exportMode`**, **`drafted-only`** volume filter, partial header note
+- ✅ Per-volume **`### Sources`** from section **`citations`**
+- ✅ Extended **`runAssembleProposalMarkdownHarness`**
 **Test Strategy:** Harness partial export omits pending; Sources section non-empty when citations exist.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runAssembleProposalMarkdownHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-135 export  
 
 ---
@@ -418,16 +421,20 @@ flowchart TD
 ### **ID:** BDA-214
 
 **Title:** Export drafted volumes button  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-213  
 **Priority:** High  
 **Description:** [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx): when **`canExportProposalProfile`** fails but ≥1 volume `draft`, show **Export drafted volumes** (outline) using **`drafted-only`** assemble. Keep full **Export .md** gated on BDA-176.  
 **Completed Changes:**
-- 🔄 Second export path  
+- ✅ **Export drafted volumes** when full gate fails and drafts exist
+- ✅ Shared download helper with **`drafted-only`** filename suffix
+- ✅ Static QA asserts
 **Test Strategy:** Manual: one draft, nine pending → partial download works.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-213/214 asserts
+- 🔄 Manual partial export pending
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-176 gate unchanged  
 
 ---

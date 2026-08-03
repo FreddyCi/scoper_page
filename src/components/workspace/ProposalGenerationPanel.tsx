@@ -17,7 +17,9 @@ import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateL
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import {
   assembleProposalMarkdown,
+  canExportDraftedProposalVolumes,
   proposalExportFilename,
+  type ProposalExportMode,
 } from '@/lib/assemble-proposal-markdown'
 import { canExportProposalProfile } from '@/lib/proposal-export-quality'
 import { beginBlobSave } from '@/lib/download-blob'
@@ -115,6 +117,11 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
 
   const canExportProposal = exportGate?.ok ?? false
 
+  const canExportDraftedOnly = useMemo(
+    () => (profile ? canExportDraftedProposalVolumes(profile) && !canExportProposal : false),
+    [profile, canExportProposal],
+  )
+
   const exportButtonTitle =
     exportGate && !exportGate.ok
       ? exportGate.reasons.slice(0, 2).join(' ')
@@ -122,12 +129,17 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
         ? 'Complete generation with passing draft quality before exporting'
         : undefined
 
-  async function handleExportProposal() {
+  async function downloadProposalMarkdown(exportMode: ProposalExportMode) {
     if (!profile || exportingProposal || proposalGenerating) return
 
-    const gate = canExportProposalProfile(profile)
-    if (!gate.ok) {
-      setExportError(gate.reasons[0] ?? 'Export blocked until all volumes pass quality checks.')
+    if (exportMode === 'complete') {
+      const gate = canExportProposalProfile(profile)
+      if (!gate.ok) {
+        setExportError(gate.reasons[0] ?? 'Export blocked until all volumes pass quality checks.')
+        return
+      }
+    } else if (!canExportDraftedProposalVolumes(profile)) {
+      setExportError('No drafted volumes available to export.')
       return
     }
 
@@ -136,8 +148,11 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
 
     try {
       const rfpDoc = documents.find((doc) => doc.doc_id === profile.rfp_doc_id)
-      const markdown = assembleProposalMarkdown(profile, { rfpFilename: rfpDoc?.filename })
-      const filename = proposalExportFilename(rfpDoc?.filename ?? 'proposal')
+      const markdown = assembleProposalMarkdown(profile, {
+        rfpFilename: rfpDoc?.filename,
+        exportMode,
+      })
+      const filename = proposalExportFilename(rfpDoc?.filename ?? 'proposal', exportMode)
       const writeBlob = await beginBlobSave({
         filename,
         mime: 'text/markdown',
@@ -153,6 +168,14 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
     } finally {
       setExportingProposal(false)
     }
+  }
+
+  async function handleExportProposal() {
+    await downloadProposalMarkdown('complete')
+  }
+
+  async function handleExportDraftedVolumes() {
+    await downloadProposalMarkdown('drafted-only')
   }
 
   async function handleBuildProfile() {
@@ -328,7 +351,19 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 buttonLabel="Generate complete proposal"
               />
             ) : (
-              <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+              <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
+                {canExportDraftedOnly ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="sm:flex-1"
+                    disabled={exportingProposal || buildingProfile}
+                    title="Download markdown for volumes that already have draft content"
+                    onClick={() => void handleExportDraftedVolumes()}
+                  >
+                    {exportingProposal ? 'Exporting…' : 'Export drafted volumes'}
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   variant="outline"

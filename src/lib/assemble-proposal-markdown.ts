@@ -1,8 +1,65 @@
-import type { ProposalRequirementsProfile } from '@/lib/types'
+import type {
+  CitationRef,
+  ProposalRequirementsProfile,
+  ProposalVolume,
+} from '@/lib/types'
 import { canExportProposalProfile } from '@/lib/proposal-export-quality'
+
+export type ProposalExportMode = 'complete' | 'drafted-only'
 
 export type AssembleProposalMarkdownOptions = {
   rfpFilename?: string
+  /** Full profile vs draft volumes only (BDA-213). */
+  exportMode?: ProposalExportMode
+}
+
+const SOURCE_EXCERPT_MAX = 200
+
+function volumesForExport(
+  profile: ProposalRequirementsProfile,
+  exportMode: ProposalExportMode,
+): ProposalVolume[] {
+  if (exportMode === 'complete') {
+    return profile.volumes
+  }
+
+  return profile.volumes.filter(
+    (volume) => volume.status === 'draft' && Boolean(volume.bodyMarkdown?.trim()),
+  )
+}
+
+function collectVolumeCitations(volume: ProposalVolume): CitationRef[] {
+  const seen = new Set<string>()
+  const citations: CitationRef[] = []
+
+  for (const section of volume.sections ?? []) {
+    for (const citation of section.citations ?? []) {
+      if (seen.has(citation.block_id)) continue
+      seen.add(citation.block_id)
+      citations.push(citation)
+    }
+  }
+
+  return citations
+}
+
+function formatSourceLine(citation: CitationRef): string {
+  const page = citation.page_num != null ? `Page ${citation.page_num}` : 'Source'
+  const excerpt = citation.excerpt.trim().replace(/\s+/g, ' ')
+  const clipped =
+    excerpt.length > SOURCE_EXCERPT_MAX
+      ? `${excerpt.slice(0, SOURCE_EXCERPT_MAX - 1)}…`
+      : excerpt
+  return `- ${page}: ${clipped || '(no excerpt)'}`
+}
+
+function volumeSourcesMarkdown(volume: ProposalVolume): string {
+  const citations = collectVolumeCitations(volume)
+  if (citations.length === 0) {
+    return ''
+  }
+
+  return ['### Sources', '', ...citations.map(formatSourceLine), ''].join('\n')
 }
 
 /** Single downloadable markdown file from all volume drafts (BDA-135). */
@@ -10,7 +67,19 @@ export function assembleProposalMarkdown(
   profile: ProposalRequirementsProfile,
   options: AssembleProposalMarkdownOptions = {},
 ): string {
-  const sections: string[] = ['# Complete proposal draft', '']
+  const exportMode = options.exportMode ?? 'complete'
+  const volumes = volumesForExport(profile, exportMode)
+
+  const title =
+    exportMode === 'drafted-only' ? '# Partial proposal draft' : '# Complete proposal draft'
+  const sections: string[] = [title, '']
+
+  if (exportMode === 'drafted-only') {
+    sections.push(
+      '_This export includes only volumes with draft content; pending and incomplete volumes are omitted._',
+      '',
+    )
+  }
 
   if (options.rfpFilename) {
     sections.push(`_Solicitation: ${options.rfpFilename}_`, '')
@@ -20,7 +89,12 @@ export function assembleProposalMarkdown(
     sections.push(profile.summary.trim(), '')
   }
 
-  for (const volume of profile.volumes) {
+  if (volumes.length === 0) {
+    sections.push('_No draft volumes available for export._', '')
+    return sections.join('\n').trim()
+  }
+
+  for (const volume of volumes) {
     sections.push(`# Volume: ${volume.title}`, '')
 
     const requirement = volume.requirementSummary.trim()
@@ -37,23 +111,42 @@ export function assembleProposalMarkdown(
       sections.push('_No draft content for this volume._', '')
     }
 
+    const sources = volumeSourcesMarkdown(volume)
+    if (sources) {
+      sections.push(sources)
+    }
+
     sections.push('---', '')
   }
 
   return sections.join('\n').trim()
 }
 
+export function countDraftedProposalVolumes(profile: ProposalRequirementsProfile): number {
+  return profile.volumes.filter(
+    (volume) => volume.status === 'draft' && Boolean(volume.bodyMarkdown?.trim()),
+  ).length
+}
+
+export function canExportDraftedProposalVolumes(profile: ProposalRequirementsProfile): boolean {
+  return countDraftedProposalVolumes(profile) > 0
+}
+
 export function hasExportableProposalContent(profile: ProposalRequirementsProfile): boolean {
   return canExportProposalProfile(profile).ok
 }
 
-export function proposalExportFilename(rfpFilename: string): string {
+export function proposalExportFilename(
+  rfpFilename: string,
+  exportMode: ProposalExportMode = 'complete',
+): string {
   const stem = rfpFilename.replace(/\.[^.]+$/i, '').trim() || 'proposal'
   const safe = stem.replace(/[^\w.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
-  return `${safe || 'proposal'}-draft.md`
+  const suffix = exportMode === 'drafted-only' ? 'partial-draft' : 'draft'
+  return `${safe || 'proposal'}-${suffix}.md`
 }
 
-/** Dev harness — assembled export shape (BDA-135) */
+/** Dev harness — assembled export shape (BDA-135, BDA-213) */
 export function runAssembleProposalMarkdownHarness(): void {
   const exportableBody = `
 ## Approach
@@ -81,6 +174,23 @@ with weekly status reporting and risk registers maintained in the shared project
         requirementSummary: 'Describe installation methodology.',
         status: 'draft',
         bodyMarkdown: exportableBody,
+        sections: [
+          {
+            id: 'sec-a1',
+            title: 'Approach',
+            findClauseQuery: 'methodology',
+            status: 'draft',
+            bodyMarkdown: exportableBody,
+            citations: [
+              {
+                doc_id: 'rfp-1',
+                block_id: 'rfp-1:p4:i2',
+                page_num: 4,
+                excerpt: 'Section L.1 requires a detailed methodology and project schedule.',
+              },
+            ],
+          },
+        ],
       },
       {
         id: 'vol-b',
@@ -120,15 +230,41 @@ with weekly status reporting and risk registers maintained in the shared project
   if (!markdown.includes('CMMI Level 3')) {
     throw new Error('runAssembleProposalMarkdownHarness: missing second volume body')
   }
+  if (!markdown.includes('### Sources') || !markdown.includes('Page 4')) {
+    throw new Error('runAssembleProposalMarkdownHarness: expected Sources from section citations')
+  }
+
+  const partialExport = assembleProposalMarkdown(partialProfile, {
+    rfpFilename: 'Sample-RFP.pdf',
+    exportMode: 'drafted-only',
+  })
+  if (!partialExport.includes('Partial proposal draft')) {
+    throw new Error('runAssembleProposalMarkdownHarness: partial export missing header note')
+  }
+  if (partialExport.includes('# Volume: Management plan')) {
+    throw new Error('runAssembleProposalMarkdownHarness: drafted-only should omit pending volumes')
+  }
+  if (!partialExport.includes('# Volume: Technical approach')) {
+    throw new Error('runAssembleProposalMarkdownHarness: drafted-only should keep draft volume')
+  }
 
   const filename = proposalExportFilename('Sample RFP.pdf')
   if (filename !== 'Sample-RFP-draft.md') {
     throw new Error(`runAssembleProposalMarkdownHarness: unexpected filename ${filename}`)
   }
 
+  const partialFilename = proposalExportFilename('Sample RFP.pdf', 'drafted-only')
+  if (partialFilename !== 'Sample-RFP-partial-draft.md') {
+    throw new Error(`runAssembleProposalMarkdownHarness: unexpected partial filename ${partialFilename}`)
+  }
+
   const empty: ProposalRequirementsProfile = {
     ...profile,
-    volumes: profile.volumes.map((volume) => ({ ...volume, bodyMarkdown: undefined, status: 'pending' as const })),
+    volumes: profile.volumes.map((volume) => ({
+      ...volume,
+      bodyMarkdown: undefined,
+      status: 'pending' as const,
+    })),
   }
   if (hasExportableProposalContent(empty)) {
     throw new Error('runAssembleProposalMarkdownHarness: empty profile should not export')

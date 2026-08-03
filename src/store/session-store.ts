@@ -36,9 +36,16 @@ import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggest
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getProposalSetupState } from '@/lib/proposal-readiness'
 import { assessProposalContextQuality } from '@/lib/proposal-context-quality'
-import type { ProposalHandoffState } from '@/lib/proposal-context-roll'
+import { createEmptyProposalHandoff, type ProposalHandoffState } from '@/lib/proposal-context-roll'
+import { createProposalContextTracker } from '@/lib/proposal-context-tracker'
 import { buildProposalRfpProfile } from '@/services/build-proposal-rfp-profile'
-import { buildProposalVolumes } from '@/services/build-proposal-volumes'
+import {
+  buildProposalVolume,
+  buildProposalVolumes,
+  type BuildProposalVolumeBatchState,
+} from '@/services/build-proposal-volumes'
+import { fetchDocumentBlocks } from '@/services/document-blocks'
+import { syncContextUsageFromTracker } from '@/services/agent-activity-bridge'
 import { ensureScoperEcpReadyBeforeAgentRun } from '@/ecp/environment'
 import { getScoperClient } from '@/services/scoper-client'
 import {
@@ -187,6 +194,7 @@ export type SessionState = {
   clearProposalGeneration: () => void
   runProposalRequirementsProfile: () => Promise<void>
   runGenerateProposalVolumes: () => Promise<void>
+  runGenerateProposalVolume: (volumeId: string) => Promise<void>
   setCreepProfiles: (profiles: ScopeCreepProfile[]) => void
   selectCitation: (citation: CitationRef | null) => void
   bumpCitationFocus: () => void
@@ -583,6 +591,99 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       set({
         proposalGenerationError:
           error instanceof Error ? error.message : 'Proposal volume generation failed',
+      })
+    } finally {
+      set({ proposalGenerating: false, contextPhase: 'idle' })
+    }
+  },
+
+  runGenerateProposalVolume: async (volumeId: string) => {
+    const state = get()
+    const setup = getProposalSetupState({
+      documents: state.documents,
+      evaluationDocId: state.evaluationDocId,
+      companyContext: state.companyContext,
+      proposalRequirementsProfile: state.proposalRequirementsProfile,
+    })
+
+    if (!setup.readyToGenerate || state.proposalGenerating || state.chatGenerating) return
+
+    const profile = state.proposalRequirementsProfile
+    if (!profile) return
+
+    const volume = profile.volumes.find((entry) => entry.id === volumeId)
+    if (!volume) {
+      set({
+        proposalGenerationError: `Unknown proposal volume (${volumeId}).`,
+      })
+      return
+    }
+
+    const volumeLabel = volume.title.trim() || volumeId
+
+    const contextQuality = assessProposalContextQuality(state.companyContext)
+    if (!contextQuality.ok) {
+      set({
+        proposalGenerationError: contextQuality.warnings.join(' '),
+        proposalHandoffState: null,
+      })
+      return
+    }
+
+    set({
+      proposalGenerating: true,
+      proposalGenerationError: null,
+      proposalHandoffState: null,
+      ...clearAgentActivityState(),
+      contextPhase: 'generating',
+    })
+
+    try {
+      await ensureScoperEcpReadyBeforeAgentRun()
+      getScoperClient().resetConversation()
+
+      const rfpDoc = state.documents.find((doc) => doc.doc_id === profile.rfp_doc_id)
+      if (!rfpDoc) {
+        throw new Error('RFP document not found in session')
+      }
+
+      const blocks = await fetchDocumentBlocks(profile.rfp_doc_id)
+
+      const batchState: BuildProposalVolumeBatchState = {
+        handoff: createEmptyProposalHandoff({
+          activeGoal:
+            profile.summary.trim() ||
+            'Draft complete proposal volumes for the attached RFP',
+          packageKind: profile.packageKind,
+          pendingSections: [],
+        }),
+        handoffChunkIndex: 0,
+        contextTracker: createProposalContextTracker({
+          effectiveMaxSeqLen: getScoperClient().getState().maxSeqLen,
+        }),
+        isolatedVolumeRun: true,
+      }
+
+      const updated = await buildProposalVolume(
+        profile,
+        volumeId,
+        {
+          blocks,
+          rfpDoc,
+          companyContext: state.companyContext,
+          onProfileUpdate: (next) => set({ proposalRequirementsProfile: next }),
+          onHandoffUpdate: (handoff) => set({ proposalHandoffState: handoff }),
+        },
+        batchState,
+      )
+
+      set({ proposalRequirementsProfile: updated })
+      syncContextUsageFromTracker(batchState.contextTracker)
+    } catch (error) {
+      const base =
+        error instanceof Error ? error.message : 'Proposal volume generation failed'
+      set({
+        proposalGenerationError: `${volumeLabel}: ${base}`,
       })
     } finally {
       set({ proposalGenerating: false, contextPhase: 'idle' })

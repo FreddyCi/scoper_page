@@ -87,3 +87,53 @@ export async function runProposalStoreGeneratePreflightHarness(): Promise<void> 
 
   useSessionStore.getState().resetSession()
 }
+
+/** Store gates for single-volume generate (BDA-199). */
+export async function runProposalStoreGenerateSingleVolumeHarness(): Promise<void> {
+  const store = useSessionStore.getState()
+  store.resetSession()
+
+  useSessionStore.setState({
+    mode: 'proposal',
+    evaluationDocId: 'rfp-1',
+    documents: [
+      {
+        doc_id: 'rfp-1',
+        filename: 'RFP.pdf',
+        mime: 'application/pdf',
+        role: 'unknown',
+        uploaded_at: new Date().toISOString(),
+      },
+    ],
+    companyContext:
+      'Acme Systems is a CMMI Level 3 integrator specializing in cloud migration since 2004.',
+    proposalRequirementsProfile: HARNESS_PROFILE,
+  })
+
+  await useSessionStore.getState().runGenerateProposalVolume('vol-missing')
+
+  const unknownVol = useSessionStore.getState()
+  if (unknownVol.proposalGenerating) {
+    throw new Error(
+      'runProposalStoreGenerateSingleVolumeHarness: unknown volume should not set proposalGenerating',
+    )
+  }
+  if (!unknownVol.proposalGenerationError?.includes('Unknown proposal volume')) {
+    throw new Error(
+      'runProposalStoreGenerateSingleVolumeHarness: expected unknown volume error',
+    )
+  }
+
+  useSessionStore.setState({ chatGenerating: true, proposalGenerationError: null })
+
+  await useSessionStore.getState().runGenerateProposalVolume('vol-1')
+
+  const chatBusy = useSessionStore.getState()
+  if (chatBusy.proposalGenerating) {
+    throw new Error(
+      'runProposalStoreGenerateSingleVolumeHarness: chatGenerating should block single-volume generate',
+    )
+  }
+
+  useSessionStore.getState().resetSession()
+}

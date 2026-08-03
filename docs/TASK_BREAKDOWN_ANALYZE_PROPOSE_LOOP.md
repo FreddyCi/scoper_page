@@ -114,16 +114,19 @@ flowchart TD
 ### **ID:** BDA-199
 
 **Title:** runGenerateProposalVolume store action  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-196, BDA-198  
 **Priority:** Critical  
 **Description:** Add **`runGenerateProposalVolume(volumeId: string)`** to [`session-store.ts`](../src/store/session-store.ts). Mirror **`runGenerateProposalVolumes`**: `readyToGenerate`, `assessProposalContextQuality`, block if `proposalGenerating` or `chatGenerating`, set `proposalGenerating` + `contextPhase`, clear agent activity, `ensureScoperEcpReadyBeforeAgentRun()`, **`resetConversation()`**, call **`buildProposalVolume`**, `onProfileUpdate` patches. Set **`proposalGenerationError`** with volume title on failure. Do not set `chatGenerating`.  
 **Completed Changes:**
-- 🔄 Store method + type on `SessionState`  
+- ✅ **`runGenerateProposalVolume`** with **`isolatedVolumeRun: true`**, blocks fetch, context usage sync
+- ✅ **`runProposalStoreGenerateSingleVolumeHarness`** (unknown volume + chat busy gates)
+- ✅ Static QA asserts in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** `proposal-store-generate-harness.ts` calls new action for one id.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `pnpm run qa:proposal` static BDA-199 checks
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-132 store batch; ECP table in TASK_BREAKDOWN_PROPOSAL_MODE.md  
 
 ---

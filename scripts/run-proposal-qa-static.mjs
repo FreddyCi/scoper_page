@@ -90,6 +90,18 @@ assert(
   'runGenerateProposalVolumes must not set chatGenerating during proposal batch',
 )
 
+const singleVolumeFnStart = sessionStore.indexOf('runGenerateProposalVolume: async')
+assert(singleVolumeFnStart >= 0, 'session-store must define runGenerateProposalVolume (BDA-199)')
+const singleVolumeFnBody = sessionStore.slice(singleVolumeFnStart, singleVolumeFnStart + 2400)
+assert(
+  singleVolumeFnBody.includes('isolatedVolumeRun: true'),
+  'runGenerateProposalVolume must use isolated volume handoff (BDA-199)',
+)
+assert(
+  singleVolumeFnBody.includes('buildProposalVolume('),
+  'runGenerateProposalVolume must call buildProposalVolume (BDA-199)',
+)
+
 const buildVolumes = read('src/services/build-proposal-volumes.ts')
 assert(
   buildVolumes.includes('notifyProposalSectionRoll'),

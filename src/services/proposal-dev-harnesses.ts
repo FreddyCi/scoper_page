@@ -23,7 +23,10 @@ import { runCommandIngestProposalLandingHarness } from '@/lib/post-ingest-mode-e
 import { runProposalPostIngestHarness } from '@/lib/proposal-post-ingest'
 import { runProposalPromptsHarness } from '@/lib/proposal-prompts'
 import { runProposalReadinessHarness } from '@/lib/proposal-readiness'
-import { runProposalStoreGeneratePreflightHarness } from '@/services/proposal-store-generate-harness'
+import {
+  runProposalStoreGeneratePreflightHarness,
+  runProposalStoreGenerateSingleVolumeHarness,
+} from '@/services/proposal-store-generate-harness'
 import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
@@ -63,6 +66,7 @@ export async function runProposalAsyncUnitHarnesses(): Promise<void> {
   runAgentActivityStoreHarness()
   runAgentActivityMarkersHarness()
   await runProposalStoreGeneratePreflightHarness()
+  await runProposalStoreGenerateSingleVolumeHarness()
   await runProposalSectionEcpHarness()
   await runCommandIngestProposalLandingHarness()
 }

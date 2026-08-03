@@ -232,16 +232,21 @@ flowchart TD
 ### **ID:** BDA-205
 
 **Title:** Inline markdown edit preview  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-204  
 **Priority:** High  
 **Description:** [`ProposalVolumeMarkdownPreview.tsx`](../src/components/workspace/ProposalVolumeMarkdownPreview.tsx): **Edit** toggles `Streamdown` ↔ **`Textarea`** with Save/Cancel. Save calls **`setProposalVolumeBody`**; run **`validateProposalVolumeDraft`** and show **`reasons`** as non-blocking warnings. Update pending placeholder copy to mention per-volume Generate (not only complete proposal).  
 **Completed Changes:**
-- 🔄 Edit mode UI  
+- ✅ Edit / Save / Cancel with **`Textarea`** + **`Streamdown`**
+- ✅ Non-blocking **Quality notes** from **`validateProposalVolumeDraft`**
+- ✅ Pending copy references per-volume **Generate**
+- ✅ Static QA asserts in **`run-proposal-qa-static.mjs`**
 **Test Strategy:** Manual: edit draft, save, reload preview; warnings show for short/placeholder text but save succeeds.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ `node scripts/run-proposal-qa-static.mjs` BDA-205 asserts
+- 🔄 Manual checklist pending
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-134 preview  
 
 ---

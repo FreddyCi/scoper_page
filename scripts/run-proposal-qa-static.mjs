@@ -146,6 +146,20 @@ assert(
   'ProposalGenerationPanel must pass onGenerate to volume rows (BDA-201)',
 )
 
+const volumePreview = read('src/components/workspace/ProposalVolumeMarkdownPreview.tsx')
+assert(
+  volumePreview.includes('setProposalVolumeBody'),
+  'ProposalVolumeMarkdownPreview must save via setProposalVolumeBody (BDA-205)',
+)
+assert(
+  volumePreview.includes('validateProposalVolumeDraft'),
+  'ProposalVolumeMarkdownPreview must run draft validation on save (BDA-205)',
+)
+assert(
+  volumePreview.includes('Generate on this volume'),
+  'ProposalVolumeMarkdownPreview pending copy must mention per-volume Generate (BDA-205)',
+)
+
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
   'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',

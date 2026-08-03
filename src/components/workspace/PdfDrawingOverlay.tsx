@@ -17,7 +17,6 @@ import type {
   PdfDrawingStampGeometry,
   PdfDrawingStrokeGeometry,
   PdfDrawingTextGeometry,
-  PdfDrawingTool,
   PdfMarkSessionTool,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -272,11 +271,11 @@ function pointerToNormalized(
   return normalizePoint(event.clientX - rect.left, event.clientY - rect.top, viewport)
 }
 
-function isStrokeTool(tool: PdfDrawingTool | null | undefined): tool is 'pen' | 'highlighter' {
+function isStrokeTool(tool: PdfMarkSessionTool | null | undefined): tool is 'pen' | 'highlighter' {
   return tool === 'pen' || tool === 'highlighter'
 }
 
-function isShapeTool(tool: PdfDrawingTool | null | undefined): tool is 'rect' | 'ellipse' {
+function isShapeTool(tool: PdfMarkSessionTool | null | undefined): tool is 'rect' | 'ellipse' {
   return tool === 'rect' || tool === 'ellipse'
 }
 

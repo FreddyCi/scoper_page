@@ -3,6 +3,8 @@
  */
 
 import { reviewerInitialsFromName } from '@/lib/reviewer-profile'
+import type { DuckdbQueryParam } from '@/lib/duckdb-protocol'
+import type { PdfDrawingHistoryApplyHandlers } from '@/lib/pdf-drawing-history'
 import type {
   PdfDrawingAnnotation,
   PdfDrawingAnnotationRecord,
@@ -140,7 +142,7 @@ export function pdfDrawingAnnotationToRecord(
   }
 }
 
-function rowInsertParams(row: PdfDrawingAnnotationRecord): unknown[] {
+function rowInsertParams(row: PdfDrawingAnnotationRecord): DuckdbQueryParam[] {
   return [
     row.annotation_id,
     row.doc_id,
@@ -528,17 +530,17 @@ export async function runPdfDrawingAnnotationsUndoHarness(): Promise<void> {
 
   clearPdfDrawingHistory(docId)
 
-  const handlers = {
-    undoInsert: async (annotation) => {
+  const handlers: PdfDrawingHistoryApplyHandlers = {
+    undoInsert: async (annotation: PdfDrawingAnnotation) => {
       await deletePdfDrawingAnnotation(annotation.annotation_id)
     },
-    undoDelete: async (annotation) => {
+    undoDelete: async (annotation: PdfDrawingAnnotation) => {
       await restorePdfDrawingAnnotation(annotation)
     },
-    redoInsert: async (annotation) => {
+    redoInsert: async (annotation: PdfDrawingAnnotation) => {
       await restorePdfDrawingAnnotation(annotation)
     },
-    redoDelete: async (annotation) => {
+    redoDelete: async (annotation: PdfDrawingAnnotation) => {
       await deletePdfDrawingAnnotation(annotation.annotation_id)
     },
   }

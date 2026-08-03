@@ -195,8 +195,8 @@ export function DocumentViewer({
       }
     }
 
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
+    globalThis.document.addEventListener('keydown', onKeyDown)
+    return () => globalThis.document.removeEventListener('keydown', onKeyDown)
   }, [markMode, redoDrawingMark, undoDrawingMark])
 
   async function persistDrawingMark<T>(

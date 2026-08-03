@@ -26,7 +26,7 @@ function requireBytes(document: DocumentMeta): ArrayBuffer {
   if (!bytes) {
     throw new Error(`Missing file bytes for ${document.filename}. Re-upload the document first.`)
   }
-  return bytes
+  return bytes.slice().buffer
 }
 
 export async function buildDocumentMarkdownExport(

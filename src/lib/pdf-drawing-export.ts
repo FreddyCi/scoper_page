@@ -1,12 +1,12 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib'
 
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
+import type { PdfDrawingNormalizedBounds } from '@/lib/pdf-drawing-geometry'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
 import type {
   PdfDrawingAnnotation,
   PdfDrawingEllipseGeometry,
   PdfDrawingGeometry,
-  PdfDrawingNormalizedBounds,
   PdfDrawingNormalizedPoint,
   PdfDrawingRectGeometry,
   PdfDrawingStampGeometry,

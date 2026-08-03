@@ -11,7 +11,6 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import type { PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 /** Mark tools including eraser (UI-only; not persisted as `PdfDrawingTool`). */

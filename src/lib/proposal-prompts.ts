@@ -1,8 +1,11 @@
 import type { ProposalPackageKind } from '@/lib/proposal-package-classifier'
 import { buildProposalHandoffBlock, type ProposalHandoffState } from '@/lib/proposal-context-roll'
 import { CHARS_PER_TOKEN_ESTIMATE } from '@/lib/page-context-manager'
-import type { ProposalVolume, ProposalVolumeSection } from '@/lib/types'
+import type { ProposalAnalysisRef, ProposalVolume, ProposalVolumeSection } from '@/lib/types'
 import { compactFindClauseQuery } from '@/services/document-search'
+
+export const PROPOSAL_ANALYSIS_REFS_PROMPT_MAX = 3
+const PROPOSAL_ANALYSIS_CITATION_EXCERPT_MAX = 160
 
 export const PROPOSAL_SECTION_ONLY_LINE =
   'Write only this section in markdown. Do not output other volumes, sections, or writer instructions.'
@@ -79,6 +82,50 @@ export type SectionPromptInput = {
   handoffChunkIndex?: number
 }
 
+function analysisRefPromptRank(status: ProposalAnalysisRef['status']): number {
+  switch (status) {
+    case 'fail':
+      return 0
+    case 'warn':
+      return 1
+    default:
+      return 2
+  }
+}
+
+function truncateAnalysisCitationExcerpt(excerpt: string): string {
+  const trimmed = excerpt.replace(/\s+/g, ' ').trim()
+  if (trimmed.length <= PROPOSAL_ANALYSIS_CITATION_EXCERPT_MAX) {
+    return trimmed
+  }
+  return `${trimmed.slice(0, PROPOSAL_ANALYSIS_CITATION_EXCERPT_MAX - 1)}…`
+}
+
+/** Capped RFP Analysis criteria block for sectional user prompts (BDA-210). */
+export function buildProposalAnalysisRefsBlock(
+  analysisRefs: ProposalAnalysisRef[] | undefined,
+): string {
+  if (!analysisRefs?.length) {
+    return ''
+  }
+
+  const selected = [...analysisRefs]
+    .sort((left, right) => analysisRefPromptRank(left.status) - analysisRefPromptRank(right.status))
+    .slice(0, PROPOSAL_ANALYSIS_REFS_PROMPT_MAX)
+
+  const lines = selected.map((ref) => {
+    const citationPart = ref.citation?.excerpt
+      ? ` — "${truncateAnalysisCitationExcerpt(ref.citation.excerpt)}"`
+      : ''
+    return `  • [${ref.status}] ${ref.label}${citationPart}`
+  })
+
+  return [
+    'RFP ANALYSIS FINDINGS (address gaps in this section where relevant):',
+    ...lines,
+  ].join('\n')
+}
+
 /** User turn for one proposal section (includes optional UCW handoff block). */
 export function buildSectionUserPrompt(input: SectionPromptInput): string {
   const {
@@ -99,9 +146,13 @@ export function buildSectionUserPrompt(input: SectionPromptInput): string {
   const handoffBlock =
     handoff != null ? buildProposalHandoffBlock(handoff, handoffChunkIndex) : ''
 
+  const analysisBlock = buildProposalAnalysisRefsBlock(volume.analysisRefs)
+
   return [
     handoffBlock,
     handoffBlock ? '' : null,
+    analysisBlock,
+    analysisBlock ? '' : null,
     `Package kind: ${packageKind}`,
     `Volume: ${volume.title}`,
     volume.solicitationRefs?.length
@@ -298,5 +349,48 @@ export function runProposalPromptsHarness(): void {
   const contractSystem = buildSectionSystemPrompt('contract_framework')
   if (!contractSystem.includes('contract or master agreement')) {
     throw new Error('runProposalPromptsHarness: contract package system tone missing')
+  }
+
+  const volumeWithAnalysis: ProposalVolume = {
+    ...volume,
+    analysisRefs: [
+      { criterionId: 'c-pass', label: 'Past performance reference', status: 'pass' },
+      { criterionId: 'c-warn', label: 'Bonding documentation', status: 'warn' },
+      {
+        criterionId: 'c-fail',
+        label: 'Insurance limits',
+        status: 'fail',
+        citation: {
+          doc_id: 'rfp-1',
+          block_id: 'block-ins',
+          excerpt: 'Minimum $2M general liability required for all subcontractors.',
+        },
+      },
+      { criterionId: 'c-fail-2', label: 'Additional insured endorsement', status: 'fail' },
+    ],
+  }
+
+  const analysisUser = buildSectionUserPrompt({
+    section,
+    volume: volumeWithAnalysis,
+    handoff: null,
+    excerpts,
+    context,
+  })
+
+  if (!analysisUser.includes('RFP ANALYSIS FINDINGS')) {
+    throw new Error('runProposalPromptsHarness: section user missing analysis findings block')
+  }
+  if (
+    !analysisUser.includes('[fail] Insurance limits') ||
+    !analysisUser.includes('Minimum $2M general liability')
+  ) {
+    throw new Error('runProposalPromptsHarness: analysis block missing fail criterion + citation')
+  }
+  if (!analysisUser.includes('[warn] Bonding documentation')) {
+    throw new Error('runProposalPromptsHarness: analysis block missing warn criterion')
+  }
+  if (analysisUser.includes('[pass]')) {
+    throw new Error('runProposalPromptsHarness: capped analysis block should prioritize fail/warn')
   }
 }

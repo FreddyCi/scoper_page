@@ -176,6 +176,16 @@ assert(
   'ProposalVolumeMarkdownPreview pending copy must mention per-volume Generate (BDA-205)',
 )
 
+const proposalPrompts = read('src/lib/proposal-prompts.ts')
+assert(
+  proposalPrompts.includes('buildProposalAnalysisRefsBlock'),
+  'proposal-prompts must build analysis refs block for section prompts (BDA-210)',
+)
+assert(
+  proposalPrompts.includes('RFP ANALYSIS FINDINGS'),
+  'proposal-prompts must emit analysis findings header (BDA-210)',
+)
+
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
   'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',

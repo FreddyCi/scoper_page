@@ -336,16 +336,19 @@ flowchart TD
 ### **ID:** BDA-210
 
 **Title:** Analysis block in section prompt  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-207, BDA-208  
 **Priority:** High  
 **Description:** [`proposal-prompts.ts`](../src/lib/proposal-prompts.ts) **`buildSectionUserPrompt`**: when volume has **`analysisRefs`**, prepend capped block (~3 items, fail before warn, then pass only if empty): label, status, truncated citation excerpt. Protect 8K budget — reuse existing handoff/excerpt caps pattern.  
 **Completed Changes:**
-- 🔄 Prompt block + prompt harness assert string present  
+- ✅ **`buildProposalAnalysisRefsBlock`** (max 3, fail → warn → pass, citation excerpt cap)
+- ✅ Wired into **`buildSectionUserPrompt`**
+- ✅ **`runProposalPromptsHarness`** analysis assertions
 **Test Strategy:** `runProposalPromptsHarness` or extend existing prompt tests in dev.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `runProposalPromptsHarness` (dev unit chain)
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-162 section prompts  
 
 ---

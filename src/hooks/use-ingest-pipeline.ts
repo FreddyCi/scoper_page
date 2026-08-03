@@ -19,9 +19,10 @@ export function useIngestPipeline() {
       files: File[],
       callbacks?: { onProgress?: (progress: IngestProgress) => void },
     ): Promise<IngestPipelineResult> => {
-      const ocrEnabled = useSessionStore.getState().ocrEnabled
+      const { ocrEnabled, skipPdfTextExtractOnIngest } = useSessionStore.getState()
       const { results, errors } = await ingestFiles(files, {
-        ocrEnabled,
+        ocrEnabled: skipPdfTextExtractOnIngest ? false : ocrEnabled,
+        skipPdfTextExtract: skipPdfTextExtractOnIngest,
         onProgress: callbacks?.onProgress,
       })
 

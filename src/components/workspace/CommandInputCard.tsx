@@ -162,6 +162,8 @@ function CommandSettingsPopover({
   const setMode = useSessionStore((s) => s.setMode)
   const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
   const setOcrEnabled = useSessionStore((s) => s.setOcrEnabled)
+  const skipPdfTextExtractOnIngest = useSessionStore((s) => s.skipPdfTextExtractOnIngest)
+  const setSkipPdfTextExtractOnIngest = useSessionStore((s) => s.setSkipPdfTextExtractOnIngest)
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -245,6 +247,18 @@ function CommandSettingsPopover({
             checked={ocrEnabled}
             onChange={(event) => setOcrEnabled(event.target.checked)}
             className="accent-foreground size-3.5 rounded border"
+          />
+        </label>
+
+        <label className="flex cursor-pointer items-start justify-between gap-2">
+          <span className="text-muted-foreground text-xs leading-relaxed">
+            Preview only PDFs (skip text extract) — plan/drawing mark-up
+          </span>
+          <input
+            type="checkbox"
+            checked={skipPdfTextExtractOnIngest}
+            onChange={(event) => setSkipPdfTextExtractOnIngest(event.target.checked)}
+            className="accent-foreground mt-0.5 size-3.5 shrink-0 rounded border"
           />
         </label>
       </div>

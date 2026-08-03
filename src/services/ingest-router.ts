@@ -32,6 +32,8 @@ function resolveSpreadsheetMime(mime: string, filename: string): string {
 
 export type IngestOptions = {
   ocrEnabled?: boolean
+  /** Skip LiteParse block extract — cache PDF bytes only (plan/drawing mark-up). */
+  skipPdfTextExtract?: boolean
   onProgress?: (progress: IngestProgress) => void
   onFileProgress?: (progress: IngestFileProgress) => void
 }
@@ -172,6 +174,39 @@ async function ingestPdf(
 
   report(8, 'Reading metadata')
   const scoperMeta = await readScoperExportMetadata(bytes, file.name)
+
+  if (options.skipPdfTextExtract) {
+    const roleFromExport = scoperMeta.role
+    const role =
+      roleFromExport ??
+      (await resolveDocumentRoleForIngest(
+        docId,
+        useSessionStore.getState().documents,
+        'application/pdf',
+      ))
+
+    const document: DocumentMeta = {
+      doc_id: docId,
+      filename: file.name,
+      mime: 'application/pdf',
+      role,
+      uploaded_at: new Date().toISOString(),
+    }
+
+    report(40, 'Storing preview')
+    await persistIngestBlocks(document, [])
+    report(100, 'Done')
+
+    return {
+      doc_id: docId,
+      filename: file.name,
+      mime: document.mime,
+      block_count: 0,
+      ocr_used: false,
+      role: document.role,
+    }
+  }
+
   const liteparse = await getLiteParseClient()
 
   report(12, 'Parsing document')

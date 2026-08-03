@@ -184,6 +184,7 @@ export type SessionState = {
   uploadPopupOpen: boolean
   uploadIntent: UploadIntent
   ocrEnabled: boolean
+  skipPdfTextExtractOnIngest: boolean
   agentActivityLog: AgentActivityEntry[]
   contextUsageSnapshot: ContextUsageResult | null
   contextPhase: ContextPhase
@@ -257,6 +258,7 @@ export type SessionState = {
   setUploadPopupOpen: (open: boolean) => void
   openUploadPopup: (intent: UploadIntent) => void
   setOcrEnabled: (enabled: boolean) => void
+  setSkipPdfTextExtractOnIngest: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
   resetSession: () => void
   pushAgentActivity: (
@@ -304,6 +306,7 @@ const initialState = {
   uploadPopupOpen: false,
   uploadIntent: 'rfp' as UploadIntent,
   ocrEnabled: true,
+  skipPdfTextExtractOnIngest: false,
   ...createAgentActivityInitialState(),
 }
 
@@ -1029,6 +1032,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   openUploadPopup: (uploadIntent) => set({ uploadPopupOpen: true, uploadIntent }),
 
   setOcrEnabled: (ocrEnabled) => set({ ocrEnabled }),
+
+  setSkipPdfTextExtractOnIngest: (skipPdfTextExtractOnIngest) =>
+    set({ skipPdfTextExtractOnIngest }),
 
   commitIngestResults: (results) =>
     set((state) => {

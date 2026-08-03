@@ -36,6 +36,7 @@ import {
 } from '@/lib/upload-accept'
 import { UPLOAD_INTENT_COPY, type UploadIntent } from '@/lib/upload-suggestions'
 import { cn } from '@/lib/utils'
+import { useSessionStore } from '@/store/session-store'
 
 type UploadPopupProps = {
   open: boolean
@@ -143,6 +144,10 @@ export function UploadPopup({
   const [isDragging, setIsDragging] = useState(false)
   const copy = UPLOAD_INTENT_COPY[intent]
   const highlightAccent = featureCardAccent(intent === 'rfp' ? 0 : 2)
+  const ocrEnabled = useSessionStore((s) => s.ocrEnabled)
+  const setOcrEnabled = useSessionStore((s) => s.setOcrEnabled)
+  const skipPdfTextExtractOnIngest = useSessionStore((s) => s.skipPdfTextExtractOnIngest)
+  const setSkipPdfTextExtractOnIngest = useSessionStore((s) => s.setSkipPdfTextExtractOnIngest)
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
@@ -283,6 +288,41 @@ export function UploadPopup({
                 }}
               />
             </div>
+
+            {intent === 'rfp' ? (
+              <div className="border-border/70 bg-workspace/40 space-y-2 rounded-xl border px-3 py-2.5">
+                <p className="text-foreground text-xs font-medium">PDF options</p>
+                <label className="flex cursor-pointer items-start justify-between gap-3">
+                  <span className="text-muted-foreground text-xs leading-relaxed">
+                    Preview only (skip text extract) — for plan/drawing PDFs you will mark up in{' '}
+                    <span className="text-foreground font-medium">Original</span>; much faster than
+                    full parse.
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={skipPdfTextExtractOnIngest}
+                    onChange={(event) => setSkipPdfTextExtractOnIngest(event.target.checked)}
+                    disabled={isSubmitting}
+                    className="accent-foreground mt-0.5 size-3.5 shrink-0 rounded border"
+                  />
+                </label>
+                <label
+                  className={cn(
+                    'flex cursor-pointer items-center justify-between gap-2',
+                    skipPdfTextExtractOnIngest && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  <span className="text-muted-foreground text-xs">OCR for scanned PDFs</span>
+                  <input
+                    type="checkbox"
+                    checked={ocrEnabled}
+                    onChange={(event) => setOcrEnabled(event.target.checked)}
+                    disabled={isSubmitting || skipPdfTextExtractOnIngest}
+                    className="accent-foreground size-3.5 rounded border"
+                  />
+                </label>
+              </div>
+            ) : null}
 
             {items.length > 0 ? (
               <div className="space-y-2">

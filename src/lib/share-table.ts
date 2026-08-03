@@ -1,7 +1,7 @@
 import type { WorkspaceMode, WorkspaceView } from '@/lib/types'
 
 /** Share pack format version — bump when payload shape changes. */
-export const SHARE_PACK_VERSION = 1 as const
+export const SHARE_PACK_VERSION = 2 as const
 
 export type SharePackVersion = typeof SHARE_PACK_VERSION
 
@@ -13,6 +13,9 @@ export type ShareTableId =
   | 'results_profiles'
   | 'profile_criteria'
   | 'scope_flags'
+  | 'proposal_profiles'
+  | 'proposal_volumes'
+  | 'proposal_volume_sections'
 
 export type ShareTableRow = Record<string, string | number | null>
 
@@ -92,6 +95,66 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
     selectSql: `SELECT comment_id, block_id, text, author_initials, created_at
                 FROM comments ORDER BY created_at, comment_id`,
   },
+  {
+    id: 'proposal_profiles',
+    tableName: 'proposal_profiles',
+    columns: [
+      'profile_id',
+      'rfp_doc_id',
+      'summary',
+      'built_at',
+      'package_kind',
+      'package_warnings_json',
+    ],
+    importOrder: 7,
+    selectSql: `SELECT profile_id, rfp_doc_id, summary, built_at, package_kind, package_warnings_json
+                FROM proposal_profiles ORDER BY profile_id`,
+  },
+  {
+    id: 'proposal_volumes',
+    tableName: 'proposal_volumes',
+    columns: [
+      'profile_id',
+      'volume_id',
+      'title',
+      'requirement_summary',
+      'solicitation_refs_json',
+      'body_markdown',
+      'status',
+      'error_message',
+      'edited',
+      'edited_at',
+      'generation_progress_json',
+      'analysis_refs_json',
+    ],
+    importOrder: 8,
+    selectSql: `SELECT profile_id, volume_id, title, requirement_summary, solicitation_refs_json,
+                       body_markdown, status, error_message, edited, edited_at,
+                       generation_progress_json, analysis_refs_json
+                FROM proposal_volumes ORDER BY profile_id, volume_id`,
+  },
+  {
+    id: 'proposal_volume_sections',
+    tableName: 'proposal_volume_sections',
+    columns: [
+      'profile_id',
+      'volume_id',
+      'section_id',
+      'title',
+      'find_clause_query',
+      'status',
+      'body_markdown',
+      'error_message',
+      'edited',
+      'edited_at',
+      'citations_json',
+    ],
+    importOrder: 9,
+    selectSql: `SELECT profile_id, volume_id, section_id, title, find_clause_query, status,
+                       body_markdown, error_message, edited, edited_at, citations_json
+                FROM proposal_volume_sections
+                ORDER BY profile_id, volume_id, section_id`,
+  },
 ] as const
 
 export function getShareTableById(id: ShareTableId): ShareTableDefinition {
@@ -122,6 +185,7 @@ export type ShareSessionManifest = {
   reviewerName: string
   activeDocId: string | null
   workspaceView: WorkspaceView
+  proposalRequirementsProfileId: string | null
 }
 
 /** Raw document bytes bundled with the share pack. */

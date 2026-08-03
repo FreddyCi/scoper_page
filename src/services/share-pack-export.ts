@@ -20,6 +20,7 @@ import {
 import { downloadBlob } from '@/lib/download-blob'
 import { getDocumentBytes } from '@/services/document-bytes-cache'
 import { countShareTableRows, exportShareTables } from '@/services/share-pack-duckdb'
+import { syncProposalProfileToDuckdb, clearProposalShareTables } from '@/services/proposal-share-store'
 import { createShareId, putLocalSharePack } from '@/services/share-pack-storage'
 import { buildShareLink, uploadSharePackToApi } from '@/services/share-pack-link'
 import { useSessionStore } from '@/store/session-store'
@@ -42,6 +43,7 @@ function buildManifest(): ShareSessionManifest {
     reviewerName: state.reviewerName,
     activeDocId: state.activeDocId,
     workspaceView: state.workspaceView,
+    proposalRequirementsProfileId: state.proposalRequirementsProfile?.profile_id ?? null,
   }
 }
 
@@ -68,6 +70,12 @@ async function collectDocumentPayloads(): Promise<ShareDocumentPayload[]> {
 }
 
 async function buildSharePackPayload(): Promise<SharePackPayload> {
+  const state = useSessionStore.getState()
+  await clearProposalShareTables()
+  if (state.mode === 'proposal' && state.proposalRequirementsProfile) {
+    await syncProposalProfileToDuckdb(state.proposalRequirementsProfile)
+  }
+
   const tables = await exportShareTables()
 
   return {

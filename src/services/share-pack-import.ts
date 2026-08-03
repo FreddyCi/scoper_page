@@ -53,6 +53,9 @@ function emptyShareTables(): Record<ShareTableId, ShareTableRow[]> {
     results_profiles: [],
     profile_criteria: [],
     scope_flags: [],
+    proposal_profiles: [],
+    proposal_volumes: [],
+    proposal_volume_sections: [],
   }
 }
 
@@ -189,6 +192,7 @@ export async function runSharePackProposalCompatHarness(): Promise<void> {
       reviewerName: 'Harness',
       activeDocId: null,
       workspaceView: 'profiles',
+      proposalRequirementsProfileId: null,
     },
     tables,
     documents: [],

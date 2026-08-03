@@ -51,6 +51,43 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     author_initials VARCHAR NOT NULL DEFAULT '?',
     created_at VARCHAR NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS proposal_profiles (
+    profile_id VARCHAR PRIMARY KEY,
+    rfp_doc_id VARCHAR NOT NULL,
+    summary VARCHAR NOT NULL,
+    built_at VARCHAR NOT NULL,
+    package_kind VARCHAR NOT NULL,
+    package_warnings_json VARCHAR NOT NULL DEFAULT '[]'
+  )`,
+  `CREATE TABLE IF NOT EXISTS proposal_volumes (
+    profile_id VARCHAR NOT NULL,
+    volume_id VARCHAR NOT NULL,
+    title VARCHAR NOT NULL,
+    requirement_summary VARCHAR NOT NULL,
+    solicitation_refs_json VARCHAR,
+    body_markdown VARCHAR,
+    status VARCHAR NOT NULL,
+    error_message VARCHAR,
+    edited INTEGER NOT NULL DEFAULT 0,
+    edited_at VARCHAR,
+    generation_progress_json VARCHAR,
+    analysis_refs_json VARCHAR,
+    PRIMARY KEY (profile_id, volume_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS proposal_volume_sections (
+    profile_id VARCHAR NOT NULL,
+    volume_id VARCHAR NOT NULL,
+    section_id VARCHAR NOT NULL,
+    title VARCHAR NOT NULL,
+    find_clause_query VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    body_markdown VARCHAR,
+    error_message VARCHAR,
+    edited INTEGER NOT NULL DEFAULT 0,
+    edited_at VARCHAR,
+    citations_json VARCHAR,
+    PRIMARY KEY (profile_id, volume_id, section_id)
+  )`,
 ] as const
 
 /** Applied after CREATE TABLE — DuckDB ADD COLUMN cannot use NOT NULL/DEFAULT */

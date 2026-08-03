@@ -446,16 +446,22 @@ flowchart TD
 ### **ID:** BDA-215
 
 **Title:** Proposal share table registry  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-203, BDA-207, BDA-212  
 **Priority:** Medium  
 **Description:** Add DuckDB/share tables for proposal profile snapshot (manifest or rows): volumes, sections, bodies, citations, edited flags. Extend [`share-table.ts`](../src/lib/share-table.ts) registry + [`share-pack-duckdb.ts`](../src/services/share-pack-duckdb.ts) export/import order. Version bump **`SHARE_PACK_VERSION`** if shape changes.  
 **Completed Changes:**
-- 🔄 Registry + export SQL  
+- ✅ DuckDB **`proposal_profiles`**, **`proposal_volumes`**, **`proposal_volume_sections`**
+- ✅ Share registry import order 7–9; **`SHARE_PACK_VERSION = 2`**
+- ✅ **`proposal-share-store.ts`** serialize/sync + **`runProposalShareStoreHarness`**
+- ✅ Export syncs profile to DuckDB before **`exportShareTables`**
+- ✅ Manifest **`proposalRequirementsProfileId`**
 **Test Strategy:** `validateShareTableRegistry()`; export round-trip in share harness stub.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `validateShareTableRegistry()` (share harness)
+- ✅ `runProposalShareStoreHarness`
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-142 share pack  
 
 ---

@@ -234,6 +234,16 @@ assert(
   'ProposalGenerationPanel must call drafted-only assemble (BDA-214)',
 )
 
+const shareTable = read('src/lib/share-table.ts')
+assert(
+  String(shareTable.match(/SHARE_PACK_VERSION = (\d+)/)?.[1]) === '2',
+  'share-table must use SHARE_PACK_VERSION 2 for proposal tables (BDA-215)',
+)
+assert(
+  shareTable.includes("'proposal_volume_sections'"),
+  'share-table registry must include proposal volume sections (BDA-215)',
+)
+
 assert(
   existsSync(path.join(root, 'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md')),
   'docs/PROPOSAL_CONTEXT_AND_SECTIONS.md must exist (BDA-177)',

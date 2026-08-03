@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
-import { PdfDrawingOverlay } from '@/components/workspace/PdfDrawingOverlay'
+import { PdfDrawingOverlay, type PdfDrawingPenCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
-import type { Bbox, CitationRef, PdfDrawingAnnotation } from '@/lib/types'
+import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 type PdfPageCanvasProps = {
@@ -19,6 +19,11 @@ type PdfPageCanvasProps = {
   onRegionCommit?: (bbox: Bbox) => void | Promise<void>
   /** Normalized drawing marks for this page (read-only overlay until Mark mode tools, BDA-224+). */
   drawingAnnotations?: PdfDrawingAnnotation[]
+  markDrawingMode?: boolean
+  markTool?: PdfDrawingTool
+  markColor?: string
+  markStrokeWidth?: number
+  onPenStrokeCommit?: (commit: PdfDrawingPenCommit) => void | Promise<void>
   className?: string
 }
 
@@ -53,6 +58,11 @@ export function PdfPageCanvas({
   adjusting = false,
   onRegionCommit,
   drawingAnnotations = [],
+  markDrawingMode = false,
+  markTool = 'pen',
+  markColor,
+  markStrokeWidth,
+  onPenStrokeCommit,
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -184,6 +194,14 @@ export function PdfPageCanvas({
         }
       : null
 
+  const drawingViewport =
+    canvasLayout != null
+      ? { width: canvasLayout.width, height: canvasLayout.height }
+      : null
+  const showDrawingOverlay =
+    drawingViewport != null &&
+    (drawingAnnotations.length > 0 || (markDrawingMode && onPenStrokeCommit))
+
   return (
     <div className={cn('relative inline-block w-fit', className)}>
       <canvas ref={canvasRef} className="bg-white shadow-panel block" />
@@ -221,14 +239,19 @@ export function PdfPageCanvas({
         </div>
       ) : null}
 
-      {canvasLayout && drawingAnnotations.length > 0 ? (
+      {showDrawingOverlay && drawingViewport ? (
         <div
           className="absolute inset-0"
-          style={{ width: canvasLayout.width, height: canvasLayout.height }}
+          style={{ width: drawingViewport.width, height: drawingViewport.height }}
         >
           <PdfDrawingOverlay
             annotations={drawingAnnotations}
-            viewport={{ width: canvasLayout.width, height: canvasLayout.height }}
+            viewport={drawingViewport}
+            interactive={markDrawingMode}
+            activeTool={markTool}
+            markColor={markColor}
+            markStrokeWidth={markStrokeWidth}
+            onPenStrokeCommit={onPenStrokeCommit}
           />
         </div>
       ) : null}

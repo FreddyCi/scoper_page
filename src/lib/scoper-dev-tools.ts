@@ -3,6 +3,7 @@ import {
   getEcpAgentAuditLog,
   type EcpAgentAuditEntry,
 } from '@/ecp/agent-run'
+import { useSessionStore } from '@/store/session-store'
 
 export type ScoperDevGlobals = {
   /** ECP agent tool allow/deny entries (append-only; newest last). */
@@ -10,6 +11,8 @@ export type ScoperDevGlobals = {
   clearEcpAgentAuditLog: () => void
   /** Pretty-print the audit log in DevTools (returns the same array). */
   printEcpAgentAuditLog: () => readonly EcpAgentAuditEntry[]
+  /** Toggle PDF mark-drawing mode until toolbar ships (BDA-225). */
+  setPdfMarkDrawingMode: (enabled: boolean) => void
 }
 
 let devGlobalsAnnounced = false
@@ -31,6 +34,9 @@ export function exposeScoperDevGlobals(): void {
       }
       return entries
     },
+    setPdfMarkDrawingMode(enabled: boolean) {
+      useSessionStore.getState().setPdfMarkDrawingMode(enabled)
+    },
   }
 
   window.Scoper = { ...window.Scoper, ...api }
@@ -38,7 +44,7 @@ export function exposeScoperDevGlobals(): void {
   if (!devGlobalsAnnounced) {
     devGlobalsAnnounced = true
     console.debug(
-      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog()',
+      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog() · Scoper.setPdfMarkDrawingMode(true|false)',
     )
   }
 }

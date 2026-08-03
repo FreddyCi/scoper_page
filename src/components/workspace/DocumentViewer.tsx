@@ -7,6 +7,8 @@ import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPrev
 import { SpreadsheetDocumentPreview } from '@/components/workspace/SpreadsheetDocumentPreview'
 import { isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
+import type { PdfDrawingPenCommit } from '@/components/workspace/PdfDrawingOverlay'
+import { usePdfDrawingAnnotations } from '@/hooks/use-pdf-drawing-annotations'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox } from '@/lib/types'
 import { blockToCitation } from '@/lib/types'
@@ -62,6 +64,7 @@ export function DocumentViewer({
   const isDark = theme === 'dark'
   const selectedCitation = useSessionStore((state) => state.selectedCitation)
   const citationFocusSeq = useSessionStore((state) => state.citationFocusSeq)
+  const pdfMarkDrawingMode = useSessionStore((state) => state.pdfMarkDrawingMode)
   const canvasAnchorRef = useRef<HTMLDivElement>(null)
   const pdfBytes = useMemo(
     () => getDocumentBytes(document.doc_id),
@@ -78,6 +81,10 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
+  const { annotations: drawingAnnotations, commitPenStroke } = usePdfDrawingAnnotations(
+    document.doc_id,
+    currentPage,
+  )
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
     : false
@@ -136,8 +143,27 @@ export function DocumentViewer({
     activeCitation?.bbox &&
       activeCitation.page_num === currentPage &&
       !loading &&
-      pdf,
+      pdf &&
+      !pdfMarkDrawingMode,
   )
+
+  const handlePenStrokeCommit = async (commit: PdfDrawingPenCommit) => {
+    try {
+      await commitPenStroke(commit)
+    } catch (error) {
+      console.error('[document-viewer] pen stroke commit failed', error)
+    }
+  }
+
+  const toolbarHint =
+    adjustError ??
+    (pdfMarkDrawingMode
+      ? `Mark window locations on the plan · Page ${currentPage} of ${totalPages || '—'} · ${Math.round(scale * 100)}%`
+      : canAdjustRegion
+        ? adjustingRegion
+          ? 'Updating block region…'
+          : 'Drag the highlight to adjust the extract block'
+        : null)
 
   if (document.mime === 'text/markdown') {
     return <MarkdownDocumentViewer document={document} className={className} />
@@ -197,14 +223,7 @@ export function DocumentViewer({
         totalPages={totalPages}
         scale={scale}
         theme={theme}
-        hint={
-          adjustError ??
-          (canAdjustRegion
-            ? adjustingRegion
-              ? 'Updating block region…'
-              : 'Drag the highlight to adjust the extract block'
-            : null)
-        }
+        hint={toolbarHint}
         hintTone={adjustError ? 'error' : 'muted'}
         onPageChange={updatePage}
         onScaleChange={setScale}
@@ -236,6 +255,12 @@ export function DocumentViewer({
               editable={canAdjustRegion}
               adjusting={adjustingRegion}
               onRegionCommit={handleRegionAdjust}
+              drawingAnnotations={drawingAnnotations}
+              markDrawingMode={pdfMarkDrawingMode}
+              markTool="pen"
+              markColor="#F59E0B"
+              markStrokeWidth={4}
+              onPenStrokeCommit={pdfMarkDrawingMode ? handlePenStrokeCommit : undefined}
             />
           </div>
         )}

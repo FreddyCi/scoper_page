@@ -148,6 +148,8 @@ export type SessionState = {
   contractReviewProfile: RfpResultsProfile | null
   companyContext: string
   reviewerName: string
+  /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
+  pdfMarkDrawingMode: boolean
   creepProfiles: ScopeCreepProfile[]
   proposalRequirementsProfile: ProposalRequirementsProfile | null
   /** Rolling UCW handoff between sectional turns; cleared at each generate batch (BDA-165). */
@@ -189,6 +191,7 @@ export type SessionState = {
   runContractKeywordReview: () => Promise<void>
   setCompanyContext: (context: string) => void
   setReviewerName: (name: string) => void
+  setPdfMarkDrawingMode: (enabled: boolean) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
@@ -260,6 +263,7 @@ const initialState = {
   contractReviewProfile: null as RfpResultsProfile | null,
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
+  pdfMarkDrawingMode: false,
   creepProfiles: [] as ScopeCreepProfile[],
   proposalRequirementsProfile: null as ProposalRequirementsProfile | null,
   proposalHandoffState: null as ProposalHandoffState | null,
@@ -417,6 +421,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     writeReviewerNamePreference(reviewerName)
     set({ reviewerName })
   },
+
+  setPdfMarkDrawingMode: (pdfMarkDrawingMode) => set({ pdfMarkDrawingMode }),
 
   clearEvaluationSetup: () => {
     writeCompanyContextPreference('')

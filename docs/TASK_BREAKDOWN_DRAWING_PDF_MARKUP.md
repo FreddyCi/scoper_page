@@ -158,16 +158,20 @@ flowchart TD
 ### **ID:** BDA-225
 
 **Title:** Pen tool capture and commit  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-224  
 **Priority:** High  
 **Description:** Pointer down/move/up on overlay for **pen**: accumulate normalized points; on pointer up call `onCommit` → persist via BDA-223. Respect active color and stroke width from toolbar state (stub props until BDA-231).  
 **Completed Changes:**
-- 🔄 Pen interaction + commit payload shape
+- ✅ Pen pointer capture + draft preview + `PdfDrawingPenCommit` on pointer up
+- ✅ [`usePdfDrawingAnnotations`](../src/hooks/use-pdf-drawing-annotations.ts) → `insertPdfDrawingAnnotation`
+- ✅ [`DocumentViewer`](../src/components/workspace/DocumentViewer.tsx) + [`PdfPageCanvas`](../src/components/workspace/PdfPageCanvas.tsx) wiring; `pdfMarkDrawingMode` on session store
+- ✅ Dev: `Scoper.setPdfMarkDrawingMode(true)` in [`scoper-dev-tools.ts`](../src/lib/scoper-dev-tools.ts)
 **Test Strategy:** Mark mode manual: draw line; reload page; line reappears from DB.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- 🔄 Manual: `Scoper.setPdfMarkDrawingMode(true)` → draw on Original PDF → change page and return
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Architecture sequence diagram
 
 ---

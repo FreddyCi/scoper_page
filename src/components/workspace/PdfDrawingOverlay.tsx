@@ -1,20 +1,49 @@
-import { denormalizePoint, type PdfDrawingViewportSize } from '@/lib/pdf-drawing-geometry'
-import type { PdfDrawingAnnotation, PdfDrawingGeometry } from '@/lib/types'
+import { useCallback, useRef, useState } from 'react'
+
+import {
+  denormalizePoint,
+  normalizePoint,
+  type PdfDrawingViewportSize,
+} from '@/lib/pdf-drawing-geometry'
+import type {
+  PdfDrawingAnnotation,
+  PdfDrawingGeometry,
+  PdfDrawingNormalizedPoint,
+  PdfDrawingStrokeGeometry,
+  PdfDrawingTool,
+} from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_STAMP_PX = 24
 const DEFAULT_STROKE_WIDTH = 4
 const DEFAULT_TEXT_PX = 14
+const DEFAULT_PEN_COLOR = '#F59E0B'
+const MIN_POINT_DISTANCE_PX = 1.5
+
+export type PdfDrawingPenCommit = {
+  tool: 'pen'
+  color: string
+  stroke_width: number
+  opacity: number
+  geometry: PdfDrawingStrokeGeometry
+}
 
 export type PdfDrawingOverlayProps = {
   annotations: PdfDrawingAnnotation[]
   viewport: PdfDrawingViewportSize
   className?: string
-  /** BDA-224: read-only. Pointer handlers land in BDA-225+. */
+  /** When true, pen tool accepts pointer input (BDA-225). */
   interactive?: boolean
+  activeTool?: PdfDrawingTool | null
+  markColor?: string
+  markStrokeWidth?: number
+  onPenStrokeCommit?: (commit: PdfDrawingPenCommit) => void | Promise<void>
 }
 
-function stampSizePx(geometry: Extract<PdfDrawingGeometry, { kind: 'stamp' }>, viewport: PdfDrawingViewportSize): number {
+function stampSizePx(
+  geometry: Extract<PdfDrawingGeometry, { kind: 'stamp' }>,
+  viewport: PdfDrawingViewportSize,
+): number {
   if (geometry.size != null && geometry.size > 0) {
     return geometry.size * viewport.width
   }
@@ -42,6 +71,57 @@ function WindowStampGraphic({
   )
 }
 
+function strokePolylinePoints(
+  points: readonly PdfDrawingNormalizedPoint[],
+  viewport: PdfDrawingViewportSize,
+): string {
+  return points
+    .map((point) => {
+      const pixel = denormalizePoint(point, viewport)
+      return `${pixel.x},${pixel.y}`
+    })
+    .join(' ')
+}
+
+function StrokeGraphic({
+  points,
+  viewport,
+  color,
+  strokeWidth,
+  opacity,
+}: {
+  points: readonly PdfDrawingNormalizedPoint[]
+  viewport: PdfDrawingViewportSize
+  color: string
+  strokeWidth: number
+  opacity: number
+}) {
+  if (points.length === 0) return null
+  if (points.length === 1) {
+    const point = denormalizePoint(points[0]!, viewport)
+    return (
+      <circle
+        cx={point.x}
+        cy={point.y}
+        r={strokeWidth / 2}
+        fill={color}
+        fillOpacity={opacity}
+      />
+    )
+  }
+  return (
+    <polyline
+      points={strokePolylinePoints(points, viewport)}
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeOpacity={opacity}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  )
+}
+
 function AnnotationGraphic({
   annotation,
   viewport,
@@ -58,38 +138,16 @@ function AnnotationGraphic({
   const geometry = annotation.geometry
 
   switch (geometry.kind) {
-    case 'stroke': {
-      if (geometry.points.length === 0) return null
-      if (geometry.points.length === 1) {
-        const point = denormalizePoint(geometry.points[0]!, viewport)
-        return (
-          <circle
-            cx={point.x}
-            cy={point.y}
-            r={strokeWidth / 2}
-            fill={color}
-            fillOpacity={opacity}
-          />
-        )
-      }
-      const points = geometry.points
-        .map((point) => {
-          const pixel = denormalizePoint(point, viewport)
-          return `${pixel.x},${pixel.y}`
-        })
-        .join(' ')
+    case 'stroke':
       return (
-        <polyline
-          points={points}
-          fill="none"
-          stroke={color}
+        <StrokeGraphic
+          points={geometry.points}
+          viewport={viewport}
+          color={color}
           strokeWidth={strokeWidth}
-          strokeOpacity={opacity}
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          opacity={opacity}
         />
       )
-    }
     case 'rect': {
       const topLeft = denormalizePoint({ x: geometry.x, y: geometry.y }, viewport)
       return (
@@ -153,14 +211,122 @@ function AnnotationGraphic({
   }
 }
 
-/** Read-only SVG layer for persisted PDF drawing marks (BDA-224). */
+function shouldAppendPoint(
+  previous: PdfDrawingNormalizedPoint | undefined,
+  next: PdfDrawingNormalizedPoint,
+  viewport: PdfDrawingViewportSize,
+): boolean {
+  if (!previous) return true
+  const a = denormalizePoint(previous, viewport)
+  const b = denormalizePoint(next, viewport)
+  return Math.hypot(a.x - b.x, a.y - b.y) >= MIN_POINT_DISTANCE_PX
+}
+
+function pointerToNormalized(
+  event: React.PointerEvent<SVGSVGElement>,
+  viewport: PdfDrawingViewportSize,
+): PdfDrawingNormalizedPoint {
+  const rect = event.currentTarget.getBoundingClientRect()
+  return normalizePoint(event.clientX - rect.left, event.clientY - rect.top, viewport)
+}
+
+/** SVG layer for persisted PDF drawing marks + in-progress pen strokes (BDA-224–225). */
 export function PdfDrawingOverlay({
   annotations,
   viewport,
   className,
   interactive = false,
+  activeTool = null,
+  markColor = DEFAULT_PEN_COLOR,
+  markStrokeWidth = DEFAULT_STROKE_WIDTH,
+  onPenStrokeCommit,
 }: PdfDrawingOverlayProps) {
-  if (annotations.length === 0 || viewport.width <= 0 || viewport.height <= 0) {
+  const penActive = interactive && activeTool === 'pen' && Boolean(onPenStrokeCommit)
+  const [draftPoints, setDraftPoints] = useState<PdfDrawingNormalizedPoint[]>([])
+  const draftPointsRef = useRef<PdfDrawingNormalizedPoint[]>([])
+  const drawingPointerId = useRef<number | null>(null)
+
+  const resetDraft = useCallback(() => {
+    drawingPointerId.current = null
+    draftPointsRef.current = []
+    setDraftPoints([])
+  }, [])
+
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (!penActive || event.button !== 0) return
+      event.preventDefault()
+      event.currentTarget.setPointerCapture(event.pointerId)
+      drawingPointerId.current = event.pointerId
+      const point = pointerToNormalized(event, viewport)
+      draftPointsRef.current = [point]
+      setDraftPoints([point])
+    },
+    [penActive, viewport],
+  )
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (!penActive || drawingPointerId.current !== event.pointerId) return
+      event.preventDefault()
+      const point = pointerToNormalized(event, viewport)
+      setDraftPoints((previous) => {
+        const last = previous[previous.length - 1]
+        if (!shouldAppendPoint(last, point, viewport)) {
+          return previous
+        }
+        const next = [...previous, point]
+        draftPointsRef.current = next
+        return next
+      })
+    },
+    [penActive, viewport],
+  )
+
+  const finishStroke = useCallback(
+    async (points: PdfDrawingNormalizedPoint[]) => {
+      if (points.length === 0 || !onPenStrokeCommit) return
+      await onPenStrokeCommit({
+        tool: 'pen',
+        color: markColor,
+        stroke_width: markStrokeWidth,
+        opacity: 1,
+        geometry: { kind: 'stroke', points },
+      })
+    },
+    [markColor, markStrokeWidth, onPenStrokeCommit],
+  )
+
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (drawingPointerId.current !== event.pointerId) return
+      event.preventDefault()
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
+      const points = draftPointsRef.current
+      resetDraft()
+      void finishStroke(points)
+    },
+    [finishStroke, resetDraft],
+  )
+
+  const handlePointerCancel = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (drawingPointerId.current !== event.pointerId) return
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId)
+      }
+      resetDraft()
+    },
+    [resetDraft],
+  )
+
+  if (viewport.width <= 0 || viewport.height <= 0) {
+    return null
+  }
+
+  if (annotations.length === 0 && !penActive && draftPoints.length === 0) {
     return null
   }
 
@@ -168,19 +334,33 @@ export function PdfDrawingOverlay({
     <svg
       className={cn(
         'absolute inset-0 touch-none',
-        interactive ? 'pointer-events-auto' : 'pointer-events-none',
+        penActive ? 'pointer-events-auto cursor-crosshair' : 'pointer-events-none',
         className,
       )}
       width={viewport.width}
       height={viewport.height}
       viewBox={`0 0 ${viewport.width} ${viewport.height}`}
-      aria-hidden={!interactive}
+      aria-hidden={!penActive}
+      onPointerDown={penActive ? handlePointerDown : undefined}
+      onPointerMove={penActive ? handlePointerMove : undefined}
+      onPointerUp={penActive ? handlePointerUp : undefined}
+      onPointerCancel={penActive ? handlePointerCancel : undefined}
     >
       {annotations.map((annotation) => (
         <g key={annotation.annotation_id} data-annotation-id={annotation.annotation_id}>
           <AnnotationGraphic annotation={annotation} viewport={viewport} />
         </g>
       ))}
+
+      {draftPoints.length > 0 ? (
+        <StrokeGraphic
+          points={draftPoints}
+          viewport={viewport}
+          color={markColor}
+          strokeWidth={markStrokeWidth}
+          opacity={1}
+        />
+      ) : null}
     </svg>
   )
 }

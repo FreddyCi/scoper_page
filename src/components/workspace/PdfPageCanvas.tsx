@@ -3,8 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
+import { PdfDrawingOverlay } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
-import type { Bbox, CitationRef } from '@/lib/types'
+import type { Bbox, CitationRef, PdfDrawingAnnotation } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 type PdfPageCanvasProps = {
@@ -16,6 +17,8 @@ type PdfPageCanvasProps = {
   editable?: boolean
   adjusting?: boolean
   onRegionCommit?: (bbox: Bbox) => void | Promise<void>
+  /** Normalized drawing marks for this page (read-only overlay until Mark mode tools, BDA-224+). */
+  drawingAnnotations?: PdfDrawingAnnotation[]
   className?: string
 }
 
@@ -49,6 +52,7 @@ export function PdfPageCanvas({
   editable = false,
   adjusting = false,
   onRegionCommit,
+  drawingAnnotations = [],
   className,
 }: PdfPageCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -214,6 +218,18 @@ export function PdfPageCanvas({
               }}
             />
           )}
+        </div>
+      ) : null}
+
+      {canvasLayout && drawingAnnotations.length > 0 ? (
+        <div
+          className="absolute inset-0"
+          style={{ width: canvasLayout.width, height: canvasLayout.height }}
+        >
+          <PdfDrawingOverlay
+            annotations={drawingAnnotations}
+            viewport={{ width: canvasLayout.width, height: canvasLayout.height }}
+          />
         </div>
       ) : null}
 

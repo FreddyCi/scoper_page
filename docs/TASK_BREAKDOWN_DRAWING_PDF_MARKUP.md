@@ -138,16 +138,19 @@ flowchart TD
 ### **ID:** BDA-224
 
 **Title:** PdfDrawingOverlay SVG shell  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-222, BDA-223  
 **Priority:** Critical  
 **Description:** New [`PdfDrawingOverlay.tsx`](../src/components/workspace/PdfDrawingOverlay.tsx): SVG layer above PDF canvas; map stored normalized geometry to screen via BDA-222; render paths, rects, ellipses, text, stamps from props `annotations`. No tools yet — read-only render pass.  
 **Completed Changes:**
-- 🔄 Component + prop types; SVG elements for each tool kind
+- ✅ `PdfDrawingOverlay` + per-geometry SVG renderers (stroke, rect, ellipse, text, window stamp)
+- ✅ Denormalize via [`pdf-drawing-geometry`](../src/lib/pdf-drawing-geometry.ts); `pointer-events-none` by default
+- ✅ Optional `drawingAnnotations` on [`PdfPageCanvas`](../src/components/workspace/PdfPageCanvas.tsx)
 **Test Strategy:** Story/dev: load fixture annotations on a page; visual check at 100% and 150% zoom.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- 🔄 Manual: pass `drawingAnnotations` from DocumentViewer when wired (BDA-232)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Components; [`PdfPageCanvas.tsx`](../src/components/workspace/PdfPageCanvas.tsx)
 
 ---

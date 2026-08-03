@@ -4,6 +4,20 @@ import type {
   ProposalVolumeSection,
 } from '@/lib/types'
 
+const TOC_TITLE_DOT_LEADERS = /\s*[.·…]{2,}\s*\d{0,4}\s*$/
+
+/** Short label for UI (strip TOC dot leaders / page numbers; cap length). */
+export function formatProposalSectionTitleForDisplay(
+  title: string,
+  maxLength = 80,
+): string {
+  const cleaned = title.replace(TOC_TITLE_DOT_LEADERS, '').replace(/\s+/g, ' ').trim()
+  if (cleaned.length <= maxLength) {
+    return cleaned
+  }
+  return `${cleaned.slice(0, maxLength - 1).trim()}…`
+}
+
 /** Derive UI progress from sectional status fields. */
 export function computeVolumeGenerationProgress(
   sections: ProposalVolumeSection[] | undefined,
@@ -38,7 +52,8 @@ export function formatVolumeSectionProgressLine(volume: ProposalVolume): string 
 
   if (activeSection && volume.status === 'generating') {
     const index = Math.min(progress.completedSections + 1, progress.totalSections)
-    return `Section ${index}/${progress.totalSections} — ${activeSection.title}`
+    const sectionLabel = formatProposalSectionTitleForDisplay(activeSection.title, 56)
+    return `Section ${index}/${progress.totalSections} — ${sectionLabel}`
   }
 
   if (progress.totalSections > 1 && volume.status === 'generating') {
@@ -134,6 +149,24 @@ export function runProposalVolumeSectionTypesHarness(): void {
   const line = formatVolumeSectionProgressLine(volume)
   if (line !== 'Section 2/2 — Insurance') {
     throw new Error(`runProposalVolumeSectionTypesHarness: unexpected progress line "${line}"`)
+  }
+
+  const longTitleVolume: ProposalVolume = {
+    ...volume,
+    sections: [
+      {
+        ...section,
+        title:
+          'ENTIRE AGREEMENT; INVESTIGATION; PRIME CONTRACT; DEFINITIONS ............ 3',
+      },
+    ],
+  }
+  const longLine = formatVolumeSectionProgressLine(longTitleVolume)
+  if (!longLine?.startsWith('Section 2/2 — ENTIRE AGREEMENT')) {
+    throw new Error('runProposalVolumeSectionTypesHarness: long section title should compact')
+  }
+  if (longLine.includes('............')) {
+    throw new Error('runProposalVolumeSectionTypesHarness: progress line should strip dot leaders')
   }
 
   const summary = summarizeProposalProfileGeneration([volume])

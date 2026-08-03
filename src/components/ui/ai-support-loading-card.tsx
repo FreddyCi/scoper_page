@@ -127,9 +127,12 @@ export function AiSupportLoadingCard({
 
       <div
         ref={lensRef}
-        className="border-border bg-background/80 pointer-events-none absolute top-5 right-4 flex size-20 items-center justify-center rounded-full border shadow-panel backdrop-blur-sm"
+        className="border-border bg-background/80 pointer-events-none absolute top-5 right-4 flex size-20 min-w-0 items-center justify-center rounded-full border shadow-panel backdrop-blur-sm"
       >
-        <span className="text-muted-foreground px-2 text-center text-xs leading-tight font-medium">
+        <span
+          className="text-muted-foreground line-clamp-3 max-w-full px-2 text-center text-xs leading-tight font-medium"
+          title={label}
+        >
           {label}
         </span>
       </div>

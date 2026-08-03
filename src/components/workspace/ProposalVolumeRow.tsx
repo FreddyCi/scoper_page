@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ProposalVolumeMarkdownPreview } from '@/components/workspace/ProposalVolumeMarkdownPreview'
-import { formatVolumeSectionProgressLine } from '@/lib/proposal-volume-section'
+import { formatVolumeSectionProgressLine, formatProposalSectionTitleForDisplay } from '@/lib/proposal-volume-section'
 import type {
   CriterionStatus,
   ProposalAnalysisRef,
@@ -165,8 +165,9 @@ function ProposalVolumeSectionStatusList({
     >
       {sections.map((section) => {
         const SectionIcon = STATUS_ICON[section.status]
+        const sectionTitleDisplay = formatProposalSectionTitleForDisplay(section.title)
         return (
-          <li key={section.id} className="flex items-start gap-2 text-xs">
+          <li key={section.id} className="flex min-w-0 items-start gap-2 text-xs">
             <SectionIcon
               className={cn(
                 'mt-0.5 size-3.5 shrink-0',
@@ -175,17 +176,18 @@ function ProposalVolumeSectionStatusList({
               )}
               aria-hidden
             />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline justify-between gap-2">
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="flex min-w-0 items-baseline justify-between gap-2">
                 <span
                   className={cn(
-                    'leading-snug',
+                    'min-w-0 flex-1 truncate leading-snug',
                     section.status === 'generating'
                       ? 'text-foreground font-medium'
                       : 'text-muted-foreground',
                   )}
+                  title={section.title}
                 >
-                  {section.title}
+                  {sectionTitleDisplay}
                 </span>
                 <span className="text-muted-foreground shrink-0 tabular-nums">
                   {sectionStatusLabel(section.status)}
@@ -314,15 +316,16 @@ export function ProposalVolumeRow({
           aria-hidden
         />
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 overflow-hidden">
               <button
                 type="button"
                 className={cn(
-                  'text-left font-medium leading-snug hover:underline',
+                  'min-w-0 max-w-full truncate text-left font-medium leading-snug hover:underline',
                   muted ? 'text-muted-foreground' : 'text-foreground',
                 )}
+                title={volume.title}
                 onClick={() => setExpanded((open) => !open)}
               >
                 {volume.title}
@@ -335,9 +338,17 @@ export function ProposalVolumeRow({
             </div>
             <span
               className={cn(
-                'shrink-0 text-xs tabular-nums',
+                'max-w-[min(100%,11rem)] shrink-0 truncate text-right text-xs tabular-nums',
                 showLiveStatus ? 'text-muted-foreground' : 'text-muted-foreground/70',
               )}
+              title={
+                sectionProgressLine ??
+                (muted && volume.status === 'pending'
+                  ? 'Awaiting setup'
+                  : hasBody
+                    ? `${statusLabel} · Preview`
+                    : statusLabel)
+              }
             >
               {sectionProgressLine ??
                 (muted && volume.status === 'pending'

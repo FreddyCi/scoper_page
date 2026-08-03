@@ -44,6 +44,19 @@ const WRITER_INSTRUCTION_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: /do not use generic marketing copy/i, reason: 'Prompt guardrail text appears in export body.' },
   { pattern: /relevant rfp excerpts:/i, reason: 'Prompt template (RFP excerpts block) leaked into body.' },
   { pattern: /responder company context:/i, reason: 'Prompt template (company context block) leaked into body.' },
+  { pattern: /\brfp analysis findings\b/i, reason: 'Prompt analysis block leaked into export body.' },
+  { pattern: /source document:\s*.+\.pdf/i, reason: 'Source filename metadata leaked into export body.' },
+]
+
+const TOC_OR_FAKE_SECTION_PATTERNS: { pattern: RegExp; reason: string }[] = [
+  {
+    pattern: /\.{4,}\s*\d+\s*$/m,
+    reason: 'Body contains table-of-contents dot leaders.',
+  },
+  {
+    pattern: /^##\s+SECTION\s+\d+/im,
+    reason: 'Body uses generic numbered SECTION headings instead of substantive prose.',
+  },
 ]
 
 export type ValidateProposalDraftOptions = {
@@ -98,6 +111,19 @@ export function validateProposalVolumeDraft(
     if (pattern.test(trimmed)) {
       reasons.push(prefixReason(label, reason))
     }
+  }
+
+  for (const { pattern, reason } of TOC_OR_FAKE_SECTION_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      reasons.push(prefixReason(label, reason))
+    }
+  }
+
+  const fakeSectionHeadings = trimmed.match(/^##\s+SECTION\s+\d+/gim)?.length ?? 0
+  if (fakeSectionHeadings >= 2) {
+    reasons.push(
+      prefixReason(label, 'Body repeats generic SECTION N headings (likely outline spam).'),
+    )
   }
 
   const outlineOnly =

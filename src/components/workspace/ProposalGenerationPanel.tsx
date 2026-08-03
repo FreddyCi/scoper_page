@@ -301,7 +301,12 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
               </p>
             ) : null}
             {proposalGenerating && generationProgress ? (
-              <p className="text-muted-foreground shrink-0 text-xs leading-relaxed" role="status" aria-live="polite">
+              <p
+                className="text-muted-foreground min-w-0 shrink-0 truncate text-xs leading-relaxed"
+                role="status"
+                aria-live="polite"
+                title={generationProgress.statusLine}
+              >
                 {generationProgress.statusLine}
               </p>
             ) : allVolumesDraft && !proposalGenerating ? (
@@ -313,7 +318,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             ) : null}
             <ul
               className={cn(
-                'grid grid-cols-1 gap-2 sm:grid-cols-2',
+                'grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2',
                 !setup.readyToGenerate &&
                   profile.volumes.every((v) => v.status === 'pending') &&
                   'pointer-events-none',

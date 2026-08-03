@@ -15,6 +15,9 @@ export const PROPOSAL_GUARDRAIL_PHRASES = [
   'Do not use generic marketing copy or boilerplate unrelated to the RFP.',
   'Align each subsection to the cited RFP requirements.',
   'Reference specific RFP sections (e.g. Section L/M) when requirements mention them.',
+  'Do not copy table-of-contents lines, dot leaders, or trailing page numbers from the PDF.',
+  'Write only the current section; do not repeat paragraphs already drafted for other sections in this volume.',
+  'Do not include prompt labels, source filenames, or meta commentary in the markdown output.',
 ] as const
 
 /** Fixed system instructions for every proposal volume generation turn. */
@@ -57,6 +60,7 @@ export function buildSectionSystemPrompt(packageKind: ProposalPackageKind): stri
     PROPOSAL_SECTION_ONLY_LINE,
     'Use ## / ### headings appropriate to this section only.',
     'Be specific to the excerpts and responder context; avoid filler and generic sales language.',
+    'Prefer a few substantive paragraphs over inventing numbered "SECTION N" headings unless they appear in the excerpts.',
   ].join('\n')
 }
 
@@ -148,9 +152,20 @@ export function buildSectionUserPrompt(input: SectionPromptInput): string {
 
   const analysisBlock = buildProposalAnalysisRefsBlock(volume.analysisRefs)
 
+  const priorInVolume =
+    handoff != null
+      ? handoff.completedSections.filter((entry) => entry.volumeId === volume.id).length
+      : 0
+  const continuityNote =
+    priorInVolume > 0
+      ? 'Earlier subsections in this volume are summarized in the handoff — write fresh prose for the current section title only (no repeated boilerplate from prior subsections).'
+      : ''
+
   return [
     handoffBlock,
     handoffBlock ? '' : null,
+    continuityNote,
+    continuityNote ? '' : null,
     analysisBlock,
     analysisBlock ? '' : null,
     `Package kind: ${packageKind}`,

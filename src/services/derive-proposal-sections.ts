@@ -16,8 +16,34 @@ import { buildSectionFindClauseQuery } from '@/lib/proposal-section-find-clause'
 export const SOLICITATION_SECTIONS_MAX = 8
 export const CONTRACT_FRAMEWORK_SECTIONS_MAX = 12
 export const CONTRACT_FRAMEWORK_SECTIONS_MIN = 6
+/** Cap OCR/inline-derived outlines so one volume is not 10+ repetitive turns. */
+export const CONTRACT_FRAMEWORK_INLINE_SECTIONS_MAX = 6
 
 const MIN_SECTION_BLOCK_CHARS = 80
+
+const VOLUME_SCOPE_STOP_WORDS = new Set([
+  'address',
+  'how',
+  'the',
+  'and',
+  'any',
+  'with',
+  'that',
+  'this',
+  'from',
+  'your',
+  'respond',
+  'requirements',
+  'requirement',
+  'align',
+  'agreement',
+  'templates',
+  'applicable',
+  'explain',
+  'describe',
+  'cover',
+  'clarify',
+])
 
 const INLINE_SECTION_HEADING =
   /^(?:section\s+[a-z0-9.]+\s*[-–—:]?\s*.+|(?:\d+\.){1,3}\s+[A-Z][^\n]{4,80})$/im
@@ -70,7 +96,58 @@ function blocksScopedToVolume(blocks: BlockRecord[], volume: ProposalVolume): Bl
     groups.find((group) => group.label.toLowerCase() === titleNeedle) ??
     groups.find((group) => group.label.toLowerCase().includes(titleNeedle.slice(0, 24)))
 
-  return matched?.blocks ?? blocks
+  if (matched?.blocks.length) {
+    return matched.blocks
+  }
+
+  const tokens = volumeFocusTokens(volume)
+  if (tokens.length === 0) {
+    return blocks.slice(0, Math.min(blocks.length, 96))
+  }
+
+  const focused = blocks.filter((block) => blockMatchesVolumeFocus(block, tokens))
+  if (focused.length >= 3) {
+    return focused
+  }
+
+  return blocks.slice(0, Math.min(blocks.length, 96))
+}
+
+function volumeFocusTokens(volume: ProposalVolume): string[] {
+  const raw = `${volume.title} ${volume.requirementSummary}`.toLowerCase()
+  const tokens = raw.match(/[a-z0-9]{4,}/g) ?? []
+  const unique: string[] = []
+  for (const token of tokens) {
+    if (VOLUME_SCOPE_STOP_WORDS.has(token)) continue
+    if (!unique.includes(token)) unique.push(token)
+  }
+  return unique
+}
+
+function blockMatchesVolumeFocus(block: BlockRecord, tokens: string[]): boolean {
+  const hay = `${block.section_path ?? ''} ${block.text}`.toLowerCase()
+  return tokens.some((token) => hay.includes(token))
+}
+
+/** Reject TOC/OCR junk and meta titles before sectional generation (BDA-218 QA). */
+export function isRejectedProposalSectionTitle(title: string): boolean {
+  const trimmed = title.trim()
+  if (trimmed.length < 3) return true
+  if (trimmed.length > 100) return true
+  if (/\.{3,}/.test(trimmed)) return true
+  if (/\s+\d{1,4}\s*$/.test(trimmed) && /[.·…]{2,}/.test(trimmed)) return true
+  if (/^section\s+\d+\.?\s*$/i.test(trimmed)) return true
+  if (/^##?\s*section\s+\d+/i.test(trimmed)) return true
+  if (/source document:/i.test(trimmed)) return true
+  if (/\.pdf\b/i.test(trimmed)) return true
+  if (trimmed.length > 48 && trimmed === trimmed.toUpperCase() && /[;…]/.test(trimmed)) {
+    return true
+  }
+  return false
+}
+
+function filterSectionTitles(titles: string[]): string[] {
+  return dedupeTitles(titles).filter((title) => !isRejectedProposalSectionTitle(title))
 }
 
 function sectionTitlesFromGroups(scopedBlocks: BlockRecord[]): string[] {
@@ -158,21 +235,25 @@ export function deriveProposalSectionsForVolume(
   const scoped = blocksScopedToVolume(blocks, volume)
   const corpus = scoped.map((block) => block.text).join('\n')
 
-  let titles = dedupeTitles([
-    ...sectionTitlesFromGroups(scoped),
+  const groupTitles = sectionTitlesFromGroups(scoped)
+  let titles = filterSectionTitles([
+    ...groupTitles,
     ...sectionTitlesFromInlineHeadings(scoped),
   ])
 
   if (titles.length < 2) {
-    titles = dedupeTitles([...titles, ...sectionTitlesFromKeywords(corpus, maxSections)])
+    titles = filterSectionTitles([
+      ...titles,
+      ...sectionTitlesFromKeywords(corpus, maxSections),
+    ])
   }
 
   if (packageKind === 'contract_framework' && titles.length < CONTRACT_FRAMEWORK_SECTIONS_MIN) {
     const keywordTitles = sectionTitlesFromKeywords(
-      `${volume.title}\n${volume.requirementSummary}\n${corpus}`,
+      `${volume.title}\n${volume.requirementSummary}`,
       maxSections,
     )
-    titles = dedupeTitles([...titles, ...keywordTitles]).slice(0, maxSections)
+    titles = filterSectionTitles([...titles, ...keywordTitles]).slice(0, maxSections)
   }
 
   if (titles.length === 0) {
@@ -183,7 +264,13 @@ export function deriveProposalSectionsForVolume(
     return [wholeVolumeSection(volume, packageKind)]
   }
 
-  const selected = titles.slice(0, maxSections)
+  const sectionCap =
+    groupTitles.length >= 2
+      ? maxSections
+      : packageKind === 'contract_framework'
+        ? Math.min(CONTRACT_FRAMEWORK_INLINE_SECTIONS_MAX, maxSections)
+        : maxSections
+  const selected = titles.slice(0, sectionCap)
   return selected.map((title, index) => buildSection(volume, title, index, packageKind))
 }
 
@@ -285,5 +372,44 @@ export function runDeriveProposalSectionsHarness(): void {
   }
   if (contractSections.length > CONTRACT_FRAMEWORK_SECTIONS_MAX) {
     throw new Error('runDeriveProposalSectionsHarness: contract cap exceeded')
+  }
+
+  if (!isRejectedProposalSectionTitle('ENTIRE AGREEMENT; INVESTIGATION ............ 3')) {
+    throw new Error('runDeriveProposalSectionsHarness: TOC title should be rejected')
+  }
+
+  const scopeVolume: ProposalVolume = {
+    id: 'vol-scope',
+    title: 'Scope and statements of work',
+    requirementSummary:
+      'Address how services, deliverables, and change control align to the agreement and any SOW templates.',
+    status: 'pending',
+  }
+  const msaBlocks: BlockRecord[] = [
+    mockBlock(
+      'ENTIRE AGREEMENT; INVESTIGATION; PRIME CONTRACT; DEFINITIONS ............ 3',
+      'Document',
+    ),
+    mockBlock(
+      'The Subcontractor shall provide crane, hoist, and scaffolding per Section 2.2.2. '.repeat(8),
+      'Insurance › General liability',
+    ),
+    mockBlock(
+      'Statement of work and change control procedures for deliverables under the Prime Contract. '.repeat(
+        10,
+      ),
+      'Scope › Statement of work',
+    ),
+  ]
+  const scopeSections = deriveProposalSectionsForVolume({
+    volume: scopeVolume,
+    blocks: msaBlocks,
+    packageKind: 'contract_framework',
+  })
+  if (scopeSections.some((section) => isRejectedProposalSectionTitle(section.title))) {
+    throw new Error('runDeriveProposalSectionsHarness: scope volume should not keep TOC titles')
+  }
+  if (scopeSections.length > CONTRACT_FRAMEWORK_INLINE_SECTIONS_MAX + 1) {
+    throw new Error('runDeriveProposalSectionsHarness: scope volume should cap inline-derived sections')
   }
 }

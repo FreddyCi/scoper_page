@@ -101,6 +101,14 @@ export type ProposalVolumeGenerationProgress = {
   activeSectionId?: string
 }
 
+/** RFP Analysis criterion linked to a proposal volume (BDA-207). */
+export type ProposalAnalysisRef = {
+  criterionId: string
+  label: string
+  status: CriterionStatus
+  citation?: CitationRef
+}
+
 /** One solicitation-aligned volume in a complete proposal draft */
 export type ProposalVolume = {
   id: string
@@ -118,6 +126,8 @@ export type ProposalVolume = {
   edited?: boolean
   /** ISO timestamp of the last hand-edit save. */
   editedAt?: string
+  /** Criteria from RFP Analysis mapped to this volume (BDA-207). */
+  analysisRefs?: ProposalAnalysisRef[]
 }
 
 /** RFP-derived outline used to generate responder proposal volumes */

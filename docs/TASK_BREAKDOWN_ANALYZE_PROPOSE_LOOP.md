@@ -279,16 +279,16 @@ flowchart TD
 ### **ID:** BDA-207
 
 **Title:** ProposalAnalysisRef type  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** High  
 **Description:** Add **`ProposalAnalysisRef`** (`criterionId`, `label`, `status`, optional `citation`) and **`analysisRefs?: ProposalAnalysisRef[]`** on **`ProposalVolume`** in [`types.ts`](../src/lib/types.ts).  
 **Completed Changes:**
-- 🔄 Types  
+- ✅ **`ProposalAnalysisRef`** + **`analysisRefs`** on **`ProposalVolume`**
 **Test Strategy:** `tsc --noEmit`.  
 **Test Results:**
-- 🔄 Pending  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+**Assigned:** Completed  
 **Context/Artifacts:** [`RfpResultsProfile`](../src/lib/types.ts) / `CriterionResult`  
 
 ---

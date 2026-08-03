@@ -396,13 +396,28 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: text label round-trip')
   }
 
+  const windowStamp = await insertPdfDrawingAnnotation({
+    doc_id: docId,
+    page_num: 1,
+    tool: 'stamp',
+    color: '#0EA5E9',
+    stroke_width: 2,
+    geometry: { kind: 'stamp', x: 0.25, y: 0.75, stampKind: 'window' },
+  })
+  if (
+    windowStamp.geometry.kind !== 'stamp' ||
+    windowStamp.geometry.stampKind !== 'window'
+  ) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: window stamp round-trip')
+  }
+
   const docAnnotationsAll = await fetchPdfDrawingAnnotationsForDoc(docId)
-  if (docAnnotationsAll.length !== 4) {
-    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected 4 doc annotations')
+  if (docAnnotationsAll.length !== 5) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected 5 doc annotations')
   }
 
   const pageOne = await fetchPdfDrawingAnnotationsForPage(docId, 1)
-  if (pageOne.length !== 3) {
+  if (pageOne.length !== 4) {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: page-scoped list mismatch')
   }
   const pageOneStroke = pageOne.find((row) => row.annotation_id === strokeA.annotation_id)
@@ -432,14 +447,19 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
   }
 
   const remaining = await fetchPdfDrawingAnnotationsForDoc(docId)
-  if (remaining.length !== 3) {
-    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected rect, text, and page-2 annotation')
+  if (remaining.length !== 4) {
+    throw new Error(
+      'runPdfDrawingAnnotationsCrudHarness failed: expected rect, text, stamp, and page-2 annotation',
+    )
   }
   if (!remaining.some((row) => row.geometry.kind === 'rect')) {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected rect to remain')
   }
   if (!remaining.some((row) => row.text_body === 'W-12')) {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected text label to remain')
+  }
+  if (!remaining.some((row) => row.geometry.kind === 'stamp')) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: expected window stamp to remain')
   }
 
   await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [docId])

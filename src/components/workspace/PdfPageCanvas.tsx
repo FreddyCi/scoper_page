@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
-import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
+import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStampCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
 import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -29,6 +29,7 @@ type PdfPageCanvasProps = {
   onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
   onShapeCommit?: (commit: PdfDrawingShapeCommit) => void | Promise<void>
   onTextCommit?: (commit: PdfDrawingTextCommit) => void | Promise<void>
+  onStampCommit?: (commit: PdfDrawingStampCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
   className?: string
 }
@@ -73,6 +74,7 @@ export function PdfPageCanvas({
   onPenStrokeCommit,
   onShapeCommit,
   onTextCommit,
+  onStampCommit,
   onEraseAnnotation,
   className,
 }: PdfPageCanvasProps) {
@@ -217,6 +219,7 @@ export function PdfPageCanvas({
           onPenStrokeCommit ||
           onShapeCommit ||
           onTextCommit ||
+          onStampCommit ||
           onEraseAnnotation)))
 
   return (
@@ -273,6 +276,7 @@ export function PdfPageCanvas({
             onPenStrokeCommit={onPenStrokeCommit}
             onShapeCommit={onShapeCommit}
             onTextCommit={onTextCommit}
+            onStampCommit={onStampCommit}
             onEraseAnnotation={onEraseAnnotation}
           />
         </div>

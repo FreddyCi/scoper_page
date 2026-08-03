@@ -50,7 +50,7 @@ export function exposeScoperDevGlobals(): void {
   if (!devGlobalsAnnounced) {
     devGlobalsAnnounced = true
     console.debug(
-      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog() · Scoper.setPdfMarkDrawingMode(true|false) · Scoper.setPdfMarkTool("pen"|"highlighter"|"eraser"|"rect"|"ellipse"|"text")',
+      '[Scoper dev] ECP audit: Scoper.getEcpAgentAuditLog() · Scoper.printEcpAgentAuditLog() · Scoper.clearEcpAgentAuditLog() · Scoper.setPdfMarkDrawingMode(true|false) · Scoper.setPdfMarkTool("pen"|"highlighter"|"eraser"|"rect"|"ellipse"|"text"|"stamp")',
     )
   }
 }

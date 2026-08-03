@@ -268,15 +268,18 @@ flowchart TD
 ### **ID:** BDA-230
 
 **Title:** Window stamp tool  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-224  
 **Priority:** High  
 **Description:** Click-to-place stamp (~24px at 100% zoom): simple SVG icon (square + cross or "W"); `tool: stamp`, geometry includes position + `stampKind: 'window'`. v1: click-only (no drag) unless select tool added later.  
 **Completed Changes:**
-- 🔄 Stamp icon + commit
+- ✅ Click-to-place `onStampCommit` on `PdfDrawingOverlay` (existing `WindowStampGraphic`, 24px default)
+- ✅ `usePdfDrawingAnnotations.commitStamp`; `DocumentViewer` / `PdfPageCanvas` wiring
+- ✅ Dev `Scoper.setPdfMarkTool("stamp")`; sky `#0EA5E9` stamp color
+- ✅ CRUD harness window stamp geometry round-trip
 **Test Strategy:** Place multiple stamps on `Windows_Drawing.pdf` plan sheet; counts in DB.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Unit harness (CRUD stamp); manual: multiple click-placed stamps persist per page  
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan §Window stamp; sample PDF in repo or test fixtures
 

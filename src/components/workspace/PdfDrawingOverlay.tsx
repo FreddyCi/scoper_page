@@ -14,6 +14,7 @@ import type {
   PdfDrawingGeometry,
   PdfDrawingNormalizedPoint,
   PdfDrawingRectGeometry,
+  PdfDrawingStampGeometry,
   PdfDrawingStrokeGeometry,
   PdfDrawingTextGeometry,
   PdfDrawingTool,
@@ -55,6 +56,13 @@ export type PdfDrawingTextCommit = {
   geometry: PdfDrawingTextGeometry
 }
 
+export type PdfDrawingStampCommit = {
+  tool: 'stamp'
+  color: string
+  stroke_width: number
+  geometry: PdfDrawingStampGeometry
+}
+
 export type PdfDrawingOverlayProps = {
   annotations: PdfDrawingAnnotation[]
   viewport: PdfDrawingViewportSize
@@ -69,6 +77,7 @@ export type PdfDrawingOverlayProps = {
   onPenStrokeCommit?: (commit: PdfDrawingStrokeCommit) => void | Promise<void>
   onShapeCommit?: (commit: PdfDrawingShapeCommit) => void | Promise<void>
   onTextCommit?: (commit: PdfDrawingTextCommit) => void | Promise<void>
+  onStampCommit?: (commit: PdfDrawingStampCommit) => void | Promise<void>
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
 }
 
@@ -397,6 +406,7 @@ export function PdfDrawingOverlay({
   onPenStrokeCommit,
   onShapeCommit,
   onTextCommit,
+  onStampCommit,
   onEraseAnnotation,
 }: PdfDrawingOverlayProps) {
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
@@ -404,9 +414,10 @@ export function PdfDrawingOverlay({
     interactive && isStrokeTool(activeTool) && Boolean(commitStroke)
   const shapeToolActive = interactive && isShapeTool(activeTool) && Boolean(onShapeCommit)
   const textToolActive = interactive && activeTool === 'text' && Boolean(onTextCommit)
+  const stampToolActive = interactive && activeTool === 'stamp' && Boolean(onStampCommit)
   const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
   const pointerActive =
-    strokeToolActive || shapeToolActive || textToolActive || eraserActive
+    strokeToolActive || shapeToolActive || textToolActive || stampToolActive || eraserActive
 
   const effectiveStrokeWidth =
     activeTool === 'highlighter'
@@ -481,6 +492,25 @@ export function PdfDrawingOverlay({
     setTextEditor(null)
   }, [])
 
+  const placeStamp = useCallback(
+    async (anchor: PdfDrawingNormalizedPoint) => {
+      if (!onStampCommit) return
+      const geometry: PdfDrawingStampGeometry = {
+        kind: 'stamp',
+        x: anchor.x,
+        y: anchor.y,
+        stampKind: 'window',
+      }
+      await onStampCommit({
+        tool: 'stamp',
+        color: markColor,
+        stroke_width: 2,
+        geometry,
+      })
+    },
+    [markColor, onStampCommit],
+  )
+
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       if (!pointerActive || event.button !== 0) return
@@ -490,6 +520,12 @@ export function PdfDrawingOverlay({
         if (textEditor) return
         event.preventDefault()
         setTextEditor({ anchor: point, value: '' })
+        return
+      }
+
+      if (stampToolActive) {
+        event.preventDefault()
+        void placeStamp(point)
         return
       }
 
@@ -520,9 +556,11 @@ export function PdfDrawingOverlay({
       eraserActive,
       pointerActive,
       shapeToolActive,
+      stampToolActive,
       strokeToolActive,
       textEditor,
       textToolActive,
+      placeStamp,
       viewport,
     ],
   )
@@ -655,9 +693,11 @@ export function PdfDrawingOverlay({
     ? 'cursor-cell'
     : textToolActive
       ? 'cursor-text'
-      : strokeToolActive || shapeToolActive
-        ? 'cursor-crosshair'
-        : undefined
+      : stampToolActive
+        ? 'cursor-copy'
+        : strokeToolActive || shapeToolActive
+          ? 'cursor-crosshair'
+          : undefined
 
   const svgPointerActive = pointerActive && !textEditor
 

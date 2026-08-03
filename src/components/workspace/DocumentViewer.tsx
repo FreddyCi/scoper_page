@@ -9,6 +9,7 @@ import { isSpreadsheetDocument, isWordDocument } from '@/lib/document-preview'
 import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import type {
   PdfDrawingShapeCommit,
+  PdfDrawingStampCommit,
   PdfDrawingStrokeCommit,
   PdfDrawingTextCommit,
 } from '@/components/workspace/PdfDrawingOverlay'
@@ -86,7 +87,7 @@ export function DocumentViewer({
     selectedCitation?.doc_id === document.doc_id ? selectedCitation : null
   const currentPage = clampPage(page, totalPages)
   const { blockIds: commentedBlockIds } = useCommentedBlockIds(document.doc_id)
-  const { annotations: drawingAnnotations, commitStroke, commitShape, commitText, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
+  const { annotations: drawingAnnotations, commitStroke, commitShape, commitText, commitStamp, eraseAnnotation, undoDrawingMark, redoDrawingMark } =
     usePdfDrawingAnnotations(document.doc_id, currentPage)
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
@@ -203,6 +204,14 @@ export function DocumentViewer({
     }
   }
 
+  const handleStampCommit = async (commit: PdfDrawingStampCommit) => {
+    try {
+      await commitStamp(commit)
+    } catch (error) {
+      console.error('[document-viewer] drawing stamp commit failed', error)
+    }
+  }
+
   const handleEraseAnnotation = async (annotationId: string) => {
     try {
       await eraseAnnotation(annotationId)
@@ -221,7 +230,9 @@ export function DocumentViewer({
           ? '#0EA5E9'
           : pdfMarkTool === 'text'
             ? '#18181B'
-            : '#F59E0B'
+            : pdfMarkTool === 'stamp'
+              ? '#0EA5E9'
+              : '#F59E0B'
 
   const toolbarHint =
     adjustError ??
@@ -341,6 +352,9 @@ export function DocumentViewer({
               }
               onTextCommit={
                 pdfMarkDrawingMode && pdfMarkTool === 'text' ? handleTextCommit : undefined
+              }
+              onStampCommit={
+                pdfMarkDrawingMode && pdfMarkTool === 'stamp' ? handleStampCommit : undefined
               }
               onEraseAnnotation={
                 pdfMarkDrawingMode && pdfMarkTool === 'eraser' ? handleEraseAnnotation : undefined

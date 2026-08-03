@@ -72,16 +72,19 @@ flowchart TD
 ### **ID:** BDA-221
 
 **Title:** DuckDB pdf_drawing_annotations schema  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-220  
 **Priority:** Critical  
 **Description:** Add table `pdf_drawing_annotations` to [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts) with columns: `annotation_id`, `doc_id`, `page_num`, `tool`, `color`, `stroke_width`, `opacity`, `geometry_json`, `text_body`, `author_initials`, `created_at`, `updated_at`. Ensure init/migration path matches existing comment tables.  
 **Completed Changes:**
-- 🔄 DDL + registration in schema bootstrap
+- ✅ `CREATE TABLE pdf_drawing_annotations` in `DUCKDB_SCHEMA_STATEMENTS` (worker bootstrap on init)
+- ✅ `runPdfDrawingAnnotationsSchemaHarness` — DESCRIBE columns + insert/select/delete smoke
+- ✅ Dev harness chain in [`App.tsx`](../src/App.tsx) after `runBlockCommentsHarness`
 **Test Strategy:** App boot / harness opens DB; `DESCRIBE` or insert smoke via annotation service (BDA-223).  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc --noEmit`
+- ✅ Schema harness runs on dev app load (after DuckDB init)
+**Assigned:** Completed  
 **Context/Artifacts:** Plan §Data model; [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts)
 
 ---

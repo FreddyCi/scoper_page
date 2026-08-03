@@ -51,6 +51,20 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     author_initials VARCHAR NOT NULL DEFAULT '?',
     created_at VARCHAR NOT NULL
   )`,
+  `CREATE TABLE IF NOT EXISTS pdf_drawing_annotations (
+    annotation_id VARCHAR PRIMARY KEY,
+    doc_id VARCHAR NOT NULL,
+    page_num INTEGER NOT NULL,
+    tool VARCHAR NOT NULL,
+    color VARCHAR NOT NULL,
+    stroke_width DOUBLE,
+    opacity DOUBLE,
+    geometry_json VARCHAR NOT NULL,
+    text_body VARCHAR,
+    author_initials VARCHAR NOT NULL DEFAULT '?',
+    created_at VARCHAR NOT NULL,
+    updated_at VARCHAR
+  )`,
   `CREATE TABLE IF NOT EXISTS proposal_profiles (
     profile_id VARCHAR PRIMARY KEY,
     rfp_doc_id VARCHAR NOT NULL,

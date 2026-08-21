@@ -377,7 +377,10 @@ export type FindClauseResult = {
   summary: string
 }
 
-/** Step 2 of RFP pipeline — requirements extracted from RFP doc before profiling */
+/**
+ * Extracted shall / must line from the baseline RFP.
+ * Persist shape for `rfp_requirements` — do not invent a parallel requirement model.
+ */
 export type RfpRequirement = {
   id: string
   label: string
@@ -388,6 +391,24 @@ export type RfpRequirement = {
 export type RfpRequirementsExtract = {
   requirements: RfpRequirement[]
   summary: string
+}
+
+/** Matrix cell vs one bidder profile. Distinct from 3-rule `CriterionStatus`. */
+export type RfpRequirementScoreStatus = 'met' | 'partial' | 'gap' | 'unknown'
+
+/** Who last wrote the score. User override wins on re-extract / re-qualify. */
+export type RfpRequirementScoreSource = 'heuristic' | 'user'
+
+/**
+ * Per-bidder score for one `RfpRequirement.id`.
+ * Heuristic overlap seeds empty rows; `source: 'user'` status and note must not be clobbered.
+ */
+export type RfpRequirementScore = {
+  requirement_id: string
+  profile_id: string
+  status: RfpRequirementScoreStatus
+  note?: string
+  source?: RfpRequirementScoreSource
 }
 
 export type IngestStatus = 'idle' | 'parsing' | 'done' | 'error'

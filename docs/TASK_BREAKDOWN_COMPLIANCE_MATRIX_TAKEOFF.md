@@ -57,18 +57,19 @@ flowchart TD
 ### **ID:** BDA-259
 
 **Title:** Wire RfpRequirement and score types  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None (types already exist unused)  
 **Priority:** Critical  
 **Description:** Confirm and extend [`RfpRequirement`](../src/lib/types.ts) / `RfpRequirementsExtract` so they can persist extracted shalls. Add score types used by the matrix (do not invent a parallel requirement model). Expected deliverables: `RfpRequirementScore` (`requirement_id`, `profile_id`, `status`, `note`, optional `source: 'heuristic' | 'user'`) and a small status union (`met` / `partial` / `gap` / `unknown`). Keep `rfpRequirementsResponseSchema` unused — do not call bitgpu. Re-export from [`lib/index.ts`](../src/lib/index.ts) if that is the existing pattern.  
 **Completed Changes:**
-- 🔄 Confirm existing `RfpRequirement` fields (`id`, `label`, `category?`, `citation?`) are the persist shape
-- 🔄 Add `RfpRequirementScore` + status union + JSDoc (user override wins)
-- 🔄 Re-export if needed; no UI
+- ✅ Confirmed existing `RfpRequirement` fields (`id`, `label`, `category?`, `citation?`) are the persist shape — JSDoc only, no parallel model
+- ✅ Added `RfpRequirementScoreStatus`, `RfpRequirementScoreSource`, `RfpRequirementScore` + JSDoc (user override wins)
+- ✅ Re-exported new types from [`lib/index.ts`](../src/lib/index.ts); `rfpRequirementsResponseSchema` left unused; no UI
 **Test Strategy:** `pnpm exec tsc -b`; no breaking changes to `CriterionResult` / `RfpResultsProfile`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `CriterionResult` / `RfpResultsProfile` unchanged
+**Assigned:** Completed  
 **Context/Artifacts:** [plans/compliance_matrix_takeoff.md](plans/compliance_matrix_takeoff.md); [`types.ts`](../src/lib/types.ts) ~381; [`schemas.ts`](../src/lib/schemas.ts) `rfpRequirementsResponseSchema`; `.github/copilot-instructions.md` §Types
 
 ---
@@ -503,4 +504,5 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.1 | 2026-08-21 | BDA-259 implemented: score types + persist-shape JSDoc |
 | v1.0 | 2026-08-21 | Initial breakdown BDA-259–276 from matrix / takeoff / instructions plan |

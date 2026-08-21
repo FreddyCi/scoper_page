@@ -250,7 +250,13 @@ export type PdfDrawingAnnotation = {
   stroke_width?: number
   opacity?: number
   geometry: PdfDrawingGeometry
+  /** Typed label for `text` tool marks (rendered on canvas). */
   text_body?: string
+  /**
+   * Spoken field notation from hold-Space dictation (BDA-242+).
+   * Separate from `text_body`. v1: append new dictation onto existing value on commit.
+   */
+  voice_note?: string
   author_initials: string
   created_at: string
   updated_at?: string
@@ -266,7 +272,10 @@ export type PdfDrawingAnnotationRecord = {
   stroke_width?: number
   opacity?: number
   geometry_json: string
+  /** Typed label for `text` tool marks. */
   text_body?: string
+  /** Spoken dictation transcript; persisted in `voice_note` column (BDA-243+). */
+  voice_note?: string
   author_initials: string
   created_at: string
   updated_at?: string

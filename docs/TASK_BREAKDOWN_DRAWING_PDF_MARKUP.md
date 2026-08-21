@@ -583,6 +583,7 @@ flowchart TD
 
 - [Drawing PDF markup plan](/Users/christopherkruger/.cursor/plans/drawing_pdf_markup_6e60b292.plan.md)
 - [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) (index BDA-220–241)
+- [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) — follow-on hold Space dictation (BDA-242–258)
 - [PRD.md](PRD.md) §2.2 secondary goals — Mark mode
 - [QA_RESULTS.md](QA_RESULTS.md) § Drawing PDF markup (BDA-241)
 - [TASK_BREAKDOWN_TEMPLATE.md](TASK_BREAKDOWN_TEMPLATE.md)

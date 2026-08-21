@@ -256,12 +256,20 @@ export function DocumentViewer({
       if (!tool) return
 
       event.preventDefault()
+      if (tool === 'stamp' && pdfMarkTool === 'stamp') {
+        setPdfMarkTool('select')
+        return
+      }
       setPdfMarkTool(tool)
+      if (tool !== 'select') {
+        setNotationPickMode(false)
+        setVoicePanelOpen(false)
+      }
     }
 
     globalThis.document.addEventListener('keydown', onKeyDown)
     return () => globalThis.document.removeEventListener('keydown', onKeyDown)
-  }, [markMode, setPdfMarkTool])
+  }, [markMode, pdfMarkTool, setPdfMarkTool])
 
   useEffect(() => {
     if (!markMode) return
@@ -340,12 +348,16 @@ export function DocumentViewer({
   }, [onDictationSelectionChange])
 
   const openVoiceNotationPanel = useCallback(() => {
-    setVoicePanelOpen((previous) => {
-      const next = !previous
-      if (next) setNotationPickMode(true)
-      return next
-    })
-  }, [])
+    const currentlyOn = voicePanelOpen || notationPickMode
+    if (currentlyOn) {
+      setVoicePanelOpen(false)
+      setNotationPickMode(false)
+      return
+    }
+    setPdfMarkTool('select')
+    setVoicePanelOpen(true)
+    setNotationPickMode(true)
+  }, [notationPickMode, setPdfMarkTool, voicePanelOpen])
 
   const handleEraseAnnotation = async (annotationId: string) => {
     await persistDrawingMark(
@@ -424,14 +436,6 @@ export function DocumentViewer({
     return annotation?.voice_note?.trim() ? annotationId : null
   }, [pageDrawingAnnotations, selectedDrawingAnnotationIds])
 
-  const handleClearSelectedVoiceNotation = async () => {
-    if (!selectedVoiceNotationId) return
-    await persistDrawingMark(
-      () => updateMarkVoiceNote(selectedVoiceNotationId, ''),
-      'clear voice notation failed',
-    )
-  }
-
   const markDictationHint =
     markMode && isDictating
       ? 'Listening… release Space to save the notation'
@@ -446,7 +450,7 @@ export function DocumentViewer({
           : markMode && selectedDrawingAnnotationIds.length === 0
             ? 'Place markers, then open voice notations to review, type, or dictate'
         : markMode && selectedVoiceNotationId
-          ? 'Selected mark has voice notation · Hold Space to add more, or clear with the message button'
+          ? 'Selected mark has voice notation · Hold Space to add more, or edit in the card'
           : markMode && selectedDrawingAnnotationIds.length === 1
             ? 'Hold Space to dictate notation'
             : null
@@ -530,7 +534,13 @@ export function DocumentViewer({
             tool={pdfMarkTool}
             color={pdfMarkColor}
             strokeWidth={pdfMarkStrokeWidth as PdfMarkupStrokeWidth}
-            onChange={applyPdfMarkupToolbarChange}
+            onChange={(change) => {
+              if (change.tool && change.tool !== 'select') {
+                setNotationPickMode(false)
+                setVoicePanelOpen(false)
+              }
+              applyPdfMarkupToolbarChange(change)
+            }}
             onUndo={() => {
               void undoDrawingMark()
             }}
@@ -542,10 +552,6 @@ export function DocumentViewer({
             selectionCount={selectedDrawingAnnotationIds.length}
             onDeleteSelection={() => {
               void handleDeleteSelectedMarks()
-            }}
-            canClearVoiceNotation={selectedVoiceNotationId != null}
-            onClearVoiceNotation={() => {
-              void handleClearSelectedVoiceNotation()
             }}
             speechNotesAvailable={dictationAvailable}
             notationPickMode={notationPickMode || voicePanelOpen}
@@ -661,7 +667,7 @@ export function DocumentViewer({
         open={voicePanelOpen}
         onOpenChange={(open) => {
           setVoicePanelOpen(open)
-          if (open) setNotationPickMode(true)
+          setNotationPickMode(open)
         }}
         pageNumber={currentPage}
         annotations={pageDrawingAnnotations}

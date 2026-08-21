@@ -22,7 +22,7 @@ function VoiceNotationTooltipContent({ speechNotesAvailable = true }: { speechNo
       <span className="block font-medium">Voice notation</span>
       <span className="text-background/85 mt-0.5 block font-normal leading-snug">
         {speechNotesAvailable
-          ? 'Open all voice notations. Click a mark, then type or hold Space to dictate.'
+          ? 'Open the notation list to type or dictate. Click again to close. Click a mark on the plan to target it.'
           : 'Voice notation requires HTTPS and Chrome or Edge speech support.'}
       </span>
     </>
@@ -56,7 +56,11 @@ export function VoiceNotationControl({
             type="button"
             size={isCanvas ? 'sm' : 'icon-xs'}
             variant="ghost"
-            aria-label="Show voice notations"
+            aria-label={
+              speechNotesAvailable
+                ? 'Voice notation. Open the list to type or dictate. Click again to close.'
+                : 'Voice notation unavailable. Requires HTTPS and Chrome or Edge speech support.'
+            }
             aria-pressed={active}
             className={cn(
               'relative',

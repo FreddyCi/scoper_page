@@ -90,6 +90,10 @@ assert(
   'share-table must use SHARE_PACK_VERSION 3 for pdf_drawing_annotations (BDA-235)',
 )
 assert(shareTable.includes("'pdf_drawing_annotations'"), 'share-table must register pdf_drawing_annotations')
+assert(
+  shareTable.includes("'voice_note'"),
+  'share-table pdf_drawing_annotations must include voice_note (BDA-245)',
+)
 
 const minimalPdf = path.join(root, 'public/sample/minimal.pdf')
 try {

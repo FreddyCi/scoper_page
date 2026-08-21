@@ -109,13 +109,14 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
       'opacity',
       'geometry_json',
       'text_body',
+      'voice_note',
       'author_initials',
       'created_at',
       'updated_at',
     ],
     importOrder: 7,
     selectSql: `SELECT annotation_id, doc_id, page_num, tool, color, stroke_width, opacity,
-                       geometry_json, text_body, author_initials, created_at, updated_at
+                       geometry_json, text_body, voice_note, author_initials, created_at, updated_at
                 FROM pdf_drawing_annotations
                 ORDER BY doc_id, page_num, created_at, annotation_id`,
   },

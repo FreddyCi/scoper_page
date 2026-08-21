@@ -373,6 +373,7 @@ export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
     [orphanDocId, 'orphan.pdf', 'application/pdf', 'unknown', new Date().toISOString()],
   )
 
+  const voiceNoteText = 'North elevation window verification'
   await insertPdfDrawingAnnotation({
     doc_id: docId,
     page_num: 1,
@@ -380,6 +381,7 @@ export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
     color: '#0EA5E9',
     stroke_width: 2,
     geometry: { kind: 'stamp', x: 0.2, y: 0.3, stampKind: 'window' },
+    voice_note: voiceNoteText,
   })
   await insertPdfDrawingAnnotation({
     doc_id: docId,
@@ -408,6 +410,9 @@ export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
   if (exportedMarks.some((row) => String(row.doc_id) === orphanDocId)) {
     throw new Error('runSharePackDrawingAnnotationsHarness: orphan doc annotations must be excluded')
   }
+  if (!exportedMarks.some((row) => String(row.voice_note) === voiceNoteText)) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: voice_note not exported')
+  }
 
   useSessionStore.getState().resetSession()
   await applySharePackPayload(payload)
@@ -418,6 +423,9 @@ export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
   }
   if (!imported.some((row) => row.text_body === 'W-12')) {
     throw new Error('runSharePackDrawingAnnotationsHarness: text label not restored')
+  }
+  if (!imported.some((row) => row.voice_note === voiceNoteText)) {
+    throw new Error('runSharePackDrawingAnnotationsHarness: voice_note not restored')
   }
 
   const orphanRemaining = await fetchPdfDrawingAnnotationsForDoc(orphanDocId)

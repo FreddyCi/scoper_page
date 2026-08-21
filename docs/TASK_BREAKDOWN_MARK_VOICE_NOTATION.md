@@ -114,17 +114,20 @@ flowchart TD
 ### **ID:** BDA-245
 
 **Title:** Share pack voice_note round-trip  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-244  
 **Priority:** High  
 **Description:** Add `voice_note` to [`share-table.ts`](../src/lib/share-table.ts) registry for `pdf_drawing_annotations` (export SELECT + import column list). Verify [`share-pack-import.ts`](../src/services/share-pack-import.ts) / duckdb share path preserves field.  
 **Completed Changes:**
-- 🔄 Share table column definition
-- 🔄 Import/export smoke in share harness or manual note in QA
+- ✅ `voice_note` in share-table columns + SELECT for `pdf_drawing_annotations`
+- ✅ `assertShareTablesShape` fills missing registry columns as null (older packs without `voice_note`)
+- ✅ `runSharePackDrawingAnnotationsHarness`: export + import asserts `voice_note`
+- ✅ Static QA asserts `voice_note` in share-table registry
 **Test Strategy:** Export workspace with dictated mark → import in fresh session → `voice_note` intact.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `pnpm qa:drawing-markup` static checks pass
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-224 share pack v3; [`share-table.ts`](../src/lib/share-table.ts)
 
 ---

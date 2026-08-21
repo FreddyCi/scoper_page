@@ -161,15 +161,20 @@ export function assertShareTablesShape(
       throw new Error(`Share pack missing table: ${definition.id}`)
     }
 
-    for (const row of rows) {
+    normalized[definition.id] = rows.map((row) => {
+      const normalizedRow: ShareTableRow = {}
       for (const column of definition.columns) {
-        if (!(column in row)) {
-          throw new Error(`Share pack row missing column ${column} in ${definition.id}`)
+        const value = row[column]
+        if (value == null) {
+          normalizedRow[column] = null
+        } else if (typeof value === 'number') {
+          normalizedRow[column] = value
+        } else {
+          normalizedRow[column] = String(value)
         }
       }
-    }
-
-    normalized[definition.id] = rows
+      return normalizedRow
+    })
   }
 
   return normalized

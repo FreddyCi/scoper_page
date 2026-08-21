@@ -40,6 +40,10 @@ type PdfPageCanvasProps = {
     annotationId: string,
     geometry: PdfDrawingGeometry,
   ) => void | Promise<void>
+  /** Hold-Space dictation target mark (BDA-250+). */
+  dictationTargetId?: string | null
+  dictationDraft?: string
+  isDictating?: boolean
   className?: string
 }
 
@@ -89,8 +93,14 @@ export function PdfPageCanvas({
   selectedAnnotationIds,
   onSelectionChange,
   onMoveAnnotation,
+  dictationTargetId,
+  dictationDraft,
+  isDictating,
   className,
 }: PdfPageCanvasProps) {
+  void dictationTargetId
+  void dictationDraft
+  void isDictating
   const markModeActive = markMode || markDrawingMode
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)

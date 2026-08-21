@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 
 import { PdfPageCanvas } from '@/components/workspace/PdfPageCanvas'
 import { PdfMarkupToolbar, type PdfMarkupStrokeWidth } from '@/components/workspace/PdfMarkupToolbar'
@@ -15,6 +15,7 @@ import type {
   PdfDrawingTextCommit,
 } from '@/components/workspace/PdfDrawingOverlay'
 import { usePdfDrawingAnnotations } from '@/hooks/use-pdf-drawing-annotations'
+import { useMarkDictation } from '@/hooks/use-mark-dictation'
 import { usePdfDocument } from '@/hooks/use-pdf-document'
 import type { Bbox, PdfDrawingGeometry } from '@/lib/types'
 import { blockToCitation } from '@/lib/types'
@@ -111,11 +112,29 @@ export function DocumentViewer({
     eraseAnnotation,
     eraseAnnotations,
     moveDrawingMark,
+    updateMarkVoiceNote,
     undoDrawingMark,
     redoDrawingMark,
     canUndoDrawingMark,
     canRedoDrawingMark,
   } = usePdfDrawingAnnotations(document.doc_id, currentPage)
+
+  const {
+    available: dictationAvailable,
+    isDictating,
+    targetAnnotationId: dictationTargetId,
+    draftNote: dictationDraft,
+    handleSpaceKeyDown,
+    handleSpaceKeyUp,
+    onSelectionChange: onDictationSelectionChange,
+    onWindowBlur: onDictationWindowBlur,
+  } = useMarkDictation({
+    markMode,
+    selectedAnnotationIds: selectedDrawingAnnotationIds,
+    annotations: drawingAnnotationsLoading ? [] : drawingAnnotations,
+    updateMarkVoiceNote,
+  })
+
   const activeCitationHasComment = activeCitation
     ? commentedBlockIds.has(activeCitation.block_id)
     : false
@@ -229,6 +248,48 @@ export function DocumentViewer({
     return () => globalThis.document.removeEventListener('keydown', onKeyDown)
   }, [markMode, setPdfMarkTool])
 
+  useEffect(() => {
+    if (!markMode) return
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (handleSpaceKeyDown(event)) {
+        event.preventDefault()
+      }
+    }
+
+    function onKeyUp(event: KeyboardEvent) {
+      handleSpaceKeyUp(event)
+    }
+
+    globalThis.window.addEventListener('keydown', onKeyDown)
+    globalThis.window.addEventListener('keyup', onKeyUp)
+    return () => {
+      globalThis.window.removeEventListener('keydown', onKeyDown)
+      globalThis.window.removeEventListener('keyup', onKeyUp)
+    }
+  }, [handleSpaceKeyDown, handleSpaceKeyUp, markMode])
+
+  useEffect(() => {
+    if (!markMode) return
+
+    function onBlur() {
+      onDictationWindowBlur()
+    }
+
+    function onVisibilityChange() {
+      if (globalThis.document.visibilityState === 'hidden') {
+        onDictationWindowBlur()
+      }
+    }
+
+    globalThis.window.addEventListener('blur', onBlur)
+    globalThis.document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      globalThis.window.removeEventListener('blur', onBlur)
+      globalThis.document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [markMode, onDictationWindowBlur])
+
   async function persistDrawingMark<T>(
     action: () => Promise<T>,
     errorLabel: string,
@@ -311,6 +372,14 @@ export function DocumentViewer({
     return () => globalThis.document.removeEventListener('keydown', onKeyDown)
   }, [handleDeleteSelectedMarks, markMode, pdfMarkTool, selectedDrawingAnnotationIds.length])
 
+  const handleDrawingSelectionChange = useCallback(
+    (annotationIds: string[]) => {
+      onDictationSelectionChange(annotationIds)
+      setSelectedDrawingAnnotationIds(annotationIds)
+    },
+    [onDictationSelectionChange],
+  )
+
   const effectiveMarkStrokeWidth =
     pdfMarkTool === 'highlighter'
       ? Math.max(pdfMarkStrokeWidth, 8)
@@ -318,8 +387,18 @@ export function DocumentViewer({
   const markColor = pdfMarkColor
   const pageDrawingAnnotations = drawingAnnotationsLoading ? [] : drawingAnnotations
 
+  const markDictationHint =
+    markMode && isDictating
+      ? 'Listening… release Space to save'
+      : markMode && !dictationAvailable
+        ? 'Voice notation requires HTTPS + Chrome/Edge speech support'
+        : markMode && selectedDrawingAnnotationIds.length === 1
+          ? 'Hold Space to dictate notation'
+          : null
+
   const toolbarHint =
     adjustError ??
+    markDictationHint ??
     (markMode
       ? `Mark window locations on the plan · Page ${currentPage} of ${totalPages || '—'} · ${Math.round(scale * 100)}%`
       : canAdjustRegion
@@ -465,11 +544,14 @@ export function DocumentViewer({
                 markMode && pdfMarkTool === 'select' ? selectedDrawingAnnotationIds : undefined
               }
               onSelectionChange={
-                markMode && pdfMarkTool === 'select' ? setSelectedDrawingAnnotationIds : undefined
+                markMode && pdfMarkTool === 'select' ? handleDrawingSelectionChange : undefined
               }
               onMoveAnnotation={
                 markMode && pdfMarkTool === 'hand' ? handleMoveAnnotation : undefined
               }
+              dictationTargetId={dictationTargetId}
+              dictationDraft={dictationDraft}
+              isDictating={isDictating}
             />
           </div>
         )}

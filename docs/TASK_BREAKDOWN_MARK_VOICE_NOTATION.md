@@ -217,17 +217,19 @@ flowchart TD
 ### **ID:** BDA-250
 
 **Title:** DocumentViewer Space key wiring  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-249  
 **Priority:** Critical  
 **Description:** Wire [`DocumentViewer.tsx`](../src/components/workspace/DocumentViewer.tsx): `window` `keydown`/`keyup` for Space when `markMode`; integrate `useMarkDictation`; pass `dictationTargetId`, `dictationDraft`, `isDictating` to canvas. Guard: `isPdfMarkupShortcutTarget`, `isChatVoiceSessionActive()`, exactly one `selectedDrawingAnnotationIds`. Update toolbar hint string (extend existing mark hint block).  
 **Completed Changes:**
-- 🔄 Key listeners with preventDefault on keydown
-- 🔄 Hint: select one mark / listening / speech unavailable
+- ✅ Window Space keydown/keyup with `preventDefault` when dictation starts
+- ✅ Blur + `visibilitychange` commit; selection change routed through dictation hook
+- ✅ Toolbar hints: one mark / listening / speech unavailable
+- ✅ Dictation props passed to `PdfPageCanvas`
 **Test Strategy:** Mark mode → select stamp → hold Space → speak → release → hint clears; reload persists note.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`DocumentViewer.tsx`](../src/components/workspace/DocumentViewer.tsx); [`pdf-markup-tool-shortcuts.ts`](../src/lib/pdf-markup-tool-shortcuts.ts)
 
 ---

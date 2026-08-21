@@ -98,9 +98,6 @@ export function PdfPageCanvas({
   isDictating,
   className,
 }: PdfPageCanvasProps) {
-  void dictationTargetId
-  void dictationDraft
-  void isDictating
   const markModeActive = markMode || markDrawingMode
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const renderTaskRef = useRef<RenderTask | null>(null)
@@ -299,6 +296,9 @@ export function PdfPageCanvas({
             selectedAnnotationIds={selectedAnnotationIds}
             onSelectionChange={onSelectionChange}
             onMoveAnnotation={onMoveAnnotation}
+            dictationTargetId={dictationTargetId}
+            dictationDraft={dictationDraft}
+            isDictating={isDictating}
           />
         </div>
       ) : null}

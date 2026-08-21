@@ -237,16 +237,16 @@ flowchart TD
 ### **ID:** BDA-251
 
 **Title:** PdfPageCanvas dictation props  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-250  
 **Priority:** High  
 **Description:** Extend [`PdfPageCanvas.tsx`](../src/components/workspace/PdfPageCanvas.tsx) props: `dictationTargetId`, `dictationDraft`, `isDictating` (or single `dictationState` object). Pass through to [`PdfDrawingOverlay.tsx`](../src/components/workspace/PdfDrawingOverlay.tsx). No keyboard logic in canvas layer.  
 **Completed Changes:**
-- 🔄 Typed props + forwarding
+- ✅ Typed props on canvas + overlay; canvas forwards to `PdfDrawingOverlay`
 **Test Strategy:** `pnpm exec tsc -b`; overlay receives props when dictating.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-225 overlay wiring pattern
 
 ---

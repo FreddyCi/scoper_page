@@ -90,6 +90,10 @@ export type PdfDrawingOverlayProps = {
     annotationId: string,
     geometry: PdfDrawingGeometry,
   ) => void | Promise<void>
+  /** Hold-Space dictation state forwarded from DocumentViewer (BDA-251+). */
+  dictationTargetId?: string | null
+  dictationDraft?: string
+  isDictating?: boolean
 }
 
 function stampSizePx(
@@ -497,7 +501,13 @@ export function PdfDrawingOverlay({
   selectedAnnotationIds = [],
   onSelectionChange,
   onMoveAnnotation,
+  dictationTargetId,
+  dictationDraft,
+  isDictating,
 }: PdfDrawingOverlayProps) {
+  void dictationTargetId
+  void dictationDraft
+  void isDictating
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
   const strokeToolActive =
     interactive && isStrokeTool(activeTool) && Boolean(commitStroke)

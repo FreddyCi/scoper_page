@@ -35,7 +35,7 @@ import {
 import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildContractKeywordReview } from '@/services/build-contract-keyword-review'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
-import { syncRfpComplianceMatrixForQualification } from '@/services/rfp-requirements'
+import { syncRfpComplianceMatrixForQualification, upsertRfpRequirementScore } from '@/services/rfp-requirements'
 import {
   canAttachDocumentToChat,
   contextAttachmentsForDocuments,
@@ -123,6 +123,20 @@ function writeChatCollapsedPreference(collapsed: boolean) {
 function readInitialChatCollapsed(): boolean {
   if (!readChatStartedPreference()) return true
   return readChatCollapsedPreference()
+}
+
+function mergeRfpRequirementScore(
+  scores: RfpRequirementScore[],
+  updated: RfpRequirementScore,
+): RfpRequirementScore[] {
+  const index = scores.findIndex(
+    (score) =>
+      score.requirement_id === updated.requirement_id && score.profile_id === updated.profile_id,
+  )
+  if (index === -1) return [...scores, updated]
+  const next = [...scores]
+  next[index] = updated
+  return next
 }
 
 function mapChatActions(
@@ -216,6 +230,7 @@ export type SessionState = {
   applyPdfMarkupToolbarChange: (change: PdfMarkupToolbarChange) => void
   clearEvaluationSetup: () => void
   runRfpQualification: () => Promise<void>
+  updateRfpRequirementScore: (score: RfpRequirementScore) => Promise<void>
   setProposalRequirementsProfile: (profile: ProposalRequirementsProfile | null) => void
   setProposalVolumeBody: (volumeId: string, markdown: string) => void
   clearProposalGeneration: () => void
@@ -560,6 +575,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     } catch (error) {
       console.error('[session-store] rfp requirements extract failed', error)
       set({ rfpRequirements: [], rfpRequirementScores: [] })
+    }
+  },
+
+  updateRfpRequirementScore: async (score) => {
+    const userScore: RfpRequirementScore = { ...score, source: 'user' }
+    const previous = get().rfpRequirementScores
+    const next = mergeRfpRequirementScore(previous, userScore)
+    set({ rfpRequirementScores: next })
+
+    try {
+      await upsertRfpRequirementScore(userScore)
+    } catch (error) {
+      console.error('[session-store] updateRfpRequirementScore failed', error)
+      set({ rfpRequirementScores: previous })
     }
   },
 

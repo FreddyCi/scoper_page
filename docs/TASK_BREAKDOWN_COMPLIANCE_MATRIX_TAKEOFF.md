@@ -186,19 +186,20 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-265
 
 **Title:** Editable matrix status and notes  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-264  
 **Priority:** High  
 **Description:** Status chip and note field blur-save to `rfp_requirement_scores` with `source = 'user'`. Optimistic UI; persist via the BDA-262 service. Re-run qualification must not clobber user edits (already required in BDA-262 — this task verifies from UI).  
 **Completed Changes:**
-- 🔄 Status control + note input
-- 🔄 Blur / commit persist
-- 🔄 Reload / re-qualify keeps overrides
+- ✅ Per-bidder status `<select>` in `ComplianceMatrix` (styled like criterion chips); saves on change with `source: 'user'`
+- ✅ Note `<Input>` per bidder in Note column; blur / Enter commits via `updateRfpRequirementScore`
+- ✅ Session store optimistic update + `upsertRfpRequirementScore`; re-qualify preserves user rows (BDA-262 CRUD harness)
 **Test Strategy:** Change a chip + note → refresh or re-run Qualify → values remain.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** BDA-262 user-override rule
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runRfpRequirementsCrudHarness` verifies user override survives re-seed
+**Assigned:** Completed  
+**Context/Artifacts:** BDA-262 user-override rule; [`ComplianceMatrix.tsx`](../src/components/workspace/ComplianceMatrix.tsx); [`session-store.ts`](../src/store/session-store.ts) `updateRfpRequirementScore`
 
 ---
 
@@ -506,6 +507,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.7 | 2026-08-21 | BDA-265 implemented: editable matrix status + notes |
 | v1.6 | 2026-08-21 | BDA-264 implemented: ComplianceMatrix on evaluation panel |
 | v1.5 | 2026-08-21 | BDA-263 implemented: qualification hook + matrix selectors |
 | v1.4 | 2026-08-21 | BDA-262 implemented: persist requirements + seed scores |

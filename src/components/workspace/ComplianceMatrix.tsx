@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react'
 import { ChevronRightIcon } from 'lucide-react'
 
-import { Badge } from '@/components/ui/badge'
-import type { CitationRef, RfpRequirementScoreStatus } from '@/lib/types'
+import { Input } from '@/components/ui/input'
+import type { CitationRef, RfpRequirementScore, RfpRequirementScoreStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
@@ -9,6 +10,8 @@ import {
   selectRfpRequirements,
   useSessionStore,
 } from '@/store/session-store'
+
+const STATUS_OPTIONS: RfpRequirementScoreStatus[] = ['met', 'partial', 'gap', 'unknown']
 
 const STATUS_LABEL: Record<RfpRequirementScoreStatus, string> = {
   met: 'Met',
@@ -29,42 +32,113 @@ type ComplianceMatrixProps = {
   className?: string
 }
 
-function RequirementScoreChip({ status }: { status: RfpRequirementScoreStatus | null }) {
-  if (!status) {
-    return <span className="text-muted-foreground text-xs">—</span>
+type ScoreCellProps = {
+  requirementId: string
+  profileId: string
+  score: RfpRequirementScore | null
+}
+
+function RequirementScoreSelect({ requirementId, profileId, score }: ScoreCellProps) {
+  const updateRfpRequirementScore = useSessionStore((state) => state.updateRfpRequirementScore)
+  const status = score?.status ?? 'unknown'
+  const [draft, setDraft] = useState(status)
+
+  useEffect(() => {
+    setDraft(status)
+  }, [status])
+
+  async function commit(next: RfpRequirementScoreStatus) {
+    if (next === status && score?.source === 'user') return
+    setDraft(next)
+    await updateRfpRequirementScore({
+      requirement_id: requirementId,
+      profile_id: profileId,
+      status: next,
+      note: score?.note,
+      source: 'user',
+    })
   }
 
   return (
-    <Badge variant="outline" className={cn('text-[10px] font-medium', STATUS_CLASS[status])}>
-      {STATUS_LABEL[status]}
-    </Badge>
+    <select
+      value={draft}
+      aria-label={`Compliance status for requirement ${requirementId}`}
+      onChange={(event) => void commit(event.target.value as RfpRequirementScoreStatus)}
+      className={cn(
+        'max-w-full rounded-md border px-1.5 py-1 text-[10px] font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+        STATUS_CLASS[draft],
+      )}
+    >
+      {STATUS_OPTIONS.map((option) => (
+        <option key={option} value={option}>
+          {STATUS_LABEL[option]}
+        </option>
+      ))}
+    </select>
   )
 }
 
-function formatNotesForRow(
-  profileIds: string[],
-  profileNames: Map<string, string>,
-  notesByProfile: Map<string, string>,
-): string | null {
-  const entries = profileIds
-    .map((profileId) => {
-      const note = notesByProfile.get(profileId)?.trim()
-      if (!note) return null
-      const name = profileNames.get(profileId) ?? profileId
-      return profileIds.length === 1 ? note : `${name}: ${note}`
-    })
-    .filter((entry): entry is string => Boolean(entry))
+function RequirementNoteInput({
+  requirementId,
+  profileId,
+  profileLabel,
+  score,
+  showProfileLabel,
+}: ScoreCellProps & { profileLabel: string; showProfileLabel: boolean }) {
+  const updateRfpRequirementScore = useSessionStore((state) => state.updateRfpRequirementScore)
+  const note = score?.note ?? ''
+  const [draft, setDraft] = useState(note)
 
-  return entries.length > 0 ? entries.join(' · ') : null
+  useEffect(() => {
+    setDraft(note)
+  }, [note])
+
+  async function commit() {
+    const trimmed = draft.trim()
+    const previous = note.trim()
+    if (trimmed === previous) return
+    await updateRfpRequirementScore({
+      requirement_id: requirementId,
+      profile_id: profileId,
+      status: score?.status ?? 'unknown',
+      note: trimmed || undefined,
+      source: 'user',
+    })
+  }
+
+  return (
+    <div className="space-y-1">
+      {showProfileLabel ? (
+        <p className="text-muted-foreground truncate text-[10px] font-medium" title={profileLabel}>
+          {profileLabel}
+        </p>
+      ) : null}
+      <Input
+        value={draft}
+        placeholder="Add note…"
+        aria-label={
+          showProfileLabel
+            ? `Note for ${profileLabel}`
+            : `Note for requirement ${requirementId}`
+        }
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => void commit()}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.currentTarget.blur()
+          }
+        }}
+        className="h-7 min-w-[6rem] px-2 text-xs"
+      />
+    </div>
+  )
 }
 
-/** Shall/must compliance matrix — baseline requirements vs bidder profiles (BDA-264). */
+/** Shall/must compliance matrix — baseline requirements vs bidder profiles (BDA-264–265). */
 export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatrixProps) {
   const requirements = useSessionStore(selectRfpRequirements)
   const scores = useSessionStore(selectRfpRequirementScores)
   const profiles = useSessionStore((state) => state.profiles)
-
-  const profileNames = new Map(profiles.map((profile) => [profile.profile_id, profile.subject.name]))
 
   function handleCitationClick(citation: CitationRef) {
     if (onCitationClick) {
@@ -72,6 +146,14 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
       return
     }
     focusCitation(citation)
+  }
+
+  function scoreFor(requirementId: string, profileId: string): RfpRequirementScore | null {
+    return (
+      scores.find(
+        (score) => score.requirement_id === requirementId && score.profile_id === profileId,
+      ) ?? null
+    )
   }
 
   if (requirements.length === 0) {
@@ -94,13 +176,13 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
         <p className="text-muted-foreground text-xs leading-relaxed">
           {requirements.length} obligation{requirements.length === 1 ? '' : 's'} from baseline
           {profiles.length > 0
-            ? ` · scored against ${profiles.length} bidder${profiles.length === 1 ? '' : 's'}`
+            ? ` · edit status and notes per bidder (saved on blur)`
             : ' · upload bidder responses to score columns'}
         </p>
       </div>
 
       <div className="border-border/70 overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[32rem] border-collapse text-left text-xs">
+        <table className="w-full min-w-[36rem] border-collapse text-left text-xs">
           <thead>
             <tr className="border-border/70 bg-workspace-muted/40 border-b">
               <th className="text-muted-foreground w-8 px-2 py-2 font-medium">#</th>
@@ -117,25 +199,11 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
                   {profile.subject.name}
                 </th>
               ))}
-              <th className="text-muted-foreground min-w-[5rem] px-2 py-2 font-medium">Note</th>
+              <th className="text-muted-foreground min-w-[7rem] px-2 py-2 font-medium">Note</th>
             </tr>
           </thead>
           <tbody>
             {requirements.map((requirement, index) => {
-              const rowScores = scores.filter((score) => score.requirement_id === requirement.id)
-              const scoresByProfile = new Map(
-                rowScores.map((score) => [score.profile_id, score.status]),
-              )
-              const notesByProfile = new Map(
-                rowScores
-                  .filter((score) => score.note?.trim())
-                  .map((score) => [score.profile_id, score.note!.trim()]),
-              )
-              const noteText = formatNotesForRow(
-                profiles.map((profile) => profile.profile_id),
-                profileNames,
-                notesByProfile,
-              )
               const clickable = Boolean(requirement.citation)
 
               return (
@@ -178,13 +246,30 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
                   </td>
                   {profiles.map((profile) => (
                     <td key={profile.profile_id} className="px-2 py-2 align-top">
-                      <RequirementScoreChip
-                        status={scoresByProfile.get(profile.profile_id) ?? null}
+                      <RequirementScoreSelect
+                        requirementId={requirement.id}
+                        profileId={profile.profile_id}
+                        score={scoreFor(requirement.id, profile.profile_id)}
                       />
                     </td>
                   ))}
-                  <td className="text-muted-foreground px-2 py-2 align-top leading-relaxed">
-                    {noteText ?? '—'}
+                  <td className="px-2 py-2 align-top">
+                    {profiles.length === 0 ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <div className="space-y-2">
+                        {profiles.map((profile) => (
+                          <RequirementNoteInput
+                            key={profile.profile_id}
+                            requirementId={requirement.id}
+                            profileId={profile.profile_id}
+                            profileLabel={profile.subject.name}
+                            showProfileLabel={profiles.length > 1}
+                            score={scoreFor(requirement.id, profile.profile_id)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </td>
                 </tr>
               )

@@ -142,18 +142,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-263
 
 **Title:** Hook extract into runRfpQualification  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-262  
 **Priority:** Critical  
 **Description:** In [`session-store.ts`](../src/store/session-store.ts) `runRfpQualification`, after existing 3-rule profile build: run shall extract on baseline blocks, persist requirements, seed/update scores for loaded bidder profiles. Expose read selectors (requirements + scores) the matrix will use. Failure of extract must **not** fail qualification cards (log + continue).  
 **Completed Changes:**
-- 🔄 Call extract + persist from `runRfpQualification`
-- 🔄 Store fields / getters for matrix
-- 🔄 Isolate errors from existing profile path
+- ✅ `syncRfpComplianceMatrixForQualification` in [`rfp-requirements.ts`](../src/services/rfp-requirements.ts); called after profile cards in `runRfpQualification`
+- ✅ Store fields `rfpRequirements` / `rfpRequirementScores`; selectors `selectRfpRequirements`, `selectRfpRequirementScores`, `selectRfpRequirementScoresForProfile`
+- ✅ Extract errors isolated (`console.error` + empty matrix state); profile cards still set
+- ✅ `runRfpRequirementsQualificationHarness` + session reset clears matrix state
 **Test Strategy:** Load sample RFP pack → profiles still appear; store has requirement rows when baseline text contains shall/must. `pnpm exec tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`session-store.ts`](../src/store/session-store.ts) `runRfpQualification`; [`load-sample-documents.ts`](../src/services/load-sample-documents.ts)
 
 ---
@@ -505,6 +506,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.5 | 2026-08-21 | BDA-263 implemented: qualification hook + matrix selectors |
 | v1.4 | 2026-08-21 | BDA-262 implemented: persist requirements + seed scores |
 | v1.3 | 2026-08-21 | BDA-261 implemented: rfp_requirements + scores DuckDB tables |
 | v1.2 | 2026-08-21 | BDA-260 implemented: heuristic shall extract + harness |

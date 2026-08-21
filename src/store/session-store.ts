@@ -14,6 +14,8 @@ import type {
   IngestResult,
   PdfMarkSessionTool,
   ProposalRequirementsProfile,
+  RfpRequirement,
+  RfpRequirementScore,
   RfpResultsProfile,
   ScopeCreepProfile,
   WorkspaceMode,
@@ -33,6 +35,7 @@ import {
 import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildContractKeywordReview } from '@/services/build-contract-keyword-review'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
+import { syncRfpComplianceMatrixForQualification } from '@/services/rfp-requirements'
 import {
   canAttachDocumentToChat,
   contextAttachmentsForDocuments,
@@ -153,6 +156,10 @@ export type SessionState = {
   evaluationDocId: string | null
   contractChecklistDocId: string | null
   contractReviewProfile: RfpResultsProfile | null
+  /** Baseline shall/must rows for compliance matrix (BDA-263). */
+  rfpRequirements: RfpRequirement[]
+  /** Per-bidder matrix scores keyed by requirement + profile (BDA-263). */
+  rfpRequirementScores: RfpRequirementScore[]
   companyContext: string
   reviewerName: string
   /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
@@ -277,6 +284,8 @@ const initialState = {
   evaluationDocId: null as string | null,
   contractChecklistDocId: null as string | null,
   contractReviewProfile: null as RfpResultsProfile | null,
+  rfpRequirements: [] as RfpRequirement[],
+  rfpRequirementScores: [] as RfpRequirementScore[],
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   pdfMarkDrawingMode: false,
@@ -469,6 +478,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       contractChecklistDocId: null,
       contractReviewProfile: null,
       profiles: [],
+      rfpRequirements: [],
+      rfpRequirementScores: [],
       proposalRequirementsProfile: null,
       proposalGenerating: false,
       proposalGenerationError: null,
@@ -536,6 +547,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       profiles: result.responseProfiles,
       workspaceView: 'profiles',
     })
+
+    try {
+      const matrix = await syncRfpComplianceMatrixForQualification({
+        docId: resolvedEvaluationDocId,
+        responseProfiles: result.responseProfiles,
+      })
+      set({
+        rfpRequirements: matrix.requirements,
+        rfpRequirementScores: matrix.scores,
+      })
+    } catch (error) {
+      console.error('[session-store] rfp requirements extract failed', error)
+      set({ rfpRequirements: [], rfpRequirementScores: [] })
+    }
   },
 
   setProposalRequirementsProfile: (proposalRequirementsProfile) =>
@@ -1118,6 +1143,24 @@ export function useBidderResponseCount() {
   return useSessionStore(selectBidderResponseCount)
 }
 
+/** Baseline shall/must rows for the compliance matrix. */
+export function selectRfpRequirements(state: SessionState): RfpRequirement[] {
+  return state.rfpRequirements
+}
+
+/** All matrix scores for the current baseline evaluation. */
+export function selectRfpRequirementScores(state: SessionState): RfpRequirementScore[] {
+  return state.rfpRequirementScores
+}
+
+/** Matrix scores for one bidder profile card. */
+export function selectRfpRequirementScoresForProfile(
+  state: SessionState,
+  profileId: string,
+): RfpRequirementScore[] {
+  return state.rfpRequirementScores.filter((score) => score.profile_id === profileId)
+}
+
 /** Active document metadata, or null when none selected / empty session */
 export function selectActiveDocument(state: SessionState): DocumentMeta | null {
   if (!state.activeDocId) return null
@@ -1340,4 +1383,8 @@ export function runSessionStoreHarness(): void {
   }
 
   store.resetSession()
+  const afterReset = useSessionStore.getState()
+  if (afterReset.rfpRequirements.length !== 0 || afterReset.rfpRequirementScores.length !== 0) {
+    throw new Error('resetSession should clear rfp compliance matrix state')
+  }
 }

@@ -1,4 +1,5 @@
 import { extractRfpRequirements } from '@/services/extract-rfp-requirements'
+import { fetchDocumentBlocks } from '@/services/document-blocks'
 import { getDuckdbClient } from '@/services/duckdb-client'
 import type {
   BlockRecord,
@@ -8,6 +9,7 @@ import type {
   RfpRequirementScoreSource,
   RfpRequirementScoreStatus,
   RfpRequirementsExtract,
+  RfpResultsProfile,
 } from '@/lib/types'
 
 const TOKEN_PATTERN = /[a-z0-9]{4,}/gi
@@ -280,6 +282,30 @@ export async function persistRfpRequirementsExtract(
   }
 }
 
+/**
+ * Run shall extract on baseline blocks and seed matrix scores for bidder profiles.
+ * Called from `runRfpQualification` after the 3-rule profile cards build.
+ */
+export async function syncRfpComplianceMatrixForQualification(input: {
+  docId: string
+  responseProfiles: RfpResultsProfile[]
+}): Promise<{ requirements: RfpRequirement[]; scores: RfpRequirementScore[] }> {
+  const baselineBlocks = await fetchDocumentBlocks(input.docId)
+  const extract = extractRfpRequirements(baselineBlocks)
+  const profiles: RfpScoreProfileInput[] = []
+
+  for (const profile of input.responseProfiles) {
+    const blocks = await fetchDocumentBlocks(profile.source_doc_id)
+    profiles.push({ profile_id: profile.profile_id, blocks })
+  }
+
+  return persistRfpRequirementsExtract({
+    docId: input.docId,
+    extract,
+    profiles,
+  })
+}
+
 function fixtureBlock(
   block_id: string,
   text: string,
@@ -368,6 +394,72 @@ export async function runRfpRequirementsCrudHarness(): Promise<void> {
   }
 
   const duckdb = await getDuckdbClient()
+  await duckdb.query(
+    `DELETE FROM rfp_requirement_scores
+     WHERE requirement_id IN (SELECT requirement_id FROM rfp_requirements WHERE doc_id = ?)`,
+    [docId],
+  )
+  await duckdb.query('DELETE FROM rfp_requirements WHERE doc_id = ?', [docId])
+}
+
+/** Dev harness — qualification sync on DuckDB blocks (BDA-263). */
+export async function runRfpRequirementsQualificationHarness(): Promise<void> {
+  const docId = 'rfp-req-qual-harness'
+  const profileId = 'profile-bidder-qual-harness'
+  const knownShall =
+    'The Contractor shall provide weekly status reports to the Contracting Officer.'
+  const duckdb = await getDuckdbClient()
+
+  await duckdb.query('DELETE FROM blocks WHERE doc_id IN (?, ?)', [docId, 'bidder-qual-harness'])
+  await duckdb.query(
+    `DELETE FROM rfp_requirement_scores
+     WHERE requirement_id IN (SELECT requirement_id FROM rfp_requirements WHERE doc_id = ?)`,
+    [docId],
+  )
+  await duckdb.query('DELETE FROM rfp_requirements WHERE doc_id = ?', [docId])
+
+  await duckdb.insertBlock({
+    block_id: 'qual-baseline-shall',
+    doc_id: docId,
+    page_num: 2,
+    text: knownShall,
+  })
+  await duckdb.insertBlock({
+    block_id: 'qual-bidder-match',
+    doc_id: 'bidder-qual-harness',
+    page_num: 1,
+    text: 'We will provide weekly status reports to the Contracting Officer.',
+  })
+
+  const synced = await syncRfpComplianceMatrixForQualification({
+    docId,
+    responseProfiles: [
+      {
+        profile_id: profileId,
+        source_doc_id: 'bidder-qual-harness',
+        verdict: 'likely',
+        subject: { name: 'Bidder qual harness' },
+        criteria: [],
+        summary: 'Harness bidder',
+      },
+    ],
+  })
+
+  const requirement = synced.requirements.find((row) => row.label.includes('weekly status reports'))
+  if (!requirement) {
+    throw new Error('runRfpRequirementsQualificationHarness: sync missing known shall')
+  }
+
+  const score = synced.scores.find(
+    (row) => row.requirement_id === requirement.id && row.profile_id === profileId,
+  )
+  if (!score || score.status === 'gap' || score.status === 'unknown') {
+    throw new Error(
+      `runRfpRequirementsQualificationHarness: expected seeded met/partial, got ${score?.status}`,
+    )
+  }
+
+  await duckdb.query('DELETE FROM blocks WHERE doc_id IN (?, ?)', [docId, 'bidder-qual-harness'])
   await duckdb.query(
     `DELETE FROM rfp_requirement_scores
      WHERE requirement_id IN (SELECT requirement_id FROM rfp_requirements WHERE doc_id = ?)`,

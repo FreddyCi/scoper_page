@@ -1,7 +1,11 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib'
 
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
-import type { PdfDrawingNormalizedBounds } from '@/lib/pdf-drawing-geometry'
+import {
+  normalizedAnnotationMarqueeBounds,
+  type PdfDrawingNormalizedBounds,
+  type PdfDrawingViewportSize,
+} from '@/lib/pdf-drawing-geometry'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
 import type {
   PdfDrawingAnnotation,
@@ -20,6 +24,15 @@ const DEFAULT_HIGHLIGHTER_OPACITY = 0.35
 const DEFAULT_TEXT_PT = 14
 const DEFAULT_STAMP_PT = 24
 const DEFAULT_STAMP_STROKE_PT = 2
+const VOICE_NOTE_FONT_PT = 8
+const VOICE_NOTE_TITLE_PT = 7
+const VOICE_NOTE_MAX_WIDTH_PT = 132
+const VOICE_NOTE_GAP_PT = 6
+const VOICE_NOTE_PADDING_PT = 5
+const VOICE_NOTE_BG = rgb(1, 0.97, 0.86)
+const VOICE_NOTE_BORDER = rgb(0.82, 0.62, 0.12)
+const VOICE_NOTE_TITLE = rgb(0.35, 0.22, 0.02)
+const VOICE_NOTE_BODY = rgb(0.18, 0.14, 0.1)
 
 export type PdfDrawingPageSize = {
   widthPts: number
@@ -190,6 +203,101 @@ function drawTextAnnotation(
   })
 }
 
+function wrapPdfLatinText(
+  text: string,
+  font: PDFFont,
+  fontSize: number,
+  maxWidth: number,
+): string[] {
+  const normalized = toPdfLatinText(text)
+  if (!normalized) return []
+
+  const words = normalized.split(' ')
+  const lines: string[] = []
+  let current = ''
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) {
+      current = next
+      continue
+    }
+    if (current) lines.push(current)
+    current = word
+  }
+
+  if (current) lines.push(current)
+  return lines
+}
+
+function drawVoiceNotationCallout(
+  page: PDFPage,
+  annotation: PdfDrawingAnnotation,
+  pageSize: PdfDrawingPageSize,
+  font: PDFFont,
+  boldFont: PDFFont,
+): void {
+  const note = annotation.voice_note?.trim()
+  if (!note) return
+
+  const viewport: PdfDrawingViewportSize = {
+    width: pageSize.widthPts,
+    height: pageSize.heightPts,
+  }
+  const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
+  const mark = normalizedBoundsToPdfUserSpace(bounds, pageSize)
+  const innerWidth = VOICE_NOTE_MAX_WIDTH_PT - VOICE_NOTE_PADDING_PT * 2
+  const bodyLines = wrapPdfLatinText(note, font, VOICE_NOTE_FONT_PT, innerWidth)
+  if (bodyLines.length === 0) return
+
+  const title = 'Notation'
+  const lineHeight = VOICE_NOTE_FONT_PT * 1.25
+  const titleHeight = VOICE_NOTE_TITLE_PT + 3
+  const boxWidth = VOICE_NOTE_MAX_WIDTH_PT
+  const boxHeight =
+    VOICE_NOTE_PADDING_PT * 2 + titleHeight + bodyLines.length * lineHeight
+  const placeRight = mark.x + mark.width + VOICE_NOTE_GAP_PT + boxWidth <= pageSize.widthPts - 8
+  const boxX = placeRight
+    ? mark.x + mark.width + VOICE_NOTE_GAP_PT
+    : Math.max(8, mark.x - VOICE_NOTE_GAP_PT - boxWidth)
+  const boxY = Math.min(
+    Math.max(8, mark.y + mark.height - boxHeight),
+    pageSize.heightPts - boxHeight - 8,
+  )
+
+  page.drawRectangle({
+    x: boxX,
+    y: boxY,
+    width: boxWidth,
+    height: boxHeight,
+    color: VOICE_NOTE_BG,
+    borderColor: VOICE_NOTE_BORDER,
+    borderWidth: 0.75,
+  })
+
+  const textX = boxX + VOICE_NOTE_PADDING_PT
+  let cursorY = boxY + boxHeight - VOICE_NOTE_PADDING_PT - VOICE_NOTE_TITLE_PT
+  page.drawText(title, {
+    x: textX,
+    y: cursorY,
+    size: VOICE_NOTE_TITLE_PT,
+    font: boldFont,
+    color: VOICE_NOTE_TITLE,
+  })
+  cursorY -= titleHeight
+
+  for (const line of bodyLines) {
+    page.drawText(line, {
+      x: textX,
+      y: cursorY,
+      size: VOICE_NOTE_FONT_PT,
+      font,
+      color: VOICE_NOTE_BODY,
+    })
+    cursorY -= lineHeight
+  }
+}
+
 function stampSizePts(geometry: PdfDrawingStampGeometry, pageWidthPts: number): number {
   if (geometry.size != null && geometry.size > 0) {
     return geometry.size * pageWidthPts
@@ -283,16 +391,24 @@ export function drawPdfDrawingAnnotationsOnPage(
     const geometry = annotation.geometry
     if (geometry.kind === 'text') {
       const label = annotation.text_body?.trim()
-      if (!label) continue
-      const font = options.boldFont ?? options.font
-      if (!font) {
-        throw new Error('drawPdfDrawingAnnotationsOnPage: font required for text marks')
+      if (label) {
+        const font = options.boldFont ?? options.font
+        if (!font) {
+          throw new Error('drawPdfDrawingAnnotationsOnPage: font required for text marks')
+        }
+        drawTextAnnotation(page, annotation, geometry, pageSize, font)
       }
-      drawTextAnnotation(page, annotation, geometry, pageSize, font)
-      continue
+    } else {
+      drawAnnotationGraphic(page, annotation, geometry, pageSize)
     }
 
-    drawAnnotationGraphic(page, annotation, geometry, pageSize)
+    if (!annotation.voice_note?.trim()) continue
+    const font = options.font
+    const boldFont = options.boldFont ?? options.font
+    if (!font || !boldFont) {
+      throw new Error('drawPdfDrawingAnnotationsOnPage: font required for voice notation')
+    }
+    drawVoiceNotationCallout(page, annotation, pageSize, font, boldFont)
   }
 }
 
@@ -325,6 +441,7 @@ export async function runPdfDrawingExportHarness(): Promise<void> {
         color: '#0EA5E9',
         stroke_width: 2,
         geometry: { kind: 'stamp', x: 0.5, y: 0.5, stampKind: 'window' },
+        voice_note: 'this is window 108',
         author_initials: 'HR',
         created_at: '2026-01-01T00:00:01.000Z',
       },
@@ -340,6 +457,9 @@ export async function runPdfDrawingExportHarness(): Promise<void> {
   const pdfText = new TextDecoder('latin1').decode(bytes)
   if (!pdfText.includes('re') && !pdfText.includes('S')) {
     throw new Error('runPdfDrawingExportHarness failed: expected vector operators in PDF')
+  }
+  if (!pdfText.includes('this is window 108') && !pdfText.includes('Notation')) {
+    throw new Error('runPdfDrawingExportHarness failed: expected burned-in voice notation text')
   }
 
   const bounds = normalizedBoundsToPdfUserSpace(

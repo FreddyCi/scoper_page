@@ -349,7 +349,11 @@ function SplitDocumentViewFooter({
                     >
                       <MenuOptionContent
                         title="Toggleable markup"
-                        description="Highlights and notes you can hide in Preview or Acrobat."
+                        description={
+                          drawingMarkCount > 0
+                            ? 'Highlights, drawing markers, and voice notations you can hide in Preview or Acrobat.'
+                            : 'Highlights and notes you can hide in Preview or Acrobat.'
+                        }
                         titleClassName={brandAccentStyles('amber').title}
                       />
                     </DropdownMenuItem>
@@ -361,7 +365,7 @@ function SplitDocumentViewFooter({
                         title="Burned-in notes"
                         description={
                           drawingMarkCount > 0
-                            ? 'Always-visible note boxes; includes drawing marks when this document has any.'
+                            ? 'Always-visible note boxes; drawing markers include voice notation callouts.'
                             : 'Always-visible yellow boxes on the page for sharing outside PDF viewers.'
                         }
                         titleClassName={brandAccentStyles('amber').title}
@@ -375,7 +379,7 @@ function SplitDocumentViewFooter({
                   <BrandMenuSectionHeader
                     accent="rose"
                     title="Drawing marks"
-                    description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — burned into the page on export.`}
+                    description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — burned into the page on export, with voice notation beside each marked note.`}
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
@@ -386,7 +390,7 @@ function SplitDocumentViewFooter({
                     >
                       <MenuOptionContent
                         title="Export PDF with drawing marks"
-                        description="Burned-in review notes plus pen, shapes, text, and stamps from Mark mode."
+                        description="Burned-in review notes plus pen, shapes, text, stamps, and voice notation callouts from Mark mode."
                         titleClassName={brandAccentStyles('rose').title}
                       />
                     </DropdownMenuItem>

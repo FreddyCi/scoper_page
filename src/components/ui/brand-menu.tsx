@@ -11,7 +11,7 @@ export function BrandDropdownContent({ className, children, ...props }: BrandDro
   return (
     <DropdownMenuContent
       className={cn(
-        'border-border bg-workspace shadow-elevated flex w-80 flex-col gap-2 overflow-hidden rounded-2xl p-2 ring-0',
+        'border-border bg-workspace shadow-elevated flex w-80 min-h-0 max-h-(--available-height) flex-col gap-2 overflow-x-hidden overflow-y-auto rounded-2xl p-2 ring-0',
         className,
       )}
       {...props}

@@ -128,3 +128,34 @@ export function addTextNoteAnnotation(
   dict.set(PDFName.of('T'), PDFString.of('Scoper'))
   registerAnnotation(page, dict)
 }
+
+/** Native square annotation — toggleable drawing-mark outline in markup export. */
+export function addSquareAnnotation(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  bbox: Bbox,
+  contents: string,
+  color: [number, number, number] = HIGHLIGHT_COLOR,
+): void {
+  const context = pdfDoc.context
+  const dict = PDFDict.withContext(context)
+  const safeContents = toPdfLatinText(contents)
+  const border = PDFArray.withContext(context)
+  border.push(PDFNumber.of(0))
+  border.push(PDFNumber.of(0))
+  border.push(PDFNumber.of(1.5))
+
+  dict.set(PDFName.of('Type'), PDFName.of('Annot'))
+  dict.set(PDFName.of('Subtype'), PDFName.of('Square'))
+  dict.set(PDFName.of('F'), PDFNumber.of(4))
+  dict.set(PDFName.of('Rect'), makePdfRect(context, bbox.x, bbox.y, bbox.width, bbox.height))
+  dict.set(PDFName.of('C'), makeColorArray(context, color))
+  dict.set(PDFName.of('Border'), border)
+
+  if (safeContents) {
+    dict.set(PDFName.of('Contents'), PDFHexString.fromText(safeContents))
+  }
+
+  dict.set(PDFName.of('T'), PDFString.of('Scoper'))
+  registerAnnotation(page, dict)
+}

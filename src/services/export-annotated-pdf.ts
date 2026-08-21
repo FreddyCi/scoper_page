@@ -3,8 +3,16 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
 import { beginBlobSave } from '@/lib/download-blob'
-import { drawPdfDrawingAnnotationsOnPage } from '@/lib/pdf-drawing-export'
-import { addHighlightAnnotation, addTextNoteAnnotation } from '@/lib/pdf-export-annotations'
+import {
+  drawPdfDrawingAnnotationsOnPage,
+  normalizedBoundsToPdfUserSpace,
+} from '@/lib/pdf-drawing-export'
+import { normalizedAnnotationMarqueeBounds } from '@/lib/pdf-drawing-geometry'
+import {
+  addHighlightAnnotation,
+  addSquareAnnotation,
+  addTextNoteAnnotation,
+} from '@/lib/pdf-export-annotations'
 import { toPdfLatinText } from '@/lib/pdf-latin-text'
 import type { Bbox, CommentRecord, DocumentMeta, PdfDrawingAnnotation } from '@/lib/types'
 import {
@@ -335,6 +343,70 @@ function addMarkupBlockAnnotation(
   addTextNoteAnnotation(pdfDoc, page, 48, pageHeight - 72 - noteIndex * 28, contents)
 }
 
+const MARKUP_SQUARE_MIN_PT = 16
+
+function hexToRgbTuple(hex: string): [number, number, number] {
+  const normalized = hex.trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return [0.06, 0.65, 0.91]
+  }
+  const value = Number.parseInt(normalized, 16)
+  return [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255]
+}
+
+function drawingMarkMarkupLabel(annotation: PdfDrawingAnnotation): string {
+  switch (annotation.geometry.kind) {
+    case 'stamp':
+      return 'Window marker'
+    case 'text':
+      return annotation.text_body?.trim() || 'Text label'
+    case 'rect':
+      return 'Rectangle'
+    case 'ellipse':
+      return 'Ellipse'
+    case 'stroke':
+      return annotation.tool === 'highlighter' ? 'Highlight' : 'Stroke'
+    default:
+      return 'Drawing mark'
+  }
+}
+
+function addMarkupDrawingAnnotations(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  annotations: readonly PdfDrawingAnnotation[],
+): void {
+  const pageSize = { widthPts: page.getWidth(), heightPts: page.getHeight() }
+  const viewport = { width: pageSize.widthPts, height: pageSize.heightPts }
+
+  for (const annotation of annotations) {
+    const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
+    const pdfBbox = normalizedBoundsToPdfUserSpace(bounds, pageSize)
+    const width = Math.max(pdfBbox.width, MARKUP_SQUARE_MIN_PT)
+    const height = Math.max(pdfBbox.height, MARKUP_SQUARE_MIN_PT)
+    const bbox = {
+      x: pdfBbox.x,
+      y: Math.max(0, pdfBbox.y + pdfBbox.height - height),
+      width,
+      height,
+    }
+    const voiceNote = annotation.voice_note?.trim()
+    const contents = voiceNote || drawingMarkMarkupLabel(annotation)
+
+    addSquareAnnotation(pdfDoc, page, bbox, contents, hexToRgbTuple(annotation.color))
+
+    if (voiceNote) {
+      addTextNoteAnnotation(
+        pdfDoc,
+        page,
+        bbox.x + bbox.width,
+        bbox.y + bbox.height,
+        voiceNote,
+      )
+    }
+  }
+}
+
 function annotatedExportFilename(filename: string, mode: ExportCommentMode): string {
   const base = filename.replace(/\.pdf$/i, '')
   const suffix = mode === 'markup' ? 'scoper-markup' : 'scoper-export'
@@ -346,7 +418,9 @@ export { annotatedExportFilename }
 export type ExportAnnotatedPdfOptions = {
   commentMode?: ExportCommentMode
   /**
-   * Burned-in export only — merge vector drawing marks (BDA-238).
+   * Include drawing marks on export.
+   * Burned-in: vector graphics + voice notation callouts.
+   * Markup: toggleable square + sticky-note annotations (voice_note in Contents).
    * Default: true when the document has any `pdf_drawing_annotations` rows.
    */
   includeDrawingMarks?: boolean
@@ -447,6 +521,13 @@ export async function exportAnnotatedPdf(
       entries.forEach((entry, index) => {
         addMarkupBlockAnnotation(pdfDoc, page, pageHeight, entry, index)
       })
+    }
+
+    if (includeDrawingMarks) {
+      for (const [pageNum, marks] of drawingsByPage) {
+        if (pageNum < 1 || pageNum > pages.length) continue
+        addMarkupDrawingAnnotations(pdfDoc, pages[pageNum - 1]!, marks)
+      }
     }
   }
 
@@ -581,14 +662,24 @@ export async function runExportAnnotatedPdfDrawingMarksHarness(): Promise<void> 
     )
   }
 
-  const markupBytes = await exportAnnotatedPdf(document, { commentMode: 'markup' })
-  const markupWithoutExplicitDrawing = await exportAnnotatedPdf(document, {
+  const markupWithoutDrawing = await exportAnnotatedPdf(document, {
+    commentMode: 'markup',
+    includeDrawingMarks: false,
+  })
+  const markupWithDrawing = await exportAnnotatedPdf(document, {
     commentMode: 'markup',
     includeDrawingMarks: true,
   })
-  if (markupBytes.byteLength !== markupWithoutExplicitDrawing.byteLength) {
+  if (markupWithDrawing.byteLength <= markupWithoutDrawing.byteLength) {
     throw new Error(
-      'runExportAnnotatedPdfDrawingMarksHarness failed: markup mode must ignore drawing marks',
+      'runExportAnnotatedPdfDrawingMarksHarness failed: markup mode should include drawing-mark annotations',
+    )
+  }
+
+  const markupDefault = await exportAnnotatedPdf(document, { commentMode: 'markup' })
+  if (markupDefault.byteLength !== markupWithDrawing.byteLength) {
+    throw new Error(
+      'runExportAnnotatedPdfDrawingMarksHarness failed: default markup includeDrawingMarks should match explicit true',
     )
   }
 }

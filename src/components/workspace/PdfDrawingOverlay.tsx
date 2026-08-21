@@ -561,6 +561,7 @@ export function PdfDrawingOverlay({
   const draftMarqueeRef = useRef<MarqueeDragState | null>(null)
   const [hoveredVoiceNoteId, setHoveredVoiceNoteId] = useState<string | null>(null)
   const hoverCardPinnedRef = useRef(false)
+  const ignoreHoverUntilLeaveRef = useRef<string | null>(null)
   const selectedIdsRef = useRef(selectedAnnotationIds)
   selectedIdsRef.current = selectedAnnotationIds
   const annotationsRef = useRef(annotations)
@@ -790,6 +791,7 @@ export function PdfDrawingOverlay({
   const updateVoiceNoteHover = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       if (isDictating) {
+        ignoreHoverUntilLeaveRef.current = null
         setHoveredVoiceNoteId(null)
         return
       }
@@ -801,6 +803,14 @@ export function PdfDrawingOverlay({
         16,
       )
       const nextId = hit?.voice_note?.trim() ? hit.annotation_id : null
+      const ignoredId = ignoreHoverUntilLeaveRef.current
+      if (ignoredId) {
+        if (nextId === ignoredId) {
+          setHoveredVoiceNoteId((previous) => (previous == null ? previous : null))
+          return
+        }
+        ignoreHoverUntilLeaveRef.current = null
+      }
       setHoveredVoiceNoteId((previous) => (previous === nextId ? previous : nextId))
     },
     [isDictating, viewport],
@@ -981,6 +991,7 @@ export function PdfDrawingOverlay({
 
   const handlePointerLeave = useCallback(() => {
     if (hoverCardPinnedRef.current) return
+    ignoreHoverUntilLeaveRef.current = null
     setHoveredVoiceNoteId(null)
   }, [])
 
@@ -1123,9 +1134,6 @@ export function PdfDrawingOverlay({
         dictationPreview={dictationPreview ?? dictationDraft}
         isDictating={isDictating}
         hoveredVoiceNoteId={hoveredVoiceNoteId}
-        selectedAnnotationId={
-          selectedAnnotationIds.length === 1 ? selectedAnnotationIds[0] : null
-        }
         speechNotesAvailable={speechNotesAvailable}
         onSaveNote={onSaveVoiceNote}
         onDictateHoldStart={onDictateHoldStart}
@@ -1134,6 +1142,11 @@ export function PdfDrawingOverlay({
           hoverCardPinnedRef.current = true
         }}
         onHoverCardLeave={() => {
+          hoverCardPinnedRef.current = false
+          setHoveredVoiceNoteId(null)
+        }}
+        onSuppressHover={(annotationId) => {
+          ignoreHoverUntilLeaveRef.current = annotationId
           hoverCardPinnedRef.current = false
           setHoveredVoiceNoteId(null)
         }}

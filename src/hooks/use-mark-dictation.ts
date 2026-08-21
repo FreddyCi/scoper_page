@@ -245,7 +245,7 @@ export function useMarkDictation({
   return {
     available,
     status,
-    isDictating: Boolean(targetAnnotationId) || isListening,
+    isDictating: Boolean(targetAnnotationId),
     canDictate,
     targetAnnotationId,
     draftNote,

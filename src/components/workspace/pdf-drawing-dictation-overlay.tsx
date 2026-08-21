@@ -1,10 +1,11 @@
-import { MicAudioLinesIcon } from 'lucide-react'
+import { MicAudioLinesIcon, Minimize2Icon } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   denormalizePoint,
   normalizedAnnotationMarqueeBounds,
@@ -101,6 +102,8 @@ export function DictationDraftBubble({
   onSave,
   onDictateHoldStart,
   onDictateHoldEnd,
+  onMinimize,
+  onExpand,
   onPointerEnter,
   onPointerLeave,
   className,
@@ -114,6 +117,8 @@ export function DictationDraftBubble({
   onSave?: (value: string) => void
   onDictateHoldStart?: () => void
   onDictateHoldEnd?: () => void
+  onMinimize?: () => void
+  onExpand?: () => void
   onPointerEnter?: () => void
   onPointerLeave?: () => void
   className?: string
@@ -167,16 +172,18 @@ export function DictationDraftBubble({
 
   if (!trimmed && !isListening && !editable) return null
 
-  const interactive = editable || isListening
+  const hideCard = () => {
+    if (editable && !isListening && onSave && draft.trim() !== previewText.trim()) {
+      onSave(draft)
+    }
+    if (isListening) onDictateHoldEnd?.()
+    onMinimize?.()
+  }
 
   return (
     <div
       ref={hostRef}
-      className={cn(
-        'absolute z-[3] w-[min(20rem,78%)]',
-        interactive ? 'pointer-events-auto' : 'pointer-events-none',
-        className,
-      )}
+      className={cn('pointer-events-auto absolute z-[3] w-[min(20rem,78%)]', className)}
       style={{
         left: placement.left,
         top: placement.top,
@@ -184,6 +191,14 @@ export function DictationDraftBubble({
       }}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
+      onClick={
+        !editable && !isListening && onExpand
+          ? (event) => {
+              event.stopPropagation()
+              onExpand()
+            }
+          : undefined
+      }
     >
       <Card className="border-border bg-surface shadow-panel gap-0 overflow-hidden rounded-xl border py-0">
         <CardHeader className="flex flex-row items-start gap-2.5 border-b border-border/70 px-3 py-2.5">
@@ -200,59 +215,89 @@ export function DictationDraftBubble({
                   : 'Listening…'
                 : editable
                   ? 'Type to edit, or hold the sound-wave button to dictate'
-                  : 'Saved note'}
+                  : 'Hover to read · click to edit'}
             </CardDescription>
           </div>
-          {editable && onDictateHoldStart ? (
-            <Button
-              type="button"
-              size="icon-xs"
-              variant={isListening ? 'default' : 'ghost'}
-              aria-label="Hold to dictate this notation"
-              disabled={!speechNotesAvailable}
-              className={cn('shrink-0', isListening && 'ring-1 ring-primary/50')}
-              onPointerDown={(event) => {
-                if (event.button !== 0) return
-                event.preventDefault()
-                event.stopPropagation()
-                event.currentTarget.setPointerCapture(event.pointerId)
-                onDictateHoldStart()
-              }}
-              onPointerUp={(event) => {
-                event.stopPropagation()
-                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                  event.currentTarget.releasePointerCapture(event.pointerId)
+          <div className="flex shrink-0 items-center gap-0.5">
+            {editable && onDictateHoldStart ? (
+              <Button
+                type="button"
+                size="icon-xs"
+                variant={isListening ? 'default' : 'ghost'}
+                aria-label="Hold to dictate this notation"
+                disabled={!speechNotesAvailable}
+                className={cn('shrink-0', isListening && 'ring-1 ring-primary/50')}
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return
+                  event.preventDefault()
+                  event.stopPropagation()
+                  event.currentTarget.setPointerCapture(event.pointerId)
+                  onDictateHoldStart()
+                }}
+                onPointerUp={(event) => {
+                  event.stopPropagation()
+                  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                    event.currentTarget.releasePointerCapture(event.pointerId)
+                  }
+                  onDictateHoldEnd?.()
+                }}
+                onPointerCancel={(event) => {
+                  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                    event.currentTarget.releasePointerCapture(event.pointerId)
+                  }
+                  onDictateHoldEnd?.()
+                }}
+              >
+                <MicAudioLinesIcon className={cn('size-3.5', isListening && 'animate-pulse')} />
+              </Button>
+            ) : null}
+            <Tooltip>
+              <TooltipTrigger
+                delay={300}
+                render={
+                  <Button
+                    type="button"
+                    size="icon-xs"
+                    variant="ghost"
+                    aria-label="Hide notation"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      hideCard()
+                    }}
+                  >
+                    <Minimize2Icon className="size-3.5" />
+                  </Button>
                 }
-                onDictateHoldEnd?.()
-              }}
-              onPointerCancel={(event) => {
-                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                  event.currentTarget.releasePointerCapture(event.pointerId)
-                }
-                onDictateHoldEnd?.()
-              }}
-            >
-              <MicAudioLinesIcon className={cn('size-3.5', isListening && 'animate-pulse')} />
-            </Button>
-          ) : null}
+              />
+              <TooltipContent side="bottom">
+                Hide notation · hover the mark to read it again
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </CardHeader>
         <CardContent className="px-3 py-3">
-          <div className="border-border/70 bg-muted/40 rounded-lg border px-0.5 py-0.5">
-            <Textarea
-              readOnly={!editable || isListening}
-              tabIndex={editable && !isListening ? 0 : -1}
-              aria-label="Voice notation"
-              value={displayValue}
-              placeholder="Type a note, or hold Space to dictate…"
-              className="text-foreground min-h-24 resize-y border-0 bg-transparent shadow-none focus-visible:ring-0"
-              onChange={(event) => setDraft(event.target.value)}
-              onBlur={() => {
-                if (!editable || isListening || !onSave) return
-                if (draft.trim() === previewText.trim()) return
-                onSave(draft)
-              }}
-            />
-          </div>
+          {editable || isListening ? (
+            <div className="border-border/70 bg-muted/40 rounded-lg border px-0.5 py-0.5">
+              <Textarea
+                readOnly={!editable || isListening}
+                tabIndex={editable && !isListening ? 0 : -1}
+                aria-label="Voice notation"
+                value={displayValue}
+                placeholder="Type a note, or hold Space to dictate…"
+                className="text-foreground min-h-24 resize-y border-0 bg-transparent shadow-none focus-visible:ring-0"
+                onChange={(event) => setDraft(event.target.value)}
+                onBlur={() => {
+                  if (!editable || isListening || !onSave) return
+                  if (draft.trim() === previewText.trim()) return
+                  onSave(draft)
+                }}
+              />
+            </div>
+          ) : (
+            <p className="text-foreground max-h-32 overflow-auto text-sm leading-relaxed whitespace-pre-wrap">
+              {displayValue}
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -263,9 +308,15 @@ export function DictationDraftBubble({
 export function VoiceNotationBadge({
   annotation,
   viewport,
+  onOpen,
+  onPointerEnter,
+  onPointerLeave,
 }: {
   annotation: PdfDrawingAnnotation
   viewport: PdfDrawingViewportSize
+  onOpen?: () => void
+  onPointerEnter?: () => void
+  onPointerLeave?: () => void
 }) {
   const voiceNote = annotation.voice_note?.trim()
   if (!voiceNote) return null
@@ -277,19 +328,38 @@ export function VoiceNotationBadge({
 
   return (
     <span
-      className="pointer-events-none absolute z-[2] flex size-5 items-center justify-center"
+      className="pointer-events-auto absolute z-[2] flex size-5 items-center justify-center"
       style={{
         left: rect.left + rect.width - size + inset,
         top: rect.top - inset,
       }}
-      aria-hidden
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
     >
-      <Badge
-        variant="secondary"
-        className="border-border/70 bg-surface text-foreground h-5 gap-0 px-1.5 shadow-sm"
-      >
-        <MicAudioLinesIcon className="size-3" aria-hidden />
-      </Badge>
+      <Tooltip>
+        <TooltipTrigger
+          delay={300}
+          render={
+            <button
+              type="button"
+              aria-label="Show voice notation"
+              className="flex size-5 items-center justify-center"
+              onClick={(event) => {
+                event.stopPropagation()
+                onOpen?.()
+              }}
+            >
+              <Badge
+                variant="secondary"
+                className="border-border/70 bg-surface text-foreground h-5 gap-0 px-1.5 shadow-sm"
+              >
+                <MicAudioLinesIcon className="size-3" aria-hidden />
+              </Badge>
+            </button>
+          }
+        />
+        <TooltipContent side="top">Hover to read · click to edit</TooltipContent>
+      </Tooltip>
     </span>
   )
 }
@@ -301,13 +371,13 @@ export type PdfDrawingDictationLayerProps = {
   dictationPreview?: string
   isDictating?: boolean
   hoveredVoiceNoteId?: string | null
-  selectedAnnotationId?: string | null
   speechNotesAvailable?: boolean
   onSaveNote?: (annotationId: string, voiceNote: string) => void
   onDictateHoldStart?: (annotationId: string) => void
   onDictateHoldEnd?: () => void
   onHoverCardEnter?: () => void
   onHoverCardLeave?: () => void
+  onSuppressHover?: (annotationId: string) => void
 }
 
 /** HTML + SVG dictation affordances over the drawing overlay (BDA-252/253). */
@@ -318,37 +388,60 @@ export function PdfDrawingDictationLayer({
   dictationPreview = '',
   isDictating = false,
   hoveredVoiceNoteId = null,
-  selectedAnnotationId = null,
   speechNotesAvailable = true,
   onSaveNote,
   onDictateHoldStart,
   onDictateHoldEnd,
   onHoverCardEnter,
   onHoverCardLeave,
+  onSuppressHover,
 }: PdfDrawingDictationLayerProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [badgeHoverId, setBadgeHoverId] = useState<string | null>(null)
+  const wasDictatingRef = useRef(isDictating)
+
+  useEffect(() => {
+    if (wasDictatingRef.current && !isDictating) {
+      setExpandedId(null)
+    }
+    wasDictatingRef.current = isDictating
+  }, [isDictating])
+
   const dictationTarget =
     isDictating && dictationTargetId
       ? annotations.find((annotation) => annotation.annotation_id === dictationTargetId) ?? null
       : null
 
-  const selectedAnnotation = selectedAnnotationId
-    ? annotations.find((annotation) => annotation.annotation_id === selectedAnnotationId) ?? null
-    : null
+  const hoverId = !isDictating ? hoveredVoiceNoteId ?? badgeHoverId : null
 
-  const hoveredAnnotation =
-    !isDictating && hoveredVoiceNoteId && hoveredVoiceNoteId !== selectedAnnotationId
-      ? annotations.find((annotation) => annotation.annotation_id === hoveredVoiceNoteId) ?? null
+  const expandedAnnotation =
+    !isDictating && expandedId
+      ? annotations.find((annotation) => annotation.annotation_id === expandedId) ?? null
       : null
 
-  const editorAnnotation = dictationTarget ?? selectedAnnotation ?? hoveredAnnotation
+  const hoveredAnnotation =
+    !isDictating && hoverId && hoverId !== expandedId
+      ? annotations.find((annotation) => annotation.annotation_id === hoverId) ?? null
+      : null
+
+  const editorAnnotation = dictationTarget ?? expandedAnnotation ?? hoveredAnnotation
   const editorIsListening = Boolean(dictationTarget && isDictating)
-  const editorIsEditable = Boolean(editorAnnotation && !editorIsListening && onSaveNote)
+  const editorIsEditable = Boolean(
+    editorAnnotation && !editorIsListening && expandedAnnotation?.annotation_id === editorAnnotation.annotation_id && onSaveNote,
+  )
   const editorPreview =
     editorIsListening
       ? dictationPreview
       : editorAnnotation?.voice_note ?? ''
 
   const voiceNoteAnnotations = annotations.filter((annotation) => annotation.voice_note?.trim())
+
+  const hideEditor = (annotationId: string) => {
+    setExpandedId(null)
+    setBadgeHoverId((current) => (current === annotationId ? null : current))
+    onSuppressHover?.(annotationId)
+    onHoverCardLeave?.()
+  }
 
   if (!editorAnnotation && voiceNoteAnnotations.length === 0) {
     return null
@@ -388,6 +481,14 @@ export function PdfDrawingDictationLayer({
                 : undefined
             }
             onDictateHoldEnd={onDictateHoldEnd}
+            onMinimize={() => hideEditor(editorAnnotation.annotation_id)}
+            onExpand={
+              editorIsEditable || editorIsListening
+                ? undefined
+                : () => {
+                    setExpandedId(editorAnnotation.annotation_id)
+                  }
+            }
             onPointerEnter={onHoverCardEnter}
             onPointerLeave={onHoverCardLeave}
           />
@@ -400,6 +501,19 @@ export function PdfDrawingDictationLayer({
               key={`voice-${annotation.annotation_id}`}
               annotation={annotation}
               viewport={viewport}
+              onOpen={() => {
+                setExpandedId(annotation.annotation_id)
+              }}
+              onPointerEnter={() => {
+                setBadgeHoverId(annotation.annotation_id)
+                onHoverCardEnter?.()
+              }}
+              onPointerLeave={() => {
+                setBadgeHoverId((current) =>
+                  current === annotation.annotation_id ? null : current,
+                )
+                onHoverCardLeave?.()
+              }}
             />
           ))}
       </div>

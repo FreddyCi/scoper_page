@@ -399,17 +399,17 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-275
 
 **Title:** PRD §16 and related-doc links  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-274  
 **Priority:** Medium  
 **Description:** Update [PRD.md](PRD.md) §16: check off / promote **matrix CSV**, **instructions card**, and **takeoff list** as shipped (or move them out of “future” into a current-goal bullet). Keep templates, SAM, realtime markup as non-goals. Link this breakdown from [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) Related documents (and ARCHITECTURE if that doc lists feature breakdowns).  
 **Completed Changes:**
-- 🔄 PRD §16 wording
-- 🔄 Related-docs links
+- ✅ PRD §2.2 secondary goals + §14 checklist; §16 notes shipped vs future (templates, SAM, realtime markup stay deferred)
+- ✅ Related-docs links in PRD metadata, [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md), [`ARCHITECTURE.md`](ARCHITECTURE.md)
 **Test Strategy:** Docs review only; no product code.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ Docs review complete
+**Assigned:** Completed  
 **Context/Artifacts:** [PRD.md](PRD.md) §16; [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md); [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ---
@@ -510,6 +510,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.17 | 2026-08-21 | BDA-275 implemented: PRD §16 + related-doc links |
 | v1.16 | 2026-08-21 | BDA-274 implemented: compliance matrix harness chain + qa:compliance-matrix |
 | v1.15 | 2026-08-21 | BDA-273 implemented: share pack v4 for RFP matrix + instructions tables |
 | v1.14 | 2026-08-21 | BDA-272 implemented: export takeoff CSV from Drawing marks menu |

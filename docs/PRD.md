@@ -3,7 +3,7 @@
 
 **Author:** Scoper Page team  
 **Date:** 2026-07-27  
-**Version:** v1.1  
+**Version:** v1.3  
 **Status:** Draft  
 
 **Related plan:** [browser_doc_agent_demo_9dbcbc83.plan.md](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
@@ -44,6 +44,9 @@ Browser Doc Agent Demo is a **standalone, browser-only** web application that le
 * User comments anchored to document blocks
 * **PDF drawing markup (Mark mode)** — pen, highlighter, shapes, text, and window stamp on plan/elevation PDFs; persisted in session; **burned-in** vector export and share pack v3 round-trip ([`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md))
 * **Mark voice notation** — hold Space to dictate field notes on a selected mark; Web Speech API; persisted on `voice_note` with share-pack round-trip ([`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md))
+* **RFP compliance matrix + CSV** — heuristic shall/must extract on baseline blocks; editable per-bidder scores; matrix CSV with instructions preamble ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
+* **Instructions card** — due date, Q&A deadline, page limits, and volume headings on evaluation/proposal panels with citations ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
+* **Stamp takeoff list + CSV** — doc-wide window-stamp counts (page, color, voice note); jump-to-mark from split view ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
 * IndexedDB session restore for chat KV cache (bitgpu) and workspace state
 * Model picker (Bonsai 1.7B default, 4B optional)
 * Voice input on composer (defer post-MVP)
@@ -61,6 +64,7 @@ This PRD **does not** define:
 * DOCX/XLSX conversion via LiteParse native CLI (browser uses client-side parsers only)
 * Mobile-native apps or offline-first PWA install flow (offline after cache is acceptable, not a dedicated PWA product)
 * **Drawing markup (v1 scope limits):** AI window detection; multi-user realtime ink sync; full Adobe Acrobat ink compatibility; drawing tools on non-PDF previews; arbitrary color picker; native PDF Ink annotations for the drawing layer (burned-in vectors are primary)
+* **RFP matrix / takeoff (v1 scope limits):** LLM shall extraction; Section L structured parser; Excel-formatted matrix; custom criteria template library; SAM.gov or content-library integrations; Loopio/Bluebeam-style realtime markup or screen capture
 * Production SLA, multi-tenant hosting, or enterprise admin
 
 ---
@@ -492,6 +496,9 @@ type CitationRef = {
 - [x] Word / Markdown / Excel parsers
 - [x] Block comments persisted in session
 - [x] Full `@demo/*` ECP extension set
+- [x] RFP compliance matrix (editable scores) + CSV export with instructions preamble
+- [x] Instructions card on RFP evaluation and proposal panels
+- [x] Drawing stamp takeoff sheet + takeoff CSV (doc-wide window marks)
 
 **Testing:**
 - [x] Manual QA script for MVP flows
@@ -525,13 +532,17 @@ type CitationRef = {
 
 ## 16. Future Enhancements (v2.0+)
 
+*Shipped in v1.x (see §2.2 and §14): compliance matrix CSV, instructions card, stamp takeoff list + CSV — not deferred here.*
+
 * Server-optional sync export (share profile JSON + cites, not raw docs)
 * PWA install + explicit offline mode messaging
 * Voice input and multi-language OCR
-* Custom RFP criteria templates (user-defined schemas)
+* **Custom RFP criteria templates** (user-defined schemas) — not the heuristic shall matrix shipped in v1
 * Batch ZIP upload
 * Comparison export to PDF/CSV
 * Integration hook for external products (optional; not Scoper-coupled by default)
+* SAM.gov / solicitation feed integrations
+* Realtime multi-user drawing markup sync (Bluebeam-style)
 
 ---
 
@@ -561,6 +572,7 @@ type CitationRef = {
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| v1.3 | 2026-08-21 | — | Secondary goals + §14: compliance matrix CSV, instructions card, stamp takeoff; §16 non-goals clarified (BDA-275) |
 | v1.2 | 2026-08-21 | — | Secondary goal: hold-Space mark voice notation (BDA-242–258) |
 | v1.1 | 2026-08-03 | — | Secondary goal: PDF Mark drawing markup; viewer + export notes; scoped non-goals for drawing v1 (BDA-241) |
 | v1.0 | 2026-07-27 | — | Initial PRD from browser_doc_agent_demo plan + UI refs |
@@ -580,4 +592,5 @@ type CitationRef = {
 - Plan: [`browser_doc_agent_demo_9dbcbc83.plan.md`](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Drawing markup tasks: [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) (BDA-220–241)
 - Mark voice notation: [`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) (BDA-242–258)
+- Compliance matrix, instructions card, stamp takeoff: [`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) (BDA-259–276)
 - Wireframes: [`docs/main.png`](main.png), [`docs/Screenshot 2026-07-27 at 2.49.33 PM.png`](Screenshot%202026-07-27%20at%202.49.33%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.51.53 PM.png`](Screenshot%202026-07-27%20at%202.51.53%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png)

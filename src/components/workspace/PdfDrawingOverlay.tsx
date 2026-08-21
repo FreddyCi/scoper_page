@@ -656,13 +656,6 @@ export function PdfDrawingOverlay({
       if (!pointerActive || event.button !== 0) return
       const point = pointerToNormalized(event, viewport)
 
-      if (textToolActive) {
-        if (textEditor) return
-        event.preventDefault()
-        setTextEditor({ anchor: point, value: '' })
-        return
-      }
-
       if (notationPickActive) {
         event.preventDefault()
         const hit = findPdfDrawingAnnotationAtPointer(
@@ -677,7 +670,14 @@ export function PdfDrawingOverlay({
         return
       }
 
-      if (stampToolActive && !notationPickMode) {
+      if (textToolActive) {
+        if (textEditor) return
+        event.preventDefault()
+        setTextEditor({ anchor: point, value: '' })
+        return
+      }
+
+      if (stampToolActive) {
         event.preventDefault()
         void placeStamp(point)
         return
@@ -765,7 +765,6 @@ export function PdfDrawingOverlay({
       eraserRadiusPx,
       handActive,
       notationPickActive,
-      notationPickMode,
       pointerActive,
       selectActive,
       shapeToolActive,

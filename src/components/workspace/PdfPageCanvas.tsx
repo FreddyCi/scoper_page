@@ -4,6 +4,7 @@ import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
 import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStampCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
+import { VoiceNotationControl } from '@/components/workspace/voice-notation-control'
 import { citationViewportHighlight, viewportRectToLiteParseBbox } from '@/lib/citation-bbox'
 import type { Bbox, CitationRef, PdfDrawingAnnotation, PdfDrawingGeometry, PdfMarkSessionTool } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -47,6 +48,9 @@ type PdfPageCanvasProps = {
   dictationDraft?: string
   dictationPreview?: string
   isDictating?: boolean
+  speechNotesAvailable?: boolean
+  onNotationPickToggle?: () => void
+  theme?: 'light' | 'dark'
   className?: string
 }
 
@@ -102,6 +106,9 @@ export function PdfPageCanvas({
   dictationDraft,
   dictationPreview,
   isDictating,
+  speechNotesAvailable,
+  onNotationPickToggle,
+  theme = 'light',
   className,
 }: PdfPageCanvasProps) {
   const markModeActive = markMode || markDrawingMode
@@ -309,6 +316,21 @@ export function PdfPageCanvas({
             dictationPreview={dictationPreview}
             isDictating={isDictating}
           />
+
+          {markModeActive && onNotationPickToggle ? (
+            <div className="pointer-events-none absolute inset-0 z-[3]">
+              <div className="pointer-events-auto absolute right-3 bottom-3">
+                <VoiceNotationControl
+                  theme={theme}
+                  layout="canvas"
+                  speechNotesAvailable={speechNotesAvailable}
+                  notationPickMode={notationPickMode}
+                  onNotationPickToggle={onNotationPickToggle}
+                  isDictating={isDictating}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

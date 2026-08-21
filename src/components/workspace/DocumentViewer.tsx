@@ -123,14 +123,11 @@ export function DocumentViewer({
   const {
     available: dictationAvailable,
     isDictating,
-    canDictate,
     targetAnnotationId: dictationTargetId,
     draftNote: dictationDraft,
     committedPreview: dictationPreview,
     handleSpaceKeyDown,
     handleSpaceKeyUp,
-    beginDictation,
-    endDictation,
     onSelectionChange: onDictationSelectionChange,
     onWindowBlur: onDictationWindowBlur,
   } = useMarkDictation({
@@ -423,21 +420,21 @@ export function DocumentViewer({
 
   const markDictationHint =
     markMode && isDictating
-      ? 'Listening… release Space or the sound-wave button to save'
+      ? 'Listening… release Space to save the notation'
       : markMode && !dictationAvailable
         ? 'Voice notation requires HTTPS + Chrome/Edge speech support'
         : markMode && notationPickMode && selectedDrawingAnnotationIds.length === 0
-          ? 'Voice notation: click a mark on the plan to target it'
+          ? 'Voice notation on · click a marker or shape to target it, then hold Space'
           : markMode && notationPickMode && selectedDrawingAnnotationIds.length === 1
-            ? 'Mark targeted · hold Space or the sound-wave button to dictate'
+            ? 'Hold Space to dictate notation on the targeted mark'
         : markMode && selectedDrawingAnnotationIds.length > 1
-          ? 'Select exactly one mark to dictate notation'
+          ? 'Click exactly one mark to dictate notation'
           : markMode && selectedDrawingAnnotationIds.length === 0
-            ? 'Place markers, then use the sound-wave button to pick one for notation'
+            ? 'Place markers, then toggle voice notation to pick one and hold Space'
         : markMode && selectedVoiceNotationId
           ? 'Selected mark has voice notation · Hold Space to add more, or clear with the message button'
           : markMode && selectedDrawingAnnotationIds.length === 1
-            ? 'Hold Space or the sound-wave button to dictate notation'
+            ? 'Hold Space to dictate notation'
             : null
 
   const toolbarHint =
@@ -547,14 +544,7 @@ export function DocumentViewer({
                 return next
               })
             }}
-            canDictate={canDictate}
             isDictating={isDictating}
-            onDictateHoldStart={() => {
-              beginDictation()
-            }}
-            onDictateHoldEnd={() => {
-              endDictation()
-            }}
           />
         }
         onPageChange={updatePage}
@@ -628,6 +618,17 @@ export function DocumentViewer({
               dictationDraft={dictationDraft}
               dictationPreview={dictationPreview}
               isDictating={isDictating}
+              speechNotesAvailable={dictationAvailable}
+              onNotationPickToggle={() => {
+                setNotationPickMode((previous) => {
+                  const next = !previous
+                  if (!next) {
+                    setSelectedDrawingAnnotationIds([])
+                  }
+                  return next
+                })
+              }}
+              theme={theme}
             />
           </div>
         )}

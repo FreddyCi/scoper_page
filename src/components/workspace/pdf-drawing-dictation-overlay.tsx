@@ -1,7 +1,6 @@
-import { AudioLinesIcon, MicIcon } from 'lucide-react'
+import { MicAudioLinesIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
-import { Bubble, BubbleContent } from '@/components/ui/bubble'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   denormalizePoint,
@@ -94,25 +93,29 @@ export function DictationDraftBubble({
         transform: 'translate(-50%, -100%)',
       }}
     >
-      <Bubble variant="tinted" className="max-w-full shadow-md">
-        <BubbleContent className="flex items-start gap-2 px-3 py-2 text-sm leading-snug">
-          <AudioLinesIcon
+      <div
+        className={cn(
+          'bg-card text-card-foreground pointer-events-none max-w-full rounded-md border px-3 py-2 shadow-md',
+        )}
+      >
+        <div className="flex items-start gap-2 text-sm leading-snug">
+          <MicAudioLinesIcon
             className={cn(
               'text-primary mt-0.5 size-4 shrink-0',
-              isListening && !trimmed && 'animate-pulse',
+              isListening && 'animate-pulse',
             )}
             aria-hidden
           />
-          <span
+          <p
             className={cn(
-              'text-foreground',
-              trimmed ? 'line-clamp-4' : 'text-muted-foreground italic',
+              'min-w-[8rem]',
+              trimmed ? 'whitespace-pre-wrap' : 'text-muted-foreground italic',
             )}
           >
             {trimmed ? truncateDictationPreview(trimmed, 160) : displayText}
-          </span>
-        </BubbleContent>
-      </Bubble>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -150,7 +153,7 @@ export function VoiceNotationBadge({
               variant="secondary"
               className="border-primary/25 bg-primary/10 text-primary pointer-events-auto h-5 gap-0 px-1.5 shadow-sm ring-2 ring-card"
             >
-              <MicIcon className="size-3" aria-hidden />
+              <MicAudioLinesIcon className="size-3" aria-hidden />
             </Badge>
           </span>
         }
@@ -216,13 +219,18 @@ export function PdfDrawingDictationLayer({
           />
         ) : null}
 
-        {voiceNoteAnnotations.map((annotation) => (
-          <VoiceNotationBadge
-            key={`voice-${annotation.annotation_id}`}
-            annotation={annotation}
-            viewport={viewport}
-          />
-        ))}
+        {voiceNoteAnnotations
+          .filter(
+            (annotation) =>
+              !dictationTarget || annotation.annotation_id !== dictationTarget.annotation_id,
+          )
+          .map((annotation) => (
+            <VoiceNotationBadge
+              key={`voice-${annotation.annotation_id}`}
+              annotation={annotation}
+              viewport={viewport}
+            />
+          ))}
       </div>
     </>
   )

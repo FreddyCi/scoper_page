@@ -176,7 +176,10 @@ export function useMarkDictation({
 
   const handleSpaceKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (!isSpaceKeyboardEvent(event) || event.repeat) return false
+      if (!isSpaceKeyboardEvent(event)) return false
+      if (event.repeat) {
+        return spaceActiveRef.current || Boolean(targetAnnotationIdRef.current)
+      }
       if (!canStartDictation()) return false
 
       const annotationId = selectedAnnotationIds[0]
@@ -230,7 +233,7 @@ export function useMarkDictation({
   return {
     available,
     status,
-    isDictating: isListening,
+    isDictating: Boolean(targetAnnotationId) || isListening,
     canDictate,
     targetAnnotationId,
     draftNote,

@@ -13,6 +13,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
+import { InstructionsCard } from '@/components/workspace/InstructionsCard'
 import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateList'
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import {
@@ -26,6 +27,7 @@ import { beginBlobSave } from '@/lib/download-blob'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
 import { summarizeProposalProfileGeneration } from '@/lib/proposal-volume-section'
 import { cn } from '@/lib/utils'
+import { focusCitation } from '@/services/citation-bridge'
 import {
   useProposalRequirementsProfile,
   useProposalSetupState,
@@ -48,6 +50,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
   const runProposalRequirementsProfile = useSessionStore((s) => s.runProposalRequirementsProfile)
   const runGenerateProposalVolumes = useSessionStore((s) => s.runGenerateProposalVolumes)
   const runGenerateProposalVolume = useSessionStore((s) => s.runGenerateProposalVolume)
+  const rfpInstructionsProfile = useSessionStore((s) => s.rfpInstructionsProfile)
 
   const setup = useProposalSetupState()
   const profile = useProposalRequirementsProfile()
@@ -295,6 +298,13 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
+            {rfpInstructionsProfile ? (
+              <InstructionsCard
+                variant="proposal"
+                onCitationClick={focusCitation}
+                className="shadow-none"
+              />
+            ) : null}
             {volumeGenerationError ? (
               <p className="text-destructive text-xs leading-relaxed" role="alert">
                 {volumeGenerationError}

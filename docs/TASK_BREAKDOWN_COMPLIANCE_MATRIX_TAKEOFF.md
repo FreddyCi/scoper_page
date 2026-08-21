@@ -250,19 +250,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-268
 
 **Title:** InstructionsCard on evaluation and proposal  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-267  
 **Priority:** High  
 **Description:** New [`InstructionsCard`](../src/components/workspace/InstructionsCard.tsx) modeled on [`ResultsProfileCard`](../src/components/workspace/ResultsProfileCard.tsx). **Primary:** [`RfpEvaluationPanel`](../src/components/workspace/RfpEvaluationPanel.tsx) above/beside “Requirements extracted” (baseline already excluded from bidder cards). **Secondary:** [`ProposalGenerationPanel`](../src/components/workspace/ProposalGenerationPanel.tsx) above volume rows so page limits sit next to draft volumes. Solicitation volumes ≠ responder `ProposalVolume` — label copy must not imply they are the same. Click a field → `focusCitation`. Empty fields: “Not found”.  
 **Completed Changes:**
-- 🔄 `InstructionsCard` UI
-- 🔄 Mount evaluation (primary) + proposal (secondary)
-- 🔄 Citation click
-- 🔄 “Not found” for missing fields
+- ✅ [`InstructionsCard`](../src/components/workspace/InstructionsCard.tsx) — due, Q&A, page limit, solicitation volumes; cite chevron → `focusCitation`
+- ✅ Evaluation panel: above “Requirements extracted” after qualify
+- ✅ Proposal panel: above draft volume rows with distinct copy
+- ✅ Missing fields show “Not found”
 **Test Strategy:** Sample RFP with instruction language shows card; click due-date cite focuses viewer; proposal panel shows same meta above volumes.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`ResultsProfileCard.tsx`](../src/components/workspace/ResultsProfileCard.tsx); [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx)
 
 ---
@@ -507,6 +507,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.10 | 2026-08-21 | BDA-268 implemented: InstructionsCard on evaluation + proposal |
 | v1.9 | 2026-08-21 | BDA-267 implemented: solicitation meta extract + persist |
 | v1.8 | 2026-08-21 | BDA-266 implemented: compliance matrix CSV export |
 | v1.7 | 2026-08-21 | BDA-265 implemented: editable matrix status + notes |

@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
+import { InstructionsCard } from '@/components/workspace/InstructionsCard'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
 import { cn } from '@/lib/utils'
@@ -185,6 +186,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const contractReviewProfile = useSessionStore((s) => s.contractReviewProfile)
   const companyContext = useSessionStore((s) => s.companyContext)
   const baselineProfile = useSessionStore((s) => s.evaluationBaselineProfile)
+  const rfpInstructionsProfile = useSessionStore((s) => s.rfpInstructionsProfile)
   const setEvaluationDocId = useSessionStore((s) => s.setEvaluationDocId)
   const setContractChecklistDocId = useSessionStore((s) => s.setContractChecklistDocId)
   const runContractKeywordReview = useSessionStore((s) => s.runContractKeywordReview)
@@ -483,7 +485,14 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
           ) : null}
 
           {baselineProfile && !running ? (
-            <section className="border-border/70 space-y-3 border-t pt-4">
+            <>
+              {rfpInstructionsProfile ? (
+                <InstructionsCard
+                  variant="evaluation"
+                  onCitationClick={handleCriterionClick}
+                />
+              ) : null}
+              <section className="border-border/70 space-y-3 border-t pt-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-medium">Requirements extracted</h3>
                 <p className="text-muted-foreground text-xs leading-relaxed">{baselineProfile.summary}</p>
@@ -500,6 +509,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
               </div>
               <ComplianceMatrix onCitationClick={handleCriterionClick} />
             </section>
+            </>
           ) : null}
         </div>
       </CardContent>

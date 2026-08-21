@@ -124,6 +124,7 @@ export function DocumentViewer({
     isDictating,
     targetAnnotationId: dictationTargetId,
     draftNote: dictationDraft,
+    committedPreview: dictationPreview,
     handleSpaceKeyDown,
     handleSpaceKeyUp,
     onSelectionChange: onDictationSelectionChange,
@@ -488,6 +489,7 @@ export function DocumentViewer({
             onDeleteSelection={() => {
               void handleDeleteSelectedMarks()
             }}
+            speechNotesAvailable={dictationAvailable}
           />
         }
         onPageChange={updatePage}
@@ -551,6 +553,7 @@ export function DocumentViewer({
               }
               dictationTargetId={dictationTargetId}
               dictationDraft={dictationDraft}
+              dictationPreview={dictationPreview}
               isDictating={isDictating}
             />
           </div>

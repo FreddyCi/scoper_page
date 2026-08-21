@@ -43,6 +43,7 @@ type PdfPageCanvasProps = {
   /** Hold-Space dictation target mark (BDA-250+). */
   dictationTargetId?: string | null
   dictationDraft?: string
+  dictationPreview?: string
   isDictating?: boolean
   className?: string
 }
@@ -95,6 +96,7 @@ export function PdfPageCanvas({
   onMoveAnnotation,
   dictationTargetId,
   dictationDraft,
+  dictationPreview,
   isDictating,
   className,
 }: PdfPageCanvasProps) {
@@ -298,6 +300,7 @@ export function PdfPageCanvas({
             onMoveAnnotation={onMoveAnnotation}
             dictationTargetId={dictationTargetId}
             dictationDraft={dictationDraft}
+            dictationPreview={dictationPreview}
             isDictating={isDictating}
           />
         </div>

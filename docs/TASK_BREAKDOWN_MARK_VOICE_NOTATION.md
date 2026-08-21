@@ -258,17 +258,17 @@ flowchart TD
 ### **ID:** BDA-252
 
 **Title:** Listening ring and draft preview  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-251  
 **Priority:** High  
 **Description:** In [`PdfDrawingOverlay.tsx`](../src/components/workspace/PdfDrawingOverlay.tsx): when `isDictating && dictationTargetId`, render animated dashed ring using `normalizedAnnotationMarqueeBounds`. Optional truncated `dictationDraft` text bubble near mark anchor (all geometry kinds).  
 **Completed Changes:**
-- 🔄 `DictationListeningRing` + preview graphic components
-- 🔄 Uses display annotation list (respect move preview if active)
+- ✅ `DictationListeningRing` + `DictationDraftBubble` in [`pdf-drawing-dictation-overlay.tsx`](../src/components/workspace/pdf-drawing-dictation-overlay.tsx)
+- ✅ Shadcn `Bubble` preview with pulsing mic; uses `displayAnnotations` (move preview aware)
 **Test Strategy:** Visual manual on `Windows_Drawing.pdf` full-page mark mode.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`pdf-drawing-geometry.ts`](../src/lib/pdf-drawing-geometry.ts) marquee bounds
 
 ---
@@ -276,17 +276,17 @@ flowchart TD
 ### **ID:** BDA-253
 
 **Title:** Voice notation badge on marks  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-251  
 **Priority:** High  
 **Description:** Render small mic/speech indicator on marks where `voice_note?.trim()` is non-empty. Position using marquee bounds top-right. `title` or Tooltip with full note text (read-only v1). Visible in View and Mark modes when annotations shown.  
 **Completed Changes:**
-- 🔄 Badge component in overlay SVG/HTML layer
-- 🔄 Does not block pointer hit-testing for select/hand
+- ✅ Shadcn `Badge` + `Tooltip` mic indicator at marquee top-right
+- ✅ `pointer-events-auto` on badge only; layer does not block select/hand hit-testing
 **Test Strategy:** Dictate on stamp → badge appears; hover shows full text.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-252 overlay patterns
 
 ---
@@ -294,16 +294,17 @@ flowchart TD
 ### **ID:** BDA-254
 
 **Title:** Toolbar tooltip dictation hint  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-250  
 **Priority:** Medium  
 **Description:** Update [`PdfMarkupToolbar.tsx`](../src/components/workspace/PdfMarkupToolbar.tsx) Select tool hint: *"Select a mark, hold Space to dictate"*. Optional mic icon disabled state when `!speechNotesAvailable`. Do not add Space to tool shortcut map (conflicts with hold-to-talk).  
 **Completed Changes:**
-- 🔄 Tooltip copy update
+- ✅ Select tooltip with mic copy + unavailable browser message
+- ✅ `MicOff` corner badge on Select when speech unavailable; `speechNotesAvailable` prop from DocumentViewer
 **Test Strategy:** Hover Select tool in mark mode; copy matches UX rules.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-236 tooltips; [`PdfMarkupToolbar.tsx`](../src/components/workspace/PdfMarkupToolbar.tsx)
 
 ---

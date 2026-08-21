@@ -24,6 +24,7 @@ import type {
   PdfMarkSessionTool,
 } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { PdfDrawingDictationLayer } from '@/components/workspace/pdf-drawing-dictation-overlay'
 
 const DEFAULT_STAMP_PX = 24
 const DEFAULT_STROKE_WIDTH = 4
@@ -93,6 +94,8 @@ export type PdfDrawingOverlayProps = {
   /** Hold-Space dictation state forwarded from DocumentViewer (BDA-251+). */
   dictationTargetId?: string | null
   dictationDraft?: string
+  /** Merged existing note + live draft for preview bubble (BDA-252). */
+  dictationPreview?: string
   isDictating?: boolean
 }
 
@@ -503,11 +506,10 @@ export function PdfDrawingOverlay({
   onMoveAnnotation,
   dictationTargetId,
   dictationDraft,
+  dictationPreview,
   isDictating,
 }: PdfDrawingOverlayProps) {
-  void dictationTargetId
   void dictationDraft
-  void isDictating
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
   const strokeToolActive =
     interactive && isStrokeTool(activeTool) && Boolean(commitStroke)
@@ -940,7 +942,9 @@ export function PdfDrawingOverlay({
     !draftMarquee &&
     !moveDrag &&
     !textEditor &&
-    selectedAnnotationIds.length === 0
+    selectedAnnotationIds.length === 0 &&
+    !isDictating &&
+    !annotations.some((annotation) => annotation.voice_note?.trim())
   ) {
     return null
   }
@@ -1042,6 +1046,14 @@ export function PdfDrawingOverlay({
           onCancel={cancelTextEditor}
         />
       ) : null}
+
+      <PdfDrawingDictationLayer
+        annotations={displayAnnotations}
+        viewport={viewport}
+        dictationTargetId={dictationTargetId}
+        dictationPreview={dictationPreview ?? dictationDraft}
+        isDictating={isDictating}
+      />
     </div>
   )
 }

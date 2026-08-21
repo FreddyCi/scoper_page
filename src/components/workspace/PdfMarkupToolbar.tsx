@@ -5,6 +5,8 @@ import {
   Grid2X2Icon,
   HandIcon,
   HighlighterIcon,
+  MicIcon,
+  MicOffIcon,
   PencilIcon,
   Redo2Icon,
   SquareIcon,
@@ -54,6 +56,8 @@ export type PdfMarkupToolbarProps = {
   canRedo?: boolean
   selectionCount?: number
   onDeleteSelection?: () => void
+  /** Web Speech API available for hold-Space dictation (BDA-254). */
+  speechNotesAvailable?: boolean
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -118,6 +122,29 @@ const MARKUP_TOOLS: MarkupToolDef[] = [
   },
 ]
 
+function SelectToolTooltipContent({ speechNotesAvailable = true }: { speechNotesAvailable?: boolean }) {
+  return (
+    <>
+      <span className="block font-medium">Select (V)</span>
+      <span className="text-background/85 mt-0.5 block font-normal leading-snug">
+        Click or drag a box to select marks. Delete removes the selection.
+      </span>
+      <span className="text-background/85 mt-1.5 flex items-start gap-1.5 font-normal leading-snug">
+        {speechNotesAvailable ? (
+          <MicIcon className="mt-0.5 size-3 shrink-0" aria-hidden />
+        ) : (
+          <MicOffIcon className="mt-0.5 size-3 shrink-0 opacity-70" aria-hidden />
+        )}
+        <span>
+          {speechNotesAvailable
+            ? 'Select a mark, hold Space to dictate notation.'
+            : 'Voice notation requires HTTPS and Chrome or Edge speech support.'}
+        </span>
+      </span>
+    </>
+  )
+}
+
 function MarkupToolTooltipContent({ entry }: { entry: MarkupToolDef }) {
   const shortcut = PDF_MARKUP_TOOL_SHORTCUT_LABEL[entry.id]
   const title = shortcut ? `${entry.label} (${shortcut})` : entry.label
@@ -159,6 +186,7 @@ export function PdfMarkupToolbar({
   canRedo = false,
   selectionCount = 0,
   onDeleteSelection,
+  speechNotesAvailable = true,
   theme = 'light',
   className,
 }: PdfMarkupToolbarProps) {
@@ -190,6 +218,7 @@ export function PdfMarkupToolbar({
         {MARKUP_TOOLS.map((entry) => {
           const Icon = entry.icon
           const active = tool === entry.id
+          const showMicUnavailable = entry.id === 'select' && !speechNotesAvailable
           return (
             <Tooltip key={entry.id}>
               <TooltipTrigger
@@ -201,15 +230,25 @@ export function PdfMarkupToolbar({
                     variant="ghost"
                     aria-label={entry.hint ? `${entry.label}. ${entry.hint}` : entry.label}
                     aria-pressed={active}
-                    className={toolButtonClass(active, isDark)}
+                    className={cn(toolButtonClass(active, isDark), showMicUnavailable && 'relative')}
                     onClick={() => onChange({ tool: entry.id })}
                   >
                     <Icon className="size-3.5" />
+                    {showMicUnavailable ? (
+                      <MicOffIcon
+                        className="text-muted-foreground absolute -right-0.5 -bottom-0.5 size-2.5 opacity-80"
+                        aria-hidden
+                      />
+                    ) : null}
                   </Button>
                 }
               />
               <TooltipContent side="bottom" className="max-w-[15rem] text-left">
-                <MarkupToolTooltipContent entry={entry} />
+                {entry.id === 'select' ? (
+                  <SelectToolTooltipContent speechNotesAvailable={speechNotesAvailable} />
+                ) : (
+                  <MarkupToolTooltipContent entry={entry} />
+                )}
               </TooltipContent>
             </Tooltip>
           )

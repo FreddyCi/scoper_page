@@ -36,6 +36,8 @@ type PdfPageCanvasProps = {
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
   selectedAnnotationIds?: readonly string[]
   onSelectionChange?: (annotationIds: string[]) => void
+  notationPickMode?: boolean
+  onNotationTargetPick?: (annotationIds: string[]) => void
   onMoveAnnotation?: (
     annotationId: string,
     geometry: PdfDrawingGeometry,
@@ -93,6 +95,8 @@ export function PdfPageCanvas({
   onEraseAnnotation,
   selectedAnnotationIds,
   onSelectionChange,
+  notationPickMode,
+  onNotationTargetPick,
   onMoveAnnotation,
   dictationTargetId,
   dictationDraft,
@@ -297,6 +301,8 @@ export function PdfPageCanvas({
             onEraseAnnotation={onEraseAnnotation}
             selectedAnnotationIds={selectedAnnotationIds}
             onSelectionChange={onSelectionChange}
+            notationPickMode={notationPickMode}
+            onNotationTargetPick={onNotationTargetPick}
             onMoveAnnotation={onMoveAnnotation}
             dictationTargetId={dictationTargetId}
             dictationDraft={dictationDraft}

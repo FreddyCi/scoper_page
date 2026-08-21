@@ -607,6 +607,8 @@ export async function runDocxIngestHarness(): Promise<void> {
   if (!nestedSection) {
     throw new Error('Docx ingest harness: expected nested heading section_path')
   }
+
+  useSessionStore.getState().commitIngestResults([ingested])
 }
 
 /** Dev harness — ingest sample .xlsx; verify DuckDB blocks with sheet cell-range paths (BDA-081) */
@@ -646,4 +648,6 @@ export async function runXlsxIngestHarness(): Promise<void> {
   if (!blocks.some((block) => block.text.includes('CMMI Level 3'))) {
     throw new Error('Xlsx ingest harness: expected row text from sample spreadsheet')
   }
+
+  useSessionStore.getState().commitIngestResults([ingested])
 }

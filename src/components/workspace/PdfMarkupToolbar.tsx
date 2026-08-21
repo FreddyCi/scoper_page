@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import {
   BoxSelectIcon,
   CircleIcon,
@@ -5,7 +6,8 @@ import {
   Grid2X2Icon,
   HandIcon,
   HighlighterIcon,
-  MicIcon,
+  AudioLinesIcon,
+  MessageSquareXIcon,
   MicOffIcon,
   PencilIcon,
   Redo2Icon,
@@ -61,6 +63,12 @@ export type PdfMarkupToolbarProps = {
   onClearVoiceNotation?: () => void
   /** Web Speech API available for hold-Space dictation (BDA-254). */
   speechNotesAvailable?: boolean
+  notationPickMode?: boolean
+  onNotationPickToggle?: () => void
+  canDictate?: boolean
+  isDictating?: boolean
+  onDictateHoldStart?: () => void
+  onDictateHoldEnd?: () => void
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -134,13 +142,13 @@ function SelectToolTooltipContent({ speechNotesAvailable = true }: { speechNotes
       </span>
       <span className="text-background/85 mt-1.5 flex items-start gap-1.5 font-normal leading-snug">
         {speechNotesAvailable ? (
-          <MicIcon className="mt-0.5 size-3 shrink-0" aria-hidden />
+          <AudioLinesIcon className="mt-0.5 size-3 shrink-0" aria-hidden />
         ) : (
           <MicOffIcon className="mt-0.5 size-3 shrink-0 opacity-70" aria-hidden />
         )}
         <span>
           {speechNotesAvailable
-            ? 'Select a mark, hold Space to dictate notation.'
+            ? 'Use the sound-wave button to pick a mark, then hold Space to dictate.'
             : 'Voice notation requires HTTPS and Chrome or Edge speech support.'}
         </span>
       </span>
@@ -192,10 +200,17 @@ export function PdfMarkupToolbar({
   canClearVoiceNotation = false,
   onClearVoiceNotation,
   speechNotesAvailable = true,
+  notationPickMode = false,
+  onNotationPickToggle,
+  canDictate = false,
+  isDictating = false,
+  onDictateHoldStart,
+  onDictateHoldEnd,
   theme = 'light',
   className,
 }: PdfMarkupToolbarProps) {
   const isDark = theme === 'dark'
+  const dictateHoldTimerRef = useRef<number | null>(null)
   const showStrokeWidth =
     tool !== 'eraser' &&
     tool !== 'text' &&
@@ -322,10 +337,83 @@ export function PdfMarkupToolbar({
         </>
       ) : null}
 
-      {onUndo || onRedo || (tool === 'select' && onDeleteSelection) || onClearVoiceNotation ? (
+      {onUndo ||
+      onRedo ||
+      onNotationPickToggle ||
+      (tool === 'select' && onDeleteSelection) ||
+      onClearVoiceNotation ? (
         <>
           <ToolbarDivider isDark={isDark} />
           <div className="ml-auto flex items-center gap-0.5">
+            {onNotationPickToggle ? (
+              <Tooltip>
+                <TooltipTrigger
+                  delay={300}
+                  render={
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant={notationPickMode || isDictating ? 'default' : 'ghost'}
+                      aria-label="Pick a mark for voice notation"
+                      aria-pressed={notationPickMode || isDictating}
+                      disabled={!speechNotesAvailable}
+                      className={cn(
+                        (notationPickMode || isDictating) && 'ring-1 ring-primary/50',
+                        speechNotesAvailable &&
+                          !notationPickMode &&
+                          !isDictating &&
+                          'text-primary hover:text-primary hover:bg-primary/10',
+                      )}
+                      onClick={(event) => event.preventDefault()}
+                      onPointerDown={(event) => {
+                        if (event.button !== 0) return
+                        event.preventDefault()
+                        event.currentTarget.setPointerCapture(event.pointerId)
+                        if (canDictate && onDictateHoldStart) {
+                          dictateHoldTimerRef.current = window.setTimeout(() => {
+                            dictateHoldTimerRef.current = null
+                            onDictateHoldStart()
+                          }, 220)
+                        }
+                      }}
+                      onPointerUp={(event) => {
+                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                          event.currentTarget.releasePointerCapture(event.pointerId)
+                        }
+                        if (dictateHoldTimerRef.current != null) {
+                          window.clearTimeout(dictateHoldTimerRef.current)
+                          dictateHoldTimerRef.current = null
+                          onNotationPickToggle()
+                        } else {
+                          onDictateHoldEnd?.()
+                        }
+                      }}
+                      onPointerCancel={(event) => {
+                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                          event.currentTarget.releasePointerCapture(event.pointerId)
+                        }
+                        if (dictateHoldTimerRef.current != null) {
+                          window.clearTimeout(dictateHoldTimerRef.current)
+                          dictateHoldTimerRef.current = null
+                        } else {
+                          onDictateHoldEnd?.()
+                        }
+                      }}
+                    >
+                      <AudioLinesIcon className={cn('size-3.5', isDictating && 'animate-pulse')} />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="bottom" className="max-w-[15rem] text-left">
+                  <span className="block font-medium">Voice notation</span>
+                  <span className="text-background/85 mt-0.5 block font-normal leading-snug">
+                    {speechNotesAvailable
+                      ? 'Click to pick a mark on the plan, then hold this button or Space while you speak.'
+                      : 'Voice notation requires HTTPS and Chrome or Edge speech support.'}
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             {onClearVoiceNotation ? (
               <Tooltip>
                 <TooltipTrigger
@@ -337,13 +425,9 @@ export function PdfMarkupToolbar({
                       variant="ghost"
                       aria-label="Clear voice notation"
                       disabled={!canClearVoiceNotation}
-                      className={cn(
-                        canClearVoiceNotation &&
-                          'text-primary hover:text-primary hover:bg-primary/10',
-                      )}
                       onClick={() => onClearVoiceNotation()}
                     >
-                      <MicOffIcon className="size-3.5" />
+                      <MessageSquareXIcon className="size-3.5" />
                     </Button>
                   }
                 />

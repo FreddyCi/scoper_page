@@ -1,4 +1,4 @@
-import { MicIcon } from 'lucide-react'
+import { AudioLinesIcon, MicIcon } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Bubble, BubbleContent } from '@/components/ui/bubble'
@@ -63,20 +63,23 @@ export function DictationListeningRing({
   )
 }
 
-/** Live dictation preview bubble — shadcn Bubble + mic pulse (BDA-252). */
+/** Live dictation preview bubble — shadcn Bubble + sound-wave pulse (BDA-252). */
 export function DictationDraftBubble({
   annotation,
   previewText,
   viewport,
+  isListening = false,
   className,
 }: {
   annotation: PdfDrawingAnnotation
   previewText: string
   viewport: PdfDrawingViewportSize
+  isListening?: boolean
   className?: string
 }) {
   const trimmed = previewText.trim()
-  if (!trimmed) return null
+  const displayText = trimmed || (isListening ? 'Listening…' : '')
+  if (!displayText) return null
 
   const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
   const rect = boundsToPixelRect(bounds, viewport)
@@ -84,7 +87,7 @@ export function DictationDraftBubble({
 
   return (
     <div
-      className={cn('pointer-events-none absolute z-[2] max-w-[min(16rem,70%)]', className)}
+      className={cn('pointer-events-none absolute z-[2] max-w-[min(18rem,75%)]', className)}
       style={{
         left: centerX,
         top: Math.max(4, rect.top - 8),
@@ -92,9 +95,22 @@ export function DictationDraftBubble({
       }}
     >
       <Bubble variant="tinted" className="max-w-full shadow-md">
-        <BubbleContent className="flex items-start gap-2 px-2.5 py-1.5 text-xs leading-snug">
-          <MicIcon className="text-primary mt-0.5 size-3.5 shrink-0 animate-pulse" aria-hidden />
-          <span className="text-foreground line-clamp-3">{truncateDictationPreview(trimmed)}</span>
+        <BubbleContent className="flex items-start gap-2 px-3 py-2 text-sm leading-snug">
+          <AudioLinesIcon
+            className={cn(
+              'text-primary mt-0.5 size-4 shrink-0',
+              isListening && !trimmed && 'animate-pulse',
+            )}
+            aria-hidden
+          />
+          <span
+            className={cn(
+              'text-foreground',
+              trimmed ? 'line-clamp-4' : 'text-muted-foreground italic',
+            )}
+          >
+            {trimmed ? truncateDictationPreview(trimmed, 160) : displayText}
+          </span>
         </BubbleContent>
       </Bubble>
     </div>
@@ -196,6 +212,7 @@ export function PdfDrawingDictationLayer({
             annotation={dictationTarget}
             previewText={dictationPreview}
             viewport={viewport}
+            isListening
           />
         ) : null}
 

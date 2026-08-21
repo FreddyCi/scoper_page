@@ -218,12 +218,17 @@ export function normalizedStampBounds(
 ): PdfDrawingNormalizedBounds {
   const sizePx =
     geometry.size != null && geometry.size > 0 ? geometry.size * viewport.width : defaultSizePx
-  const sizeN = sizePx / viewport.width
+  const widthN = sizePx / viewport.width
+  const heightN = sizePx / viewport.height
+  const halfW = widthN / 2
+  const halfH = heightN / 2
+  const x = Math.max(0, geometry.x - halfW)
+  const y = Math.max(0, geometry.y - halfH)
   return {
-    x: geometry.x,
-    y: geometry.y,
-    width: Math.min(sizeN, Math.max(0, 1 - geometry.x)),
-    height: Math.min(sizePx / viewport.height, Math.max(0, 1 - geometry.y)),
+    x,
+    y,
+    width: Math.min(widthN, Math.max(0, 1 - x)),
+    height: Math.min(heightN, Math.max(0, 1 - y)),
   }
 }
 
@@ -473,7 +478,11 @@ export function runPdfDrawingGeometryHarness(): void {
       { x: 0.9, y: 0.9 },
     ],
   }
-  const midPointer = normalizePoint(300, 300, smallViewport)
+  // Midpoint of the stroke in normalized space is (0.5, 0.5) — map through the non-square viewport.
+  const midPointer = normalizePoint(200, 300, smallViewport)
+  if (Math.abs(midPointer.x - 0.5) > 1e-10 || Math.abs(midPointer.y - 0.5) > 1e-10) {
+    throw new Error('runPdfDrawingGeometryHarness failed: stroke midpoint normalization')
+  }
   if (!hitTestStroke(midPointer, stroke, smallViewport, 12)) {
     throw new Error('runPdfDrawingGeometryHarness failed: expected hit on stroke segment')
   }
@@ -554,5 +563,16 @@ export function runPdfDrawingGeometryHarness(): void {
   const textFarPointer = normalizePoint(350, 130, smallViewport)
   if (hitTestPdfDrawingAnnotation(textFarPointer, textAnnotation, smallViewport)) {
     throw new Error('runPdfDrawingGeometryHarness failed: unexpected text label hit')
+  }
+
+  const stampGeometry = { kind: 'stamp' as const, x: 0.5, y: 0.5, stampKind: 'window' as const }
+  const stampBounds = normalizedStampBounds(stampGeometry, smallViewport)
+  const stampHalfW = (24 / smallViewport.width) / 2
+  const stampHalfH = (24 / smallViewport.height) / 2
+  if (
+    Math.abs(stampBounds.x - (0.5 - stampHalfW)) > 1e-10 ||
+    Math.abs(stampBounds.y - (0.5 - stampHalfH)) > 1e-10
+  ) {
+    throw new Error('runPdfDrawingGeometryHarness failed: stamp bounds centered on anchor')
   }
 }

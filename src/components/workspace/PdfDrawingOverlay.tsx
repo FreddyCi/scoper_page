@@ -87,6 +87,8 @@ export type PdfDrawingOverlayProps = {
   onEraseAnnotation?: (annotationId: string) => void | Promise<void>
   selectedAnnotationIds?: readonly string[]
   onSelectionChange?: (annotationIds: string[]) => void
+  notationPickMode?: boolean
+  onNotationTargetPick?: (annotationIds: string[]) => void
   onMoveAnnotation?: (
     annotationId: string,
     geometry: PdfDrawingGeometry,
@@ -503,6 +505,8 @@ export function PdfDrawingOverlay({
   onEraseAnnotation,
   selectedAnnotationIds = [],
   onSelectionChange,
+  notationPickMode = false,
+  onNotationTargetPick,
   onMoveAnnotation,
   dictationTargetId,
   dictationDraft,
@@ -519,6 +523,8 @@ export function PdfDrawingOverlay({
   const eraserActive = interactive && activeTool === 'eraser' && Boolean(onEraseAnnotation)
   const handActive = interactive && activeTool === 'hand' && Boolean(onMoveAnnotation)
   const selectActive = interactive && activeTool === 'select' && Boolean(onSelectionChange)
+  const notationPickActive =
+    interactive && notationPickMode && Boolean(onNotationTargetPick)
   const pointerActive =
     strokeToolActive ||
     shapeToolActive ||
@@ -526,7 +532,8 @@ export function PdfDrawingOverlay({
     stampToolActive ||
     eraserActive ||
     handActive ||
-    selectActive
+    selectActive ||
+    notationPickActive
 
   const effectiveStrokeWidth =
     activeTool === 'highlighter'
@@ -566,6 +573,13 @@ export function PdfDrawingOverlay({
     setMoveDrag(null)
     setDraftMarquee(null)
   }, [])
+
+  const applyNotationTarget = useCallback(
+    (nextIds: string[]) => {
+      onNotationTargetPick?.(nextIds)
+    },
+    [onNotationTargetPick],
+  )
 
   const applySelection = useCallback(
     (nextIds: string[]) => {
@@ -649,7 +663,21 @@ export function PdfDrawingOverlay({
         return
       }
 
-      if (stampToolActive) {
+      if (notationPickActive) {
+        event.preventDefault()
+        const hit = findPdfDrawingAnnotationAtPointer(
+          point,
+          annotationsRef.current,
+          viewport,
+          eraserRadiusPx,
+        )
+        if (hit) {
+          applyNotationTarget([hit.annotation_id])
+        }
+        return
+      }
+
+      if (stampToolActive && !notationPickMode) {
         event.preventDefault()
         void placeStamp(point)
         return
@@ -730,11 +758,14 @@ export function PdfDrawingOverlay({
     },
     [
       activeTool,
+      applyNotationTarget,
       applySelection,
       eraseAtPointer,
       eraserActive,
       eraserRadiusPx,
       handActive,
+      notationPickActive,
+      notationPickMode,
       pointerActive,
       selectActive,
       shapeToolActive,
@@ -963,7 +994,9 @@ export function PdfDrawingOverlay({
 
   const cursorClass = handActive
     ? 'cursor-grab active:cursor-grabbing'
-    : selectActive
+    : notationPickActive
+      ? 'cursor-pointer'
+      : selectActive
       ? 'cursor-crosshair'
       : eraserActive
         ? 'cursor-cell'
@@ -999,7 +1032,7 @@ export function PdfDrawingOverlay({
         </g>
       ))}
 
-      {selectActive
+      {selectedAnnotationIds.length > 0
         ? displayAnnotations
             .filter((annotation) => selectedSet.has(annotation.annotation_id))
             .map((annotation) => (

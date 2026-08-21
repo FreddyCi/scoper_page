@@ -140,6 +140,40 @@ export function useMarkDictation({
     return true
   }, [available, isListening, markMode, selectedAnnotationIds.length, speechStatus])
 
+  const canDictate = useMemo(() => {
+    if (!markMode || !available) return false
+    if (selectedAnnotationIds.length !== 1) return false
+    if (isChatVoiceSessionActive()) return false
+    if (isListening || targetAnnotationId) return false
+    if (speechStatus === 'error') return false
+    return true
+  }, [
+    available,
+    isListening,
+    markMode,
+    selectedAnnotationIds.length,
+    speechStatus,
+    targetAnnotationId,
+  ])
+
+  const beginDictation = useCallback(() => {
+    if (!canStartDictation()) return false
+
+    const annotationId = selectedAnnotationIds[0]
+    if (!annotationId) return false
+
+    spaceActiveRef.current = true
+    setTargetAnnotationId(annotationId)
+    setDraftNote('')
+    startListening()
+    return true
+  }, [canStartDictation, selectedAnnotationIds, startListening])
+
+  const endDictation = useCallback(() => {
+    if (!spaceActiveRef.current && !targetAnnotationIdRef.current) return
+    finishDictation(targetAnnotationIdRef.current)
+  }, [finishDictation])
+
   const handleSpaceKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!isSpaceKeyboardEvent(event) || event.repeat) return false
@@ -197,12 +231,15 @@ export function useMarkDictation({
     available,
     status,
     isDictating: isListening,
+    canDictate,
     targetAnnotationId,
     draftNote,
     committedPreview,
     errorMessage,
     handleSpaceKeyDown,
     handleSpaceKeyUp,
+    beginDictation,
+    endDictation,
     onSelectionChange,
     onWindowBlur,
     dismissError,

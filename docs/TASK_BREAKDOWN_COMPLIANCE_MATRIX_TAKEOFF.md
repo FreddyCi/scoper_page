@@ -206,20 +206,20 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-266
 
 **Title:** Compliance matrix CSV export  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-264  
 **Priority:** High  
 **Description:** New [`src/services/export-rfp-compliance-csv.ts`](../src/services/export-rfp-compliance-csv.ts) + [`beginBlobSave`](../src/lib/download-blob.ts). Columns: requirement, page, excerpt, per-bidder status, notes. Button on `RfpEvaluationPanel` (optional second entry on footer Export later — not required). Filename includes session / baseline hint if that matches other exports.  
 **Completed Changes:**
-- 🔄 Pure CSV builder (testable)
-- 🔄 `beginBlobSave` download
-- 🔄 Button on evaluation panel
-- 🔄 Harness: CSV string contains a known requirement phrase
+- ✅ `buildRfpComplianceCsv` + `downloadRfpComplianceCsv` (pure builder + `beginBlobSave`)
+- ✅ CSV columns: #, requirement, page, excerpt, per-bidder status + note pairs
+- ✅ **CSV** button on compliance matrix header in evaluation panel (`ComplianceMatrix`)
+- ✅ `runExportRfpComplianceCsvHarness` — known shall phrase + bidder columns; wired in dev unit chain
 **Test Strategy:** Export from sample RFP; open CSV; known shall phrase + bidder columns present. `pnpm exec tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** [`download-blob.ts`](../src/lib/download-blob.ts); proposal CSV pattern in [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx)
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
+**Context/Artifacts:** [`download-blob.ts`](../src/lib/download-blob.ts); [`export-rfp-compliance-csv.ts`](../src/services/export-rfp-compliance-csv.ts); [`ComplianceMatrix.tsx`](../src/components/workspace/ComplianceMatrix.tsx)
 
 ---
 
@@ -507,6 +507,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.8 | 2026-08-21 | BDA-266 implemented: compliance matrix CSV export |
 | v1.7 | 2026-08-21 | BDA-265 implemented: editable matrix status + notes |
 | v1.6 | 2026-08-21 | BDA-264 implemented: ComplianceMatrix on evaluation panel |
 | v1.5 | 2026-08-21 | BDA-263 implemented: qualification hook + matrix selectors |

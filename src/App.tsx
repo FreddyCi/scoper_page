@@ -17,6 +17,7 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runExtractRfpRequirementsHarness } from '@/services/extract-rfp-requirements'
+import { runExportRfpComplianceCsvHarness } from '@/services/export-rfp-compliance-csv'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import {
   runChatVoiceAsyncHarnesses,
@@ -77,6 +78,7 @@ function App() {
       runSessionStoreHarness()
       runProposalUnitHarnesses()
       runExtractRfpRequirementsHarness()
+      runExportRfpComplianceCsvHarness()
       runDrawingMarkupUnitHarnesses()
       runChatVoiceUnitHarnesses()
       await runProposalAsyncUnitHarnesses()

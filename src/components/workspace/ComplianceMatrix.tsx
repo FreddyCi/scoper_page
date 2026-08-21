@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ChevronRightIcon } from 'lucide-react'
+import { ChevronRightIcon, DownloadIcon } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { CitationRef, RfpRequirementScore, RfpRequirementScoreStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
+import { downloadRfpComplianceCsv } from '@/services/export-rfp-compliance-csv'
 import {
   selectRfpRequirementScores,
   selectRfpRequirements,
@@ -139,6 +141,29 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
   const requirements = useSessionStore(selectRfpRequirements)
   const scores = useSessionStore(selectRfpRequirementScores)
   const profiles = useSessionStore((state) => state.profiles)
+  const evaluationDocId = useSessionStore((state) => state.evaluationDocId)
+  const documents = useSessionStore((state) => state.documents)
+  const [exportingCsv, setExportingCsv] = useState(false)
+
+  const baselineFilename = documents.find((doc) => doc.doc_id === evaluationDocId)?.filename
+
+  async function handleExportCsv() {
+    if (requirements.length === 0 || exportingCsv) return
+    setExportingCsv(true)
+    try {
+      await downloadRfpComplianceCsv({
+        baselineFilename,
+        requirements,
+        profiles,
+        scores,
+      })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      console.error('[compliance-matrix] csv export failed', error)
+    } finally {
+      setExportingCsv(false)
+    }
+  }
 
   function handleCitationClick(citation: CitationRef) {
     if (onCitationClick) {
@@ -171,14 +196,27 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
 
   return (
     <section className={cn('border-border/70 space-y-3 border-t pt-4', className)}>
-      <div className="space-y-1">
-        <h3 className="text-sm font-medium">Compliance matrix</h3>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          {requirements.length} obligation{requirements.length === 1 ? '' : 's'} from baseline
-          {profiles.length > 0
-            ? ` · edit status and notes per bidder (saved on blur)`
-            : ' · upload bidder responses to score columns'}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">Compliance matrix</h3>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            {requirements.length} obligation{requirements.length === 1 ? '' : 's'} from baseline
+            {profiles.length > 0
+              ? ` · edit status and notes per bidder (saved on blur)`
+              : ' · upload bidder responses to score columns'}
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7 shrink-0 px-2 text-xs"
+          disabled={exportingCsv}
+          onClick={() => void handleExportCsv()}
+        >
+          <DownloadIcon className="size-3.5" />
+          {exportingCsv ? 'Exporting…' : 'CSV'}
+        </Button>
       </div>
 
       <div className="border-border/70 overflow-x-auto rounded-lg border">

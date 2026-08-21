@@ -356,18 +356,18 @@ flowchart TD
 ### **ID:** BDA-257
 
 **Title:** Static QA and dev harnesses  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-247, BDA-249, BDA-250  
 **Priority:** High  
 **Description:** Extend [`drawing-markup-dev-harnesses.ts`](../src/services/drawing-markup-dev-harnesses.ts) or new `mark-voice-notation-harness.ts`: speech-notes + merge harnesses. Extend [`run-drawing-markup-qa-static.mjs`](../scripts/run-drawing-markup-qa-static.mjs) to assert `speech-notes.ts`, `use-mark-dictation.ts`, DocumentViewer Space listener, share-table `voice_note` column. Wire into [`App.tsx`](../src/App.tsx) dev chain.  
 **Completed Changes:**
-- 🔄 Unit harnesses
-- 🔄 Static script checks
-- 🔄 `pnpm qa:drawing-markup` still passes
+- ✅ [`mark-voice-notation-harness.ts`](../src/services/mark-voice-notation-harness.ts) — `runMarkVoiceNotationUnitHarnesses`
+- ✅ Unit chain via `runDrawingMarkupUnitHarnesses` (App dev bootstrap unchanged)
+- ✅ Static QA BDA-257 section: speech hooks, DocumentViewer Space wiring, dictation overlay, share `voice_note`
 **Test Strategy:** `pnpm qa:drawing-markup`; dev console no `[dev-harness]` errors.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm qa:drawing-markup` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-240–241 QA pattern
 
 ---

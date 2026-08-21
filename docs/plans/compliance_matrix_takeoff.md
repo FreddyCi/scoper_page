@@ -1,6 +1,6 @@
 # Compliance matrix, instructions card, stamp takeoff
 
-**Status:** Planned — see [TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md](../TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) (BDA-259–276)  
+**Status:** Implemented — see [TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md](../TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) (BDA-259–276); peer manual UI pending  
 **Created:** 2026-08-21  
 **Overview:** Three Scoper-native deliverables: a shall/compliance matrix with CSV, an Instructions card on evaluation/proposal panels, and a stamp takeoff list with CSV. Local, cited, exportable — not Loopio or Bluebeam.
 

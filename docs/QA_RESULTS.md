@@ -160,6 +160,20 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 ---
 
+## Compliance matrix, instructions, stamp takeoff (BDA-276)
+
+**Execution date:** 2026-08-21  
+**Script:** [`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) § Manual QA checklist (BDA-276)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `pnpm exec tsc -b` | **Pass** | Types clean |
+| `pnpm qa:compliance-matrix` | **Pass** | Harness module, App chain, share v4, UI wiring, includes `tsc -b` |
+| `pnpm dev` — compliance + share harness chain | **Pending peer** | Console must not throw `[dev-harness]` |
+| Manual UI (matrix, instructions, takeoff, CSV, share v4) | **Pending peer** | Sample RFP pack + stamped drawing; see 14-step checklist |
+
+---
+
 ## Sign-off
 
 | Field | Value |

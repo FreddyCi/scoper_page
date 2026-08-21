@@ -270,18 +270,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-269
 
 **Title:** Instructions preamble on matrix CSV  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-266, BDA-267  
 **Priority:** Medium  
 **Description:** Prepend a short Instructions block to the matrix CSV (due, Q&A, page limit, volumes — “Not found” when empty). Does not replace BDA-266 columns.  
 **Completed Changes:**
-- 🔄 Preamble rows or comment lines in CSV builder
-- 🔄 Harness asserts known due-date or “Not found” present
+- ✅ `buildRfpInstructionsCsvPreamble` prepended in `buildRfpComplianceCsv`
+- ✅ Missing instruction fields → `Not found`; matrix export passes `rfpInstructionsProfile`
+- ✅ Harness asserts preamble before matrix header + March 1 + `Questions due,Not found`
 **Test Strategy:** Export CSV after sample qualify; preamble appears above requirement rows.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** BDA-266 `export-rfp-compliance-csv.ts`
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
+**Context/Artifacts:** BDA-266 [`export-rfp-compliance-csv.ts`](../src/services/export-rfp-compliance-csv.ts)
 
 ---
 
@@ -507,6 +508,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.11 | 2026-08-21 | BDA-269 implemented: instructions preamble on matrix CSV |
 | v1.10 | 2026-08-21 | BDA-268 implemented: InstructionsCard on evaluation + proposal |
 | v1.9 | 2026-08-21 | BDA-267 implemented: solicitation meta extract + persist |
 | v1.8 | 2026-08-21 | BDA-266 implemented: compliance matrix CSV export |

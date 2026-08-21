@@ -1,5 +1,6 @@
 import { beginBlobSave } from '@/lib/download-blob'
 import type {
+  RfpInstructionsProfile,
   RfpRequirement,
   RfpRequirementScore,
   RfpRequirementScoreStatus,
@@ -18,6 +19,7 @@ export type ExportRfpComplianceCsvInput = {
   requirements: RfpRequirement[]
   profiles: RfpResultsProfile[]
   scores: RfpRequirementScore[]
+  instructions?: RfpInstructionsProfile | null
 }
 
 function escapeCsvField(value: string): string {
@@ -31,8 +33,32 @@ function csvRow(cells: string[]): string {
   return cells.map(escapeCsvField).join(',')
 }
 
+function instructionValue(value: string | undefined): string {
+  return value?.trim() ? value.trim() : 'Not found'
+}
+
+/** Instructions block prepended above compliance matrix rows (BDA-269). */
+export function buildRfpInstructionsCsvPreamble(
+  instructions?: RfpInstructionsProfile | null,
+): string[] {
+  const volumes =
+    instructions && instructions.volumes.length > 0
+      ? instructions.volumes.map((volume) => volume.value).join('; ')
+      : 'Not found'
+
+  return [
+    csvRow(['Instructions']),
+    csvRow(['Due date', instructionValue(instructions?.dueDate?.value)]),
+    csvRow(['Questions due', instructionValue(instructions?.questionsDue?.value)]),
+    csvRow(['Page limit', instructionValue(instructions?.pageLimit?.value)]),
+    csvRow(['Solicitation volumes', volumes]),
+    '',
+  ]
+}
+
 /** Pure CSV builder for compliance matrix export (BDA-266). */
 export function buildRfpComplianceCsv(input: ExportRfpComplianceCsvInput): string {
+  const preamble = buildRfpInstructionsCsvPreamble(input.instructions)
   const header = [
     '#',
     'requirement',
@@ -65,7 +91,7 @@ export function buildRfpComplianceCsv(input: ExportRfpComplianceCsvInput): strin
     ])
   })
 
-  return [csvRow(header), ...rows].join('\n')
+  return [...preamble, csvRow(header), ...rows].join('\n')
 }
 
 export function rfpComplianceCsvFilename(baselineFilename?: string): string {
@@ -92,6 +118,16 @@ export async function downloadRfpComplianceCsv(input: ExportRfpComplianceCsvInpu
 export function runExportRfpComplianceCsvHarness(): void {
   const csv = buildRfpComplianceCsv({
     baselineFilename: 'sample-rfp.pdf',
+    instructions: {
+      doc_id: 'baseline-harness',
+      dueDate: {
+        label: 'Due date',
+        value: 'Proposals are due March 1, 2026',
+      },
+      volumes: [],
+      block_ids: [],
+      summary: 'Harness instructions',
+    },
     requirements: [
       {
         id: 'req-harness-1',
@@ -127,6 +163,14 @@ export function runExportRfpComplianceCsvHarness(): void {
 
   if (!csv.includes('weekly status reports')) {
     throw new Error('runExportRfpComplianceCsvHarness: missing known requirement phrase')
+  }
+  const matrixHeaderIndex = csv.indexOf('#,requirement,page,excerpt')
+  const instructionsIndex = csv.indexOf('Instructions')
+  if (instructionsIndex === -1 || instructionsIndex >= matrixHeaderIndex) {
+    throw new Error('runExportRfpComplianceCsvHarness: instructions preamble missing or after matrix')
+  }
+  if (!csv.includes('March 1') || !csv.includes('Questions due,Not found')) {
+    throw new Error('runExportRfpComplianceCsvHarness: instructions preamble content missing')
   }
   if (!csv.includes('Acme Bid status') || !csv.includes('Partial')) {
     throw new Error('runExportRfpComplianceCsvHarness: missing bidder status column')

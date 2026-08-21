@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { downloadRfpComplianceCsv } from '@/services/export-rfp-compliance-csv'
 import {
+  selectRfpInstructionsProfile,
   selectRfpRequirementScores,
   selectRfpRequirements,
   useSessionStore,
@@ -141,6 +142,7 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
   const requirements = useSessionStore(selectRfpRequirements)
   const scores = useSessionStore(selectRfpRequirementScores)
   const profiles = useSessionStore((state) => state.profiles)
+  const instructions = useSessionStore(selectRfpInstructionsProfile)
   const evaluationDocId = useSessionStore((state) => state.evaluationDocId)
   const documents = useSessionStore((state) => state.documents)
   const [exportingCsv, setExportingCsv] = useState(false)
@@ -156,6 +158,7 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
         requirements,
         profiles,
         scores,
+        instructions,
       })
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return

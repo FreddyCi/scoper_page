@@ -166,19 +166,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-264
 
 **Title:** ComplianceMatrix on evaluation panel  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-263  
 **Priority:** High  
 **Description:** New [`ComplianceMatrix`](../src/components/workspace/ComplianceMatrix.tsx) rendered in [`RfpEvaluationPanel`](../src/components/workspace/RfpEvaluationPanel.tsx) as a sibling of baseline “Requirements extracted” — **not** a new Profiles-grid column. Columns: #, requirement, citation, one status chip per loaded bidder profile, note. Citation click uses existing `focusCitation` / [`citation-bridge.ts`](../src/lib/citation-bridge.ts). Reuse chip / row patterns from [`CriterionRow`](../src/components/workspace/CriterionRow.tsx). Empty extract: short “No shall/must lines found” empty state, not a spinner forever.  
 **Completed Changes:**
-- 🔄 `ComplianceMatrix` component
-- 🔄 Mount in `RfpEvaluationPanel` only (no `ResultsProfileGrid` column)
-- 🔄 Citation → `focusCitation`
-- 🔄 Empty state
+- ✅ [`ComplianceMatrix`](../src/components/workspace/ComplianceMatrix.tsx) — table with #, requirement, cite, per-bidder status chips, note
+- ✅ Mounted in `RfpEvaluationPanel` below “Requirements extracted” (not in `ResultsProfileGrid`)
+- ✅ Requirement label + cite → `focusCitation` via `onCitationClick`
+- ✅ Empty state: “No shall/must lines found in the baseline document”
 **Test Strategy:** Sample RFP → matrix lists extracted shalls; click citation focuses the baseline viewer. Existing 3 criterion cards unchanged.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx); [`CriterionRow.tsx`](../src/components/workspace/CriterionRow.tsx); [`ResultsProfileGrid.tsx`](../src/components/workspace/ResultsProfileGrid.tsx) (do not add column)
 
 ---
@@ -506,6 +506,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.6 | 2026-08-21 | BDA-264 implemented: ComplianceMatrix on evaluation panel |
 | v1.5 | 2026-08-21 | BDA-263 implemented: qualification hook + matrix selectors |
 | v1.4 | 2026-08-21 | BDA-262 implemented: persist requirements + seed scores |
 | v1.3 | 2026-08-21 | BDA-261 implemented: rfp_requirements + scores DuckDB tables |

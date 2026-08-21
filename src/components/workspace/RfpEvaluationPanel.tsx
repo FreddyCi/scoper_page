@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
+import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
 import { cn } from '@/lib/utils'
@@ -497,6 +498,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                   />
                 ))}
               </div>
+              <ComplianceMatrix onCitationClick={handleCriterionClick} />
             </section>
           ) : null}
         </div>

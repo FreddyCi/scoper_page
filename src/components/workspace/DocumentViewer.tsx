@@ -391,14 +391,33 @@ export function DocumentViewer({
   const markColor = pdfMarkColor
   const pageDrawingAnnotations = drawingAnnotationsLoading ? [] : drawingAnnotations
 
+  const selectedVoiceNotationId = useMemo(() => {
+    if (selectedDrawingAnnotationIds.length !== 1) return null
+    const annotationId = selectedDrawingAnnotationIds[0]!
+    const annotation = pageDrawingAnnotations.find(
+      (row) => row.annotation_id === annotationId,
+    )
+    return annotation?.voice_note?.trim() ? annotationId : null
+  }, [pageDrawingAnnotations, selectedDrawingAnnotationIds])
+
+  const handleClearSelectedVoiceNotation = async () => {
+    if (!selectedVoiceNotationId) return
+    await persistDrawingMark(
+      () => updateMarkVoiceNote(selectedVoiceNotationId, ''),
+      'clear voice notation failed',
+    )
+  }
+
   const markDictationHint =
     markMode && isDictating
       ? 'Listening… release Space to save'
       : markMode && !dictationAvailable
         ? 'Voice notation requires HTTPS + Chrome/Edge speech support'
-        : markMode && selectedDrawingAnnotationIds.length === 1
-          ? 'Hold Space to dictate notation'
-          : null
+        : markMode && selectedVoiceNotationId
+          ? 'Selected mark has voice notation · Hold Space to add more, or clear with the mic-off button'
+          : markMode && selectedDrawingAnnotationIds.length === 1
+            ? 'Hold Space to dictate notation'
+            : null
 
   const toolbarHint =
     adjustError ??
@@ -491,6 +510,10 @@ export function DocumentViewer({
             selectionCount={selectedDrawingAnnotationIds.length}
             onDeleteSelection={() => {
               void handleDeleteSelectedMarks()
+            }}
+            canClearVoiceNotation={selectedVoiceNotationId != null}
+            onClearVoiceNotation={() => {
+              void handleClearSelectedVoiceNotation()
             }}
             speechNotesAvailable={dictationAvailable}
           />

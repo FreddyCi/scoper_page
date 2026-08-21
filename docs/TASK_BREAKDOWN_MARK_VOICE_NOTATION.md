@@ -334,17 +334,17 @@ flowchart TD
 ### **ID:** BDA-256
 
 **Title:** Clear voice_note on selection  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-246, BDA-253  
 **Priority:** Low  
 **Description:** When exactly one mark selected and it has `voice_note`, show compact actions in toolbar hint row or overlay popover: **Clear notation** (sets `voice_note` null). Keyboard shortcut optional (defer).  
 **Completed Changes:**
-- 🔄 Clear button + confirm or single-click clear
-- 🔄 Updates via `updateMarkVoiceNote(id, '')`
+- ✅ Shadcn toolbar `MicOff` button with tooltip when one selected mark has `voice_note`
+- ✅ Single-click clear via `updateMarkVoiceNote(id, '')`; hint mentions clear action
 **Test Strategy:** Dictate → clear → badge gone after reload.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** v1 view notation via badge tooltip; clear is minimal edit UX
 
 ---

@@ -56,6 +56,9 @@ export type PdfMarkupToolbarProps = {
   canRedo?: boolean
   selectionCount?: number
   onDeleteSelection?: () => void
+  /** Exactly one selected mark has a saved voice notation (BDA-256). */
+  canClearVoiceNotation?: boolean
+  onClearVoiceNotation?: () => void
   /** Web Speech API available for hold-Space dictation (BDA-254). */
   speechNotesAvailable?: boolean
   theme?: 'light' | 'dark'
@@ -186,6 +189,8 @@ export function PdfMarkupToolbar({
   canRedo = false,
   selectionCount = 0,
   onDeleteSelection,
+  canClearVoiceNotation = false,
+  onClearVoiceNotation,
   speechNotesAvailable = true,
   theme = 'light',
   className,
@@ -317,10 +322,39 @@ export function PdfMarkupToolbar({
         </>
       ) : null}
 
-      {onUndo || onRedo || (tool === 'select' && onDeleteSelection) ? (
+      {onUndo || onRedo || (tool === 'select' && onDeleteSelection) || onClearVoiceNotation ? (
         <>
           <ToolbarDivider isDark={isDark} />
           <div className="ml-auto flex items-center gap-0.5">
+            {onClearVoiceNotation ? (
+              <Tooltip>
+                <TooltipTrigger
+                  delay={300}
+                  render={
+                    <Button
+                      type="button"
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label="Clear voice notation"
+                      disabled={!canClearVoiceNotation}
+                      className={cn(
+                        canClearVoiceNotation &&
+                          'text-primary hover:text-primary hover:bg-primary/10',
+                      )}
+                      onClick={() => onClearVoiceNotation()}
+                    >
+                      <MicOffIcon className="size-3.5" />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="bottom" className="max-w-[14rem] text-left">
+                  <span className="block font-medium">Clear notation</span>
+                  <span className="text-background/85 mt-0.5 block font-normal leading-snug">
+                    Remove the saved voice note from the selected mark.
+                  </span>
+                </TooltipContent>
+              </Tooltip>
+            ) : null}
             {tool === 'select' && onDeleteSelection ? (
               <Tooltip>
                 <TooltipTrigger

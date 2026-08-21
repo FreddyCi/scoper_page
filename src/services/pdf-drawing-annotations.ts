@@ -26,6 +26,7 @@ const PDF_DRAWING_ANNOTATION_COLUMNS = [
   'opacity',
   'geometry_json',
   'text_body',
+  'voice_note',
   'author_initials',
   'created_at',
   'updated_at',
@@ -343,6 +344,33 @@ export async function runPdfDrawingAnnotationsSchemaHarness(): Promise<void> {
   }
 
   await deletePdfDrawingAnnotation(saved.annotation_id)
+
+  const voiceNoteId = 'harness-voice-note-ann'
+  const voiceNoteText = 'Window faces north elevation'
+  await duckdb.query(
+    `INSERT INTO pdf_drawing_annotations (
+       annotation_id, doc_id, page_num, tool, color, geometry_json, voice_note, author_initials, created_at
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      voiceNoteId,
+      'doc-schema-harness',
+      1,
+      'stamp',
+      '#E11D48',
+      JSON.stringify({ kind: 'stamp', x: 0.5, y: 0.5, stampKind: 'window' }),
+      voiceNoteText,
+      'HR',
+      new Date().toISOString(),
+    ],
+  )
+  const voiceRows = await duckdb.query<{ voice_note: string | null }>(
+    'SELECT voice_note FROM pdf_drawing_annotations WHERE annotation_id = ?',
+    [voiceNoteId],
+  )
+  if (voiceRows[0]?.voice_note !== voiceNoteText) {
+    throw new Error('runPdfDrawingAnnotationsSchemaHarness failed: voice_note round-trip')
+  }
+  await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE annotation_id = ?', [voiceNoteId])
 }
 
 /** Dev harness — create → list → update → delete (BDA-223). */

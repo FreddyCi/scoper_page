@@ -61,6 +61,7 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     opacity DOUBLE,
     geometry_json VARCHAR NOT NULL,
     text_body VARCHAR,
+    voice_note VARCHAR,
     author_initials VARCHAR NOT NULL DEFAULT '?',
     created_at VARCHAR NOT NULL,
     updated_at VARCHAR
@@ -108,4 +109,5 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
 export const DUCKDB_MIGRATION_STATEMENTS = [
   `ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_initials VARCHAR`,
   `UPDATE comments SET author_initials = '?' WHERE author_initials IS NULL`,
+  `ALTER TABLE pdf_drawing_annotations ADD COLUMN IF NOT EXISTS voice_note VARCHAR`,
 ] as const

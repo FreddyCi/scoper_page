@@ -75,17 +75,19 @@ flowchart TD
 ### **ID:** BDA-243
 
 **Title:** DuckDB voice_note column migration  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-242  
 **Priority:** Critical  
 **Description:** Add migration in [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts): `ALTER TABLE pdf_drawing_annotations ADD COLUMN IF NOT EXISTS voice_note VARCHAR` in `DUCKDB_MIGRATION_STATEMENTS`. Extend schema harness (mirror BDA-221) to assert column exists after init.  
 **Completed Changes:**
-- 🔄 Migration statement
-- 🔄 Harness DESCRIBE / smoke insert with `voice_note`
+- ✅ Migration statement in `DUCKDB_MIGRATION_STATEMENTS`
+- ✅ `voice_note` on CREATE TABLE for fresh installs
+- ✅ Harness DESCRIBE includes `voice_note`; raw insert/select smoke
 **Test Strategy:** Dev app load runs harness; existing sessions migrate without data loss.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runPdfDrawingAnnotationsSchemaHarness` column list + voice_note round-trip
+**Assigned:** Completed  
 **Context/Artifacts:** [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts); BDA-221
 
 ---

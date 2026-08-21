@@ -3,6 +3,7 @@ import {
   fetchScopeCreepProfiles,
   persistScopeCreepProfile,
 } from '@/services/scope-creep-store'
+import { countObligationMatches } from '@/lib/obligation-pattern'
 import type { BlockRecord, CitationRef, DocumentMeta, ScopeCreepFlag, ScopeCreepProfile } from '@/lib/types'
 import { blockToCitation } from '@/lib/types'
 import { useSessionStore } from '@/store/session-store'
@@ -27,8 +28,6 @@ const TOKEN_PATTERN = /[a-z0-9]{4,}/gi
 
 const DELIVERABLE_PATTERN =
   /(?:shall|must)\s+(?:provide|deliver|implement|supply)|additional\s+\w+|new\s+deliverable|beyond\s+(?:the\s+)?baseline/i
-
-const OBLIGATION_PATTERN = /\b(shall|must|will\s+provide|required\s+to)\b/gi
 
 const TIMELINE_PATTERN =
   /\b(\d{1,3})\s*(?:calendar\s+)?(day|days|week|weeks|month|months)\b|\b(ninety|one hundred twenty|120|90)\b/gi
@@ -101,7 +100,7 @@ function detectShallMustShifts(
   const flags: ScopeCreepFlag[] = []
 
   for (const block of candidateBlocks) {
-    const candidateMatches = block.text.match(OBLIGATION_PATTERN)?.length ?? 0
+    const candidateMatches = countObligationMatches(block.text)
     if (candidateMatches === 0) continue
 
     const candidateTokens = tokenSet(block.text)
@@ -110,7 +109,7 @@ function detectShallMustShifts(
     )
 
     const baselineMatches = relatedBaseline.reduce(
-      (total, baseline) => total + (baseline.text.match(OBLIGATION_PATTERN)?.length ?? 0),
+      (total, baseline) => total + countObligationMatches(baseline.text),
       0,
     )
 

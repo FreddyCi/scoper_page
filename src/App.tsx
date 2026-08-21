@@ -16,6 +16,7 @@ import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
+import { runExtractRfpRequirementsHarness } from '@/services/extract-rfp-requirements'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import {
   runChatVoiceAsyncHarnesses,
@@ -73,6 +74,7 @@ function App() {
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
       runProposalUnitHarnesses()
+      runExtractRfpRequirementsHarness()
       runDrawingMarkupUnitHarnesses()
       runChatVoiceUnitHarnesses()
       await runProposalAsyncUnitHarnesses()

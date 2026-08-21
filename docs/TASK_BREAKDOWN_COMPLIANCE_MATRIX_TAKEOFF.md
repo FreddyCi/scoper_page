@@ -77,20 +77,21 @@ flowchart TD
 ### **ID:** BDA-260
 
 **Title:** Heuristic shall extractor + harness  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-259  
 **Priority:** Critical  
 **Description:** New service (e.g. [`src/services/extract-rfp-requirements.ts`](../src/services/extract-rfp-requirements.ts)) scans **baseline** blocks with the existing obligation pattern from [`compare-scope.ts`](../src/services/compare-scope.ts) (`shall` / `must` / `will provide` / `required to`). Cap + de-dupe near-duplicate sentences; skip ToC / heading-only noise. Reuse `findMatchingBlock`-style scoring from [`build-rfp-profiles.ts`](../src/services/build-rfp-profiles.ts) to attach `citation` (`block_id`, page). Extract `OBLIGATION_PATTERN` to a shared module **or** import a named export from `compare-scope` — do not fork a second regex. Do **not** change the 3-rule profile builder or contract-checklist path.  
 **Completed Changes:**
-- 🔄 Shared obligation pattern (single source of truth)
-- 🔄 `extractRfpRequirements(blocks) → RfpRequirementsExtract`
-- 🔄 Cap, de-dupe, skip ToC noise
-- 🔄 Unit harness: fixture text containing a known shall → extract includes that phrase + citation
+- ✅ Shared obligation pattern in [`obligation-pattern.ts`](../src/lib/obligation-pattern.ts); `compare-scope` uses `countObligationMatches` (no forked regex)
+- ✅ `extractRfpRequirements(blocks) → RfpRequirementsExtract` with `blockToCitation` via findMatchingBlock-style score
+- ✅ Cap 48, exact/containment de-dupe, skip ToC / heading-only noise
+- ✅ `runExtractRfpRequirementsHarness` — known shall + citation, ToC-only / empty → `[]`; wired in `App.tsx` unit chain
 **Test Strategy:** Dev harness or `src/lib/*.test.ts` if that is the project pattern; `pnpm exec tsc -b`. Known phrase present; empty / ToC-only input returns `[]` or empty extract without throw.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** `OBLIGATION_PATTERN` in [`compare-scope.ts`](../src/services/compare-scope.ts); [`parse-contract-checklist.ts`](../src/services/parse-contract-checklist.ts) (do not merge); BDA- profile extract in `build-rfp-profiles.ts`
+- ✅ `pnpm exec tsc -b` passes
+- ✅ 3-rule `build-rfp-profiles` and contract-checklist paths unchanged
+**Assigned:** Completed  
+**Context/Artifacts:** [`obligation-pattern.ts`](../src/lib/obligation-pattern.ts); [`extract-rfp-requirements.ts`](../src/services/extract-rfp-requirements.ts); [`parse-contract-checklist.ts`](../src/services/parse-contract-checklist.ts) (do not merge)
 
 ---
 
@@ -504,5 +505,6 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.2 | 2026-08-21 | BDA-260 implemented: heuristic shall extract + harness |
 | v1.1 | 2026-08-21 | BDA-259 implemented: score types + persist-shape JSDoc |
 | v1.0 | 2026-08-21 | Initial breakdown BDA-259–276 from matrix / takeoff / instructions plan |

@@ -198,18 +198,18 @@ flowchart TD
 ### **ID:** BDA-249
 
 **Title:** useMarkDictation hook  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-246, BDA-248  
 **Priority:** Critical  
 **Description:** Create [`src/hooks/use-mark-dictation.ts`](../src/hooks/use-mark-dictation.ts). State: `idle | listening | error`, `targetAnnotationId`, `draftNote`, `committedPreview`. API: `handleSpaceKeyDown`, `handleSpaceKeyUp`, `onSelectionChange` (commit if listening), `onWindowBlur`. Append finals via `appendSpeechTranscript` into draft; on keyup merge draft onto existing `voice_note` from annotation row and call `updateMarkVoiceNote`.  
 **Completed Changes:**
-- 🔄 Hold-space lifecycle
-- 🔄 Selection-change / blur commit guards
-- 🔄 `runMarkDictationMergeHarness` for append-merge logic
+- ✅ Hold-space lifecycle via `useSpeechNotes` + `mergeMarkDictationVoiceNote`
+- ✅ Selection-change / blur commit guards; chat voice + input focus exclusions
+- ✅ `runMarkDictationMergeHarness` wired in unit harness chain
 **Test Strategy:** Harness for merge math; manual mic test in Chrome localhost.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [plans/mark_voice_notation.md](plans/mark_voice_notation.md) §3; BDA-237 selection state
 
 ---

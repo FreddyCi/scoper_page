@@ -1,5 +1,6 @@
 import { runPdfDrawingGeometryHarness } from '@/lib/pdf-drawing-geometry'
 import { runSpeechNotesHarness } from '@/lib/speech-notes'
+import { runMarkDictationMergeHarness } from '@/hooks/use-mark-dictation'
 import { runPdfDrawingExportHarness } from '@/lib/pdf-drawing-export'
 import { runExportAnnotatedPdfDrawingMarksHarness } from '@/services/export-annotated-pdf'
 import {
@@ -14,6 +15,7 @@ import { runSharePackDrawingAnnotationsHarness } from '@/services/share-pack-imp
 export function runDrawingMarkupUnitHarnesses(): void {
   runPdfDrawingGeometryHarness()
   runSpeechNotesHarness()
+  runMarkDictationMergeHarness()
 }
 
 /**

@@ -66,6 +66,7 @@ export type PdfMarkupToolbarProps = {
   notationPickMode?: boolean
   onNotationPickToggle?: () => void
   isDictating?: boolean
+  voiceNoteCount?: number
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -200,6 +201,7 @@ export function PdfMarkupToolbar({
   notationPickMode = false,
   onNotationPickToggle,
   isDictating = false,
+  voiceNoteCount = 0,
   theme = 'light',
   className,
 }: PdfMarkupToolbarProps) {
@@ -273,6 +275,7 @@ export function PdfMarkupToolbar({
             notationPickMode={notationPickMode}
             onNotationPickToggle={onNotationPickToggle}
             isDictating={isDictating}
+            noteCount={voiceNoteCount}
             layout="toolbar"
           />
         ) : null}

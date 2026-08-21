@@ -50,6 +50,7 @@ type PdfPageCanvasProps = {
   isDictating?: boolean
   speechNotesAvailable?: boolean
   onNotationPickToggle?: () => void
+  noteCount?: number
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -108,6 +109,7 @@ export function PdfPageCanvas({
   isDictating,
   speechNotesAvailable,
   onNotationPickToggle,
+  noteCount = 0,
   theme = 'light',
   className,
 }: PdfPageCanvasProps) {
@@ -327,6 +329,7 @@ export function PdfPageCanvas({
                   notationPickMode={notationPickMode}
                   onNotationPickToggle={onNotationPickToggle}
                   isDictating={isDictating}
+                  noteCount={noteCount}
                 />
               </div>
             </div>

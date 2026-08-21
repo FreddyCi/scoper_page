@@ -9,6 +9,7 @@ export type VoiceNotationControlProps = {
   notationPickMode?: boolean
   onNotationPickToggle?: () => void
   isDictating?: boolean
+  noteCount?: number
   theme?: 'light' | 'dark'
   /** Compact icon for toolbar vs floating pill on the PDF canvas. */
   layout?: 'toolbar' | 'canvas'
@@ -21,7 +22,7 @@ function VoiceNotationTooltipContent({ speechNotesAvailable = true }: { speechNo
       <span className="block font-medium">Voice notation</span>
       <span className="text-background/85 mt-0.5 block font-normal leading-snug">
         {speechNotesAvailable
-          ? 'Toggle on, click a mark or shape, then hold Space while you speak.'
+          ? 'Open all voice notations. Click a mark, then type or hold Space to dictate.'
           : 'Voice notation requires HTTPS and Chrome or Edge speech support.'}
       </span>
     </>
@@ -33,6 +34,7 @@ export function VoiceNotationControl({
   notationPickMode = false,
   onNotationPickToggle,
   isDictating = false,
+  noteCount = 0,
   theme = 'light',
   layout = 'toolbar',
   className,
@@ -54,7 +56,7 @@ export function VoiceNotationControl({
             type="button"
             size={isCanvas ? 'sm' : 'icon-xs'}
             variant="ghost"
-            aria-label="Pick a mark for voice notation"
+            aria-label="Show voice notations"
             aria-pressed={active}
             className={cn(
               'relative',
@@ -71,6 +73,16 @@ export function VoiceNotationControl({
               className={cn(isCanvas ? 'size-4' : 'size-3.5', isDictating && 'animate-pulse')}
             />
             {isCanvas ? <span className="text-xs font-medium">Voice notation</span> : null}
+            {noteCount > 0 ? (
+              <span
+                className={cn(
+                  'bg-primary text-primary-foreground absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full text-[9px] font-semibold leading-none',
+                  isCanvas && 'static ml-0.5 size-4 text-[10px]',
+                )}
+              >
+                {noteCount > 9 ? '9+' : noteCount}
+              </span>
+            ) : null}
             {!speechNotesAvailable ? (
               <MicOffIcon
                 className={cn(

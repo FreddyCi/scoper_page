@@ -130,15 +130,22 @@ export function useMarkDictation({
     [commitDraft, resetDictationSession, stopListening],
   )
 
-  const canStartDictation = useCallback(() => {
-    if (!markMode || !available) return false
-    if (selectedAnnotationIds.length !== 1) return false
-    if (isPdfMarkupShortcutTarget(document.activeElement)) return false
-    if (isChatVoiceSessionActive()) return false
-    if (isListening || targetAnnotationIdRef.current) return false
-    if (speechStatus === 'error') return false
-    return true
-  }, [available, isListening, markMode, selectedAnnotationIds.length, speechStatus])
+  const canStartDictation = useCallback(
+    (annotationId?: string, options?: { ignoreShortcutTarget?: boolean }) => {
+      if (!markMode || !available) return false
+      const targetId =
+        annotationId ?? (selectedAnnotationIds.length === 1 ? selectedAnnotationIds[0] : undefined)
+      if (!targetId) return false
+      if (!options?.ignoreShortcutTarget && isPdfMarkupShortcutTarget(document.activeElement)) {
+        return false
+      }
+      if (isChatVoiceSessionActive()) return false
+      if (isListening || targetAnnotationIdRef.current) return false
+      if (speechStatus === 'error') return false
+      return true
+    },
+    [available, isListening, markMode, selectedAnnotationIds, speechStatus],
+  )
 
   const canDictate = useMemo(() => {
     if (!markMode || !available) return false
@@ -156,18 +163,23 @@ export function useMarkDictation({
     targetAnnotationId,
   ])
 
-  const beginDictation = useCallback(() => {
-    if (!canStartDictation()) return false
+  const beginDictation = useCallback(
+    (annotationId?: string) => {
+      const targetId =
+        annotationId ?? (selectedAnnotationIds.length === 1 ? selectedAnnotationIds[0] : undefined)
+      if (!targetId) return false
+      if (!canStartDictation(targetId, { ignoreShortcutTarget: Boolean(annotationId) })) {
+        return false
+      }
 
-    const annotationId = selectedAnnotationIds[0]
-    if (!annotationId) return false
-
-    spaceActiveRef.current = true
-    setTargetAnnotationId(annotationId)
-    setDraftNote('')
-    startListening()
-    return true
-  }, [canStartDictation, selectedAnnotationIds, startListening])
+      spaceActiveRef.current = true
+      setTargetAnnotationId(targetId)
+      setDraftNote('')
+      startListening()
+      return true
+    },
+    [canStartDictation, selectedAnnotationIds, startListening],
+  )
 
   const endDictation = useCallback(() => {
     if (!spaceActiveRef.current && !targetAnnotationIdRef.current) return

@@ -1,4 +1,25 @@
 /** DuckDB DDL — PRD §5.3, plan §DuckDB schema */
+
+const RFP_REQUIREMENTS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS rfp_requirements (
+    requirement_id VARCHAR PRIMARY KEY,
+    doc_id VARCHAR NOT NULL,
+    label VARCHAR NOT NULL,
+    category VARCHAR,
+    block_id VARCHAR,
+    page_num INTEGER,
+    excerpt VARCHAR,
+    created_at VARCHAR NOT NULL
+  )`
+
+const RFP_REQUIREMENT_SCORES_TABLE_SQL = `CREATE TABLE IF NOT EXISTS rfp_requirement_scores (
+    requirement_id VARCHAR NOT NULL,
+    profile_id VARCHAR NOT NULL,
+    status VARCHAR NOT NULL,
+    note VARCHAR,
+    source VARCHAR,
+    PRIMARY KEY (requirement_id, profile_id)
+  )`
+
 export const DUCKDB_SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS documents (
     doc_id VARCHAR PRIMARY KEY,
@@ -103,6 +124,27 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     citations_json VARCHAR,
     PRIMARY KEY (profile_id, volume_id, section_id)
   )`,
+  RFP_REQUIREMENTS_TABLE_SQL,
+  RFP_REQUIREMENT_SCORES_TABLE_SQL,
+] as const
+
+export const RFP_REQUIREMENT_COLUMNS = [
+  'requirement_id',
+  'doc_id',
+  'label',
+  'category',
+  'block_id',
+  'page_num',
+  'excerpt',
+  'created_at',
+] as const
+
+export const RFP_REQUIREMENT_SCORE_COLUMNS = [
+  'requirement_id',
+  'profile_id',
+  'status',
+  'note',
+  'source',
 ] as const
 
 /** Applied after CREATE TABLE — DuckDB ADD COLUMN cannot use NOT NULL/DEFAULT */
@@ -110,4 +152,6 @@ export const DUCKDB_MIGRATION_STATEMENTS = [
   `ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_initials VARCHAR`,
   `UPDATE comments SET author_initials = '?' WHERE author_initials IS NULL`,
   `ALTER TABLE pdf_drawing_annotations ADD COLUMN IF NOT EXISTS voice_note VARCHAR`,
+  RFP_REQUIREMENTS_TABLE_SQL,
+  RFP_REQUIREMENT_SCORES_TABLE_SQL,
 ] as const

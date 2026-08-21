@@ -98,7 +98,7 @@ flowchart TD
 ### **ID:** BDA-261
 
 **Title:** DuckDB requirements and scores tables  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-259  
 **Priority:** Critical  
 **Description:** Add tables in [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts) + `DUCKDB_MIGRATION_STATEMENTS` (`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS` as the existing pattern):
@@ -108,14 +108,14 @@ flowchart TD
 
 Fresh install CREATE TABLE must include the same columns. Schema harness asserts both tables after init.  
 **Completed Changes:**
-- 🔄 CREATE TABLE for both
-- 🔄 Migration statements for existing sessions
-- 🔄 Schema harness DESCRIBE / smoke insert
+- ✅ CREATE TABLE for `rfp_requirements` + `rfp_requirement_scores` (shared SQL in schema + migrations)
+- ✅ `CREATE TABLE IF NOT EXISTS` in `DUCKDB_MIGRATION_STATEMENTS` for existing sessions
+- ✅ `runRfpRequirementsSchemaHarness` — DESCRIBE columns, smoke insert/select, `results_profiles` / `profile_criteria` still present; wired after `runDuckdbHarness`
 **Test Strategy:** Dev app load runs schema harness; existing sessions migrate without dropping `results_profiles` / `profile_criteria`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts); BDA-221 / BDA-243 migration pattern
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
+**Context/Artifacts:** [`duckdb-schema.ts`](../src/lib/duckdb-schema.ts); [`rfp-requirements-schema-harness.ts`](../src/services/rfp-requirements-schema-harness.ts); BDA-221 / BDA-243 migration pattern
 
 ---
 
@@ -505,6 +505,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.3 | 2026-08-21 | BDA-261 implemented: rfp_requirements + scores DuckDB tables |
 | v1.2 | 2026-08-21 | BDA-260 implemented: heuristic shall extract + harness |
 | v1.1 | 2026-08-21 | BDA-259 implemented: score types + persist-shape JSDoc |
 | v1.0 | 2026-08-21 | Initial breakdown BDA-259–276 from matrix / takeoff / instructions plan |

@@ -38,6 +38,7 @@ import {
 } from '@/services/drawing-markup-dev-harnesses'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
+import { runRfpRequirementsSchemaHarness } from '@/services/rfp-requirements-schema-harness'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
   runIngestHarness,
@@ -79,6 +80,7 @@ function App() {
       runChatVoiceUnitHarnesses()
       await runProposalAsyncUnitHarnesses()
       await runDuckdbHarness()
+      await runRfpRequirementsSchemaHarness()
       await runBlockCommentsHarness()
       await runDrawingMarkupAsyncHarnesses()
       await runLiteParseHarness()

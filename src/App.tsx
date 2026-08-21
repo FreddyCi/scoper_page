@@ -17,6 +17,7 @@ import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
 import { runExtractRfpRequirementsHarness } from '@/services/extract-rfp-requirements'
+import { runExtractRfpInstructionsHarness } from '@/services/extract-rfp-instructions'
 import { runExportRfpComplianceCsvHarness } from '@/services/export-rfp-compliance-csv'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import {
@@ -41,6 +42,7 @@ import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runRfpRequirementsSchemaHarness } from '@/services/rfp-requirements-schema-harness'
 import { runRfpRequirementsCrudHarness, runRfpRequirementsQualificationHarness } from '@/services/rfp-requirements'
+import { runRfpSolicitationMetaHarness } from '@/services/rfp-solicitation-meta'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
   runIngestHarness,
@@ -78,6 +80,7 @@ function App() {
       runSessionStoreHarness()
       runProposalUnitHarnesses()
       runExtractRfpRequirementsHarness()
+      runExtractRfpInstructionsHarness()
       runExportRfpComplianceCsvHarness()
       runDrawingMarkupUnitHarnesses()
       runChatVoiceUnitHarnesses()
@@ -86,6 +89,7 @@ function App() {
       await runRfpRequirementsSchemaHarness()
       await runRfpRequirementsCrudHarness()
       await runRfpRequirementsQualificationHarness()
+      await runRfpSolicitationMetaHarness()
       await runBlockCommentsHarness()
       await runDrawingMarkupAsyncHarnesses()
       await runLiteParseHarness()

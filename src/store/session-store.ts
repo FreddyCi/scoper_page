@@ -14,6 +14,7 @@ import type {
   IngestResult,
   PdfMarkSessionTool,
   ProposalRequirementsProfile,
+  RfpInstructionsProfile,
   RfpRequirement,
   RfpRequirementScore,
   RfpResultsProfile,
@@ -36,6 +37,7 @@ import { runChatAgentTurn } from '@/services/chat-agent'
 import { buildContractKeywordReview } from '@/services/build-contract-keyword-review'
 import { buildRfpProfiles } from '@/services/build-rfp-profiles'
 import { syncRfpComplianceMatrixForQualification, upsertRfpRequirementScore } from '@/services/rfp-requirements'
+import { syncRfpInstructionsForQualification } from '@/services/rfp-solicitation-meta'
 import {
   canAttachDocumentToChat,
   contextAttachmentsForDocuments,
@@ -174,6 +176,8 @@ export type SessionState = {
   rfpRequirements: RfpRequirement[]
   /** Per-bidder matrix scores keyed by requirement + profile (BDA-263). */
   rfpRequirementScores: RfpRequirementScore[]
+  /** Solicitation instructions meta (due date, page limits, volumes) — BDA-267. */
+  rfpInstructionsProfile: RfpInstructionsProfile | null
   companyContext: string
   reviewerName: string
   /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
@@ -301,6 +305,7 @@ const initialState = {
   contractReviewProfile: null as RfpResultsProfile | null,
   rfpRequirements: [] as RfpRequirement[],
   rfpRequirementScores: [] as RfpRequirementScore[],
+  rfpInstructionsProfile: null as RfpInstructionsProfile | null,
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   pdfMarkDrawingMode: false,
@@ -495,6 +500,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       profiles: [],
       rfpRequirements: [],
       rfpRequirementScores: [],
+      rfpInstructionsProfile: null,
       proposalRequirementsProfile: null,
       proposalGenerating: false,
       proposalGenerationError: null,
@@ -575,6 +581,14 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     } catch (error) {
       console.error('[session-store] rfp requirements extract failed', error)
       set({ rfpRequirements: [], rfpRequirementScores: [] })
+    }
+
+    try {
+      const instructions = await syncRfpInstructionsForQualification(resolvedEvaluationDocId)
+      set({ rfpInstructionsProfile: instructions })
+    } catch (error) {
+      console.error('[session-store] rfp instructions extract failed', error)
+      set({ rfpInstructionsProfile: null })
     }
   },
 
@@ -1182,6 +1196,11 @@ export function selectRfpRequirementScores(state: SessionState): RfpRequirementS
   return state.rfpRequirementScores
 }
 
+/** Solicitation instructions meta for the baseline RFP. */
+export function selectRfpInstructionsProfile(state: SessionState): RfpInstructionsProfile | null {
+  return state.rfpInstructionsProfile
+}
+
 /** Matrix scores for one bidder profile card. */
 export function selectRfpRequirementScoresForProfile(
   state: SessionState,
@@ -1415,5 +1434,8 @@ export function runSessionStoreHarness(): void {
   const afterReset = useSessionStore.getState()
   if (afterReset.rfpRequirements.length !== 0 || afterReset.rfpRequirementScores.length !== 0) {
     throw new Error('resetSession should clear rfp compliance matrix state')
+  }
+  if (afterReset.rfpInstructionsProfile != null) {
+    throw new Error('resetSession should clear rfp instructions profile')
   }
 }

@@ -23,6 +23,8 @@ export type {
   PdfDrawingTool,
   ProfileMode,
   ResultsProfileRecord,
+  RfpInstructionField,
+  RfpInstructionsProfile,
   RfpRequirement,
   RfpRequirementScore,
   RfpRequirementScoreSource,

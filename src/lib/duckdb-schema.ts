@@ -20,6 +20,17 @@ const RFP_REQUIREMENT_SCORES_TABLE_SQL = `CREATE TABLE IF NOT EXISTS rfp_require
     PRIMARY KEY (requirement_id, profile_id)
   )`
 
+const RFP_SOLICITATION_META_TABLE_SQL = `CREATE TABLE IF NOT EXISTS rfp_solicitation_meta (
+    doc_id VARCHAR PRIMARY KEY,
+    due_json VARCHAR,
+    questions_due_json VARCHAR,
+    page_limit_json VARCHAR,
+    volumes_json VARCHAR NOT NULL,
+    block_ids_json VARCHAR NOT NULL,
+    summary VARCHAR NOT NULL,
+    updated_at VARCHAR NOT NULL
+  )`
+
 export const DUCKDB_SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS documents (
     doc_id VARCHAR PRIMARY KEY,
@@ -126,6 +137,7 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
   )`,
   RFP_REQUIREMENTS_TABLE_SQL,
   RFP_REQUIREMENT_SCORES_TABLE_SQL,
+  RFP_SOLICITATION_META_TABLE_SQL,
 ] as const
 
 export const RFP_REQUIREMENT_COLUMNS = [
@@ -147,6 +159,17 @@ export const RFP_REQUIREMENT_SCORE_COLUMNS = [
   'source',
 ] as const
 
+export const RFP_SOLICITATION_META_COLUMNS = [
+  'doc_id',
+  'due_json',
+  'questions_due_json',
+  'page_limit_json',
+  'volumes_json',
+  'block_ids_json',
+  'summary',
+  'updated_at',
+] as const
+
 /** Applied after CREATE TABLE — DuckDB ADD COLUMN cannot use NOT NULL/DEFAULT */
 export const DUCKDB_MIGRATION_STATEMENTS = [
   `ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_initials VARCHAR`,
@@ -154,4 +177,5 @@ export const DUCKDB_MIGRATION_STATEMENTS = [
   `ALTER TABLE pdf_drawing_annotations ADD COLUMN IF NOT EXISTS voice_note VARCHAR`,
   RFP_REQUIREMENTS_TABLE_SQL,
   RFP_REQUIREMENT_SCORES_TABLE_SQL,
+  RFP_SOLICITATION_META_TABLE_SQL,
 ] as const

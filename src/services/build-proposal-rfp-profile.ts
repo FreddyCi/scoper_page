@@ -28,10 +28,10 @@ const PROPOSAL_SUMMARY_MAX = 480
 const MAX_VOLUMES = 12
 const MIN_SECTION_CHARS = 120
 
-export { PROPOSAL_SUMMARY_MAX }
-
 const PROPOSAL_SECTION_HINT =
   /section\s*[lm]\b|instructions\s*to\s*offerors|evaluation\s*factors|proposal\s*requirements|submission\s*requirements|volume\s*\d|technical\s*approach|management\s*approach|past\s*performance|cost\s*proposal|price\s*proposal/i
+
+export { PROPOSAL_SUMMARY_MAX, PROPOSAL_SECTION_HINT }
 
 const CONTRACT_FRAMEWORK_MIN_VOLUMES = 6
 const CONTRACT_FRAMEWORK_MAX_VOLUMES = 12

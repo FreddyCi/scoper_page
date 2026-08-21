@@ -411,6 +411,24 @@ export type RfpRequirementScore = {
   source?: RfpRequirementScoreSource
 }
 
+/** One cited solicitation instruction field (due date, page limit, etc.). */
+export type RfpInstructionField = {
+  label: string
+  value: string
+  citation?: CitationRef
+}
+
+/** Heuristic solicitation meta from baseline RFP blocks — never invent dates. */
+export type RfpInstructionsProfile = {
+  doc_id: string
+  dueDate?: RfpInstructionField
+  questionsDue?: RfpInstructionField
+  pageLimit?: RfpInstructionField
+  volumes: RfpInstructionField[]
+  block_ids: string[]
+  summary: string
+}
+
 export type IngestStatus = 'idle' | 'parsing' | 'done' | 'error'
 
 export type IngestResult = {

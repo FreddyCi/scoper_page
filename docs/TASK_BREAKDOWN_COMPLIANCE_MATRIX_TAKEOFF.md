@@ -230,20 +230,20 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-267
 
 **Title:** Solicitation meta type, extract, persist  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-261 (schema style), BDA-263 (qualification hook)  
 **Priority:** High  
 **Description:** Add `RfpInstructionsProfile` (name TBD) next to requirement types in [`types.ts`](../src/lib/types.ts): due / closing, Q&A / questions due, page limit, volume headings, each with optional `CitationRef`. Extractor (e.g. [`src/services/extract-rfp-instructions.ts`](../src/services/extract-rfp-instructions.ts)) on the same baseline block pass: dates near `due` / `closing` / `submit`; `Q&A` / `questions due`; `page limit` / `not to exceed N pages`; `Volume I` / `Section L`. Use `PROPOSAL_SECTION_HINT` from [`build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts) where useful. Persist `rfp_solicitation_meta` (`doc_id`, JSON fields, `block_ids`). Missing fields stay unset — **never invent dates**. Hook into `runRfpQualification` with the same isolate-on-error rule as BDA-263.  
 **Completed Changes:**
-- 🔄 `RfpInstructionsProfile` type
-- 🔄 Heuristic extract + unit harness (fixture with due date + page limit)
-- 🔄 Table + migration + persist/fetch
-- 🔄 Qualification hook; missing = empty / “Not found” later in UI
+- ✅ `RfpInstructionField` + `RfpInstructionsProfile` in [`types.ts`](../src/lib/types.ts)
+- ✅ [`extract-rfp-instructions.ts`](../src/services/extract-rfp-instructions.ts) + `runExtractRfpInstructionsHarness` (due + page limit + volumes; sparse doc → no fields)
+- ✅ `rfp_solicitation_meta` table + [`rfp-solicitation-meta.ts`](../src/services/rfp-solicitation-meta.ts) persist/fetch + schema harness
+- ✅ `syncRfpInstructionsForQualification` in `runRfpQualification`; store `rfpInstructionsProfile` + `selectRfpInstructionsProfile`
 **Test Strategy:** Fixture with “proposals due March 1” + “not to exceed 15 pages” → both fields + block ids; fixture without dates → no fabricated ISO date. Schema harness includes table.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
-**Context/Artifacts:** [`build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts) `PROPOSAL_SECTION_HINT`; LiteParse blocks have no `section_path`
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
+**Context/Artifacts:** [`build-proposal-rfp-profile.ts`](../src/services/build-proposal-rfp-profile.ts) `PROPOSAL_SECTION_HINT`; [`rfp-solicitation-meta.ts`](../src/services/rfp-solicitation-meta.ts)
 
 ---
 
@@ -507,6 +507,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.9 | 2026-08-21 | BDA-267 implemented: solicitation meta extract + persist |
 | v1.8 | 2026-08-21 | BDA-266 implemented: compliance matrix CSV export |
 | v1.7 | 2026-08-21 | BDA-265 implemented: editable matrix status + notes |
 | v1.6 | 2026-08-21 | BDA-264 implemented: ComplianceMatrix on evaluation panel |

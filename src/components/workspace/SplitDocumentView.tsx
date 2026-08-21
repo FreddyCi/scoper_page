@@ -4,6 +4,7 @@ import { DownloadIcon, InfoIcon, Maximize2Icon, Minimize2Icon } from 'lucide-rea
 import { AnnotatedMarkdownView } from '@/components/workspace/AnnotatedMarkdownView'
 import { CommentNavigator } from '@/components/workspace/CommentNavigator'
 import { DocumentViewer } from '@/components/workspace/DocumentViewer'
+import { DrawingTakeoffPanel } from '@/components/workspace/drawing-takeoff-panel'
 import { ExtractedTextPane } from '@/components/workspace/ExtractedTextPane'
 import { MarkdownDocumentViewer } from '@/components/workspace/MarkdownDocumentViewer'
 import { OfficeDocumentPreview } from '@/components/workspace/OfficeDocumentPreview'
@@ -35,9 +36,10 @@ import { useDocumentComments } from '@/hooks/use-document-comments'
 import { useDocumentBlocks } from '@/hooks/use-document-blocks'
 import { useSplitPaneRatio } from '@/hooks/use-split-pane-ratio'
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
+import { aggregateDrawingTakeoff } from '@/lib/drawing-takeoff'
 import { beginBlobSave } from '@/lib/download-blob'
 import { blockToCitation } from '@/lib/types'
-import type { DocumentMeta, WorkspaceMode } from '@/lib/types'
+import type { DocumentMeta, PdfDrawingAnnotation, WorkspaceMode } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
@@ -203,6 +205,8 @@ function SplitDocumentViewFooter({
   exportDisabled = false,
   onExportClick,
   drawingMarkCount = 0,
+  windowMarkCount = 0,
+  onTakeoffOpenClick,
   onExportMenuOpenChange,
   markdownExportLoading = false,
   onExportMarkdownClick,
@@ -224,6 +228,8 @@ function SplitDocumentViewFooter({
   exportDisabled?: boolean
   onExportClick?: (request: AnnotatedPdfFooterExportRequest) => void
   drawingMarkCount?: number
+  windowMarkCount?: number
+  onTakeoffOpenClick?: () => void
   onExportMenuOpenChange?: (open: boolean) => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
@@ -251,6 +257,15 @@ function SplitDocumentViewFooter({
         >
           {exportError ?? statusLabel}
         </span>
+        {windowMarkCount > 0 && onTakeoffOpenClick ? (
+          <button
+            type="button"
+            className="rounded-pill bg-rose-50 text-rose-900 hover:bg-rose-100/90 inline-flex items-center px-3 py-1 text-xs font-medium transition-colors"
+            onClick={onTakeoffOpenClick}
+          >
+            {windowMarkCount} window mark{windowMarkCount === 1 ? '' : 's'}
+          </button>
+        ) : null}
         {commentNavigator}
       </div>
       <div className="flex items-center gap-2">
@@ -382,6 +397,16 @@ function SplitDocumentViewFooter({
                     description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — stamps burn in; voice notation is a hover/toggle PDF comment.`}
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
+                    <DropdownMenuItem
+                      className={brandMenuItemClass('rose')}
+                      onClick={() => onTakeoffOpenClick?.()}
+                    >
+                      <MenuOptionContent
+                        title="Stamp takeoff"
+                        description="Grouped window marks with counts, pages, and voice notes — click a row to jump on the plan."
+                        titleClassName={brandAccentStyles('rose').title}
+                      />
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       className={brandMenuItemClass('rose')}
                       onClick={() =>
@@ -571,10 +596,27 @@ export function SplitDocumentView({
   const ocrEnabled = useSessionStore((state) => state.ocrEnabled)
 
   const [drawingMarkCount, setDrawingMarkCount] = useState(0)
+  const [drawingAnnotationsAll, setDrawingAnnotationsAll] = useState<PdfDrawingAnnotation[]>([])
+  const [takeoffPanelOpen, setTakeoffPanelOpen] = useState(false)
+  const [markFocusRequest, setMarkFocusRequest] = useState<{
+    page: number
+    annotationId: string
+    seq: number
+  } | null>(null)
+
+  const takeoffRows = useMemo(
+    () => aggregateDrawingTakeoff(drawingAnnotationsAll),
+    [drawingAnnotationsAll],
+  )
+  const windowMarkCount = useMemo(
+    () => drawingAnnotationsAll.filter((annotation) => annotation.geometry.kind === 'stamp').length,
+    [drawingAnnotationsAll],
+  )
 
   const refreshDrawingMarkCount = useCallback(async () => {
     if (!canExportPdf) {
       setDrawingMarkCount(0)
+      setDrawingAnnotationsAll([])
       return
     }
 
@@ -583,12 +625,41 @@ export function SplitDocumentView({
         '@/services/pdf-drawing-annotations'
       )
       const rows = await fetchPdfDrawingAnnotationsForDoc(document.doc_id)
+      setDrawingAnnotationsAll(rows)
       setDrawingMarkCount(rows.length)
     } catch (error) {
       console.error('[split-document-view] drawing mark count failed', error)
       setDrawingMarkCount(0)
+      setDrawingAnnotationsAll([])
     }
   }, [canExportPdf, document.doc_id])
+
+  const openTakeoffPanel = useCallback(() => {
+    setTakeoffPanelOpen(true)
+    void refreshDrawingMarkCount()
+  }, [refreshDrawingMarkCount])
+
+  const handleTakeoffRowActivate = useCallback(
+    (row: (typeof takeoffRows)[number]) => {
+      const annotationId = row.annotationIds[0]
+      if (!annotationId) return
+
+      const pdfViewerVisible =
+        (layoutKind === 'pdf' && pdfFocusLayout !== 'normal') ||
+        activeTab === 'extract' ||
+        activeTab === 'original'
+      if (!pdfViewerVisible) {
+        setActiveTab('extract')
+      }
+
+      setMarkFocusRequest({
+        page: row.page,
+        annotationId,
+        seq: Date.now(),
+      })
+    },
+    [activeTab, layoutKind, pdfFocusLayout],
+  )
 
   useEffect(() => {
     void refreshDrawingMarkCount()
@@ -643,6 +714,8 @@ export function SplitDocumentView({
     <DocumentViewer
       document={document}
       initialPage={initialPage}
+      focusDrawingMark={markFocusRequest}
+      onFocusDrawingMarkHandled={() => setMarkFocusRequest(null)}
       theme="dark"
       className="h-full min-h-0 flex-1 rounded-none border-0"
     />
@@ -846,6 +919,8 @@ export function SplitDocumentView({
             exportDisabled={!canExportPdf && !canExportMarkdown}
             onExportClick={canExportPdf ? handleExportPdf : undefined}
             drawingMarkCount={drawingMarkCount}
+            windowMarkCount={windowMarkCount}
+            onTakeoffOpenClick={drawingMarkCount > 0 ? openTakeoffPanel : undefined}
             onExportMenuOpenChange={() => {
               void refreshDrawingMarkCount()
             }}
@@ -985,6 +1060,8 @@ export function SplitDocumentView({
         exportDisabled={!canExportPdf && !canExportMarkdown}
         onExportClick={canExportPdf ? handleExportPdf : undefined}
         drawingMarkCount={drawingMarkCount}
+        windowMarkCount={windowMarkCount}
+        onTakeoffOpenClick={drawingMarkCount > 0 ? openTakeoffPanel : undefined}
         onExportMenuOpenChange={() => {
           void refreshDrawingMarkCount()
         }}
@@ -997,6 +1074,13 @@ export function SplitDocumentView({
       />
       </>
       )}
+      <DrawingTakeoffPanel
+        open={takeoffPanelOpen}
+        onOpenChange={setTakeoffPanelOpen}
+        rows={takeoffRows}
+        documentFilename={document.filename}
+        onRowActivate={handleTakeoffRowActivate}
+      />
     </div>
   )
 }

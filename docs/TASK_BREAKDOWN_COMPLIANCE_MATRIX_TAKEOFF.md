@@ -312,19 +312,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-271
 
 **Title:** DrawingTakeoffPanel sheet and jump-to-mark  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-270  
 **Priority:** High  
 **Description:** New `DrawingTakeoffPanel` sheet opened from [`SplitDocumentView`](../src/components/workspace/SplitDocumentView.tsx) when `drawingMarkCount > 0`, same sheet pattern as voice notation. Click row → set page + select mark in [`DocumentViewer`](../src/components/workspace/DocumentViewer.tsx). Do **not** extend `VoiceNotationPanel`. Optional footer pill `N window marks` beside existing `"N blocks · filename"` status.  
 **Completed Changes:**
-- 🔄 `DrawingTakeoffPanel` sheet
-- 🔄 Open control from split view when marks exist
-- 🔄 Click row → page + selection
-- 🔄 Optional footer count
+- ✅ [`DrawingTakeoffPanel`](../src/components/workspace/drawing-takeoff-panel.tsx) sheet — grouped stamp rows
+- ✅ Open from footer pill + Export → Drawing marks → Stamp takeoff when marks exist
+- ✅ Click row → `focusDrawingMark` on `DocumentViewer` (page, select, mark mode)
+- ✅ Footer pill `{N} window marks` beside status label
 **Test Strategy:** Windows_Drawing (or any stamped PDF): open takeoff, click a stamp row, viewer goes to that page with mark selected. Voice notes sheet still page-scoped only.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`voice-notation-panel.tsx`](../src/components/workspace/voice-notation-panel.tsx) (do not extend); [`DocumentViewer.tsx`](../src/components/workspace/DocumentViewer.tsx) selection API
 
 ---
@@ -508,6 +508,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.13 | 2026-08-21 | BDA-271 implemented: DrawingTakeoffPanel + jump-to-mark |
 | v1.12 | 2026-08-21 | BDA-270 implemented: markKindLabel + drawing takeoff helper |
 | v1.11 | 2026-08-21 | BDA-269 implemented: instructions preamble on matrix CSV |
 | v1.10 | 2026-08-21 | BDA-268 implemented: InstructionsCard on evaluation + proposal |

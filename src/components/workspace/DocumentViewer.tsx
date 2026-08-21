@@ -35,6 +35,8 @@ type DocumentViewerProps = {
   document: DocumentMeta
   initialPage?: number
   onPageChange?: (page: number) => void
+  focusDrawingMark?: { page: number; annotationId: string; seq: number } | null
+  onFocusDrawingMarkHandled?: () => void
   theme?: 'light' | 'dark'
   className?: string
 }
@@ -70,6 +72,8 @@ export function DocumentViewer({
   document,
   initialPage = 1,
   onPageChange,
+  focusDrawingMark = null,
+  onFocusDrawingMarkHandled,
   theme = 'light',
   className,
 }: DocumentViewerProps) {
@@ -426,6 +430,40 @@ export function DocumentViewer({
       : pdfMarkStrokeWidth
   const markColor = pdfMarkColor
   const pageDrawingAnnotations = drawingAnnotationsLoading ? [] : drawingAnnotations
+
+  useEffect(() => {
+    if (!focusDrawingMark) return
+    setPdfMarkDrawingMode(true)
+    setPdfMarkTool('select')
+    setVoicePanelOpen(false)
+    setNotationPickMode(false)
+    updatePage(focusDrawingMark.page)
+  }, [focusDrawingMark?.seq, setPdfMarkDrawingMode, setPdfMarkTool])
+
+  useEffect(() => {
+    if (!focusDrawingMark) return
+    if (currentPage !== focusDrawingMark.page) return
+    if (drawingAnnotationsLoading) return
+
+    const found = pageDrawingAnnotations.some(
+      (annotation) => annotation.annotation_id === focusDrawingMark.annotationId,
+    )
+    if (!found) {
+      onFocusDrawingMarkHandled?.()
+      return
+    }
+
+    handleDrawingSelectionChange([focusDrawingMark.annotationId])
+    canvasAnchorRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    onFocusDrawingMarkHandled?.()
+  }, [
+    currentPage,
+    drawingAnnotationsLoading,
+    focusDrawingMark,
+    handleDrawingSelectionChange,
+    onFocusDrawingMarkHandled,
+    pageDrawingAnnotations,
+  ])
 
   const selectedVoiceNotationId = useMemo(() => {
     if (selectedDrawingAnnotationIds.length !== 1) return null

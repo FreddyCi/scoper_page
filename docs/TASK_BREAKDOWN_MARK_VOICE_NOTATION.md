@@ -175,17 +175,18 @@ flowchart TD
 ### **ID:** BDA-248
 
 **Title:** useSpeechNotes hook  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-247  
 **Priority:** Critical  
 **Description:** Create [`src/hooks/use-speech-notes.ts`](../src/hooks/use-speech-notes.ts): port foundry [`useSpeechNotes`](file:///Users/christopherkruger/Projects/Adobe/foundry-model-eval/src/hooks/useSpeechNotes.ts) with **`startListening()` / `stopListening()`** exposed separately (not toggle-only). `continuous: true`, `interimResults: true`, `onTranscript` for **final** chunks only. Cleanup on unmount (`abort`).  
 **Completed Changes:**
-- 🔄 Hook API for mark dictation consumer
-- 🔄 Error messages for not-allowed / service-not-allowed
+- ✅ `useSpeechNotes` with `startListening` / `stopListening` / `dismissError`
+- ✅ Final-chunk `onTranscript`; `not-allowed` + `service-not-allowed` error messages
+- ✅ Unmount `abort`; skip duplicate start when already listening
 **Test Strategy:** Manual in dev: start/stop without React UI; optional mock ctor test.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-247; foundry `useSpeechNotes.ts`
 
 ---

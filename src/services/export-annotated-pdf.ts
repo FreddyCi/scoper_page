@@ -371,6 +371,31 @@ function drawingMarkMarkupLabel(annotation: PdfDrawingAnnotation): string {
   }
 }
 
+function addDrawingVoiceNoteComments(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  annotations: readonly PdfDrawingAnnotation[],
+): void {
+  const pageSize = { widthPts: page.getWidth(), heightPts: page.getHeight() }
+  const viewport = { width: pageSize.widthPts, height: pageSize.heightPts }
+
+  for (const annotation of annotations) {
+    const voiceNote = annotation.voice_note?.trim()
+    if (!voiceNote) continue
+
+    const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
+    const pdfBbox = normalizedBoundsToPdfUserSpace(bounds, pageSize)
+    addTextNoteAnnotation(
+      pdfDoc,
+      page,
+      pdfBbox.x + Math.max(pdfBbox.width, MARKUP_SQUARE_MIN_PT),
+      pdfBbox.y + Math.max(pdfBbox.height, MARKUP_SQUARE_MIN_PT),
+      voiceNote,
+      { title: 'Notation', color: hexToRgbTuple(annotation.color) },
+    )
+  }
+}
+
 function addMarkupDrawingAnnotations(
   pdfDoc: PDFDocument,
   page: PDFPage,
@@ -402,6 +427,7 @@ function addMarkupDrawingAnnotations(
         bbox.x + bbox.width,
         bbox.y + bbox.height,
         voiceNote,
+        { title: 'Notation', color: hexToRgbTuple(annotation.color) },
       )
     }
   }
@@ -419,8 +445,8 @@ export type ExportAnnotatedPdfOptions = {
   commentMode?: ExportCommentMode
   /**
    * Include drawing marks on export.
-   * Burned-in: vector graphics + voice notation callouts.
-   * Markup: toggleable square + sticky-note annotations (voice_note in Contents).
+   * Burned-in: vector stamps/strokes stay on the page; voice notation is a hover/toggle PDF comment.
+   * Markup: toggleable square + sticky-note annotations (hover or Comments panel).
    * Default: true when the document has any `pdf_drawing_annotations` rows.
    */
   includeDrawingMarks?: boolean
@@ -509,7 +535,9 @@ export async function exportAnnotatedPdf(
     if (includeDrawingMarks) {
       for (const [pageNum, marks] of drawingsByPage) {
         if (pageNum < 1 || pageNum > pages.length) continue
-        drawPdfDrawingAnnotationsOnPage(pages[pageNum - 1]!, marks, { font, boldFont })
+        const page = pages[pageNum - 1]!
+        drawPdfDrawingAnnotationsOnPage(page, marks, { font, boldFont })
+        addDrawingVoiceNoteComments(pdfDoc, page, marks)
       }
     }
   } else {

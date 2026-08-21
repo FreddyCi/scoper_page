@@ -365,7 +365,7 @@ function SplitDocumentViewFooter({
                         title="Burned-in notes"
                         description={
                           drawingMarkCount > 0
-                            ? 'Always-visible note boxes; drawing markers include voice notation callouts.'
+                            ? 'Always-visible review notes. Drawing stamps stay on the page; hover a comment pin or use the PDF markup panel to read voice notation.'
                             : 'Always-visible yellow boxes on the page for sharing outside PDF viewers.'
                         }
                         titleClassName={brandAccentStyles('amber').title}
@@ -379,7 +379,7 @@ function SplitDocumentViewFooter({
                   <BrandMenuSectionHeader
                     accent="rose"
                     title="Drawing marks"
-                    description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — burned into the page on export, with voice notation beside each marked note.`}
+                    description={`${drawingMarkCount} vector mark${drawingMarkCount === 1 ? '' : 's'} on this document — stamps burn in; voice notation is a hover/toggle PDF comment.`}
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
                     <DropdownMenuItem
@@ -390,7 +390,7 @@ function SplitDocumentViewFooter({
                     >
                       <MenuOptionContent
                         title="Export PDF with drawing marks"
-                        description="Burned-in review notes plus pen, shapes, text, stamps, and voice notation callouts from Mark mode."
+                        description="Burned-in review notes and drawing stamps. Voice notation is a comment you can hover, click, or hide in Preview/Acrobat."
                         titleClassName={brandAccentStyles('rose').title}
                       />
                     </DropdownMenuItem>

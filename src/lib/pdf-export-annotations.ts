@@ -100,36 +100,58 @@ export function addHighlightAnnotation(
   registerAnnotation(page, dict)
 }
 
-/** Native sticky-note annotation for blocks without geometry. */
+/** Native sticky-note annotation — hover/click in Preview or Acrobat; hide via markup. */
 export function addTextNoteAnnotation(
   pdfDoc: PDFDocument,
   page: PDFPage,
   x: number,
   y: number,
   contents: string,
+  options: { title?: string; color?: [number, number, number] } = {},
 ): void {
   const context = pdfDoc.context
-  const dict = PDFDict.withContext(context)
+  const textDict = PDFDict.withContext(context)
+  const popupDict = PDFDict.withContext(context)
   const safeContents = toPdfLatinText(contents)
-  const iconSize = 24
+  const iconSize = 18
+  const popupWidth = 168
+  const popupHeight = 72
+  const title = options.title ?? 'Scoper'
+  const color = options.color ?? HIGHLIGHT_COLOR
 
-  dict.set(PDFName.of('Type'), PDFName.of('Annot'))
-  dict.set(PDFName.of('Subtype'), PDFName.of('Text'))
-  dict.set(PDFName.of('F'), PDFNumber.of(4))
-  dict.set(PDFName.of('Rect'), makePdfRect(context, x, y - iconSize, iconSize, iconSize))
-  dict.set(PDFName.of('C'), makeColorArray(context, HIGHLIGHT_COLOR))
-  dict.set(PDFName.of('Name'), PDFName.of('Comment'))
-  dict.set(PDFName.of('Open'), context.obj(false))
-
+  textDict.set(PDFName.of('Type'), PDFName.of('Annot'))
+  textDict.set(PDFName.of('Subtype'), PDFName.of('Text'))
+  textDict.set(PDFName.of('F'), PDFNumber.of(4))
+  textDict.set(PDFName.of('Rect'), makePdfRect(context, x, y - iconSize, iconSize, iconSize))
+  textDict.set(PDFName.of('C'), makeColorArray(context, color))
+  textDict.set(PDFName.of('Name'), PDFName.of('Comment'))
+  textDict.set(PDFName.of('Open'), context.obj(false))
+  textDict.set(PDFName.of('T'), PDFString.of(title))
   if (safeContents) {
-    dict.set(PDFName.of('Contents'), PDFHexString.fromText(safeContents))
+    textDict.set(PDFName.of('Contents'), PDFHexString.fromText(safeContents))
+  }
+  if (title === 'Notation') {
+    textDict.set(PDFName.of('Subj'), PDFString.of('Voice notation'))
   }
 
-  dict.set(PDFName.of('T'), PDFString.of('Scoper'))
-  registerAnnotation(page, dict)
+  const popupX = x + iconSize + 4
+  const popupY = y - popupHeight
+  popupDict.set(PDFName.of('Type'), PDFName.of('Annot'))
+  popupDict.set(PDFName.of('Subtype'), PDFName.of('Popup'))
+  popupDict.set(PDFName.of('F'), PDFNumber.of(4))
+  popupDict.set(PDFName.of('Rect'), makePdfRect(context, popupX, popupY, popupWidth, popupHeight))
+  popupDict.set(PDFName.of('Open'), context.obj(false))
+
+  const textRef = context.register(textDict)
+  const popupRef = context.register(popupDict)
+  textDict.set(PDFName.of('Popup'), popupRef)
+  popupDict.set(PDFName.of('Parent'), textRef)
+
+  page.node.addAnnot(textRef)
+  page.node.addAnnot(popupRef)
 }
 
-/** Native square annotation — toggleable drawing-mark outline in markup export. */
+/** Native square annotation — toggleable outline; hover/click shows Contents. */
 export function addSquareAnnotation(
   pdfDoc: PDFDocument,
   page: PDFPage,
@@ -139,6 +161,7 @@ export function addSquareAnnotation(
 ): void {
   const context = pdfDoc.context
   const dict = PDFDict.withContext(context)
+  const popupDict = PDFDict.withContext(context)
   const safeContents = toPdfLatinText(contents)
   const border = PDFArray.withContext(context)
   border.push(PDFNumber.of(0))
@@ -151,11 +174,28 @@ export function addSquareAnnotation(
   dict.set(PDFName.of('Rect'), makePdfRect(context, bbox.x, bbox.y, bbox.width, bbox.height))
   dict.set(PDFName.of('C'), makeColorArray(context, color))
   dict.set(PDFName.of('Border'), border)
+  dict.set(PDFName.of('T'), PDFString.of(safeContents ? 'Notation' : 'Scoper'))
 
   if (safeContents) {
     dict.set(PDFName.of('Contents'), PDFHexString.fromText(safeContents))
   }
 
-  dict.set(PDFName.of('T'), PDFString.of('Scoper'))
-  registerAnnotation(page, dict)
+  const popupWidth = 168
+  const popupHeight = 72
+  popupDict.set(PDFName.of('Type'), PDFName.of('Annot'))
+  popupDict.set(PDFName.of('Subtype'), PDFName.of('Popup'))
+  popupDict.set(PDFName.of('F'), PDFNumber.of(4))
+  popupDict.set(
+    PDFName.of('Rect'),
+    makePdfRect(context, bbox.x + bbox.width + 4, bbox.y + bbox.height - popupHeight, popupWidth, popupHeight),
+  )
+  popupDict.set(PDFName.of('Open'), context.obj(false))
+
+  const squareRef = context.register(dict)
+  const popupRef = context.register(popupDict)
+  dict.set(PDFName.of('Popup'), popupRef)
+  popupDict.set(PDFName.of('Parent'), squareRef)
+
+  page.node.addAnnot(squareRef)
+  page.node.addAnnot(popupRef)
 }

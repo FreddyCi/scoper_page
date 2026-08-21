@@ -205,6 +205,30 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     [],
   )
 
+  const updateMarkVoiceNote = useCallback(
+    async (annotationId: string, voiceNote: string | null | undefined) => {
+      try {
+        const updated = await updatePdfDrawingAnnotation({
+          annotation_id: annotationId,
+          voice_note: voiceNote,
+        })
+        if (updated) {
+          setAnnotations((previous) =>
+            previous.map((annotation) =>
+              annotation.annotation_id === annotationId ? updated : annotation,
+            ),
+          )
+        }
+        return updated
+      } catch (error) {
+        console.error('[usePdfDrawingAnnotations] updateMarkVoiceNote failed', error)
+        await refresh()
+        return null
+      }
+    },
+    [refresh],
+  )
+
   const undoDrawingMark = useCallback(async () => {
     const op = await undoPdfDrawingHistory(docId, historyHandlers)
     if (!op) return false
@@ -234,6 +258,7 @@ export function usePdfDrawingAnnotations(docId: string, pageNum: number) {
     eraseAnnotation,
     eraseAnnotations,
     moveDrawingMark,
+    updateMarkVoiceNote,
     undoDrawingMark,
     redoDrawingMark,
     canUndoDrawingMark: pdfDrawingCanUndo(docId),

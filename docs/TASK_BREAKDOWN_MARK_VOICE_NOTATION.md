@@ -135,17 +135,17 @@ flowchart TD
 ### **ID:** BDA-246
 
 **Title:** Hook updateMarkVoiceNote  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-244  
 **Priority:** Critical  
 **Description:** Add `updateMarkVoiceNote(annotationId, voice_note)` to [`use-pdf-drawing-annotations.ts`](../src/hooks/use-pdf-drawing-annotations.ts): call `updatePdfDrawingAnnotation`, patch local `annotations` state. v1: **no** undo history op (same as move). Export for `DocumentViewer` dictation commit.  
 **Completed Changes:**
-- 🔄 Callback + optimistic/local state update
-- 🔄 Error path logs + refresh fallback
-**Test Strategy:** Unit/integration via dev harness calling hook pattern or service directly.  
+- ✅ `updateMarkVoiceNote` callback patches local state on success (no undo op)
+- ✅ Error path: `console.error` + `refresh()` fallback
+**Test Strategy:** Service path covered by BDA-244 CRUD harness; hook mirrors `moveDrawingMark`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`use-pdf-drawing-annotations.ts`](../src/hooks/use-pdf-drawing-annotations.ts)
 
 ---

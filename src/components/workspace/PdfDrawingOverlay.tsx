@@ -99,6 +99,10 @@ export type PdfDrawingOverlayProps = {
   /** Merged existing note + live draft for preview bubble (BDA-252). */
   dictationPreview?: string
   isDictating?: boolean
+  speechNotesAvailable?: boolean
+  onSaveVoiceNote?: (annotationId: string, voiceNote: string) => void
+  onDictateHoldStart?: (annotationId: string) => void
+  onDictateHoldEnd?: () => void
 }
 
 function stampSizePx(
@@ -512,6 +516,10 @@ export function PdfDrawingOverlay({
   dictationDraft,
   dictationPreview,
   isDictating,
+  speechNotesAvailable = true,
+  onSaveVoiceNote,
+  onDictateHoldStart,
+  onDictateHoldEnd,
 }: PdfDrawingOverlayProps) {
   void dictationDraft
   const commitStroke = onStrokeCommit ?? onPenStrokeCommit
@@ -552,6 +560,7 @@ export function PdfDrawingOverlay({
   const [draftMarquee, setDraftMarquee] = useState<MarqueeDragState | null>(null)
   const draftMarqueeRef = useRef<MarqueeDragState | null>(null)
   const [hoveredVoiceNoteId, setHoveredVoiceNoteId] = useState<string | null>(null)
+  const hoverCardPinnedRef = useRef(false)
   const selectedIdsRef = useRef(selectedAnnotationIds)
   selectedIdsRef.current = selectedAnnotationIds
   const annotationsRef = useRef(annotations)
@@ -971,6 +980,7 @@ export function PdfDrawingOverlay({
   )
 
   const handlePointerLeave = useCallback(() => {
+    if (hoverCardPinnedRef.current) return
     setHoveredVoiceNoteId(null)
   }, [])
 
@@ -1113,6 +1123,20 @@ export function PdfDrawingOverlay({
         dictationPreview={dictationPreview ?? dictationDraft}
         isDictating={isDictating}
         hoveredVoiceNoteId={hoveredVoiceNoteId}
+        selectedAnnotationId={
+          selectedAnnotationIds.length === 1 ? selectedAnnotationIds[0] : null
+        }
+        speechNotesAvailable={speechNotesAvailable}
+        onSaveNote={onSaveVoiceNote}
+        onDictateHoldStart={onDictateHoldStart}
+        onDictateHoldEnd={onDictateHoldEnd}
+        onHoverCardEnter={() => {
+          hoverCardPinnedRef.current = true
+        }}
+        onHoverCardLeave={() => {
+          hoverCardPinnedRef.current = false
+          setHoveredVoiceNoteId(null)
+        }}
       />
     </div>
   )

@@ -49,6 +49,9 @@ type PdfPageCanvasProps = {
   dictationPreview?: string
   isDictating?: boolean
   speechNotesAvailable?: boolean
+  onSaveVoiceNote?: (annotationId: string, voiceNote: string) => void
+  onDictateHoldStart?: (annotationId: string) => void
+  onDictateHoldEnd?: () => void
   onNotationPickToggle?: () => void
   noteCount?: number
   theme?: 'light' | 'dark'
@@ -108,6 +111,9 @@ export function PdfPageCanvas({
   dictationPreview,
   isDictating,
   speechNotesAvailable,
+  onSaveVoiceNote,
+  onDictateHoldStart,
+  onDictateHoldEnd,
   onNotationPickToggle,
   noteCount = 0,
   theme = 'light',
@@ -317,6 +323,10 @@ export function PdfPageCanvas({
             dictationDraft={dictationDraft}
             dictationPreview={dictationPreview}
             isDictating={isDictating}
+            speechNotesAvailable={speechNotesAvailable}
+            onSaveVoiceNote={onSaveVoiceNote}
+            onDictateHoldStart={onDictateHoldStart}
+            onDictateHoldEnd={onDictateHoldEnd}
           />
 
           {markModeActive && onNotationPickToggle ? (

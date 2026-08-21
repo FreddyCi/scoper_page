@@ -634,6 +634,19 @@ export function DocumentViewer({
               dictationPreview={dictationPreview}
               isDictating={isDictating}
               speechNotesAvailable={dictationAvailable}
+              onSaveVoiceNote={(annotationId, voiceNote) => {
+                void persistDrawingMark(
+                  () => updateMarkVoiceNote(annotationId, voiceNote),
+                  'save voice notation failed',
+                )
+              }}
+              onDictateHoldStart={(annotationId) => {
+                handleDrawingSelectionChange([annotationId])
+                beginDictation(annotationId)
+              }}
+              onDictateHoldEnd={() => {
+                endDictation()
+              }}
               onNotationPickToggle={openVoiceNotationPanel}
               noteCount={
                 pageDrawingAnnotations.filter((annotation) => annotation.voice_note?.trim())

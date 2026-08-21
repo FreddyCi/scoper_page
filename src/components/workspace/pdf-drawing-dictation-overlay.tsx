@@ -1,7 +1,8 @@
 import { MicAudioLinesIcon } from 'lucide-react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -14,7 +15,7 @@ import type { PdfDrawingAnnotation } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const CARD_GAP_PX = 8
-const CARD_ESTIMATE_HEIGHT_PX = 168
+const CARD_ESTIMATE_HEIGHT_PX = 188
 const CARD_MAX_WIDTH_PX = 320
 
 function clamp(value: number, min: number, max: number): number {
@@ -47,7 +48,6 @@ function visibleBoundsInOverlay(overlay: HTMLElement): {
 }
 const DICTATION_RING_COLOR = '#0EA5E9'
 const DICTATION_RING_PAD_PX = 5
-const PREVIEW_MAX_CHARS = 280
 
 function boundsToPixelRect(
   bounds: PdfDrawingNormalizedBounds,
@@ -60,12 +60,6 @@ function boundsToPixelRect(
     width: bounds.width * viewport.width,
     height: bounds.height * viewport.height,
   }
-}
-
-function truncateDictationPreview(text: string, maxLength = PREVIEW_MAX_CHARS): string {
-  const trimmed = text.trim()
-  if (trimmed.length <= maxLength) return trimmed
-  return `${trimmed.slice(0, maxLength - 1)}…`
 }
 
 /** Animated dashed ring around the mark being dictated (BDA-252). */
@@ -102,16 +96,31 @@ export function DictationDraftBubble({
   previewText,
   viewport,
   isListening = false,
+  editable = false,
+  speechNotesAvailable = true,
+  onSave,
+  onDictateHoldStart,
+  onDictateHoldEnd,
+  onPointerEnter,
+  onPointerLeave,
   className,
 }: {
   annotation: PdfDrawingAnnotation
   previewText: string
   viewport: PdfDrawingViewportSize
   isListening?: boolean
+  editable?: boolean
+  speechNotesAvailable?: boolean
+  onSave?: (value: string) => void
+  onDictateHoldStart?: () => void
+  onDictateHoldEnd?: () => void
+  onPointerEnter?: () => void
+  onPointerLeave?: () => void
   className?: string
 }) {
   const trimmed = previewText.trim()
   const hostRef = useRef<HTMLDivElement>(null)
+  const [draft, setDraft] = useState(previewText)
   const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
   const rect = boundsToPixelRect(bounds, viewport)
   const [placement, setPlacement] = useState(() => ({
@@ -121,6 +130,13 @@ export function DictationDraftBubble({
       : rect.top - CARD_GAP_PX,
     placeBelow: rect.top < CARD_ESTIMATE_HEIGHT_PX + CARD_GAP_PX,
   }))
+
+  useEffect(() => {
+    if (isListening) return
+    setDraft(previewText)
+  }, [isListening, previewText])
+
+  const displayValue = isListening ? previewText : draft
 
   useLayoutEffect(() => {
     const host = hostRef.current
@@ -147,19 +163,27 @@ export function DictationDraftBubble({
     const top = placeBelow ? clampedTopEdge : clampedTopEdge + cardHeight
 
     setPlacement({ left, top, placeBelow })
-  }, [rect.height, rect.left, rect.top, rect.width, trimmed, isListening, viewport.height, viewport.width])
+  }, [displayValue, isListening, rect.height, rect.left, rect.top, rect.width, viewport.height, viewport.width])
 
-  if (!trimmed && !isListening) return null
+  if (!trimmed && !isListening && !editable) return null
+
+  const interactive = editable || isListening
 
   return (
     <div
       ref={hostRef}
-      className={cn('pointer-events-none absolute z-[2] w-[min(20rem,78%)]', className)}
+      className={cn(
+        'absolute z-[3] w-[min(20rem,78%)]',
+        interactive ? 'pointer-events-auto' : 'pointer-events-none',
+        className,
+      )}
       style={{
         left: placement.left,
         top: placement.top,
         transform: placement.placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
       }}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
     >
       <Card className="border-border bg-surface shadow-panel gap-0 overflow-hidden rounded-xl border py-0">
         <CardHeader className="flex flex-row items-start gap-2.5 border-b border-border/70 px-3 py-2.5">
@@ -167,26 +191,66 @@ export function DictationDraftBubble({
             className={cn('text-primary mt-0.5 size-4 shrink-0', isListening && 'animate-pulse')}
             aria-hidden
           />
-          <div className="min-w-0 space-y-0.5">
+          <div className="min-w-0 flex-1 space-y-0.5">
             <CardTitle className="text-sm font-semibold tracking-tight">Voice notation</CardTitle>
             <CardDescription className="text-xs leading-relaxed">
               {isListening
                 ? trimmed
-                  ? 'Listening · release Space to save'
+                  ? 'Listening · release to save'
                   : 'Listening…'
-                : 'Saved note'}
+                : editable
+                  ? 'Type to edit, or hold the sound-wave button to dictate'
+                  : 'Saved note'}
             </CardDescription>
           </div>
+          {editable && onDictateHoldStart ? (
+            <Button
+              type="button"
+              size="icon-xs"
+              variant={isListening ? 'default' : 'ghost'}
+              aria-label="Hold to dictate this notation"
+              disabled={!speechNotesAvailable}
+              className={cn('shrink-0', isListening && 'ring-1 ring-primary/50')}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return
+                event.preventDefault()
+                event.stopPropagation()
+                event.currentTarget.setPointerCapture(event.pointerId)
+                onDictateHoldStart()
+              }}
+              onPointerUp={(event) => {
+                event.stopPropagation()
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId)
+                }
+                onDictateHoldEnd?.()
+              }}
+              onPointerCancel={(event) => {
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId)
+                }
+                onDictateHoldEnd?.()
+              }}
+            >
+              <MicAudioLinesIcon className={cn('size-3.5', isListening && 'animate-pulse')} />
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent className="px-3 py-3">
           <div className="border-border/70 bg-muted/40 rounded-lg border px-0.5 py-0.5">
             <Textarea
-              readOnly
-              tabIndex={-1}
+              readOnly={!editable || isListening}
+              tabIndex={editable && !isListening ? 0 : -1}
               aria-label="Voice notation"
-              value={trimmed ? truncateDictationPreview(trimmed) : ''}
-              placeholder="Speak to fill this note…"
-              className="text-muted-foreground min-h-16 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+              value={displayValue}
+              placeholder="Type a note, or hold Space to dictate…"
+              className="text-foreground min-h-24 resize-y border-0 bg-transparent shadow-none focus-visible:ring-0"
+              onChange={(event) => setDraft(event.target.value)}
+              onBlur={() => {
+                if (!editable || isListening || !onSave) return
+                if (draft.trim() === previewText.trim()) return
+                onSave(draft)
+              }}
             />
           </div>
         </CardContent>
@@ -237,6 +301,13 @@ export type PdfDrawingDictationLayerProps = {
   dictationPreview?: string
   isDictating?: boolean
   hoveredVoiceNoteId?: string | null
+  selectedAnnotationId?: string | null
+  speechNotesAvailable?: boolean
+  onSaveNote?: (annotationId: string, voiceNote: string) => void
+  onDictateHoldStart?: (annotationId: string) => void
+  onDictateHoldEnd?: () => void
+  onHoverCardEnter?: () => void
+  onHoverCardLeave?: () => void
 }
 
 /** HTML + SVG dictation affordances over the drawing overlay (BDA-252/253). */
@@ -247,21 +318,39 @@ export function PdfDrawingDictationLayer({
   dictationPreview = '',
   isDictating = false,
   hoveredVoiceNoteId = null,
+  selectedAnnotationId = null,
+  speechNotesAvailable = true,
+  onSaveNote,
+  onDictateHoldStart,
+  onDictateHoldEnd,
+  onHoverCardEnter,
+  onHoverCardLeave,
 }: PdfDrawingDictationLayerProps) {
   const dictationTarget =
     isDictating && dictationTargetId
       ? annotations.find((annotation) => annotation.annotation_id === dictationTargetId) ?? null
       : null
 
+  const selectedAnnotation = selectedAnnotationId
+    ? annotations.find((annotation) => annotation.annotation_id === selectedAnnotationId) ?? null
+    : null
+
   const hoveredAnnotation =
-    !isDictating && hoveredVoiceNoteId
+    !isDictating && hoveredVoiceNoteId && hoveredVoiceNoteId !== selectedAnnotationId
       ? annotations.find((annotation) => annotation.annotation_id === hoveredVoiceNoteId) ?? null
       : null
-  const hoveredNote = hoveredAnnotation?.voice_note?.trim() ?? ''
+
+  const editorAnnotation = dictationTarget ?? selectedAnnotation ?? hoveredAnnotation
+  const editorIsListening = Boolean(dictationTarget && isDictating)
+  const editorIsEditable = Boolean(editorAnnotation && !editorIsListening && onSaveNote)
+  const editorPreview =
+    editorIsListening
+      ? dictationPreview
+      : editorAnnotation?.voice_note ?? ''
 
   const voiceNoteAnnotations = annotations.filter((annotation) => annotation.voice_note?.trim())
 
-  if (!dictationTarget && !hoveredAnnotation && voiceNoteAnnotations.length === 0) {
+  if (!editorAnnotation && voiceNoteAnnotations.length === 0) {
     return null
   }
 
@@ -280,29 +369,32 @@ export function PdfDrawingDictationLayer({
       ) : null}
 
       <div className="pointer-events-none absolute inset-0 z-[2]">
-        {dictationTarget && isDictating ? (
+        {editorAnnotation ? (
           <DictationDraftBubble
-            annotation={dictationTarget}
-            previewText={dictationPreview}
+            annotation={editorAnnotation}
+            previewText={editorPreview}
             viewport={viewport}
-            isListening
-          />
-        ) : null}
-
-        {hoveredAnnotation && hoveredNote ? (
-          <DictationDraftBubble
-            annotation={hoveredAnnotation}
-            previewText={hoveredNote}
-            viewport={viewport}
+            isListening={editorIsListening}
+            editable={editorIsEditable}
+            speechNotesAvailable={speechNotesAvailable}
+            onSave={
+              onSaveNote
+                ? (value) => onSaveNote(editorAnnotation.annotation_id, value)
+                : undefined
+            }
+            onDictateHoldStart={
+              onDictateHoldStart
+                ? () => onDictateHoldStart(editorAnnotation.annotation_id)
+                : undefined
+            }
+            onDictateHoldEnd={onDictateHoldEnd}
+            onPointerEnter={onHoverCardEnter}
+            onPointerLeave={onHoverCardLeave}
           />
         ) : null}
 
         {voiceNoteAnnotations
-          .filter(
-            (annotation) =>
-              annotation.annotation_id !== dictationTarget?.annotation_id &&
-              annotation.annotation_id !== hoveredAnnotation?.annotation_id,
-          )
+          .filter((annotation) => annotation.annotation_id !== editorAnnotation?.annotation_id)
           .map((annotation) => (
             <VoiceNotationBadge
               key={`voice-${annotation.annotation_id}`}

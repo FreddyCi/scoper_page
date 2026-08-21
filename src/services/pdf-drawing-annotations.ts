@@ -33,7 +33,7 @@ const PDF_DRAWING_ANNOTATION_COLUMNS = [
 ] as const
 
 const SELECT_PDF_DRAWING_ANNOTATION = `SELECT annotation_id, doc_id, page_num, tool, color, stroke_width, opacity,
-       geometry_json, text_body, author_initials, created_at, updated_at
+       geometry_json, text_body, voice_note, author_initials, created_at, updated_at
 FROM pdf_drawing_annotations`
 
 const GEOMETRY_KINDS = new Set<PdfDrawingGeometry['kind']>([
@@ -54,6 +54,7 @@ type PdfDrawingAnnotationRow = {
   opacity: number | null
   geometry_json: string
   text_body: string | null
+  voice_note: string | null
   author_initials: string | null
   created_at: string
   updated_at: string | null
@@ -68,6 +69,7 @@ export type InsertPdfDrawingAnnotationInput = {
   stroke_width?: number
   opacity?: number
   text_body?: string
+  voice_note?: string
   authorInitials?: string
 }
 
@@ -79,6 +81,7 @@ export type UpdatePdfDrawingAnnotationInput = {
   opacity?: number | null
   geometry?: PdfDrawingGeometry
   text_body?: string | null
+  voice_note?: string | null
 }
 
 function resolveAuthorInitials(override?: string): string {
@@ -117,6 +120,7 @@ function normalizeRow(row: PdfDrawingAnnotationRow): PdfDrawingAnnotationRecord 
     opacity: row.opacity ?? undefined,
     geometry_json: row.geometry_json,
     text_body: row.text_body ?? undefined,
+    voice_note: row.voice_note ?? undefined,
     author_initials: row.author_initials?.trim() || '?',
     created_at: row.created_at,
     updated_at: row.updated_at ?? undefined,
@@ -154,6 +158,7 @@ function rowInsertParams(row: PdfDrawingAnnotationRecord): DuckdbQueryParam[] {
     row.opacity ?? null,
     row.geometry_json,
     row.text_body ?? null,
+    row.voice_note ?? null,
     row.author_initials,
     row.created_at,
     row.updated_at ?? null,
@@ -165,8 +170,8 @@ async function insertAnnotationRecord(row: PdfDrawingAnnotationRecord): Promise<
   await duckdb.query(
     `INSERT INTO pdf_drawing_annotations (
       annotation_id, doc_id, page_num, tool, color, stroke_width, opacity,
-      geometry_json, text_body, author_initials, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      geometry_json, text_body, voice_note, author_initials, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     rowInsertParams(row),
   )
 }
@@ -194,6 +199,7 @@ export async function insertPdfDrawingAnnotation(
     opacity: input.opacity,
     geometry: input.geometry,
     text_body: input.text_body?.trim() || undefined,
+    voice_note: input.voice_note?.trim() || undefined,
     author_initials: resolveAuthorInitials(input.authorInitials),
     created_at,
   }
@@ -219,6 +225,8 @@ export async function updatePdfDrawingAnnotation(
     geometry: input.geometry ?? existing.geometry,
     text_body:
       input.text_body !== undefined ? input.text_body?.trim() || undefined : existing.text_body,
+    voice_note:
+      input.voice_note !== undefined ? input.voice_note?.trim() || undefined : existing.voice_note,
     updated_at: new Date().toISOString(),
   }
 
@@ -227,7 +235,7 @@ export async function updatePdfDrawingAnnotation(
   await duckdb.query(
     `UPDATE pdf_drawing_annotations
      SET tool = ?, color = ?, stroke_width = ?, opacity = ?,
-         geometry_json = ?, text_body = ?, updated_at = ?
+         geometry_json = ?, text_body = ?, voice_note = ?, updated_at = ?
      WHERE annotation_id = ?`,
     [
       row.tool,
@@ -236,6 +244,7 @@ export async function updatePdfDrawingAnnotation(
       row.opacity ?? null,
       row.geometry_json,
       row.text_body ?? null,
+      row.voice_note ?? null,
       row.updated_at ?? null,
       row.annotation_id,
     ],
@@ -439,6 +448,28 @@ export async function runPdfDrawingAnnotationsCrudHarness(): Promise<void> {
     windowStamp.geometry.stampKind !== 'window'
   ) {
     throw new Error('runPdfDrawingAnnotationsCrudHarness failed: window stamp round-trip')
+  }
+
+  const voiceNoteText = 'North elevation window needs verification'
+  const withVoiceNote = await updatePdfDrawingAnnotation({
+    annotation_id: windowStamp.annotation_id,
+    voice_note: voiceNoteText,
+  })
+  if (!withVoiceNote || withVoiceNote.voice_note !== voiceNoteText) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: voice_note update')
+  }
+
+  const voiceReloaded = await fetchPdfDrawingAnnotationById(windowStamp.annotation_id)
+  if (voiceReloaded?.voice_note !== voiceNoteText) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: voice_note fetch round-trip')
+  }
+
+  const clearedVoice = await updatePdfDrawingAnnotation({
+    annotation_id: windowStamp.annotation_id,
+    voice_note: '',
+  })
+  if (clearedVoice?.voice_note !== undefined) {
+    throw new Error('runPdfDrawingAnnotationsCrudHarness failed: voice_note clear')
   }
 
   const docAnnotationsAll = await fetchPdfDrawingAnnotationsForDoc(docId)

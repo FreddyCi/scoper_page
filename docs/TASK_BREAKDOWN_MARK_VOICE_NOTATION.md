@@ -95,18 +95,18 @@ flowchart TD
 ### **ID:** BDA-244
 
 **Title:** Annotation CRUD voice_note fields  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-243  
 **Priority:** Critical  
 **Description:** Update [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts): include `voice_note` in SELECT lists, `INSERT`, `UPDATE`, record mappers, `UpdatePdfDrawingAnnotationInput`. Optional `voice_note` on insert (default null). Extend existing CRUD harness with round-trip string.  
 **Completed Changes:**
-- 🔄 Column in all SQL paths
-- 🔄 `pdfDrawingAnnotationToRecord` / parse row
-- 🔄 Harness create → update voice_note → read back
-**Test Strategy:** `runPdfDrawingAnnotationsHarness` (or new voice_note slice); `pnpm exec tsc -b`.  
+- ✅ Column in all SQL paths (SELECT, INSERT, UPDATE)
+- ✅ `normalizeRow` / record mappers; `Insert` + `Update` input types
+- ✅ CRUD harness: update voice_note → fetch → clear
+**Test Strategy:** `runPdfDrawingAnnotationsCrudHarness`; `pnpm exec tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-223; [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts)
 
 ---

@@ -157,17 +157,17 @@ flowchart TD
 ### **ID:** BDA-247
 
 **Title:** speech-notes pure utilities  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** Create [`src/lib/speech-notes.ts`](../src/lib/speech-notes.ts): port `appendSpeechTranscript`, `getSpeechRecognitionCtor`, `finalTranscriptsFromEvent`, `speechNotesAvailable(win)` from foundry [`speechNotes.ts`](file:///Users/christopherkruger/Projects/Adobe/foundry-model-eval/src/utils/speechNotes.ts). Gate: `isSecureContext` + ctor present (**no** foundry `AUTH_ENABLED` check). Add `runSpeechNotesHarness()` mirroring foundry unit tests.  
 **Completed Changes:**
-- 🔄 Pure functions + minimal SpeechRecognition typing
-- 🔄 Dev harness in markup or voice harness chain
+- ✅ Pure functions + minimal SpeechRecognition typing in `speech-notes.ts`
+- ✅ `runSpeechNotesHarness()` wired in `runDrawingMarkupUnitHarnesses`
 **Test Strategy:** Harness append + availability cases; `pnpm exec tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** Foundry FME-STD-043 pattern; [plans/mark_voice_notation.md](plans/mark_voice_notation.md) §2
 
 ---

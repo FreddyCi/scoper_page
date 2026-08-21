@@ -316,17 +316,17 @@ flowchart TD
 ### **ID:** BDA-255
 
 **Title:** Auto-select mark after stamp  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-250  
 **Priority:** Low  
 **Description:** After successful stamp commit in [`DocumentViewer`](../src/components/workspace/DocumentViewer.tsx) / overlay callback, set `selectedDrawingAnnotationIds` to `[newAnnotationId]` so user can immediately hold Space. Only when select/hand not required for first click.  
 **Completed Changes:**
-- 🔄 Return saved annotation id from commit path
-- 🔄 `setSelectedDrawingAnnotationIds([id])`
+- ✅ `handleStampCommit` captures saved annotation from `commitStamp`
+- ✅ `setSelectedDrawingAnnotationIds([saved.annotation_id])` on success
 **Test Strategy:** Place window stamp → hold Space without manual select → dictation works.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** Window takeoff UX; BDA-230 stamp tool
 
 ---

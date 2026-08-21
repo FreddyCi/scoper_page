@@ -317,7 +317,10 @@ export function DocumentViewer({
   }
 
   const handleStampCommit = async (commit: PdfDrawingStampCommit) => {
-    await persistDrawingMark(() => commitStamp(commit), 'drawing stamp commit failed')
+    const saved = await persistDrawingMark(() => commitStamp(commit), 'drawing stamp commit failed')
+    if (saved) {
+      setSelectedDrawingAnnotationIds([saved.annotation_id])
+    }
   }
 
   const handleEraseAnnotation = async (annotationId: string) => {

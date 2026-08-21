@@ -380,18 +380,18 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-274
 
 **Title:** Harness chain and static QA script  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-260, BDA-266, BDA-267, BDA-270, BDA-273  
 **Priority:** High  
 **Description:** Wire extract / CSV / solicitation / takeoff / share harnesses into the existing dev-harness chain (mirror BDA-257). Add or extend a `pnpm` QA script if drawing-markup has a dedicated one — only if that is the repo convention; otherwise console harness + `pnpm exec tsc -b` is enough.  
 **Completed Changes:**
-- 🔄 Harnesses registered in dev chain
-- 🔄 Optional `package.json` script
-- 🔄 `tsc -b` clean
+- ✅ [`compliance-matrix-dev-harnesses.ts`](../src/services/compliance-matrix-dev-harnesses.ts) — unit + async chains (extract, CSV, takeoff, DuckDB RFP, solicitation)
+- ✅ `App.tsx` dev chain uses consolidated harness module
+- ✅ `pnpm qa:compliance-matrix` static script; share pack v4 checks in proposal/drawing QA scripts
 **Test Strategy:** `pnpm exec tsc -b`; `pnpm dev` → no uncaught `[dev-harness]` failures for the new harnesses.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm qa:compliance-matrix` passes (includes `tsc -b`)
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-257 pattern in drawing-markup QA; `package.json` scripts
 
 ---
@@ -510,6 +510,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.16 | 2026-08-21 | BDA-274 implemented: compliance matrix harness chain + qa:compliance-matrix |
 | v1.15 | 2026-08-21 | BDA-273 implemented: share pack v4 for RFP matrix + instructions tables |
 | v1.14 | 2026-08-21 | BDA-272 implemented: export takeoff CSV from Drawing marks menu |
 | v1.13 | 2026-08-21 | BDA-271 implemented: DrawingTakeoffPanel + jump-to-mark |

@@ -16,9 +16,10 @@ import { runChatCitationsHarness } from '@/services/chat-citations'
 import { runDocumentSearchHarness } from '@/services/document-search'
 import { runFindClauseHarness } from '@/services/find-clause'
 import { runBuildRfpProfilesHarness } from '@/services/build-rfp-profiles'
-import { runExtractRfpRequirementsHarness } from '@/services/extract-rfp-requirements'
-import { runExtractRfpInstructionsHarness } from '@/services/extract-rfp-instructions'
-import { runExportRfpComplianceCsvHarness } from '@/services/export-rfp-compliance-csv'
+import {
+  runComplianceMatrixAsyncHarnesses,
+  runComplianceMatrixUnitHarnesses,
+} from '@/services/compliance-matrix-dev-harnesses'
 import { runContractKeywordReviewHarness } from '@/services/build-contract-keyword-review'
 import {
   runChatVoiceAsyncHarnesses,
@@ -40,9 +41,6 @@ import {
 } from '@/services/drawing-markup-dev-harnesses'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
-import { runRfpRequirementsSchemaHarness } from '@/services/rfp-requirements-schema-harness'
-import { runRfpRequirementsCrudHarness, runRfpRequirementsQualificationHarness } from '@/services/rfp-requirements'
-import { runRfpSolicitationMetaHarness } from '@/services/rfp-solicitation-meta'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
   runIngestHarness,
@@ -79,17 +77,12 @@ function App() {
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
       runProposalUnitHarnesses()
-      runExtractRfpRequirementsHarness()
-      runExtractRfpInstructionsHarness()
-      runExportRfpComplianceCsvHarness()
+      runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()
       runChatVoiceUnitHarnesses()
       await runProposalAsyncUnitHarnesses()
       await runDuckdbHarness()
-      await runRfpRequirementsSchemaHarness()
-      await runRfpRequirementsCrudHarness()
-      await runRfpRequirementsQualificationHarness()
-      await runRfpSolicitationMetaHarness()
+      await runComplianceMatrixAsyncHarnesses()
       await runBlockCommentsHarness()
       await runDrawingMarkupAsyncHarnesses()
       await runLiteParseHarness()

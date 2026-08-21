@@ -20,6 +20,7 @@
     "qa:automated": "node scripts/run-qa-automation.mjs",
     "qa:proposal": "node scripts/run-proposal-qa-static.mjs && pnpm qa:automated",
     "qa:drawing-markup": "node scripts/run-drawing-markup-qa-static.mjs",
+    "qa:compliance-matrix": "node scripts/run-compliance-matrix-qa-static.mjs",
     "qa:v1": "node scripts/run-qa-v1-automation.mjs",
     "prepare:hosting": "node scripts/prepare-static-hosting.mjs",
     "lint": "oxlint",

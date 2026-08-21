@@ -39,6 +39,7 @@ import {
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runRfpRequirementsSchemaHarness } from '@/services/rfp-requirements-schema-harness'
+import { runRfpRequirementsCrudHarness } from '@/services/rfp-requirements'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
   runIngestHarness,
@@ -81,6 +82,7 @@ function App() {
       await runProposalAsyncUnitHarnesses()
       await runDuckdbHarness()
       await runRfpRequirementsSchemaHarness()
+      await runRfpRequirementsCrudHarness()
       await runBlockCommentsHarness()
       await runDrawingMarkupAsyncHarnesses()
       await runLiteParseHarness()

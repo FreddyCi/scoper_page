@@ -122,19 +122,19 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-262
 
 **Title:** Persist requirements and seed scores  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-260, BDA-261  
 **Priority:** Critical  
 **Description:** New service (e.g. [`src/services/rfp-requirements.ts`](../src/services/rfp-requirements.ts)): replace-on-reextract for `rfp_requirements` for the baseline `doc_id`; upsert scores. **Initial score:** token overlap of requirement `label` against that bidder’s blocks (`met` / `partial` / `gap` / `unknown`). If a score row already has `source = 'user'`, do not overwrite status or note.  
 **Completed Changes:**
-- 🔄 INSERT/SELECT/DELETE (replace extract) for requirements
-- 🔄 Upsert scores; preserve user overrides
-- 🔄 Overlap heuristic documented in JSDoc
-- 🔄 CRUD harness: extract → persist → fetch → user update survives re-seed
+- ✅ INSERT/SELECT/DELETE replace-on-reextract in [`rfp-requirements.ts`](../src/services/rfp-requirements.ts)
+- ✅ Upsert scores; rematch `source: 'user'` by id or normalized label so status/note survive re-seed
+- ✅ `scoreRequirementAgainstBlocks` JSDoc (coverage ≥0.5 met, ≥0.25 partial, empty unknown, else gap)
+- ✅ `runRfpRequirementsCrudHarness` — extract → persist → fetch → user override survives re-seed; wired after schema harness
 **Test Strategy:** `runRfpRequirementsCrudHarness` (name TBD); `pnpm exec tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts) CRUD pattern; [`rfp-profile-store.ts`](../src/services/rfp-profile-store.ts)
 
 ---
@@ -505,6 +505,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.4 | 2026-08-21 | BDA-262 implemented: persist requirements + seed scores |
 | v1.3 | 2026-08-21 | BDA-261 implemented: rfp_requirements + scores DuckDB tables |
 | v1.2 | 2026-08-21 | BDA-260 implemented: heuristic shall extract + harness |
 | v1.1 | 2026-08-21 | BDA-259 implemented: score types + persist-shape JSDoc |

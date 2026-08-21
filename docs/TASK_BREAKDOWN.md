@@ -1078,6 +1078,7 @@ flowchart LR
 - [TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md) — Analyze → propose loop closure (BDA-196–218)
 - [TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) — PDF drawing markup / Mark mode (BDA-220–241)
 - [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) — Mark voice notation / hold Space dictation (BDA-242–258)
+- [TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) — Shall matrix, instructions card, stamp takeoff (BDA-259–276)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 
@@ -1085,6 +1086,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.7 | 2026-08-21 | Link TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md (BDA-259–276) |
 | v1.6 | 2026-08-21 | BDA-258: link to mark voice notation manual QA checklist |
 | v1.5 | 2026-08-21 | Link TASK_BREAKDOWN_MARK_VOICE_NOTATION.md (BDA-242–258) |
 | v1.4 | 2026-08-03 | Link TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md (BDA-220–241); BDA-241 manual QA checklist, PRD v1.1 drawing markup goal |

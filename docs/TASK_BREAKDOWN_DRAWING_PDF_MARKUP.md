@@ -551,6 +551,10 @@ flowchart TD
 | Executor | — |
 | Date | — |
 
+### Follow-on: mark voice notation (BDA-258)
+
+After BDA-241 drawing markup sign-off, run the **hold Space dictation** checklist in [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md § Manual QA](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md#manual-qa-checklist-bda-258) (Chrome/Edge, same drawing PDF fixture). Automated preflight: `pnpm qa:drawing-markup` (includes BDA-257 voice wiring).
+
 ---
 
 ## Risks (from plan)

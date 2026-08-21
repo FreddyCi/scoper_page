@@ -1085,6 +1085,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.6 | 2026-08-21 | BDA-258: link to mark voice notation manual QA checklist |
 | v1.5 | 2026-08-21 | Link TASK_BREAKDOWN_MARK_VOICE_NOTATION.md (BDA-242–258) |
 | v1.4 | 2026-08-03 | Link TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md (BDA-220–241); BDA-241 manual QA checklist, PRD v1.1 drawing markup goal |
 | v1.3 | 2026-08-02 | Analyze→propose loop doc cross-links (BDA-217) |

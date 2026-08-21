@@ -10,6 +10,8 @@
 
 **Task ID prefix:** `BDA-242`–`BDA-258` (continues after BDA-241 drawing markup QA)
 
+**Status:** **Implemented** (BDA-242–258) — peer manual QA pending on drawing PDF fixture
+
 **Reference implementation:** Foundry rubric dictation — `foundry-model-eval` [`ReviewNotesField.tsx`](file:///Users/christopherkruger/Projects/Adobe/foundry-model-eval/src/components/ReviewNotesField.tsx), [`useSpeechNotes.ts`](file:///Users/christopherkruger/Projects/Adobe/foundry-model-eval/src/hooks/useSpeechNotes.ts), [`speechNotes.ts`](file:///Users/christopherkruger/Projects/Adobe/foundry-model-eval/src/utils/speechNotes.ts). **Difference:** foundry **toggles** Space; Scoper uses **hold-to-talk** (keydown start, keyup commit).
 
 **Explicit non-goals (v1):** Whisper/WebGPU STT for marks; burn-in `voice_note` on PDF export; multi-mark batch dictation; undo/redo for voice_note; custom language picker (use `navigator.language`).
@@ -375,37 +377,56 @@ flowchart TD
 ### **ID:** BDA-258
 
 **Title:** Manual QA checklist and doc index  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-252, BDA-253, BDA-245, BDA-257  
 **Priority:** Medium  
 **Description:** Add **Manual QA** section to this doc (checklist below). Link from [`TASK_BREAKDOWN.md`](TASK_BREAKDOWN.md) and [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md). Update [plans/mark_voice_notation.md](plans/mark_voice_notation.md) status. Optional one-line PRD secondary goal in [`PRD.md`](PRD.md).  
 **Completed Changes:**
-- 🔄 Manual checklist finalized
-- 🔄 Cross-doc links
+- ✅ Manual checklist finalized (preflight + UI steps + sign-off table)
+- ✅ Cross-doc links in TASK_BREAKDOWN, DRAWING_PDF_MARKUP, PRD, plan status → Implemented
 **Test Strategy:** Human runs checklist on Chrome + `Windows_Drawing.pdf` sample.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- 🔄 Peer manual UI pending (automated: `pnpm qa:drawing-markup`)
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-241 manual checklist format
 
 ---
 
 ## Manual QA checklist (BDA-258)
 
-Run in **Mark mode**, Chrome or Edge, `localhost` or HTTPS.
+**Fixture:** Drawing PDF with plan/elevation sheets (e.g. `Windows_Drawing.pdf`). Requires **Mark mode**, **Chrome or Edge**, `localhost` or HTTPS (Web Speech API).
 
-1. [ ] **Speech available** — hint does not show “requires HTTPS” on localhost.
-2. [ ] **Select one stamp** — hint: “Hold Space to dictate notation”.
-3. [ ] **Hold Space, speak, release** — listening ring visible while held; badge after release.
-4. [ ] **Append second dictation** — new speech appends to existing `voice_note` (space between phrases).
+**Automated preflight (before manual pass):**
+
+| Step | Command / action | Expected |
+|------|------------------|----------|
+| Static + types | `pnpm qa:drawing-markup` | Exit 0; BDA-257 voice notation wiring PASS |
+| Runtime harness | `pnpm dev` → DevTools console | No uncaught `[dev-harness]` from drawing / share harness chain |
+
+**Manual UI (peer sign-off):**
+
+1. [ ] **Speech available** — toolbar hint does not show “requires HTTPS” on localhost.
+2. [ ] **Select one stamp** — hint: “Hold Space to dictate notation”; Select tool tooltip mentions hold Space.
+3. [ ] **Hold Space, speak, release** — sky listening ring + tinted preview bubble while held; mic badge after release.
+4. [ ] **Append second dictation** — new speech appends to existing `voice_note` (space between phrases); badge tooltip shows full text.
 5. [ ] **Text mark** — typed `text_body` unchanged; `voice_note` separate.
 6. [ ] **Pen stroke mark** — dictation works on stroke selection.
-7. [ ] **No selection** — Hold Space does not start mic (no scroll jump).
-8. [ ] **Chat voice** — start chat mic → Hold Space on mark blocked (or chat stops first).
+7. [ ] **No selection** — Hold Space does not start mic (no page scroll jump).
+8. [ ] **Chat voice** — start chat mic → Hold Space on mark blocked (mutual exclusion).
 9. [ ] **Page change** — selection clears; no stuck listening state.
 10. [ ] **Share pack** — export → import → `voice_note` preserved on marks.
-11. [ ] **Clear notation** (BDA-256) — badge removed after clear + reload.
-12. [ ] **Auto-select stamp** (BDA-255) — place stamp → immediate hold Space works.
+11. [ ] **Clear notation** (BDA-256) — mic-off toolbar button clears badge (immediate UI + persists after reload).
+12. [ ] **Auto-select stamp** (BDA-255) — place window stamp → hold Space without manual select → dictation works.
+
+**Sign-off**
+
+| Field | Value |
+|-------|-------|
+| Task | BDA-258 |
+| Automated | `pnpm qa:drawing-markup` + dev harness chain |
+| Manual UI | Pending peer on drawing PDF |
+| Executor | — |
+| Date | — |
 
 ---
 
@@ -445,4 +466,5 @@ Run in **Mark mode**, Chrome or Edge, `localhost` or HTTPS.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.1 | 2026-08-21 | BDA-242–258 implemented; manual QA checklist + sign-off (BDA-258) |
 | v1.0 | 2026-08-21 | Initial breakdown BDA-242–258 from mark voice notation plan |

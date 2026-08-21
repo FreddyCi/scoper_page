@@ -43,6 +43,7 @@ Browser Doc Agent Demo is a **standalone, browser-only** web application that le
 * Word, Markdown, and Excel ingest (beyond PDF MVP)
 * User comments anchored to document blocks
 * **PDF drawing markup (Mark mode)** — pen, highlighter, shapes, text, and window stamp on plan/elevation PDFs; persisted in session; **burned-in** vector export and share pack v3 round-trip ([`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md))
+* **Mark voice notation** — hold Space to dictate field notes on a selected mark; Web Speech API; persisted on `voice_note` with share-pack round-trip ([`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md))
 * IndexedDB session restore for chat KV cache (bitgpu) and workspace state
 * Model picker (Bonsai 1.7B default, 4B optional)
 * Voice input on composer (defer post-MVP)
@@ -560,6 +561,7 @@ type CitationRef = {
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| v1.2 | 2026-08-21 | — | Secondary goal: hold-Space mark voice notation (BDA-242–258) |
 | v1.1 | 2026-08-03 | — | Secondary goal: PDF Mark drawing markup; viewer + export notes; scoped non-goals for drawing v1 (BDA-241) |
 | v1.0 | 2026-07-27 | — | Initial PRD from browser_doc_agent_demo plan + UI refs |
 
@@ -577,4 +579,5 @@ type CitationRef = {
 - Template: [`docs/PRD_TEMPLATE.md`](PRD_TEMPLATE.md)
 - Plan: [`browser_doc_agent_demo_9dbcbc83.plan.md`](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Drawing markup tasks: [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) (BDA-220–241)
+- Mark voice notation: [`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) (BDA-242–258)
 - Wireframes: [`docs/main.png`](main.png), [`docs/Screenshot 2026-07-27 at 2.49.33 PM.png`](Screenshot%202026-07-27%20at%202.49.33%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.51.53 PM.png`](Screenshot%202026-07-27%20at%202.51.53%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png)

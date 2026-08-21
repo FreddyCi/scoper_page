@@ -1,6 +1,6 @@
 # Mark dictation notation (hold Space)
 
-**Status:** Planned — see [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) (BDA-242–258)  
+**Status:** **Implemented** — see [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](../TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) (BDA-242–258 complete; peer manual QA pending)  
 **Created:** 2026-08-21  
 **Overview:** Hold-Space voice notation for any selected PDF mark, using the foundry rubric dictation pattern (Web Speech API + append transcript). Persist transcripts on `pdf_drawing_annotations.voice_note` with share-pack round-trip.
 
@@ -141,8 +141,8 @@ Toolbar hints in `DocumentViewer.tsx`:
 
 ## 7. QA and docs
 
-- Harness: `appendSpeechTranscript`, `speechNotesAvailable`, mock `finalTranscriptsFromEvent`
-- Manual: select stamp → hold Space → speak → release → reload → share pack preserves `voice_note`
-- Add section to `docs/TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md` (BDA-242+)
+- **Automated:** `pnpm qa:drawing-markup` (BDA-257 static + harness chain); unit harnesses for `appendSpeechTranscript`, `speechNotesAvailable`, merge math
+- **Manual:** [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md § Manual QA](../TASK_BREAKDOWN_MARK_VOICE_NOTATION.md#manual-qa-checklist-bda-258) — select stamp → hold Space → speak → release → share pack preserves `voice_note`
+- Cross-links: [TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md](../TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md), [PRD.md](../PRD.md) secondary goal
 
 **Browser:** Web Speech works in Chrome/Edge over HTTPS/localhost; gate UI with `speechNotesAvailable`.

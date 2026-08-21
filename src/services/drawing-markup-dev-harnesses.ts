@@ -1,5 +1,6 @@
 import { runDrawingTakeoffHarness } from '@/lib/drawing-takeoff'
 import { runPdfDrawingGeometryHarness } from '@/lib/pdf-drawing-geometry'
+import { runExportDrawingTakeoffCsvHarness } from '@/services/export-drawing-takeoff-csv'
 import { runMarkVoiceNotationUnitHarnesses } from '@/services/mark-voice-notation-harness'
 import { runPdfDrawingExportHarness } from '@/lib/pdf-drawing-export'
 import { runExportAnnotatedPdfDrawingMarksHarness } from '@/services/export-annotated-pdf'
@@ -15,6 +16,7 @@ import { runSharePackDrawingAnnotationsHarness } from '@/services/share-pack-imp
 export function runDrawingMarkupUnitHarnesses(): void {
   runPdfDrawingGeometryHarness()
   runDrawingTakeoffHarness()
+  runExportDrawingTakeoffCsvHarness()
   runMarkVoiceNotationUnitHarnesses()
 }
 

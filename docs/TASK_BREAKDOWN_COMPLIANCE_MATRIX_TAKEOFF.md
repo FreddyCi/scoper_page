@@ -332,18 +332,18 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-272
 
 **Title:** Export takeoff CSV from Drawing marks menu  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-270  
 **Priority:** High  
 **Description:** “Export takeoff CSV” under the existing rose **Drawing marks** section in `SplitDocumentViewFooter`, via [`beginBlobSave`](../src/lib/download-blob.ts). Columns match BDA-270. PDF export stays as-is (vectors + hover comments). Share pack already includes raw annotation rows — **no v4 bump for takeoff alone**.  
 **Completed Changes:**
-- 🔄 CSV builder (or reuse takeoff helper → CSV)
-- 🔄 Menu item in rose Drawing marks Export
-- 🔄 Harness: CSV contains stamp label + page
+- ✅ [`export-drawing-takeoff-csv.ts`](../src/services/export-drawing-takeoff-csv.ts) — `buildDrawingTakeoffCsv` + `downloadDrawingTakeoffCsv`
+- ✅ Export → Drawing marks → Export takeoff CSV menu item
+- ✅ `runExportDrawingTakeoffCsvHarness` in drawing markup unit chain
 **Test Strategy:** Stamped doc → Export takeoff CSV → file lists stamps; annotated PDF export unchanged.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx) Drawing marks menu; [`download-blob.ts`](../src/lib/download-blob.ts)
 
 ---
@@ -508,6 +508,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.14 | 2026-08-21 | BDA-272 implemented: export takeoff CSV from Drawing marks menu |
 | v1.13 | 2026-08-21 | BDA-271 implemented: DrawingTakeoffPanel + jump-to-mark |
 | v1.12 | 2026-08-21 | BDA-270 implemented: markKindLabel + drawing takeoff helper |
 | v1.11 | 2026-08-21 | BDA-269 implemented: instructions preamble on matrix CSV |

@@ -207,6 +207,7 @@ function SplitDocumentViewFooter({
   drawingMarkCount = 0,
   windowMarkCount = 0,
   onTakeoffOpenClick,
+  onExportTakeoffCsvClick,
   onExportMenuOpenChange,
   markdownExportLoading = false,
   onExportMarkdownClick,
@@ -230,6 +231,7 @@ function SplitDocumentViewFooter({
   drawingMarkCount?: number
   windowMarkCount?: number
   onTakeoffOpenClick?: () => void
+  onExportTakeoffCsvClick?: () => void
   onExportMenuOpenChange?: (open: boolean) => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
@@ -404,6 +406,16 @@ function SplitDocumentViewFooter({
                       <MenuOptionContent
                         title="Stamp takeoff"
                         description="Grouped window marks with counts, pages, and voice notes — click a row to jump on the plan."
+                        titleClassName={brandAccentStyles('rose').title}
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className={brandMenuItemClass('rose')}
+                      onClick={() => onExportTakeoffCsvClick?.()}
+                    >
+                      <MenuOptionContent
+                        title="Export takeoff CSV"
+                        description="Window stamp counts grouped by label, color, page, and voice notation."
                         titleClassName={brandAccentStyles('rose').title}
                       />
                     </DropdownMenuItem>
@@ -780,6 +792,26 @@ export function SplitDocumentView({
     })()
   }
 
+  function handleExportTakeoffCsv() {
+    setExportError(null)
+
+    void (async () => {
+      try {
+        const { downloadDrawingTakeoffCsv } = await import('@/services/export-drawing-takeoff-csv')
+        await downloadDrawingTakeoffCsv({
+          baselineFilename: document.filename,
+          annotations: drawingAnnotationsAll,
+        })
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'Takeoff CSV export failed'
+        setExportError(message)
+        console.error('[split-document-view] takeoff csv export failed', error)
+      }
+    })()
+  }
+
   function handleExportMarkdown() {
     if (!canExportMarkdown || exportingMarkdown) return
 
@@ -921,6 +953,7 @@ export function SplitDocumentView({
             drawingMarkCount={drawingMarkCount}
             windowMarkCount={windowMarkCount}
             onTakeoffOpenClick={drawingMarkCount > 0 ? openTakeoffPanel : undefined}
+            onExportTakeoffCsvClick={drawingMarkCount > 0 ? handleExportTakeoffCsv : undefined}
             onExportMenuOpenChange={() => {
               void refreshDrawingMarkCount()
             }}
@@ -1062,6 +1095,7 @@ export function SplitDocumentView({
         drawingMarkCount={drawingMarkCount}
         windowMarkCount={windowMarkCount}
         onTakeoffOpenClick={drawingMarkCount > 0 ? openTakeoffPanel : undefined}
+        onExportTakeoffCsvClick={drawingMarkCount > 0 ? handleExportTakeoffCsv : undefined}
         onExportMenuOpenChange={() => {
           void refreshDrawingMarkCount()
         }}

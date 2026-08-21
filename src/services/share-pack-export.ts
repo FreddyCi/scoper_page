@@ -12,6 +12,7 @@ import {
 } from '@/lib/share-crypto'
 import {
   SHARE_PACK_VERSION,
+  SUPPORTED_SHARE_PACK_VERSIONS,
   type ShareDocumentPayload,
   type SharePackExportSummary,
   type SharePackPayload,
@@ -96,8 +97,9 @@ async function deserializeSharePackPayload(bytes: Uint8Array): Promise<SharePack
   const jsonBytes = await gzipDecompress(bytes)
   const parsed = JSON.parse(new TextDecoder().decode(jsonBytes)) as SharePackPayload
 
-  if (parsed.manifest?.version !== SHARE_PACK_VERSION) {
-    throw new Error('Unsupported share pack version')
+  const version = parsed.manifest?.version
+  if (!SUPPORTED_SHARE_PACK_VERSIONS.includes(version as (typeof SUPPORTED_SHARE_PACK_VERSIONS)[number])) {
+    throw new Error(`Unsupported share pack version: ${String(version)}`)
   }
 
   return parsed

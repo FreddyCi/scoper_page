@@ -355,18 +355,20 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-273
 
 **Title:** Register new tables in share pack v4  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-261, BDA-267  
 **Priority:** High  
 **Description:** Bump [`SHARE_PACK_VERSION`](../src/lib/share-table.ts) from **3** to **4**. Add `ShareTableId` + registry entries for `rfp_requirements`, `rfp_requirement_scores`, `rfp_solicitation_meta` with correct `importOrder` (documents/profiles before scores). Update export/import if they key off the registry only (prefer registry-only). Import of v3 packs must still succeed (missing tables = empty).  
 **Completed Changes:**
-- 🔄 `SHARE_PACK_VERSION = 4`
-- 🔄 Three registry entries + column lists
-- 🔄 Share harness: v4 round-trip requirements + scores + meta; v3 pack still imports
+- ✅ `SHARE_PACK_VERSION = 4`; import accepts v3 + v4 (`SUPPORTED_SHARE_PACK_VERSIONS`)
+- ✅ Registry entries for requirements (8), solicitation meta (9), scores (10); proposal tables reordered 11–13
+- ✅ `filterShareTablesByDocumentIds` + missing-table defaults in `assertShareTablesShape`
+- ✅ Import hydrates `rfpRequirements`, `rfpRequirementScores`, `rfpInstructionsProfile` for RFP mode
+- ✅ `runSharePackRfpComplianceHarness` — v4 round-trip + v3 pack import
 **Test Strategy:** Export after qualify → import in fresh session → matrix + instructions card populate; old v3 fixture still loads.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`share-table.ts`](../src/lib/share-table.ts); [`share-pack-export.ts`](../src/services/share-pack-export.ts); [`share-pack-import.ts`](../src/services/share-pack-import.ts)
 
 ---
@@ -508,6 +510,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.15 | 2026-08-21 | BDA-273 implemented: share pack v4 for RFP matrix + instructions tables |
 | v1.14 | 2026-08-21 | BDA-272 implemented: export takeoff CSV from Drawing marks menu |
 | v1.13 | 2026-08-21 | BDA-271 implemented: DrawingTakeoffPanel + jump-to-mark |
 | v1.12 | 2026-08-21 | BDA-270 implemented: markKindLabel + drawing takeoff helper |

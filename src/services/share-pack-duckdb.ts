@@ -68,6 +68,21 @@ export function filterShareTablesByDocumentIds(
       docIdSet.has(String(row.baseline_doc_id)) && docIdSet.has(String(row.candidate_doc_id)),
   )
 
+  const rfp_requirements = (tables.rfp_requirements ?? []).filter((row) =>
+    docIdSet.has(String(row.doc_id)),
+  )
+  const requirementIds = new Set(rfp_requirements.map((row) => String(row.requirement_id)))
+
+  const rfp_solicitation_meta = (tables.rfp_solicitation_meta ?? []).filter((row) =>
+    docIdSet.has(String(row.doc_id)),
+  )
+
+  const rfp_requirement_scores = (tables.rfp_requirement_scores ?? []).filter(
+    (row) =>
+      requirementIds.has(String(row.requirement_id)) &&
+      profileIds.has(String(row.profile_id)),
+  )
+
   return {
     ...tables,
     documents,
@@ -77,6 +92,9 @@ export function filterShareTablesByDocumentIds(
     results_profiles,
     profile_criteria,
     scope_flags,
+    rfp_requirements,
+    rfp_solicitation_meta,
+    rfp_requirement_scores,
   }
 }
 
@@ -158,7 +176,8 @@ export function assertShareTablesShape(
   for (const definition of getShareTablesInImportOrder()) {
     const rows = tables[definition.id]
     if (!Array.isArray(rows)) {
-      throw new Error(`Share pack missing table: ${definition.id}`)
+      normalized[definition.id] = []
+      continue
     }
 
     normalized[definition.id] = rows.map((row) => {
@@ -219,4 +238,7 @@ export function runShareTableRegistryHarness(): void {
     assertShareTableSelectCoversColumns(definition)
   }
   getShareTableById('pdf_drawing_annotations')
+  getShareTableById('rfp_requirements')
+  getShareTableById('rfp_requirement_scores')
+  getShareTableById('rfp_solicitation_meta')
 }

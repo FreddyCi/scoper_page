@@ -14,6 +14,11 @@ import { runIngestHarness } from '@/services/ingest-router'
 import { fetchSharePackBytes } from '@/services/share-pack-link'
 import { proposalProfileFromShareRows } from '@/services/proposal-share-store'
 import { fetchRfpProfilesFromDuckdb } from '@/services/rfp-profile-store'
+import {
+  fetchRfpRequirementScoresForDoc,
+  fetchRfpRequirementsForDoc,
+} from '@/services/rfp-requirements'
+import { fetchRfpInstructionsForDoc } from '@/services/rfp-solicitation-meta'
 import { getScoperClient } from '@/services/scoper-client'
 import { clearAgentActivityState } from '@/lib/agent-activity'
 import { useSessionStore } from '@/store/session-store'
@@ -103,6 +108,9 @@ function emptyShareTables(): Record<ShareTableId, ShareTableRow[]> {
     proposal_profiles: [],
     proposal_volumes: [],
     proposal_volume_sections: [],
+    rfp_requirements: [],
+    rfp_requirement_scores: [],
+    rfp_solicitation_meta: [],
   }
 }
 
@@ -140,6 +148,20 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
   const documents = documentsFromSharePayload(payload)
   const profiles = mode === 'rfp' ? await fetchRfpProfilesFromDuckdb() : []
 
+  const evaluationDocId = manifest.evaluationDocId
+  const rfpRequirements =
+    mode === 'rfp' && evaluationDocId
+      ? await fetchRfpRequirementsForDoc(evaluationDocId)
+      : []
+  const rfpRequirementScores =
+    mode === 'rfp' && evaluationDocId
+      ? await fetchRfpRequirementScoresForDoc(evaluationDocId)
+      : []
+  const rfpInstructionsProfile =
+    mode === 'rfp' && evaluationDocId
+      ? await fetchRfpInstructionsForDoc(evaluationDocId)
+      : null
+
   const evaluationBaselineProfile =
     manifest.evaluationBaselineProfileId != null
       ? profiles.find((profile) => profile.profile_id === manifest.evaluationBaselineProfileId) ??
@@ -161,6 +183,9 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     profiles,
     creepProfiles: [],
     proposalRequirementsProfile,
+    rfpRequirements,
+    rfpRequirementScores,
+    rfpInstructionsProfile,
     proposalHandoffState: null,
     proposalGenerating: false,
     proposalGenerationError: null,
@@ -435,4 +460,129 @@ export async function runSharePackDrawingAnnotationsHarness(): Promise<void> {
 
   await duckdb.query('DELETE FROM pdf_drawing_annotations WHERE doc_id = ?', [orphanDocId])
   await duckdb.query('DELETE FROM documents WHERE doc_id = ?', [orphanDocId])
+}
+
+/** Dev harness — v4 RFP matrix + instructions round-trip; v3 packs still import (BDA-273). */
+export async function runSharePackRfpComplianceHarness(): Promise<void> {
+  useSessionStore.getState().resetSession()
+  await runIngestHarness()
+
+  const docId = useSessionStore.getState().documents[0]?.doc_id
+  if (!docId) {
+    throw new Error('runSharePackRfpComplianceHarness: missing ingested document')
+  }
+
+  const requirementId = 'share-pack-req-harness'
+  const profileId = 'share-pack-profile-harness'
+  const label = 'The Contractor shall provide weekly status reports.'
+  const dueValue = 'Proposals due March 15, 2026 for share harness'
+
+  const duckdb = await getDuckdbClient()
+  await duckdb.query(
+    `INSERT OR REPLACE INTO results_profiles
+       (profile_id, mode, doc_id, verdict, subject_json, summary)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [profileId, 'rfp', docId, 'likely', '{"name":"Harness Bidder"}', 'Share pack bidder'],
+  )
+  await duckdb.query(
+    `INSERT OR REPLACE INTO rfp_requirements
+       (requirement_id, doc_id, label, category, block_id, page_num, excerpt, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      requirementId,
+      docId,
+      label,
+      null,
+      null,
+      3,
+      label,
+      new Date().toISOString(),
+    ],
+  )
+  await duckdb.query(
+    `INSERT OR REPLACE INTO rfp_requirement_scores
+       (requirement_id, profile_id, status, note, source)
+     VALUES (?, ?, ?, ?, ?)`,
+    [requirementId, profileId, 'partial', 'Needs review', 'user'],
+  )
+  await duckdb.query(
+    `INSERT OR REPLACE INTO rfp_solicitation_meta
+       (doc_id, due_json, questions_due_json, page_limit_json, volumes_json, block_ids_json, summary, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      docId,
+      JSON.stringify({ label: 'Due date', value: dueValue }),
+      null,
+      null,
+      '[]',
+      '[]',
+      'Harness instructions summary',
+      new Date().toISOString(),
+    ],
+  )
+
+  useSessionStore.setState({
+    mode: 'rfp',
+    evaluationDocId: docId,
+  })
+
+  const summary = await exportEncryptedSharePack()
+  const payload = await decryptSharePackFile(summary.encryptedBytes, summary.keyBase64Url)
+
+  if (payload.manifest.version !== SHARE_PACK_VERSION) {
+    throw new Error('runSharePackRfpComplianceHarness: export should use latest share pack version')
+  }
+  if ((payload.tables.rfp_requirements ?? []).length !== 1) {
+    throw new Error('runSharePackRfpComplianceHarness: expected exported requirement row')
+  }
+  if ((payload.tables.rfp_requirement_scores ?? []).length !== 1) {
+    throw new Error('runSharePackRfpComplianceHarness: expected exported score row')
+  }
+  if ((payload.tables.rfp_solicitation_meta ?? []).length !== 1) {
+    throw new Error('runSharePackRfpComplianceHarness: expected exported solicitation meta row')
+  }
+
+  useSessionStore.getState().resetSession()
+  await applySharePackPayload(payload)
+
+  let state = useSessionStore.getState()
+  if (state.rfpRequirements.length !== 1 || !state.rfpRequirements[0]?.label.includes('weekly')) {
+    throw new Error('runSharePackRfpComplianceHarness: requirements not restored to session')
+  }
+  if (state.rfpRequirementScores.length !== 1 || state.rfpRequirementScores[0]?.status !== 'partial') {
+    throw new Error('runSharePackRfpComplianceHarness: scores not restored to session')
+  }
+  if (!state.rfpInstructionsProfile?.dueDate?.value.includes('March 15')) {
+    throw new Error('runSharePackRfpComplianceHarness: instructions profile not restored')
+  }
+
+  const v3Tables = { ...payload.tables } as Record<string, ShareTableRow[] | undefined>
+  delete v3Tables.rfp_requirements
+  delete v3Tables.rfp_requirement_scores
+  delete v3Tables.rfp_solicitation_meta
+
+  const v3Payload: SharePackPayload = {
+    manifest: {
+      ...payload.manifest,
+      version: 3,
+    },
+    tables: v3Tables as SharePackPayload['tables'],
+    documents: payload.documents,
+  }
+
+  useSessionStore.getState().resetSession()
+  await applySharePackPayload(v3Payload)
+
+  state = useSessionStore.getState()
+  if (state.documents.length !== payload.documents.length) {
+    throw new Error('runSharePackRfpComplianceHarness: v3 pack document import failed')
+  }
+  if (state.rfpRequirements.length !== 0 || state.rfpRequirementScores.length !== 0) {
+    throw new Error('runSharePackRfpComplianceHarness: v3 pack should import with empty matrix state')
+  }
+
+  await duckdb.query('DELETE FROM rfp_requirement_scores WHERE requirement_id = ?', [requirementId])
+  await duckdb.query('DELETE FROM rfp_requirements WHERE requirement_id = ?', [requirementId])
+  await duckdb.query('DELETE FROM rfp_solicitation_meta WHERE doc_id = ?', [docId])
+  await duckdb.query('DELETE FROM results_profiles WHERE profile_id = ?', [profileId])
 }

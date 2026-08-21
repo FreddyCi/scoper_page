@@ -1,9 +1,12 @@
 import type { WorkspaceMode, WorkspaceView } from '@/lib/types'
 
 /** Share pack format version — bump when payload shape changes. */
-export const SHARE_PACK_VERSION = 3 as const
+export const SHARE_PACK_VERSION = 4 as const
 
-export type SharePackVersion = typeof SHARE_PACK_VERSION
+/** Versions this build can import (missing v4 tables default to empty). */
+export const SUPPORTED_SHARE_PACK_VERSIONS = [3, 4] as const
+
+export type SharePackVersion = (typeof SUPPORTED_SHARE_PACK_VERSIONS)[number]
 
 /** DuckDB tables included in a workspace share pack. */
 export type ShareTableId =
@@ -17,6 +20,9 @@ export type ShareTableId =
   | 'proposal_profiles'
   | 'proposal_volumes'
   | 'proposal_volume_sections'
+  | 'rfp_requirements'
+  | 'rfp_requirement_scores'
+  | 'rfp_solicitation_meta'
 
 export type ShareTableRow = Record<string, string | number | null>
 
@@ -121,6 +127,50 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
                 ORDER BY doc_id, page_num, created_at, annotation_id`,
   },
   {
+    id: 'rfp_requirements',
+    tableName: 'rfp_requirements',
+    columns: [
+      'requirement_id',
+      'doc_id',
+      'label',
+      'category',
+      'block_id',
+      'page_num',
+      'excerpt',
+      'created_at',
+    ],
+    importOrder: 8,
+    selectSql: `SELECT requirement_id, doc_id, label, category, block_id, page_num, excerpt, created_at
+                FROM rfp_requirements ORDER BY doc_id, created_at, requirement_id`,
+  },
+  {
+    id: 'rfp_solicitation_meta',
+    tableName: 'rfp_solicitation_meta',
+    columns: [
+      'doc_id',
+      'due_json',
+      'questions_due_json',
+      'page_limit_json',
+      'volumes_json',
+      'block_ids_json',
+      'summary',
+      'updated_at',
+    ],
+    importOrder: 9,
+    selectSql: `SELECT doc_id, due_json, questions_due_json, page_limit_json, volumes_json,
+                       block_ids_json, summary, updated_at
+                FROM rfp_solicitation_meta ORDER BY doc_id`,
+  },
+  {
+    id: 'rfp_requirement_scores',
+    tableName: 'rfp_requirement_scores',
+    columns: ['requirement_id', 'profile_id', 'status', 'note', 'source'],
+    importOrder: 10,
+    selectSql: `SELECT requirement_id, profile_id, status, note, source
+                FROM rfp_requirement_scores
+                ORDER BY requirement_id, profile_id`,
+  },
+  {
     id: 'proposal_profiles',
     tableName: 'proposal_profiles',
     columns: [
@@ -131,7 +181,7 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
       'package_kind',
       'package_warnings_json',
     ],
-    importOrder: 8,
+    importOrder: 11,
     selectSql: `SELECT profile_id, rfp_doc_id, summary, built_at, package_kind, package_warnings_json
                 FROM proposal_profiles ORDER BY profile_id`,
   },
@@ -152,7 +202,7 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
       'generation_progress_json',
       'analysis_refs_json',
     ],
-    importOrder: 9,
+    importOrder: 12,
     selectSql: `SELECT profile_id, volume_id, title, requirement_summary, solicitation_refs_json,
                        body_markdown, status, error_message, edited, edited_at,
                        generation_progress_json, analysis_refs_json
@@ -174,7 +224,7 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
       'edited_at',
       'citations_json',
     ],
-    importOrder: 10,
+    importOrder: 13,
     selectSql: `SELECT profile_id, volume_id, section_id, title, find_clause_query, status,
                        body_markdown, error_message, edited, edited_at, citations_json
                 FROM proposal_volume_sections

@@ -1,7 +1,9 @@
 import { MicAudioLinesIcon } from 'lucide-react'
+import { useLayoutEffect, useRef, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 import {
   denormalizePoint,
   normalizedAnnotationMarqueeBounds,
@@ -11,9 +13,41 @@ import {
 import type { PdfDrawingAnnotation } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
+const CARD_GAP_PX = 8
+const CARD_ESTIMATE_HEIGHT_PX = 168
+const CARD_MAX_WIDTH_PX = 320
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+function visibleBoundsInOverlay(overlay: HTMLElement): {
+  top: number
+  left: number
+  width: number
+  height: number
+} {
+  const overlayRect = overlay.getBoundingClientRect()
+  const scrollParent = overlay.closest('[data-pdf-scroll]')
+  if (!(scrollParent instanceof HTMLElement)) {
+    return { top: 0, left: 0, width: overlay.clientWidth, height: overlay.clientHeight }
+  }
+
+  const scrollRect = scrollParent.getBoundingClientRect()
+  const top = Math.max(0, scrollRect.top - overlayRect.top)
+  const left = Math.max(0, scrollRect.left - overlayRect.left)
+  const bottom = Math.min(overlayRect.height, scrollRect.bottom - overlayRect.top)
+  const right = Math.min(overlayRect.width, scrollRect.right - overlayRect.left)
+  return {
+    top,
+    left,
+    width: Math.max(0, right - left),
+    height: Math.max(0, bottom - top),
+  }
+}
 const DICTATION_RING_COLOR = '#0EA5E9'
 const DICTATION_RING_PAD_PX = 5
-const PREVIEW_MAX_CHARS = 96
+const PREVIEW_MAX_CHARS = 280
 
 function boundsToPixelRect(
   bounds: PdfDrawingNormalizedBounds,
@@ -62,7 +96,7 @@ export function DictationListeningRing({
   )
 }
 
-/** Live dictation preview bubble — shadcn Bubble + sound-wave pulse (BDA-252). */
+/** Live or saved voice notation card — shadcn Card + Textarea (BDA-252/253). */
 export function DictationDraftBubble({
   annotation,
   previewText,
@@ -77,50 +111,91 @@ export function DictationDraftBubble({
   className?: string
 }) {
   const trimmed = previewText.trim()
-  const displayText = trimmed || (isListening ? 'Listening…' : '')
-  if (!displayText) return null
-
+  const hostRef = useRef<HTMLDivElement>(null)
   const bounds = normalizedAnnotationMarqueeBounds(annotation, viewport)
   const rect = boundsToPixelRect(bounds, viewport)
-  const centerX = rect.left + rect.width / 2
+  const [placement, setPlacement] = useState(() => ({
+    left: rect.left + rect.width / 2,
+    top: rect.top < CARD_ESTIMATE_HEIGHT_PX + CARD_GAP_PX
+      ? rect.top + rect.height + CARD_GAP_PX
+      : rect.top - CARD_GAP_PX,
+    placeBelow: rect.top < CARD_ESTIMATE_HEIGHT_PX + CARD_GAP_PX,
+  }))
+
+  useLayoutEffect(() => {
+    const host = hostRef.current
+    const overlay = host?.offsetParent
+    if (!(host instanceof HTMLElement) || !(overlay instanceof HTMLElement)) return
+
+    const visible = visibleBoundsInOverlay(overlay)
+    const cardHeight = host.offsetHeight || CARD_ESTIMATE_HEIGHT_PX
+    const cardWidth = Math.min(host.offsetWidth || CARD_MAX_WIDTH_PX, visible.width || CARD_MAX_WIDTH_PX)
+    const spaceAbove = rect.top - visible.top
+    const spaceBelow = visible.top + visible.height - (rect.top + rect.height)
+    const placeBelow = spaceAbove < cardHeight + CARD_GAP_PX && spaceBelow >= spaceAbove
+
+    const centerX = rect.left + rect.width / 2
+    const minCenter = visible.left + cardWidth / 2 + CARD_GAP_PX
+    const maxCenter = visible.left + visible.width - cardWidth / 2 - CARD_GAP_PX
+    const left =
+      minCenter <= maxCenter ? clamp(centerX, minCenter, maxCenter) : visible.left + visible.width / 2
+
+    const unclampedTop = placeBelow ? rect.top + rect.height + CARD_GAP_PX : rect.top - CARD_GAP_PX
+    const topEdge = placeBelow ? unclampedTop : unclampedTop - cardHeight
+    const maxTop = visible.top + Math.max(0, visible.height - cardHeight) - CARD_GAP_PX
+    const clampedTopEdge = clamp(topEdge, visible.top + CARD_GAP_PX, Math.max(visible.top + CARD_GAP_PX, maxTop))
+    const top = placeBelow ? clampedTopEdge : clampedTopEdge + cardHeight
+
+    setPlacement({ left, top, placeBelow })
+  }, [rect.height, rect.left, rect.top, rect.width, trimmed, isListening, viewport.height, viewport.width])
+
+  if (!trimmed && !isListening) return null
 
   return (
     <div
-      className={cn('pointer-events-none absolute z-[2] max-w-[min(18rem,75%)]', className)}
+      ref={hostRef}
+      className={cn('pointer-events-none absolute z-[2] w-[min(20rem,78%)]', className)}
       style={{
-        left: centerX,
-        top: Math.max(4, rect.top - 8),
-        transform: 'translate(-50%, -100%)',
+        left: placement.left,
+        top: placement.top,
+        transform: placement.placeBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)',
       }}
     >
-      <div
-        className={cn(
-          'bg-card text-card-foreground pointer-events-none max-w-full rounded-md border px-3 py-2 shadow-md',
-        )}
-      >
-        <div className="flex items-start gap-2 text-sm leading-snug">
+      <Card className="border-border bg-surface shadow-panel gap-0 overflow-hidden rounded-xl border py-0">
+        <CardHeader className="flex flex-row items-start gap-2.5 border-b border-border/70 px-3 py-2.5">
           <MicAudioLinesIcon
-            className={cn(
-              'text-primary mt-0.5 size-4 shrink-0',
-              isListening && 'animate-pulse',
-            )}
+            className={cn('text-primary mt-0.5 size-4 shrink-0', isListening && 'animate-pulse')}
             aria-hidden
           />
-          <p
-            className={cn(
-              'min-w-[8rem]',
-              trimmed ? 'whitespace-pre-wrap' : 'text-muted-foreground italic',
-            )}
-          >
-            {trimmed ? truncateDictationPreview(trimmed, 160) : displayText}
-          </p>
-        </div>
-      </div>
+          <div className="min-w-0 space-y-0.5">
+            <CardTitle className="text-sm font-semibold tracking-tight">Voice notation</CardTitle>
+            <CardDescription className="text-xs leading-relaxed">
+              {isListening
+                ? trimmed
+                  ? 'Listening · release Space to save'
+                  : 'Listening…'
+                : 'Saved note'}
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="px-3 py-3">
+          <div className="border-border/70 bg-muted/40 rounded-lg border px-0.5 py-0.5">
+            <Textarea
+              readOnly
+              tabIndex={-1}
+              aria-label="Voice notation"
+              value={trimmed ? truncateDictationPreview(trimmed) : ''}
+              placeholder="Speak to fill this note…"
+              className="text-muted-foreground min-h-16 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
-/** Saved voice notation indicator — shadcn Badge + Tooltip (BDA-253). */
+/** Corner indicator that a mark has a saved voice note (hover is handled on the drawing). */
 export function VoiceNotationBadge({
   annotation,
   viewport,
@@ -137,34 +212,21 @@ export function VoiceNotationBadge({
   const inset = 4
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        delay={200}
-        render={
-          <span
-            className="pointer-events-auto absolute z-[2] flex size-5 items-center justify-center"
-            style={{
-              left: rect.left + rect.width - size + inset,
-              top: rect.top - inset,
-            }}
-            aria-label="Voice notation"
-          >
-            <Badge
-              variant="secondary"
-              className="border-primary/25 bg-primary/10 text-primary pointer-events-auto h-5 gap-0 px-1.5 shadow-sm ring-2 ring-card"
-            >
-              <MicAudioLinesIcon className="size-3" aria-hidden />
-            </Badge>
-          </span>
-        }
-      />
-      <TooltipContent side="top" align="end" className="max-w-[18rem] text-left">
-        <span className="text-background/75 block text-[10px] font-semibold tracking-wide uppercase">
-          Voice notation
-        </span>
-        <span className="mt-1 block font-normal leading-snug">{voiceNote}</span>
-      </TooltipContent>
-    </Tooltip>
+    <span
+      className="pointer-events-none absolute z-[2] flex size-5 items-center justify-center"
+      style={{
+        left: rect.left + rect.width - size + inset,
+        top: rect.top - inset,
+      }}
+      aria-hidden
+    >
+      <Badge
+        variant="secondary"
+        className="border-border/70 bg-surface text-foreground h-5 gap-0 px-1.5 shadow-sm"
+      >
+        <MicAudioLinesIcon className="size-3" aria-hidden />
+      </Badge>
+    </span>
   )
 }
 
@@ -174,6 +236,7 @@ export type PdfDrawingDictationLayerProps = {
   dictationTargetId?: string | null
   dictationPreview?: string
   isDictating?: boolean
+  hoveredVoiceNoteId?: string | null
 }
 
 /** HTML + SVG dictation affordances over the drawing overlay (BDA-252/253). */
@@ -183,15 +246,22 @@ export function PdfDrawingDictationLayer({
   dictationTargetId,
   dictationPreview = '',
   isDictating = false,
+  hoveredVoiceNoteId = null,
 }: PdfDrawingDictationLayerProps) {
   const dictationTarget =
     isDictating && dictationTargetId
       ? annotations.find((annotation) => annotation.annotation_id === dictationTargetId) ?? null
       : null
 
+  const hoveredAnnotation =
+    !isDictating && hoveredVoiceNoteId
+      ? annotations.find((annotation) => annotation.annotation_id === hoveredVoiceNoteId) ?? null
+      : null
+  const hoveredNote = hoveredAnnotation?.voice_note?.trim() ?? ''
+
   const voiceNoteAnnotations = annotations.filter((annotation) => annotation.voice_note?.trim())
 
-  if (!dictationTarget && voiceNoteAnnotations.length === 0) {
+  if (!dictationTarget && !hoveredAnnotation && voiceNoteAnnotations.length === 0) {
     return null
   }
 
@@ -219,10 +289,19 @@ export function PdfDrawingDictationLayer({
           />
         ) : null}
 
+        {hoveredAnnotation && hoveredNote ? (
+          <DictationDraftBubble
+            annotation={hoveredAnnotation}
+            previewText={hoveredNote}
+            viewport={viewport}
+          />
+        ) : null}
+
         {voiceNoteAnnotations
           .filter(
             (annotation) =>
-              !dictationTarget || annotation.annotation_id !== dictationTarget.annotation_id,
+              annotation.annotation_id !== dictationTarget?.annotation_id &&
+              annotation.annotation_id !== hoveredAnnotation?.annotation_id,
           )
           .map((annotation) => (
             <VoiceNotationBadge

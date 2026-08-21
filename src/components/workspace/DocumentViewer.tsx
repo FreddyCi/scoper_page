@@ -552,6 +552,7 @@ export function DocumentViewer({
       />
 
       <div
+        data-pdf-scroll
         className={cn(
           'min-h-0 flex-1 overflow-auto p-4',
           isDark ? 'bg-zinc-950' : 'bg-workspace',

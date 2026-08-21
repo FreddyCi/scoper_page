@@ -551,6 +551,7 @@ export function PdfDrawingOverlay({
   const moveDragRef = useRef<MoveDragState | null>(null)
   const [draftMarquee, setDraftMarquee] = useState<MarqueeDragState | null>(null)
   const draftMarqueeRef = useRef<MarqueeDragState | null>(null)
+  const [hoveredVoiceNoteId, setHoveredVoiceNoteId] = useState<string | null>(null)
   const selectedIdsRef = useRef(selectedAnnotationIds)
   selectedIdsRef.current = selectedAnnotationIds
   const annotationsRef = useRef(annotations)
@@ -777,8 +778,28 @@ export function PdfDrawingOverlay({
     ],
   )
 
+  const updateVoiceNoteHover = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (isDictating) {
+        setHoveredVoiceNoteId(null)
+        return
+      }
+      const point = pointerToNormalized(event, viewport)
+      const hit = findPdfDrawingAnnotationAtPointer(
+        point,
+        annotationsRef.current,
+        viewport,
+        16,
+      )
+      const nextId = hit?.voice_note?.trim() ? hit.annotation_id : null
+      setHoveredVoiceNoteId((previous) => (previous === nextId ? previous : nextId))
+    },
+    [isDictating, viewport],
+  )
+
   const handlePointerMove = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
+      updateVoiceNoteHover(event)
       if (drawingPointerId.current !== event.pointerId) return
       event.preventDefault()
       const point = pointerToNormalized(event, viewport)
@@ -833,7 +854,7 @@ export function PdfDrawingOverlay({
         return next
       })
     },
-    [eraseAtPointer, eraserActive, shapeToolActive, strokeToolActive, viewport],
+    [eraseAtPointer, eraserActive, shapeToolActive, strokeToolActive, updateVoiceNoteHover, viewport],
   )
 
   const finishShape = useCallback(
@@ -949,6 +970,10 @@ export function PdfDrawingOverlay({
     ],
   )
 
+  const handlePointerLeave = useCallback(() => {
+    setHoveredVoiceNoteId(null)
+  }, [])
+
   const handlePointerCancel = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       if (drawingPointerId.current !== event.pointerId) return
@@ -1007,7 +1032,8 @@ export function PdfDrawingOverlay({
               ? 'cursor-crosshair'
               : undefined
 
-  const svgPointerActive = pointerActive && !textEditor
+  const hasVoiceNotes = annotations.some((annotation) => annotation.voice_note?.trim())
+  const svgPointerActive = (pointerActive || hasVoiceNotes) && !textEditor
 
   return (
     <div className={cn('absolute inset-0', className)}>
@@ -1020,10 +1046,11 @@ export function PdfDrawingOverlay({
         height={viewport.height}
         viewBox={`0 0 ${viewport.width} ${viewport.height}`}
         aria-hidden={!svgPointerActive}
-        onPointerDown={svgPointerActive ? handlePointerDown : undefined}
+        onPointerDown={pointerActive && !textEditor ? handlePointerDown : undefined}
         onPointerMove={svgPointerActive ? handlePointerMove : undefined}
-        onPointerUp={svgPointerActive ? handlePointerUp : undefined}
-        onPointerCancel={svgPointerActive ? handlePointerCancel : undefined}
+        onPointerUp={pointerActive && !textEditor ? handlePointerUp : undefined}
+        onPointerCancel={pointerActive && !textEditor ? handlePointerCancel : undefined}
+        onPointerLeave={hasVoiceNotes ? handlePointerLeave : undefined}
       >
       {displayAnnotations.map((annotation) => (
         <g key={annotation.annotation_id} data-annotation-id={annotation.annotation_id}>
@@ -1085,6 +1112,7 @@ export function PdfDrawingOverlay({
         dictationTargetId={dictationTargetId}
         dictationPreview={dictationPreview ?? dictationDraft}
         isDictating={isDictating}
+        hoveredVoiceNoteId={hoveredVoiceNoteId}
       />
     </div>
   )

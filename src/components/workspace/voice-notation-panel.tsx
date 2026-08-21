@@ -12,24 +12,8 @@ import {
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import type { PdfDrawingAnnotation } from '@/lib/types'
+import { markKindLabel } from '@/lib/drawing-takeoff'
 import { cn } from '@/lib/utils'
-
-function markKindLabel(annotation: PdfDrawingAnnotation): string {
-  switch (annotation.geometry.kind) {
-    case 'stamp':
-      return 'Window marker'
-    case 'text':
-      return annotation.text_body?.trim() || 'Text label'
-    case 'rect':
-      return 'Rectangle'
-    case 'ellipse':
-      return 'Ellipse'
-    case 'stroke':
-      return annotation.tool === 'highlighter' ? 'Highlight' : 'Stroke'
-    default:
-      return 'Mark'
-  }
-}
 
 export type VoiceNotationPanelProps = {
   open: boolean

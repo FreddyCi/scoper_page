@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 
 import { DOCUMENT_ROLE_LABELS } from '@/lib/document-roles'
+import { markKindLabel } from '@/lib/drawing-takeoff'
 import { liteParseBboxToPdfUserSpace } from '@/lib/citation-bbox'
 import { beginBlobSave } from '@/lib/download-blob'
 import {
@@ -354,23 +355,6 @@ function hexToRgbTuple(hex: string): [number, number, number] {
   return [((value >> 16) & 255) / 255, ((value >> 8) & 255) / 255, (value & 255) / 255]
 }
 
-function drawingMarkMarkupLabel(annotation: PdfDrawingAnnotation): string {
-  switch (annotation.geometry.kind) {
-    case 'stamp':
-      return 'Window marker'
-    case 'text':
-      return annotation.text_body?.trim() || 'Text label'
-    case 'rect':
-      return 'Rectangle'
-    case 'ellipse':
-      return 'Ellipse'
-    case 'stroke':
-      return annotation.tool === 'highlighter' ? 'Highlight' : 'Stroke'
-    default:
-      return 'Drawing mark'
-  }
-}
-
 function addDrawingVoiceNoteComments(
   pdfDoc: PDFDocument,
   page: PDFPage,
@@ -416,7 +400,7 @@ function addMarkupDrawingAnnotations(
       height,
     }
     const voiceNote = annotation.voice_note?.trim()
-    const contents = voiceNote || drawingMarkMarkupLabel(annotation)
+    const contents = voiceNote || markKindLabel(annotation)
 
     addSquareAnnotation(pdfDoc, page, bbox, contents, hexToRgbTuple(annotation.color))
 

@@ -293,18 +293,18 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 ### **ID:** BDA-270
 
 **Title:** Shared markKindLabel and takeoff helper  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None (marks + `voice_note` already persist; BDA-244)  
 **Priority:** High  
 **Description:** Dedup `markKindLabel` (today duplicated in [`voice-notation-panel.tsx`](../src/components/workspace/voice-notation-panel.tsx) and [`export-annotated-pdf.ts`](../src/services/export-annotated-pdf.ts)) into a shared helper. New [`src/lib/drawing-takeoff.ts`](../src/lib/drawing-takeoff.ts): group doc-wide rows from [`fetchPdfDrawingAnnotationsForDoc`](../src/services/pdf-drawing-annotations.ts); default filter `geometry.kind === 'stamp'`. Columns for UI/CSV: mark label, color, page, voice note, count.  
 **Completed Changes:**
-- 🔄 Shared `markKindLabel`
-- 🔄 `aggregateDrawingTakeoff(annotations, { kinds?: ... })`
-- 🔄 Unit harness: two window stamps page 1 + one note → counts / pages / note
+- ✅ Shared [`markKindLabel`](../src/lib/drawing-takeoff.ts); voice panel + PDF export use it
+- ✅ `aggregateDrawingTakeoff(annotations, { kinds? })` → label, color, page, voiceNote, count
+- ✅ `runDrawingTakeoffHarness` wired in drawing markup unit chain
 **Test Strategy:** Pure function tests; voice panel + PDF export still compile against shared label.  
 **Test Results:**
-- 🔄 Pending implementation
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+**Assigned:** Completed  
 **Context/Artifacts:** [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts); `drawingMarkCount` in [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx)
 
 ---
@@ -508,6 +508,7 @@ Fresh install CREATE TABLE must include the same columns. Schema harness asserts
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v1.12 | 2026-08-21 | BDA-270 implemented: markKindLabel + drawing takeoff helper |
 | v1.11 | 2026-08-21 | BDA-269 implemented: instructions preamble on matrix CSV |
 | v1.10 | 2026-08-21 | BDA-268 implemented: InstructionsCard on evaluation + proposal |
 | v1.9 | 2026-08-21 | BDA-267 implemented: solicitation meta extract + persist |

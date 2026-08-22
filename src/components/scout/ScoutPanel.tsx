@@ -92,6 +92,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
   const isLastStep = safeIndex >= journey.steps.length - 1
 
   const primaryAction = currentStep?.action
+  const secondaryActions = currentStep?.secondaryActions ?? []
   const showPrimary = Boolean(primaryAction ?? currentStep?.manualContinue)
 
   async function handlePrimaryAction() {
@@ -99,6 +100,21 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
     setActionError(null)
 
     const actionId = currentStep.action ?? 'continue'
+    setRunningAction(true)
+    try {
+      const result = await runScoutAction(actionId)
+      if (!result.ok) {
+        setActionError(result.error ?? 'Action failed')
+      }
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Action failed')
+    } finally {
+      setRunningAction(false)
+    }
+  }
+
+  async function handleSecondaryAction(actionId: typeof secondaryActions[number]) {
+    setActionError(null)
     setRunningAction(true)
     try {
       const result = await runScoutAction(actionId)
@@ -239,6 +255,24 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
               primaryLabel
             )}
           </Button>
+        ) : null}
+
+        {secondaryActions.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {secondaryActions.map((actionId) => (
+              <Button
+                key={actionId}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full"
+                disabled={runningAction}
+                onClick={() => void handleSecondaryAction(actionId)}
+              >
+                {scoutActionLabel(actionId)}
+              </Button>
+            ))}
+          </div>
         ) : null}
 
         <div className="flex gap-2">

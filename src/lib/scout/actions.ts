@@ -6,6 +6,8 @@ import {
 import { beginBlobSave } from '@/lib/download-blob'
 import type { ScoutActionId } from '@/lib/scout/types'
 import { SCOUT_UI_EVENTS, dispatchScoutUiEvent } from '@/lib/scout/scout-ui-events'
+import type { CitationRef, CriterionResult } from '@/lib/types'
+import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleEvaluationWorkspace } from '@/services/load-sample-documents'
 import { loadSampleMarkupWorkspace } from '@/services/load-sample-markup'
 import { loadSampleProposalWorkspace } from '@/services/load-sample-proposal'
@@ -50,6 +52,57 @@ function succeed(): ScoutActionResult {
 
 function deferred(actionId: ScoutActionId, followUpTask: string): ScoutActionResult {
   return { ok: false, deferred: true, error: new ScoutActionDeferredError(actionId, followUpTask).message }
+}
+
+function firstCriterionCitation(session: ReturnType<typeof useSessionStore.getState>): CitationRef | null {
+  for (const profile of session.profiles) {
+    const citation = findFirstCriterionCitation(profile.criteria)
+    if (citation) {
+      return { ...citation, doc_id: citation.doc_id ?? profile.source_doc_id }
+    }
+  }
+
+  if (session.contractReviewProfile) {
+    const citation = findFirstCriterionCitation(session.contractReviewProfile.criteria)
+    if (citation) {
+      return {
+        ...citation,
+        doc_id: citation.doc_id ?? session.contractReviewProfile.source_doc_id,
+      }
+    }
+  }
+
+  if (session.evaluationBaselineProfile) {
+    const citation = findFirstCriterionCitation(session.evaluationBaselineProfile.criteria)
+    if (citation) {
+      return {
+        ...citation,
+        doc_id: citation.doc_id ?? session.evaluationBaselineProfile.source_doc_id,
+      }
+    }
+  }
+
+  return null
+}
+
+function findFirstCriterionCitation(criteria: CriterionResult[]): CitationRef | null {
+  for (const criterion of criteria) {
+    if (criterion.citation) {
+      return criterion.citation
+    }
+  }
+  return null
+}
+
+function focusFirstCriterion(): ScoutActionResult {
+  const session = useSessionStore.getState()
+  const citation = firstCriterionCitation(session)
+  if (!citation) {
+    return fail('No criterion citations yet — run qualification or load the sample package first')
+  }
+
+  focusCitation(citation)
+  return succeed()
 }
 
 async function exportMatrixCsv(): Promise<ScoutActionResult> {
@@ -188,6 +241,13 @@ export async function runScoutAction(
       case 'open_share_sheet':
         dispatchScoutUiEvent(SCOUT_UI_EVENTS.openShareSheet)
         return succeed()
+
+      case 'open_upload':
+        session.openUploadPopup('rfp')
+        return succeed()
+
+      case 'focus_first_criterion':
+        return focusFirstCriterion()
 
       case 'load_sample_evaluation':
         try {

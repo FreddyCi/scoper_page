@@ -51,6 +51,18 @@ export async function runScoutActionsHarness(): Promise<void> {
     throw new Error(`runScoutActionsHarness: open_share_sheet failed: ${share.error}`)
   }
 
+  const upload = await runScoutAction('open_upload')
+  if (!upload.ok || !useSessionStore.getState().uploadPopupOpen) {
+    throw new Error('runScoutActionsHarness: open_upload failed')
+  }
+
+  useSessionStore.getState().setUploadPopupOpen(false)
+
+  const focusEmpty = await runScoutAction('focus_first_criterion')
+  if (focusEmpty.ok) {
+    throw new Error('runScoutActionsHarness: focus_first_criterion should fail without citations')
+  }
+
   const cont = await runScoutAction('continue')
   if (!cont.ok || useScoutStore.getState().stepIndex !== 1) {
     throw new Error('runScoutActionsHarness: continue failed to advance step')
@@ -80,7 +92,7 @@ export async function runScoutActionsHarness(): Promise<void> {
     throw new Error(`runScoutActionsHarness: complete_journey failed: ${done.error}`)
   }
 
-  if (SCOUT_ACTION_IDS.length !== 14) {
+  if (SCOUT_ACTION_IDS.length !== 16) {
     throw new Error('runScoutActionsHarness: update harness when SCOUT_ACTION_IDS changes')
   }
 }

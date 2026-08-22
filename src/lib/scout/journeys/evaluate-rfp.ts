@@ -45,8 +45,9 @@ export const evaluateRfpJourney: ScoutJourney = {
       id: 'read-criterion',
       title: 'Inspect a criterion citation',
       body:
-        'Click any criterion on a bidder card to jump to the exact clause in the document viewer — verify the evidence before you trust the verdict.',
+        'Click any criterion on a bidder card to jump to the exact clause in the document viewer — verify the evidence before you trust the verdict. Or use the button below to jump to a sample citation.',
       target: SCOUT_TARGETS.firstProfileCriterion,
+      action: 'focus_first_criterion',
     },
     {
       id: 'compliance-matrix',
@@ -78,6 +79,7 @@ export const evaluateRfpJourney: ScoutJourney = {
       target: SCOUT_TARGETS.shareWorkspaceExport,
       manualContinue: true,
       action: 'complete_journey',
+      secondaryActions: ['open_share_sheet', 'open_upload'],
     },
   ],
 }

@@ -66,6 +66,7 @@ import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry
 import { runScoutPanelHarness } from '@/components/scout/ScoutPanel'
 import { runScoutStepEngineHarness } from '@/lib/scout/scout-step-engine'
 import { runScoutActionsHarness } from '@/lib/scout/actions-harness'
+import { runScoutEvaluateRfpJourneyHarness } from '@/lib/scout/evaluate-rfp-journey-harness'
 import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
 import { runScoutJourneysHarness } from '@/lib/scout/journeys-harness'
 
@@ -99,6 +100,7 @@ function App() {
       runScoutSessionGuardHarness()
       runScoutStepEngineHarness()
       await runScoutActionsHarness()
+      await runScoutEvaluateRfpJourneyHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

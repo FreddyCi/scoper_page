@@ -435,17 +435,21 @@ flowchart TD
 ### **ID:** BDA-294
 
 **Title:** Wire Evaluate RFP journey actions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-283, BDA-290, BDA-291, BDA-293  
 **Priority:** Critical  
 **Description:** Connect evaluate-rfp steps to actions: welcome continue, `loadSampleEvaluationWorkspace`, navigate profiles, run qualify (or rely on loader), focus citation helper optional, matrix/instructions spotlight-only steps, trigger matrix CSV export + set scout export flag, done step with links to share pack / upload. Fill gaps in BDA-282 dispatch.  
 **Completed Changes:**
-- 🔄 All 9 steps actionable or auto-complete
-- 🔄 WebGPU/model download copy in step 1
+- ✅ Journey A steps wired: `load_sample_evaluation`, `navigate_profiles`, `run_qualification`, `focus_first_criterion`, `export_matrix_csv`, `complete_journey` + done `secondaryActions` (`open_share_sheet`, `open_upload`)
+- ✅ New actions: `focus_first_criterion`, `open_upload`; share sheet listens for `SCOUT_UI_EVENTS.openShareSheet`
+- ✅ [`ScoutPanel.tsx`](../src/components/scout/ScoutPanel.tsx) renders `secondaryActions` on done step
+- ✅ Spotlight-only matrix/instructions auto-advance via completion predicates; WebGPU copy in welcome step
+- ✅ `runScoutEvaluateRfpJourneyHarness` validates step→action map + focus/upload dispatch
 **Test Strategy:** Manual Journey A < 10 min on Chrome; automated loader harness pass.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutEvaluateRfpJourneyHarness` + `runLoadSampleEvaluationHarness` in dev chain
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Journey A table
 
 ---

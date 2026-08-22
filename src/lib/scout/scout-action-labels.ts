@@ -15,6 +15,8 @@ export const SCOUT_ACTION_LABELS: Record<ScoutActionId, string> = {
   export_proposal_markdown: 'Export proposal markdown',
   export_takeoff_csv: 'Export takeoff CSV',
   open_share_sheet: 'Open share workspace',
+  open_upload: 'Upload documents',
+  focus_first_criterion: 'Jump to sample citation',
   complete_journey: 'Finish tour',
 }
 

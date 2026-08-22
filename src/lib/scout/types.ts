@@ -18,6 +18,8 @@ export type ScoutActionId =
   | 'export_proposal_markdown'
   | 'export_takeoff_csv'
   | 'open_share_sheet'
+  | 'open_upload'
+  | 'focus_first_criterion'
   | 'complete_journey'
 
 export const SCOUT_ACTION_IDS: readonly ScoutActionId[] = [
@@ -34,6 +36,8 @@ export const SCOUT_ACTION_IDS: readonly ScoutActionId[] = [
   'export_proposal_markdown',
   'export_takeoff_csv',
   'open_share_sheet',
+  'open_upload',
+  'focus_first_criterion',
   'complete_journey',
 ] as const
 
@@ -50,6 +54,8 @@ export type ScoutStep = {
   target?: ScoutTargetId
   /** Primary “Do this” button; omit when step auto-completes on predicate only. */
   action?: ScoutActionId
+  /** Optional footer buttons (e.g. share / upload on done step). */
+  secondaryActions?: ScoutActionId[]
   /** Step-level accent override; falls back to journey accent. */
   accent?: BrandAccent
   /** When true, completion requires explicit Continue (not auto-advance on predicate). */
@@ -112,6 +118,13 @@ export function assertValidScoutSteps(journey: ScoutJourney): void {
     stepIds.add(step.id)
     if (step.action && !isScoutActionId(step.action)) {
       throw new Error(`assertValidScoutSteps: invalid action on step "${step.id}"`)
+    }
+    if (step.secondaryActions) {
+      for (const actionId of step.secondaryActions) {
+        if (!isScoutActionId(actionId)) {
+          throw new Error(`assertValidScoutSteps: invalid secondary action on step "${step.id}"`)
+        }
+      }
     }
     if (step.target && !isScoutTargetId(step.target)) {
       throw new Error(`assertValidScoutSteps: invalid target on step "${step.id}"`)

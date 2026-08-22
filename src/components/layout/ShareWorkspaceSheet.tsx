@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import {
   DownloadIcon,
   Link2Icon,
@@ -24,6 +24,7 @@ import {
   BrandMenuSectionHeader,
 } from '@/components/ui/brand-menu'
 import { cn } from '@/lib/utils'
+import { SCOUT_UI_EVENTS } from '@/lib/scout/scout-ui-events'
 import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import {
   copyShareLink,
@@ -44,6 +45,15 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [importKey, setImportKey] = useState('')
+
+  useEffect(() => {
+    function onOpenShareSheet() {
+      setOpen(true)
+    }
+
+    window.addEventListener(SCOUT_UI_EVENTS.openShareSheet, onOpenShareSheet)
+    return () => window.removeEventListener(SCOUT_UI_EVENTS.openShareSheet, onOpenShareSheet)
+  }, [])
 
   async function handleExportAndDownload() {
     setBusy(true)

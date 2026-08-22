@@ -4,6 +4,7 @@ import { ChevronRightIcon, DownloadIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { CitationRef, RfpRequirementScore, RfpRequirementScoreStatus } from '@/lib/types'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { downloadRfpComplianceCsv } from '@/services/export-rfp-compliance-csv'
@@ -186,7 +187,10 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
 
   if (requirements.length === 0) {
     return (
-      <section className={cn('border-border/70 space-y-2 border-t pt-4', className)}>
+      <section
+        {...scoutTargetProps(SCOUT_TARGETS.complianceMatrix)}
+        className={cn('border-border/70 space-y-2 border-t pt-4', className)}
+      >
         <div className="space-y-1">
           <h3 className="text-sm font-medium">Compliance matrix</h3>
           <p className="text-muted-foreground text-xs leading-relaxed">
@@ -198,7 +202,10 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
   }
 
   return (
-    <section className={cn('border-border/70 space-y-3 border-t pt-4', className)}>
+    <section
+      {...scoutTargetProps(SCOUT_TARGETS.complianceMatrix)}
+      className={cn('border-border/70 space-y-3 border-t pt-4', className)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 className="text-sm font-medium">Compliance matrix</h3>
@@ -210,6 +217,7 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
           </p>
         </div>
         <Button
+          {...scoutTargetProps(SCOUT_TARGETS.matrixCsvExport)}
           type="button"
           size="sm"
           variant="outline"

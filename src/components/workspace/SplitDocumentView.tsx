@@ -40,6 +40,7 @@ import { aggregateDrawingTakeoff } from '@/lib/drawing-takeoff'
 import { beginBlobSave } from '@/lib/download-blob'
 import { blockToCitation } from '@/lib/types'
 import type { DocumentMeta, PdfDrawingAnnotation, WorkspaceMode } from '@/lib/types'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
@@ -283,6 +284,7 @@ function SplitDocumentViewFooter({
               }
               render={
                 <Button
+                  {...scoutTargetProps(SCOUT_TARGETS.splitExportMenu)}
                   type="button"
                   size="sm"
                   variant="outline"

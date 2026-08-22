@@ -371,17 +371,20 @@ flowchart TD
 ### **ID:** BDA-291
 
 **Title:** Scout targets — matrix, instructions, export  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-290  
 **Priority:** High  
 **Description:** Targets on [`ComplianceMatrix.tsx`](../src/components/workspace/ComplianceMatrix.tsx) (grid + CSV button), instructions card in [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx) / [`InstructionsCard`](../src/components/workspace/) if separate file, [`ShareWorkspaceSheet.tsx`](../src/components/layout/ShareWorkspaceSheet.tsx) export section, split view Export menu in [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx) as needed for journey A step 8–9.  
 **Completed Changes:**
-- 🔄 Matrix + CSV + instructions targets
-- 🔄 Share/export targets for “save session” done step
+- ✅ `complianceMatrix`, `matrixCsvExport` — [`ComplianceMatrix.tsx`](../src/components/workspace/ComplianceMatrix.tsx)
+- ✅ `instructionsCard` — [`InstructionsCard.tsx`](../src/components/workspace/InstructionsCard.tsx)
+- ✅ `shareWorkspaceExport` — [`ShareWorkspaceSheet.tsx`](../src/components/layout/ShareWorkspaceSheet.tsx) export section wrapper
+- ✅ `splitExportMenu` — [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx) footer Export dropdown trigger
 **Test Strategy:** Static grep + manual Journey A steps 6–9.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ Static grep: all five BDA-291 targets in expected component files
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-279 steps 6–9
 
 ---

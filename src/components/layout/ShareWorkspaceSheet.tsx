@@ -24,6 +24,7 @@ import {
   BrandMenuSectionHeader,
 } from '@/components/ui/brand-menu'
 import { cn } from '@/lib/utils'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import {
   copyShareLink,
   downloadSharePackFile,
@@ -157,36 +158,38 @@ export function ShareWorkspaceSheet({ disabled = false }: ShareWorkspaceSheetPro
         </DrawerHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pt-3 pb-5">
-          <BrandMenuSection accent="sky" className="rounded-2xl p-4">
-            <BrandMenuSectionHeader
-              accent="sky"
-              title="Export"
-              description="Chat history is not included. Document bytes must still be in memory from upload."
-            />
-            <div className="flex flex-wrap gap-2 px-3 pb-3">
-              <Button
-                type="button"
-                size="sm"
-                disabled={busy || !hasDocuments}
-                className="rounded-full bg-sky-950 text-white hover:bg-sky-900"
-                onClick={() => void handleExportAndDownload()}
-              >
-                <DownloadIcon className="size-3.5" />
-                Download pack
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={busy || !hasDocuments}
-                className="border-sky-200 bg-white/80 text-sky-950 hover:bg-sky-50 rounded-full"
-                onClick={() => void handleCopyLink()}
-              >
-                <Link2Icon className="size-3.5" />
-                Copy link
-              </Button>
-            </div>
-          </BrandMenuSection>
+          <div {...scoutTargetProps(SCOUT_TARGETS.shareWorkspaceExport)}>
+            <BrandMenuSection accent="sky" className="rounded-2xl p-4">
+              <BrandMenuSectionHeader
+                accent="sky"
+                title="Export"
+                description="Chat history is not included. Document bytes must still be in memory from upload."
+              />
+              <div className="flex flex-wrap gap-2 px-3 pb-3">
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={busy || !hasDocuments}
+                  className="rounded-full bg-sky-950 text-white hover:bg-sky-900"
+                  onClick={() => void handleExportAndDownload()}
+                >
+                  <DownloadIcon className="size-3.5" />
+                  Download pack
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={busy || !hasDocuments}
+                  className="border-sky-200 bg-white/80 text-sky-950 hover:bg-sky-50 rounded-full"
+                  onClick={() => void handleCopyLink()}
+                >
+                  <Link2Icon className="size-3.5" />
+                  Copy link
+                </Button>
+              </div>
+            </BrandMenuSection>
+          </div>
 
           <BrandMenuSection accent="violet" className="rounded-2xl p-4">
             <BrandMenuSectionHeader

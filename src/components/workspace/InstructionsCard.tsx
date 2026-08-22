@@ -2,6 +2,7 @@ import { ChevronRightIcon } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import type { CitationRef, RfpInstructionField } from '@/lib/types'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { selectRfpInstructionsProfile, useSessionStore } from '@/store/session-store'
@@ -68,6 +69,7 @@ export function InstructionsCard({
 
   return (
     <Card
+      {...scoutTargetProps(SCOUT_TARGETS.instructionsCard)}
       className={cn(
         'border-border bg-surface shadow-panel gap-0 overflow-hidden rounded-xl border py-0',
         className,

@@ -28,6 +28,7 @@ import {
   featureCardDescriptionClass,
 } from '@/components/workspace/feature-card-styles'
 import { PdfIngestOptionsPanel } from '@/components/workspace/PdfIngestOptionsPanel'
+import { UploadWorkflowPicker } from '@/components/layout/UploadWorkflowPicker'
 import type { PendingUpload } from '@/hooks/use-upload-queue'
 import {
   formatUploadFileSize,
@@ -214,6 +215,11 @@ export function UploadPopup({
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-5">
+            <div className="space-y-2">
+              <p className="text-foreground text-sm font-medium">What are you uploading?</p>
+              <UploadWorkflowPicker />
+            </div>
+
             <div
               role="button"
               tabIndex={0}

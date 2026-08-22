@@ -16,7 +16,7 @@ export function useUploadQueueContext(): UploadQueueContextValue {
   return value
 }
 
-/** Keeps upload popup mounted so landing cards and footer FAB can open it. */
+/** Keeps upload popup mounted so footer FAB and landing CTA can open it. */
 export function UploadQueueProvider({ children }: { children: ReactNode }) {
   const open = useSessionStore((s) => s.uploadPopupOpen)
   const uploadIntent = useSessionStore((s) => s.uploadIntent)

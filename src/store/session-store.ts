@@ -44,7 +44,12 @@ import {
   createDocumentContextAttachment,
   mergeContextAttachments,
 } from '@/lib/chat-context'
-import { clearBidderUploadPrompt, type UploadIntent } from '@/lib/upload-suggestions'
+import {
+  clearBidderUploadPrompt,
+  uploadIntentFromSuggestionId,
+  workspaceModeForSuggestionId,
+  type UploadIntent,
+} from '@/lib/upload-suggestions'
 import { clearDocumentBytesCache, removeDocumentBytes } from '@/services/document-bytes-cache'
 import { getProposalSetupState } from '@/lib/proposal-readiness'
 import { assessProposalContextQuality } from '@/lib/proposal-context-quality'
@@ -283,6 +288,8 @@ export type SessionState = {
   setActiveDocId: (docId: string | null) => void
   setUploadPopupOpen: (open: boolean) => void
   openUploadPopup: (intent: UploadIntent) => void
+  /** Pick analyse / proposal / context workflow inside upload popup. */
+  selectUploadWorkflow: (suggestionId: string) => void
   setOcrEnabled: (enabled: boolean) => void
   setSkipPdfTextExtractOnIngest: (enabled: boolean) => void
   commitIngestResults: (results: IngestResult[]) => void
@@ -1098,6 +1105,40 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   setUploadPopupOpen: (uploadPopupOpen) => set({ uploadPopupOpen }),
 
   openUploadPopup: (uploadIntent) => set({ uploadPopupOpen: true, uploadIntent }),
+
+  selectUploadWorkflow: (suggestionId) => {
+    const intent = uploadIntentFromSuggestionId(suggestionId)
+    if (!intent) return
+
+    const modeForWorkflow = workspaceModeForSuggestionId(suggestionId)
+    const state = get()
+
+    if (modeForWorkflow && state.documents.length > 0) {
+      if (modeForWorkflow === 'rfp') {
+        set({
+          mode: modeForWorkflow,
+          workspaceView: 'split',
+          uploadPopupOpen: false,
+          uploadIntent: intent,
+        })
+        return
+      }
+      if (modeForWorkflow === 'proposal') {
+        set({
+          mode: modeForWorkflow,
+          workspaceView: 'profiles',
+          uploadPopupOpen: false,
+          uploadIntent: intent,
+        })
+        return
+      }
+    }
+
+    set({
+      uploadIntent: intent,
+      ...(modeForWorkflow ? { mode: modeForWorkflow } : {}),
+    })
+  },
 
   setOcrEnabled: (ocrEnabled) => set({ ocrEnabled }),
 

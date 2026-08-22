@@ -118,6 +118,11 @@
   button {
     font-family: inherit;
   }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
   * {
     @apply border-border outline-ring/50;
   }

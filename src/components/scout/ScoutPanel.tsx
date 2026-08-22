@@ -53,10 +53,10 @@ function ScoutStepListItem({
   const status = scoutStepStatus(index, activeIndex)
 
   return (
-    <li className="flex min-w-0 items-start gap-2">
+    <li className="flex min-w-0 items-center gap-2.5">
       <span
         className={cn(
-          'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold tabular-nums',
+          'flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold leading-none tabular-nums',
           status === 'done' && 'bg-primary text-primary-foreground',
           status === 'current' && cn('ring-2', accent.itemSelected, accent.title),
           status === 'upcoming' && 'bg-muted text-muted-foreground',
@@ -67,7 +67,7 @@ function ScoutStepListItem({
       </span>
       <span
         className={cn(
-          'min-w-0 text-xs leading-snug',
+          'min-w-0 text-xs leading-5',
           status === 'current' ? cn('font-medium', accent.title) : 'text-muted-foreground',
           status === 'done' && 'text-foreground/80',
         )}
@@ -166,7 +166,7 @@ function ScoutWelcomePanelBody({
                 <button
                   type="button"
                   className={cn(
-                    'border-border hover:bg-surface/80 flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors',
+                    'border-border hover:bg-surface/80 flex w-full cursor-pointer items-start gap-3 rounded-lg border p-3 text-left transition-colors',
                     accent.section,
                   )}
                   onClick={() => startJourneySafe(journey.id)}
@@ -506,7 +506,7 @@ export function ScoutPanel() {
     <>
       <aside
         className={cn(
-          'border-border bg-workspace shadow-panel pointer-events-auto absolute inset-y-0 right-0 z-20 hidden flex-col border-l md:flex',
+          'border-border bg-surface shadow-elevated pointer-events-auto absolute inset-y-0 right-0 z-20 hidden flex-col overflow-hidden rounded-l-2xl border-y border-l md:flex',
           collapsed ? 'w-12' : 'w-80',
         )}
         aria-label="Scoper Scout guide"
@@ -520,7 +520,7 @@ export function ScoutPanel() {
       >
         <button
           type="button"
-          className="border-border bg-workspace flex items-center justify-between gap-2 border-t px-4 py-2.5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
+          className="border-border bg-workspace flex cursor-pointer items-center justify-between gap-2 border-t px-4 py-2.5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
           aria-expanded={mobileExpanded}
           onClick={() => setMobileExpanded((value) => !value)}
         >
@@ -532,7 +532,7 @@ export function ScoutPanel() {
           )}
         </button>
         {mobileExpanded ? (
-          <div className="border-border bg-workspace max-h-[min(70svh,28rem)] border-t">
+          <div className="border-border bg-surface max-h-[min(70svh,28rem)] overflow-hidden rounded-t-2xl border-t">
             {activeJourneyId ? (
               <ScoutPanelBody
                 collapsed={false}

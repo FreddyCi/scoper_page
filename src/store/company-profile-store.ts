@@ -290,11 +290,22 @@ export function runCompanyProfileStoreHarness(): void {
   if (!state.completedAt) {
     throw new Error('runCompanyProfileStoreHarness: completedAt not set')
   }
+  if (state.onboardingPromptDismissed) {
+    throw new Error('runCompanyProfileStoreHarness: complete should clear dismissed flag')
+  }
+
+  store.dismissOnboardingPrompt()
+  if (!useCompanyProfileStore.getState().onboardingPromptDismissed) {
+    throw new Error('runCompanyProfileStoreHarness: dismissOnboardingPrompt failed')
+  }
 
   store.clearCompanyProfile()
   state = useCompanyProfileStore.getState()
   if (selectHasCompletedOnboarding(state) || state.profile.legalName !== '') {
     throw new Error('runCompanyProfileStoreHarness: clear after complete failed')
+  }
+  if (state.onboardingPromptDismissed) {
+    throw new Error('runCompanyProfileStoreHarness: clear should reset onboardingPromptDismissed')
   }
 
   try {

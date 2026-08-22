@@ -60,10 +60,7 @@ import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
-import {
-  runCompanyProfileStoreHarness,
-  subscribeCompanyProfileStorageSync,
-} from '@/store/company-profile-store'
+import { subscribeCompanyProfileStorageSync } from '@/store/company-profile-store'
 import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
 import { runScoutSessionGuardHarness } from '@/lib/scout/session-guard'
 import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry'
@@ -75,10 +72,7 @@ import { runScoutGenerateProposalJourneyHarness } from '@/lib/scout/generate-pro
 import { runScoutFirstVisitHarness } from '@/lib/scout/scout-first-visit'
 import { runScoutHeaderLauncherHarness } from '@/lib/scout/scout-journey-start-bridge'
 import { runScoutMarkTakeoffJourneyHarness } from '@/lib/scout/mark-takeoff-journey-harness'
-import { runCompanyProfileHarness } from '@/lib/company-profile/company-profile-harness'
-import { runCompanyOnboardingEntryHarness } from '@/lib/company-profile/onboarding-entry'
-import { runCompanyContextSerializerHarness } from '@/lib/company-profile/to-company-context'
-import { runCompanyOnboardingQuestionnaireHarness } from '@/components/onboarding/company-onboarding-questionnaire-harness'
+import { runCompanyProfileUnitHarnesses } from '@/lib/company-profile/company-profile-dev-harnesses'
 import { runQuestionnaireHarness } from '@/components/ui/questionnaire-harness'
 import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
 import { runScoutJourneysHarness } from '@/lib/scout/journeys-harness'
@@ -123,11 +117,7 @@ function App() {
       runScoutHeaderLauncherHarness()
       runScoutFirstVisitHarness()
       runQuestionnaireHarness()
-      runCompanyProfileHarness()
-      runCompanyOnboardingEntryHarness()
-      runCompanyContextSerializerHarness()
-      runCompanyProfileStoreHarness()
-      runCompanyOnboardingQuestionnaireHarness()
+      runCompanyProfileUnitHarnesses()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

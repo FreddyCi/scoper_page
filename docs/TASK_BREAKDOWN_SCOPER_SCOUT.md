@@ -669,17 +669,18 @@ flowchart TD
 ### **ID:** BDA-309
 
 **Title:** Company onboarding harnesses and QA  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-305, BDA-307, BDA-308  
 **Priority:** High  
 **Description:** [`src/lib/company-profile/company-profile-harness.ts`](../src/lib/company-profile/company-profile-harness.ts): store round-trip, serializer length/quality, questionnaire item registry integrity. Chain in [`App.tsx`](../src/App.tsx) dev harness block. Extend [`scripts/run-scout-qa-static.mjs`](../scripts/run-scout-qa-static.mjs) (BDA-300) or add `qa:company-profile` script: assert `questionnaire.tsx` exists, all item `name`s unique, schema files present. Update manual QA checklist (BDA-302) with onboarding rows.  
 **Completed Changes:**
-- 🔄 Dev harness wired
-- 🔄 Static script + package.json script optional
-- 🔄 Manual QA rows 16–18
+- ✅ [`company-profile-dev-harnesses.ts`](../src/lib/company-profile/company-profile-dev-harnesses.ts) — `runCompanyProfileUnitHarnesses` chains schema, entry, serializer, store, UI smoke
+- ✅ Store harness covers `onboardingPromptDismissed` round-trip; App.tsx uses single unit chain call
+- ✅ [`scripts/run-company-profile-qa-static.mjs`](../scripts/run-company-profile-qa-static.mjs) + `pnpm qa:company-profile` (files, unique item names, wiring, `tsc -b`)
+- ✅ BDA-302 manual rows 16–18 + automated preflight row for `qa:company-profile`
 **Test Strategy:** `pnpm dev` — no `[dev-harness]` throw from company profile chain; static script exit 0.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm qa:company-profile` exit 0; dev chain consolidated under `runCompanyProfileUnitHarnesses`
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`compliance-matrix-dev-harnesses.ts`](../src/services/compliance-matrix-dev-harnesses.ts) pattern
 
@@ -771,8 +772,9 @@ flowchart TD
 | Step | Command / action | Expected | Result |
 |------|------------------|----------|--------|
 | Types + build | `pnpm exec tsc -b` | Exit 0 | Pending |
+| Static company profile QA | `pnpm qa:company-profile` | Exit 0; schema + harness wiring | Pending |
 | Static Scout QA | `pnpm qa:scout` | Exit 0; targets + journeys wired | Pending |
-| Runtime harness | `pnpm dev` → console | No uncaught `[dev-harness]` from scout chain | Pending peer |
+| Runtime harness | `pnpm dev` → console | No uncaught `[dev-harness]` from scout + company profile chains | Pending peer |
 
 **Manual UI — Journey A (Evaluate RFP):**
 
@@ -812,7 +814,7 @@ flowchart TD
 | Field | Value |
 |-------|-------|
 | Task | BDA-302 |
-| Automated | `pnpm exec tsc -b` + `pnpm qa:scout` — Pending |
+| Automated | `pnpm exec tsc -b` + `pnpm qa:company-profile` + `pnpm qa:scout` — Pending |
 | Manual UI | Pending peer (3 journeys × Chrome) |
 | Executor | — |
 | Date | — |

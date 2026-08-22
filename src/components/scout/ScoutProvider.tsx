@@ -13,6 +13,7 @@ import {
   applyJourneyStart,
   confirmStartJourney,
 } from '@/lib/scout/session-guard'
+import { registerScoutJourneyStartConfirmHandler } from '@/lib/scout/scout-journey-start-bridge'
 import type { ScoutJourneyId } from '@/lib/scout/types'
 import { fetchPdfDrawingAnnotationsForDoc } from '@/services/pdf-drawing-annotations'
 import { useSessionStore } from '@/store/session-store'
@@ -138,6 +139,14 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
       exportTriggered,
     ],
   )
+
+  useEffect(() => {
+    registerScoutJourneyStartConfirmHandler((journeyId) => {
+      setPendingJourneyId(journeyId)
+      setConfirmOpen(true)
+    })
+    return () => registerScoutJourneyStartConfirmHandler(null)
+  }, [])
 
   useEffect(() => {
     if (!activeJourney) return

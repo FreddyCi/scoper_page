@@ -503,16 +503,18 @@ flowchart TD
 ### **ID:** BDA-297
 
 **Title:** Header Scout launcher and resume  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-287, BDA-293  
 **Priority:** High  
 **Description:** Compass/map-pin icon in [`WorkspaceHeader.tsx`](../src/components/layout/WorkspaceHeader.tsx) (not bot icon): toggle panel, show “Resume tour” when `activeJourney` incomplete, journey switcher submenu optional. “Don't show again” in panel footer sets `dismissed` — suppress first-visit auto-open only, not manual launcher.  
 **Completed Changes:**
-- 🔄 Header button + tooltip
-- 🔄 Resume + dismiss behavior
+- ✅ [`ScoutHeaderLauncher.tsx`](../src/components/scout/ScoutHeaderLauncher.tsx) — MapPin split control in header (`scout-launcher` target): primary click toggles panel / opens menu when no tour; resume ring + tooltip; chevron submenu lists tours
+- ✅ [`scout-journey-start-bridge.ts`](../src/lib/scout/scout-journey-start-bridge.ts) — header starts journeys via same session guard confirm as landing picker; `ScoutProvider` registers dialog handler
+- ✅ [`ScoutPanel.tsx`](../src/components/scout/ScoutPanel.tsx) footer — “Don't show again” calls `dismissScout()` (persists `dismissed`, closes panel; header launcher still works)
+- ✅ `runScoutHeaderLauncherHarness` — resume/tooltip helpers
 **Test Strategy:** Reload mid-journey → Resume continues step index; dismiss stops auto-open.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; scout store persistence round-trip preserves `stepIndex` + `activeJourney` on reload (existing BDA-277 harness)
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan § Header entry points
 

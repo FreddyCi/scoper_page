@@ -78,6 +78,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
   const advanceStep = useScoutStore((s) => s.advanceStep)
   const completeJourney = useScoutStore((s) => s.completeJourney)
   const setPanelOpen = useScoutStore((s) => s.setPanelOpen)
+  const dismissScout = useScoutStore((s) => s.dismissScout)
 
   const [runningAction, setRunningAction] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -297,6 +298,16 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
             End tour
           </Button>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground w-full text-xs font-normal"
+          disabled={runningAction}
+          onClick={() => dismissScout()}
+        >
+          Don&apos;t show again
+        </Button>
       </footer>
     </div>
   )

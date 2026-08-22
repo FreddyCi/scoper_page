@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 
 import { DocumentRoleSelector } from '@/components/workspace/DocumentRoleSelector'
+import { ScoutHeaderLauncher } from '@/components/scout/ScoutHeaderLauncher'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
@@ -105,6 +106,7 @@ export function WorkspaceHeaderTopRow({
 
       <div className="ml-auto flex items-center gap-2">
         <WorkspaceModeToggle />
+        <ScoutHeaderLauncher />
 
         {chatCollapsed ? (
           <Button

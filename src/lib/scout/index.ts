@@ -46,3 +46,16 @@ export {
   runMarkTakeoffJourneyHarness,
   runScoutJourneysHarness,
 } from '@/lib/scout/journeys-harness'
+
+export type {
+  ScoutCompletionContext,
+  ScoutCompletionSession,
+  ScoutStepCompletionKey,
+} from '@/lib/scout/completion'
+export {
+  createScoutCompletionSession,
+  isActiveStepComplete,
+  isStepComplete,
+  scoutStepKey,
+} from '@/lib/scout/completion'
+export { runScoutCompletionHarness } from '@/lib/scout/completion-harness'

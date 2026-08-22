@@ -143,17 +143,20 @@ flowchart TD
 ### **ID:** BDA-281
 
 **Title:** Step completion predicates  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-277, BDA-279, BDA-280  
 **Priority:** Critical  
 **Description:** [`src/lib/scout/completion.ts`](../src/lib/scout/completion.ts): pure functions `isStepComplete(stepId, sessionState, scoutState) → boolean` for each journey step (e.g. `documents.length >= 2`, `profiles.length > 0`, `selectedCitation != null`, `rfpRequirements.length > 0`, `pdfMarkDrawingMode`, stamp count ≥ 2, scout export flags). Used by ScoutProvider to auto-advance when user completes action manually.  
 **Completed Changes:**
-- 🔄 Predicate map keyed by `${journeyId}:${stepId}`
-- 🔄 Dev harness with mocked session snapshots
+- ✅ [`completion.ts`](../src/lib/scout/completion.ts) — predicates for all 22 steps; `manualContinue` steps never auto-complete
+- ✅ `ScoutCompletionContext` for stamp count, takeoff panel, jump-to-mark signals
+- ✅ `isActiveStepComplete`, `scoutStepKey`, `createScoutCompletionSession`
+- ✅ [`completion-harness.ts`](../src/lib/scout/completion-harness.ts) — `runScoutCompletionHarness` wired in App dev chain
 **Test Strategy:** `runScoutCompletionHarness` — known states pass/fail per step; `tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutCompletionHarness` covers evaluate, proposal, and mark steps
+**Assigned:** Completed  
 **Context/Artifacts:** [`session-store.ts`](../src/store/session-store.ts) `SessionState`; plan completion table
 
 ---

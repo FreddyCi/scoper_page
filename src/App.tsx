@@ -58,6 +58,7 @@ import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-d
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
 import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
+import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
 import { runScoutJourneysHarness } from '@/lib/scout/journeys-harness'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
@@ -84,6 +85,7 @@ function App() {
       runScoutStoreHarness()
       runScoutRegistryHarness()
       runScoutJourneysHarness()
+      runScoutCompletionHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

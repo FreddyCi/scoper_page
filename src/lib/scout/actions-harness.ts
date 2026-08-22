@@ -92,7 +92,7 @@ export async function runScoutActionsHarness(): Promise<void> {
     throw new Error(`runScoutActionsHarness: complete_journey failed: ${done.error}`)
   }
 
-  if (SCOUT_ACTION_IDS.length !== 16) {
+  if (SCOUT_ACTION_IDS.length !== 18) {
     throw new Error('runScoutActionsHarness: update harness when SCOUT_ACTION_IDS changes')
   }
 }

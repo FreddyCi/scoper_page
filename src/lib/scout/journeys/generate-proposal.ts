@@ -1,5 +1,8 @@
+import { WEBGPU_UNAVAILABLE_BANNER_FALLBACK } from '@/lib/webgpu-user-messages'
 import { SCOUT_JOURNEY_ACCENTS, type ScoutJourney } from '@/lib/scout/types'
 import { SCOUT_TARGETS } from '@/lib/scout/targets'
+
+const PROPOSAL_WEBGPU_DEGRADED_NOTE = ` If the on-device model is unavailable (${WEBGPU_UNAVAILABLE_BANNER_FALLBACK.toLowerCase()}), you can still walk setup and export any drafted markdown that appears.`
 
 /** Generate a proposal — RFP + responder context to draft volumes (BDA-280). */
 export const generateProposalJourney: ScoutJourney = {
@@ -28,23 +31,26 @@ export const generateProposalJourney: ScoutJourney = {
       id: 'build-profile',
       title: 'Build the requirements profile',
       body:
-        'Scoper extracts volume headings and section structure from the RFP. This profile drives sectional drafting — allow time for the on-device model on first run.',
+        'Scoper extracts volume headings and section structure from the RFP. This profile drives sectional drafting — allow time for the on-device AI model on first run (~290 MB download).' +
+        PROPOSAL_WEBGPU_DEGRADED_NOTE,
       target: SCOUT_TARGETS.proposalBuildProfile,
-      action: 'continue',
+      action: 'build_proposal_profile',
     },
     {
       id: 'generate-volume',
       title: 'Generate one proposal volume',
       body:
-        'Draft a single volume section to see cited find-clause retrieval in action. Full multi-volume batch generation works the same way from the panel.',
+        'Draft the smallest volume first to see cited find-clause retrieval in action. Full multi-volume batch generation works the same way from the panel.' +
+        PROPOSAL_WEBGPU_DEGRADED_NOTE,
       target: SCOUT_TARGETS.proposalGenerateVolume,
-      action: 'continue',
+      action: 'generate_proposal_volume',
     },
     {
       id: 'export-markdown',
       title: 'Export proposal markdown',
       body:
-        'Download assembled markdown when export quality checks pass — ready to paste into your template or Word workflow.',
+        'Download assembled markdown for drafted volumes — ready to paste into your template or Word workflow. Export uses drafted-only mode when full quality gates are not met.' +
+        PROPOSAL_WEBGPU_DEGRADED_NOTE,
       target: SCOUT_TARGETS.proposalExportMarkdown,
       action: 'export_proposal_markdown',
     },

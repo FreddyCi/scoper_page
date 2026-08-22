@@ -457,17 +457,20 @@ flowchart TD
 ### **ID:** BDA-295
 
 **Title:** Wire Generate Proposal journey actions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-284, BDA-292, BDA-293  
 **Priority:** High  
 **Description:** Wire proposal journey: `loadSampleProposalWorkspace`, spotlight setup + `runProposalRequirementsProfile`, `runGenerateProposalVolume` (single volume id — pick smallest section set), export markdown via existing export gate with stub/degraded copy when WebGPU unavailable ([`WebGpuBanner`](../src/components/layout/WebGpuBanner.tsx) message reuse).  
 **Completed Changes:**
-- 🔄 All 6 steps wired
-- 🔄 Degraded path copy when model unavailable
+- ✅ Journey B actions: `load_sample_proposal`, `navigate_profiles`, `build_proposal_profile`, `generate_proposal_volume`, `export_proposal_markdown`, `complete_journey`
+- ✅ [`proposal-scout-helpers.ts`](../src/lib/scout/proposal-scout-helpers.ts) — smallest-volume picker, WebGPU degraded copy reuse from banner messages
+- ✅ Export/generate/profile failures append `readScoutWebGpuDegradedHint()`; journey step bodies note degraded path
+- ✅ `runScoutGenerateProposalJourneyHarness` validates step→action map + volume picker
 **Test Strategy:** Manual Journey B; harness loader pass.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutGenerateProposalJourneyHarness` + `runLoadSampleProposalHarness` in dev chain
+**Assigned:** Completed  
 **Context/Artifacts:** [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts)
 
 ---

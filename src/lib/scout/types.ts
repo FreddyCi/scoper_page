@@ -20,6 +20,8 @@ export type ScoutActionId =
   | 'open_share_sheet'
   | 'open_upload'
   | 'focus_first_criterion'
+  | 'build_proposal_profile'
+  | 'generate_proposal_volume'
   | 'complete_journey'
 
 export const SCOUT_ACTION_IDS: readonly ScoutActionId[] = [
@@ -38,6 +40,8 @@ export const SCOUT_ACTION_IDS: readonly ScoutActionId[] = [
   'open_share_sheet',
   'open_upload',
   'focus_first_criterion',
+  'build_proposal_profile',
+  'generate_proposal_volume',
   'complete_journey',
 ] as const
 

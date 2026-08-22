@@ -6,6 +6,14 @@ import {
 import { beginBlobSave } from '@/lib/download-blob'
 import type { ScoutActionId } from '@/lib/scout/types'
 import { SCOUT_UI_EVENTS, dispatchScoutUiEvent } from '@/lib/scout/scout-ui-events'
+import {
+  assertScoutProposalReadyToGenerate,
+  pickScoutProposalVolumeId,
+  scoutProposalExportFailureMessage,
+  scoutProposalGenerateFailureMessage,
+  scoutProposalProfileFailureMessage,
+} from '@/lib/scout/proposal-scout-helpers'
+import { getProposalSetupState } from '@/lib/proposal-readiness'
 import type { CitationRef, CriterionResult } from '@/lib/types'
 import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleEvaluationWorkspace } from '@/services/load-sample-documents'
@@ -137,10 +145,18 @@ async function exportProposalMarkdown(): Promise<ScoutActionResult> {
   const session = useSessionStore.getState()
   const profile = session.proposalRequirementsProfile
   if (!profile) {
-    return fail('Build a proposal requirements profile before exporting')
+    return fail(
+      scoutProposalExportFailureMessage(
+        'Build a proposal requirements profile before exporting.',
+      ),
+    )
   }
   if (!canExportDraftedProposalVolumes(profile)) {
-    return fail('No drafted proposal volumes available to export')
+    return fail(
+      scoutProposalExportFailureMessage(
+        'No drafted proposal volumes available to export yet — generate a volume first.',
+      ),
+    )
   }
 
   try {
@@ -198,7 +214,7 @@ async function exportTakeoffCsv(): Promise<ScoutActionResult> {
  */
 export async function runScoutAction(
   actionId: ScoutActionId,
-  _options: RunScoutActionOptions = {},
+  options: RunScoutActionOptions = {},
 ): Promise<ScoutActionResult> {
   const session = useSessionStore.getState()
   const scout = useScoutStore.getState()
@@ -248,6 +264,61 @@ export async function runScoutAction(
 
       case 'focus_first_criterion':
         return focusFirstCriterion()
+
+      case 'build_proposal_profile': {
+        const setup = getProposalSetupState({
+          documents: session.documents,
+          evaluationDocId: session.evaluationDocId,
+          companyContext: session.companyContext,
+          proposalRequirementsProfile: session.proposalRequirementsProfile,
+        })
+        if (!setup.hasRfp || !setup.hasContext) {
+          return fail('Select the solicitation RFP and add responder context before building the profile.')
+        }
+        await session.runProposalRequirementsProfile()
+        const afterProfile = useSessionStore.getState()
+        if (!afterProfile.proposalRequirementsProfile) {
+          return fail(
+            scoutProposalProfileFailureMessage(afterProfile.proposalGenerationError),
+          )
+        }
+        return succeed()
+      }
+
+      case 'generate_proposal_volume': {
+        const readyError = assertScoutProposalReadyToGenerate({
+          documents: session.documents,
+          evaluationDocId: session.evaluationDocId,
+          companyContext: session.companyContext,
+          proposalRequirementsProfile: session.proposalRequirementsProfile,
+        })
+        if (readyError) {
+          return fail(readyError)
+        }
+
+        const profile = session.proposalRequirementsProfile!
+        const volumeId = options.volumeId ?? pickScoutProposalVolumeId(profile)
+        if (!volumeId) {
+          return fail('Build a proposal profile with at least one volume before generating.')
+        }
+
+        await session.runGenerateProposalVolume(volumeId)
+
+        const afterGenerate = useSessionStore.getState()
+        const updatedProfile = afterGenerate.proposalRequirementsProfile
+        const volume = updatedProfile?.volumes.find((entry) => entry.id === volumeId)
+
+        if (volume?.status === 'draft') {
+          return succeed()
+        }
+
+        return fail(
+          scoutProposalGenerateFailureMessage(
+            afterGenerate.proposalGenerationError,
+            volume?.errorMessage,
+          ),
+        )
+      }
 
       case 'load_sample_evaluation':
         try {

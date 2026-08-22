@@ -17,6 +17,8 @@ export const SCOUT_ACTION_LABELS: Record<ScoutActionId, string> = {
   open_share_sheet: 'Open share workspace',
   open_upload: 'Upload documents',
   focus_first_criterion: 'Jump to sample citation',
+  build_proposal_profile: 'Build proposal profile',
+  generate_proposal_volume: 'Generate sample volume',
   complete_journey: 'Finish tour',
 }
 

@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 /**
  * Automated QA pre-checks for BDA-100 (no browser required).
+ * Optional Scout preflight (BDA-300): set SCOUT_QA_PREFLIGHT=1 to run `pnpm qa:scout` first.
  */
 import { spawnSync } from 'node:child_process'
 
+const optionalSteps = []
+if (process.env.SCOUT_QA_PREFLIGHT === '1') {
+  optionalSteps.push({ name: 'scout static QA', args: ['qa:scout'] })
+}
+
 const steps = [
+  ...optionalSteps,
   { name: 'production build', args: ['build'] },
   { name: 'preview smoke', args: ['preview:smoke'] },
 ]

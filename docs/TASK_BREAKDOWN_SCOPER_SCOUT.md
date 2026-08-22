@@ -713,16 +713,17 @@ flowchart TD
 ### **ID:** BDA-300
 
 **Title:** Static QA script and pnpm qa:scout  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-290, BDA-291, BDA-292, BDA-299, BDA-309  
 **Priority:** High  
 **Description:** [`scripts/run-scout-qa-static.mjs`](../scripts/run-scout-qa-static.mjs): verify all `SCOUT_TARGETS` appear in `src/`, journey step counts, files exist (`ScoutPanel`, loaders, store). Add `"qa:scout"` to [`package.json`](../package.json) running static script + `tsc -b`. Update [`run-qa-automation.mjs`](../scripts/run-qa-automation.mjs) optional inclusion.  
 **Completed Changes:**
-- 🔄 Static script
-- 🔄 package.json script
+- ✅ [`run-scout-qa-static.mjs`](../scripts/run-scout-qa-static.mjs) — 25 targets referenced in `src/`, journey step counts (9/6/7), core Scout files + dev harness wiring
+- ✅ `pnpm qa:scout` in package.json (static checks + `tsc -b`)
+- ✅ `run-qa-automation.mjs` — optional `SCOUT_QA_PREFLIGHT=1` runs `qa:scout` before build
 **Test Strategy:** `pnpm qa:scout` exit 0.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm qa:scout` exit 0
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`run-compliance-matrix-qa-static.mjs`](../scripts/run-compliance-matrix-qa-static.mjs)
 

@@ -101,18 +101,20 @@ flowchart TD
 ### **ID:** BDA-279
 
 **Title:** Evaluate RFP journey definition  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-278  
 **Priority:** Critical  
 **Description:** [`src/lib/scout/journeys/evaluate-rfp.ts`](../src/lib/scout/journeys/evaluate-rfp.ts) — 9 steps from plan: welcome (privacy + model download note), load sample, open evaluation, run qualification, read criterion/citation, compliance matrix, instructions card, export matrix CSV, done. Each step references `SCOUT_TARGETS` and `ScoutActionId` where applicable. Copy aligned with construction bid wedge (qualify subs, cited evidence).  
 **Completed Changes:**
-- 🔄 Step list with titles and body copy
-- 🔄 Wire accent `emerald` (or project convention for RFP journey)
-- 🔄 Export `evaluateRfpJourney` from [`journeys/index.ts`](../src/lib/scout/journeys/index.ts)
+- ✅ [`journeys/evaluate-rfp.ts`](../src/lib/scout/journeys/evaluate-rfp.ts) — 9 steps with construction bid copy
+- ✅ Accent `sky` via `SCOUT_JOURNEY_ACCENTS.evaluate_rfp`
+- ✅ [`journeys/index.ts`](../src/lib/scout/journeys/index.ts) + [`journeys-map.ts`](../src/lib/scout/journeys-map.ts) — `getScoutJourney`, `evaluateRfpJourney` export
+- ✅ `runEvaluateRfpJourneyHarness` + target validation in `assertValidScoutSteps`
 **Test Strategy:** Harness asserts step count === 9, all target ids ∈ `SCOUT_TARGETS`, no duplicate step ids.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runEvaluateRfpJourneyHarness` validates 9 steps, ids, accent, registry targets
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Journey A; [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx); [`ComplianceMatrix.tsx`](../src/components/workspace/ComplianceMatrix.tsx)
 
 ---

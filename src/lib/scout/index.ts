@@ -25,3 +25,11 @@ export {
 } from '@/lib/scout/targets'
 
 export { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
+
+export {
+  evaluateRfpJourney,
+  EVALUATE_RFP_JOURNEY_STEP_COUNT,
+} from '@/lib/scout/journeys'
+
+export { getScoutJourney, listDefinedScoutJourneys } from '@/lib/scout/journeys-map'
+export { runEvaluateRfpJourneyHarness } from '@/lib/scout/journeys-harness'

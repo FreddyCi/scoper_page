@@ -1,6 +1,7 @@
 import type { BrandAccent } from '@/lib/brand-accent'
 
 import type { ScoutTargetId } from '@/lib/scout/targets'
+import { isScoutTargetId } from '@/lib/scout/targets'
 
 /** Imperative coach actions dispatched from ScoutPanel (BDA-282). */
 export type ScoutActionId =
@@ -111,6 +112,9 @@ export function assertValidScoutSteps(journey: ScoutJourney): void {
     stepIds.add(step.id)
     if (step.action && !isScoutActionId(step.action)) {
       throw new Error(`assertValidScoutSteps: invalid action on step "${step.id}"`)
+    }
+    if (step.target && !isScoutTargetId(step.target)) {
+      throw new Error(`assertValidScoutSteps: invalid target on step "${step.id}"`)
     }
   }
 }

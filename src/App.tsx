@@ -58,6 +58,7 @@ import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-d
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
 import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
+import { runEvaluateRfpJourneyHarness } from '@/lib/scout/journeys-harness'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
   return import.meta.env.VITE_RUN_CREEP_HARNESS === 'true'
@@ -82,6 +83,7 @@ function App() {
       runSessionStoreHarness()
       runScoutStoreHarness()
       runScoutRegistryHarness()
+      runEvaluateRfpJourneyHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

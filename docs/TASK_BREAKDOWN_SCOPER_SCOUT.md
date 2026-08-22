@@ -164,17 +164,20 @@ flowchart TD
 ### **ID:** BDA-282
 
 **Title:** Scout action handlers skeleton  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-277, BDA-281  
 **Priority:** High  
 **Description:** [`src/lib/scout/actions.ts`](../src/lib/scout/actions.ts): `runScoutAction(actionId, context)` dispatching to session store + services. Initial stubs: `continue`, `navigateProfiles`, `navigateSplit`, `openTakeoffPanel`, `markExportTriggered`. Sample loaders wired in BDA-283–285. No UI — callable from panel buttons and Provider.  
 **Completed Changes:**
-- 🔄 Action dispatch switch
-- 🔄 Error surface as toast or panel inline error
+- ✅ [`actions.ts`](../src/lib/scout/actions.ts) — dispatch for all 14 `ScoutActionId` values; exports call compliance/proposal/takeoff services + `markExportTriggered`
+- ✅ [`scout-ui-events.ts`](../src/lib/scout/scout-ui-events.ts) — `open_takeoff_panel` / `open_share_sheet` custom events for UI wiring (BDA-286+)
+- ✅ Sample loaders return `{ deferred: true }` until BDA-283–285
+- ✅ [`actions-harness.ts`](../src/lib/scout/actions-harness.ts) — `runScoutActionsHarness` in App dev chain
 **Test Strategy:** Harness invokes each action id without throw in empty session where safe.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutActionsHarness` covers navigation, mark mode, UI events, continue, deferred loaders, soft-fail exports
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Session interaction rules
 
 ---

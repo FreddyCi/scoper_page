@@ -588,16 +588,17 @@ flowchart TD
 ### **ID:** BDA-305
 
 **Title:** Company profile store and persistence  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-304  
 **Priority:** Critical  
 **Description:** New [`src/store/company-profile-store.ts`](../src/store/company-profile-store.ts): Zustand + `localStorage` key `scoper.company-profile.v1` — `profile`, `completedAt`, `onboardingStep` (for resume). Actions: `saveProfile`, `updatePartialProfile`, `setOnboardingResumeState`, `clearCompanyProfile`, `markOnboardingComplete`. Selectors: `selectHasCompletedOnboarding`, `selectCompanyProfile`. Hydrate on app init; cross-tab sync optional (mirror scout-store pattern).  
 **Completed Changes:**
-- 🔄 Persisted snapshot type + read/write helpers
-- 🔄 `runCompanyProfileStoreHarness` — round-trip JSON
+- ✅ [`company-profile-store.ts`](../src/store/company-profile-store.ts) — persisted snapshot, read/write/parse helpers, Zustand actions + selectors
+- ✅ `parsePersistedCompanyProfile` in [`schema.ts`](../src/lib/company-profile/schema.ts) for safe JSON hydration
+- ✅ `subscribeCompanyProfileStorageSync` wired in [`App.tsx`](../src/App.tsx); `runCompanyProfileStoreHarness` in dev chain
 **Test Strategy:** Harness: save → serialize → reload → fields match; clear resets selectors.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; store harness validates save, partial update, resume, complete, clear, and JSON round-trip
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`scout-store.ts`](../src/store/scout-store.ts) persistence pattern; [`session-store.ts`](../src/store/session-store.ts) `writeCompanyContextPreference`
 

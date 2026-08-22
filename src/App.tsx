@@ -60,6 +60,10 @@ import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
+import {
+  runCompanyProfileStoreHarness,
+  subscribeCompanyProfileStorageSync,
+} from '@/store/company-profile-store'
 import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
 import { runScoutSessionGuardHarness } from '@/lib/scout/session-guard'
 import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry'
@@ -84,10 +88,14 @@ function App() {
   useEffect(() => {
     exposeScoperDevGlobals()
     const unsubscribeScoutSync = subscribeScoutStorageSync()
+    const unsubscribeCompanyProfileSync = subscribeCompanyProfileStorageSync()
     void initScoperEcpEnvironment().catch((error) => {
       console.error('[ecp-init]', error)
     })
-    return unsubscribeScoutSync
+    return () => {
+      unsubscribeScoutSync()
+      unsubscribeCompanyProfileSync()
+    }
   }, [])
 
   const runDevHarnessChain = useCallback(async () => {
@@ -113,6 +121,7 @@ function App() {
       runScoutFirstVisitHarness()
       runQuestionnaireHarness()
       runCompanyProfileHarness()
+      runCompanyProfileStoreHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

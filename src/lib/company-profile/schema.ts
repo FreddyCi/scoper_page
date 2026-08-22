@@ -320,6 +320,57 @@ function resolveDifferentiatorsAnswer(formData: FormData): string {
   return raw
 }
 
+function normalizeCertifications(value: unknown): CertificationId[] {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<CertificationId>()
+  const next: CertificationId[] = []
+  for (const item of value) {
+    if (typeof item !== 'string' || !isCertificationId(item) || seen.has(item)) continue
+    seen.add(item)
+    next.push(item)
+  }
+  return next
+}
+
+/** Safe JSON → profile for localStorage hydration (BDA-305). */
+export function parsePersistedCompanyProfile(value: unknown): CompanyProfile {
+  const defaults = createEmptyCompanyProfile()
+  if (!value || typeof value !== 'object') return defaults
+
+  const raw = value as Record<string, unknown>
+
+  return {
+    legalName: typeof raw.legalName === 'string' ? raw.legalName : defaults.legalName,
+    role:
+      typeof raw.role === 'string' && isCompanyRole(raw.role) ? raw.role : defaults.role,
+    tradeDiscipline:
+      typeof raw.tradeDiscipline === 'string' && isTradeDiscipline(raw.tradeDiscipline)
+        ? raw.tradeDiscipline
+        : defaults.tradeDiscipline,
+    serviceGeography:
+      typeof raw.serviceGeography === 'string' && isServiceGeography(raw.serviceGeography)
+        ? raw.serviceGeography
+        : defaults.serviceGeography,
+    headcountBand:
+      typeof raw.headcountBand === 'string' && isHeadcountBand(raw.headcountBand)
+        ? raw.headcountBand
+        : defaults.headcountBand,
+    certifications: normalizeCertifications(raw.certifications),
+    insuranceLimit:
+      typeof raw.insuranceLimit === 'string' && isInsuranceLimitBand(raw.insuranceLimit)
+        ? raw.insuranceLimit
+        : defaults.insuranceLimit,
+    bondingCapacity:
+      typeof raw.bondingCapacity === 'string' && isBondingCapacity(raw.bondingCapacity)
+        ? raw.bondingCapacity
+        : defaults.bondingCapacity,
+    differentiators:
+      typeof raw.differentiators === 'string' ? raw.differentiators : defaults.differentiators,
+    freeformNotes:
+      typeof raw.freeformNotes === 'string' ? raw.freeformNotes : defaults.freeformNotes,
+  }
+}
+
 /** Preset differentiator values use `preset:<id>` in form posts. */
 export const DIFFERENTIATOR_PRESET_LABELS: Record<string, string> = {
   'em385-safety': 'EM 385 compliant safety program and documented rescue plans',

@@ -156,6 +156,15 @@ for (const filename of BINARY_FIXTURES) {
   console.log(`[generate-sample-pdfs] copied ${filename}`)
 }
 
+/** QA alias — same plan bytes as windows-drawing.pdf (BDA-285). */
+const planAliasSource = join(sampleDir, 'windows-drawing.pdf')
+if (existsSync(planAliasSource)) {
+  for (const dir of [sampleDir, publicSampleDir]) {
+    copyFileSync(planAliasSource, join(dir, 'plan-windows-sample.pdf'))
+  }
+  console.log('[generate-sample-pdfs] copied plan-windows-sample.pdf (alias)')
+}
+
 await import('./generate-sample-office.mjs').catch((error) => {
   console.error('[generate-sample-pdfs] office fixture generation failed:', error.message)
   process.exit(1)

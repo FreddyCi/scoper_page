@@ -1,15 +1,13 @@
 import { runScoutAction } from '@/lib/scout/actions'
-import { SCOUT_ACTION_IDS, type ScoutActionId } from '@/lib/scout/types'
+import { SCOUT_ACTION_IDS } from '@/lib/scout/types'
 import { useSessionStore } from '@/store/session-store'
 import { useScoutStore } from '@/store/scout-store'
 
-const SAMPLE_LOADER_ACTIONS = new Set<ScoutActionId>(['load_sample_markup'])
-
-const EXPORT_ACTIONS = new Set<ScoutActionId>([
+const EXPORT_ACTIONS = new Set([
   'export_matrix_csv',
   'export_proposal_markdown',
   'export_takeoff_csv',
-])
+] as const)
 
 /** Dev harness — invoke scout actions without throw on empty session where safe (BDA-282). */
 export async function runScoutActionsHarness(): Promise<void> {
@@ -56,13 +54,6 @@ export async function runScoutActionsHarness(): Promise<void> {
   const cont = await runScoutAction('continue')
   if (!cont.ok || useScoutStore.getState().stepIndex !== 1) {
     throw new Error('runScoutActionsHarness: continue failed to advance step')
-  }
-
-  for (const actionId of SAMPLE_LOADER_ACTIONS) {
-    const result = await runScoutAction(actionId)
-    if (!result.deferred) {
-      throw new Error(`runScoutActionsHarness: expected deferred ${actionId}`)
-    }
   }
 
   for (const actionId of EXPORT_ACTIONS) {

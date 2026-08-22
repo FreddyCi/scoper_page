@@ -10,9 +10,17 @@ Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm 
 |------|------|------------|
 | [`dpr-msa-pro-bel-2025.pdf`](dpr-msa-pro-bel-2025.pdf) | Contract / MSA baseline | Evaluation baseline — shall/must matrix |
 | [`contract-keyword-check.docx`](contract-keyword-check.docx) | Keyword checklist | Contract keyword review profile |
-| [`windows-drawing.pdf`](windows-drawing.pdf) | Plan drawing | Mark / takeoff journey (BDA-285) |
 
-Loaded together by `loadSampleEvaluationWorkspace()` for the Scout **Evaluate an RFP** tour.
+Loaded by `loadSampleEvaluationWorkspace()` for the Scout **Evaluate an RFP** tour.
+
+## Mark / takeoff pack (Scout mark journey)
+
+| File | Role | Use in app |
+|------|------|------------|
+| [`windows-drawing.pdf`](windows-drawing.pdf) | Plan drawing | Primary sample — window stamp takeoff |
+| [`plan-windows-sample.pdf`](plan-windows-sample.pdf) | Plan drawing alias | Same bytes as `windows-drawing.pdf` (QA/docs) |
+
+Loaded by `loadSampleMarkupWorkspace()` for the Scout **Mark and takeoff** tour (pre-seeds 3 window stamps).
 
 ## Proposal pack (Scout generate journey)
 

@@ -235,18 +235,20 @@ flowchart TD
 ### **ID:** BDA-285
 
 **Title:** Plan sample PDF and markup workspace loader  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-282  
 **Priority:** High  
 **Description:** Add `plan-windows-sample.pdf` to [`scripts/generate-sample-pdfs.mjs`](../scripts/generate-sample-pdfs.mjs) (multi-page minimal plan text) → `sample/` + `public/sample/` via existing copy pipeline. New [`src/services/load-sample-markup.ts`](../src/services/load-sample-markup.ts): ingest plan PDF, open split view, optionally seed 2–3 window stamps via DuckDB insert or small dev-only share slice for reliable takeoff demo (prefer pre-seeded stamps for QA; optional sub-copy “place one yourself”). Wire `loadSampleMarkupWorkspace` action.  
 **Completed Changes:**
-- 🔄 Generator script + `pnpm copy:samples` output
-- 🔄 Loader + optional stamp seed harness
-- 🔄 `runLoadSampleMarkupHarness`
+- ✅ [`windows-drawing.pdf`](../public/sample/windows-drawing.pdf) + [`plan-windows-sample.pdf`](../public/sample/plan-windows-sample.pdf) alias via `generate-sample-pdfs.mjs`
+- ✅ [`load-sample-markup.ts`](../src/services/load-sample-markup.ts) — ingest with `skipPdfTextExtract`, split view, `seedSampleMarkupWindowStamps` (3 stamps)
+- ✅ `load_sample_markup` scout action wired; mark journey copy updated
+- ✅ `runLoadSampleMarkupHarness` in App dev chain
 **Test Strategy:** Static: PDF exists in `public/sample/`; harness: doc ingested, stamp count ≥ 2 when pre-seed enabled.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runLoadSampleMarkupHarness` asserts split view, active doc, ≥2 stamps
+**Assigned:** Completed  
 **Context/Artifacts:** [`pdf-drawing-annotations.ts`](../src/services/pdf-drawing-annotations.ts); TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF BDA-276 fixture note
 
 ---

@@ -628,16 +628,18 @@ flowchart TD
 ### **ID:** BDA-307
 
 **Title:** Profile → companyContext and AI prompt serializer  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-304, BDA-305  
 **Priority:** High  
 **Description:** [`src/lib/company-profile/to-company-context.ts`](../src/lib/company-profile/to-company-context.ts): pure `companyProfileToContext(profile) → string` — narrative paragraph(s) for proposal generation, RFP qualification relink ([`use-relink-rfp-profiles.ts`](../src/hooks/use-relink-rfp-profiles.ts)), and chat agent context. On save/submit: `useSessionStore.getState().setCompanyContext(...)` so existing readiness gates pass. Optional structured snippet block for share-pack export later. Wire [`assessProposalContextQuality`](../src/lib/proposal-context-quality.ts) to score derived context.  
 **Completed Changes:**
-- 🔄 Serializer + minimum length guarantee (≥ `PROPOSAL_CONTEXT_MIN_LENGTH`)
-- 🔄 `runCompanyContextSerializerHarness` — known fixture → stable string contains trade + certs
+- ✅ [`to-company-context.ts`](../src/lib/company-profile/to-company-context.ts) — `companyProfileToContext`, `companyProfileToContextSnippet`, `assessCompanyProfileContextQuality`, `syncCompanyProfileToSessionContext`
+- ✅ Minimum length guarantee via `PROPOSAL_CONTEXT_MIN_LENGTH`; Pro-Bel fixture includes trade + certifications
+- ✅ Onboarding submit calls `syncCompanyProfileToSessionContext` in [`CompanyOnboardingQuestionnaire.tsx`](../src/components/onboarding/CompanyOnboardingQuestionnaire.tsx)
+- ✅ `runCompanyContextSerializerHarness` — stable string, quality `ok`, session store sync
 **Test Strategy:** Harness: sample Pro-Bel-like profile → context length + quality not `empty`; session store updated on mock submit.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; harness validates length, trade/certs, quality, session sync
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts); [`build-rfp-profiles.ts`](../src/services/build-rfp-profiles.ts) `companyContext` option
 

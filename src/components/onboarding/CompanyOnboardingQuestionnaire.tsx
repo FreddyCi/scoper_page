@@ -47,6 +47,9 @@ import {
   validateCompanyProfile,
   type CompanyProfile,
 } from '@/lib/company-profile/schema'
+import {
+  syncCompanyProfileToSessionContext,
+} from '@/lib/company-profile/to-company-context'
 import { cn } from '@/lib/utils'
 import {
   selectCompanyProfile,
@@ -202,6 +205,7 @@ export function CompanyOnboardingQuestionnaireCore({
       }
 
       markOnboardingComplete(profile)
+      syncCompanyProfileToSessionContext(profile)
       onSubmitted?.(profile)
     },
     [markOnboardingComplete, onSubmitted],

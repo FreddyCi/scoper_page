@@ -174,6 +174,24 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 
 ---
 
+## Scoper Scout guided onboarding (BDA-302)
+
+**Execution date:** 2026-08-22  
+**Script:** [`TASK_BREAKDOWN_SCOPER_SCOUT.md`](TASK_BREAKDOWN_SCOPER_SCOUT.md) § Manual QA checklist (BDA-302)  
+**Product spec:** [`plans/scoper_scout.md`](plans/scoper_scout.md)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `pnpm exec tsc -b` | **Pass** | Types clean |
+| `pnpm qa:company-profile` | **Pass** | 13 files, 10 questionnaire items, harness wiring, includes `tsc -b` |
+| `pnpm qa:scout` | **Pass** | 24 targets, 3 journeys, Scout dev harness module, includes `tsc -b` |
+| `pnpm dev` — scout + company profile harness chain | **Pending peer** | DevTools console must not throw `[dev-harness]` on first load |
+| Manual UI (3 journeys + company profile) | **Pending peer** | Chrome incognito; 18-step checklist (evaluate / proposal / mark / cross-cutting / onboarding) |
+
+**Fixtures:** `public/sample/dpr-msa-pro-bel-2025.pdf`, `contract-keyword-check.docx`, `files/buyer-rubric.md`, `windows-drawing.pdf`, `demo-bidder-response.pdf`.
+
+---
+
 ## Sign-off
 
 | Field | Value |

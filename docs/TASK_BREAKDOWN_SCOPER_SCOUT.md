@@ -302,18 +302,20 @@ flowchart TD
 ### **ID:** BDA-288
 
 **Title:** ScoutSpotlight overlay  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-287, BDA-278  
 **Priority:** High  
 **Description:** [`src/components/scout/ScoutSpotlight.tsx`](../src/components/scout/ScoutSpotlight.tsx): full-viewport dim (`pointer-events-none` on overlay except optional tooltip card); cutout via `getBoundingClientRect` on `[data-scout-target="…"]`; reposition on resize/scroll (ResizeObserver + scroll listener); hide when target missing. Optional pulsing ring. `aria-hidden` on overlay; step instructions remain in ScoutPanel for a11y.  
 **Completed Changes:**
-- 🔄 Rect tracking + SVG/box-shadow cutout
-- 🔄 Scroll/resize listeners with cleanup
-- 🔄 Graceful null-target (panel-only mode)
+- ✅ [`ScoutSpotlight.tsx`](../src/components/scout/ScoutSpotlight.tsx) — box-shadow cutout, pulsing ring, journey-accent ring, step title tooltip (pointer-events-none)
+- ✅ [`use-scout-spotlight-tracking.ts`](../src/components/scout/use-scout-spotlight-tracking.ts) — ResizeObserver, scroll capture, MutationObserver + poll for late-mounted targets
+- ✅ [`spotlight-geometry.ts`](../src/lib/scout/spotlight-geometry.ts) — padded rect + viewport visibility; `runScoutSpotlightGeometryHarness`
+- ✅ Panel-only fallback when target not in DOM (no overlay); re-measures on workspace view/mode change
 **Test Strategy:** Manual Chrome: spotlight aligns on eval panel, matrix CSV button, mark toolbar; no console errors on view change.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutSpotlightGeometryHarness` validates cutout math
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Spotlight contract; avoid Driver.js per non-goals
 
 ---

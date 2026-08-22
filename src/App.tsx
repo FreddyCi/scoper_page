@@ -61,6 +61,7 @@ import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-d
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
 import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
+import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry'
 import { runScoutPanelHarness } from '@/components/scout/ScoutPanel'
 import { runScoutStepEngineHarness } from '@/lib/scout/scout-step-engine'
 import { runScoutActionsHarness } from '@/lib/scout/actions-harness'
@@ -93,6 +94,7 @@ function App() {
       runScoutJourneysHarness()
       runScoutCompletionHarness()
       runScoutPanelHarness()
+      runScoutSpotlightGeometryHarness()
       runScoutStepEngineHarness()
       await runScoutActionsHarness()
       runProposalUnitHarnesses()

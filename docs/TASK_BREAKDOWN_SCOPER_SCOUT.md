@@ -416,18 +416,18 @@ flowchart TD
 ### **ID:** BDA-293
 
 **Title:** ScoutJourneyPicker and landing hero  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-287, BDA-289, BDA-283  
 **Priority:** Critical  
 **Description:** [`src/components/scout/ScoutJourneyPicker.tsx`](../src/components/scout/ScoutJourneyPicker.tsx): three journey cards + “I'll upload my own files” → existing QuickActionCards. Update [`WorkspaceLanding.tsx`](../src/components/workspace/WorkspaceLanding.tsx) hero copy (construction-friendly: qualify subs, mark plans, export CSV). Primary CTA = picker; secondary = quick actions below fold or tertiary link.  
 **Completed Changes:**
-- 🔄 Journey picker UI
-- 🔄 Landing hero + layout
-- 🔄 Picker calls `startJourneySafe`
+- ✅ [`ScoutJourneyPicker.tsx`](../src/components/scout/ScoutJourneyPicker.tsx) — three accent journey cards, completed badge, `startJourneySafe` on click, `landingJourneyPicker` target
+- ✅ [`WorkspaceLanding.tsx`](../src/components/workspace/WorkspaceLanding.tsx) — construction hero copy; picker primary; “I'll upload my own files” reveals [`QuickActionCards`](../src/components/workspace/QuickActionCards.tsx)
 **Test Strategy:** First visit: picker visible; card starts Journey A and opens panel.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- 🔄 Manual: first visit picker + Journey A card opens Scout panel (pending sign-off)
+**Assigned:** Completed  
 **Context/Artifacts:** [gtm/tam.md](gtm/tam.md); plan § Landing
 
 ---

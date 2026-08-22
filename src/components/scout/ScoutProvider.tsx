@@ -13,8 +13,10 @@ import {
   applyJourneyStart,
   confirmStartJourney,
 } from '@/lib/scout/session-guard'
+import { shouldAutoOpenScoutWelcomePanel } from '@/lib/scout/scout-first-visit'
 import { registerScoutJourneyStartConfirmHandler } from '@/lib/scout/scout-journey-start-bridge'
 import type { ScoutJourneyId } from '@/lib/scout/types'
+import { readShareLinkFromLocation } from '@/services/share-pack-link'
 import { fetchPdfDrawingAnnotationsForDoc } from '@/services/pdf-drawing-annotations'
 import { useSessionStore } from '@/store/session-store'
 import {
@@ -118,6 +120,7 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
 
   const completionContext = useScoutCompletionContext(activeJourney)
   const autoAdvanceLockRef = useRef<string | null>(null)
+  const firstVisitAutoOpenRef = useRef(false)
 
   const scoutSnapshot = useMemo(
     () => ({
@@ -147,6 +150,28 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
     })
     return () => registerScoutJourneyStartConfirmHandler(null)
   }, [])
+
+  useEffect(() => {
+    if (firstVisitAutoOpenRef.current) return
+
+    const scout = useScoutStore.getState()
+    const session = useSessionStore.getState()
+
+    if (
+      !shouldAutoOpenScoutWelcomePanel({
+        dismissed: scout.dismissed,
+        panelOpen: scout.panelOpen,
+        activeJourney: scout.activeJourney,
+        documentCount: session.documents.length,
+        hasShareLink: readShareLinkFromLocation() != null,
+      })
+    ) {
+      return
+    }
+
+    firstVisitAutoOpenRef.current = true
+    setPanelOpen(true)
+  }, [setPanelOpen])
 
   useEffect(() => {
     if (!activeJourney) return

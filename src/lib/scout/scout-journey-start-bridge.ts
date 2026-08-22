@@ -40,8 +40,8 @@ export function scoutLauncherTooltipLabel(options: {
   if (scoutCanResumeTour(options.activeJourney, options.panelOpen)) {
     return 'Resume tour'
   }
-  if (options.activeJourney && options.panelOpen) {
-    return 'Close Scout guide'
+  if (options.panelOpen) {
+    return options.activeJourney ? 'Close Scout guide' : 'Close Scout welcome'
   }
   return 'Scoper Scout'
 }

@@ -523,16 +523,18 @@ flowchart TD
 ### **ID:** BDA-298
 
 **Title:** First-visit auto-open Scout panel  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-297  
 **Priority:** Medium  
 **Description:** On first load (`!localStorage scoper.scout.v1` and `!dismissed`), auto-open Scout panel with journey picker content (or inline welcome on landing). Skip when user deep-links with docs already ingested. Do not block interaction — panel is dismissible.  
 **Completed Changes:**
-- 🔄 First-visit detection in ScoutProvider
-- 🔄 Auto-open panel once per browser profile
+- ✅ [`scout-first-visit.ts`](../src/lib/scout/scout-first-visit.ts) — `shouldAutoOpenScoutWelcomePanel` (no persisted profile, not dismissed, no docs, no `#share=` link)
+- ✅ `ScoutProvider` auto-opens panel once on mount when predicates pass; persisting `panelOpen` prevents repeat auto-open
+- ✅ [`ScoutPanel.tsx`](../src/components/scout/ScoutPanel.tsx) — `ScoutWelcomePanelBody` with compact tour list when `panelOpen && !activeJourney`; Close + Don't show again footer
+- ✅ Header MapPin toggles welcome panel closed when no active tour
 **Test Strategy:** Incognito: landing opens panel; dismiss + reload does not auto-open.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; `runScoutFirstVisitHarness` validates predicates + dismiss blocks reload auto-open
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan § Landing first visit
 

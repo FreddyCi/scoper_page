@@ -68,6 +68,7 @@ import { runScoutStepEngineHarness } from '@/lib/scout/scout-step-engine'
 import { runScoutActionsHarness } from '@/lib/scout/actions-harness'
 import { runScoutEvaluateRfpJourneyHarness } from '@/lib/scout/evaluate-rfp-journey-harness'
 import { runScoutGenerateProposalJourneyHarness } from '@/lib/scout/generate-proposal-journey-harness'
+import { runScoutFirstVisitHarness } from '@/lib/scout/scout-first-visit'
 import { runScoutHeaderLauncherHarness } from '@/lib/scout/scout-journey-start-bridge'
 import { runScoutMarkTakeoffJourneyHarness } from '@/lib/scout/mark-takeoff-journey-harness'
 import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
@@ -107,6 +108,7 @@ function App() {
       await runScoutGenerateProposalJourneyHarness()
       await runScoutMarkTakeoffJourneyHarness()
       runScoutHeaderLauncherHarness()
+      runScoutFirstVisitHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

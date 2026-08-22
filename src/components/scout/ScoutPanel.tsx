@@ -5,16 +5,22 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronUpIcon,
+  ClipboardCheckIcon,
+  FileTextIcon,
+  Grid2X2Icon,
   Loader2Icon,
   XIcon,
+  type LucideIcon,
 } from 'lucide-react'
 
+import { useScout } from '@/components/scout/scout-context'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { BrandMenuSection, BrandMenuSectionHeader } from '@/components/ui/brand-menu'
 import { runScoutAction } from '@/lib/scout/actions'
-import { getScoutJourney } from '@/lib/scout/journeys-map'
-import type { ScoutStep } from '@/lib/scout/types'
 import { brandAccentStyles } from '@/lib/brand-accent'
+import { getScoutJourney, listDefinedScoutJourneys } from '@/lib/scout/journeys-map'
+import type { ScoutJourneyId, ScoutStep } from '@/lib/scout/types'
 import {
   scoutActionLabel,
   scoutStepStatus,
@@ -69,6 +75,145 @@ function ScoutStepListItem({
         {step.title}
       </span>
     </li>
+  )
+}
+
+const WELCOME_JOURNEY_ICONS: Record<ScoutJourneyId, LucideIcon> = {
+  evaluate_rfp: ClipboardCheckIcon,
+  generate_proposal: FileTextIcon,
+  mark_takeoff: Grid2X2Icon,
+}
+
+function ScoutWelcomePanelBody({
+  collapsed,
+  onToggleCollapsed,
+  onClose,
+}: ScoutPanelContentProps) {
+  const { startJourneySafe } = useScout()
+  const completedJourneys = useScoutStore((state) => state.completedJourneys)
+  const dismissScout = useScoutStore((state) => state.dismissScout)
+  const journeys = listDefinedScoutJourneys()
+
+  if (collapsed) {
+    return (
+      <div className="flex h-full flex-col items-center py-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Expand Scout panel"
+          onClick={onToggleCollapsed}
+        >
+          <ChevronLeftIcon className="size-4" />
+        </Button>
+        <span className="text-muted-foreground mt-3 rotate-180 text-[10px] font-semibold tracking-wide uppercase [writing-mode:vertical-rl]">
+          Scout
+        </span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="border-border flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2.5">
+        <div className="min-w-0">
+          <p className="text-foreground text-sm font-semibold">Welcome to Scoper Scout</p>
+          <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+            Pick a guided tour with sample construction docs — everything parses locally in your
+            browser.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="max-md:hidden"
+            aria-label="Collapse Scout panel"
+            onClick={onToggleCollapsed}
+          >
+            <ChevronRightIcon className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Close Scout panel"
+            onClick={onClose}
+          >
+            <XIcon className="size-4" />
+          </Button>
+        </div>
+      </header>
+
+      <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-3">
+        <BrandMenuSection accent="neutral" className="mb-3">
+          <BrandMenuSectionHeader
+            accent="neutral"
+            title="Guided tours"
+            description="Sample DPR packages, proposal rubrics, and plan sheets"
+          />
+        </BrandMenuSection>
+
+        <ul className="space-y-2">
+          {journeys.map((journey) => {
+            const accent = brandAccentStyles(journey.accent)
+            const Icon = WELCOME_JOURNEY_ICONS[journey.id]
+            const completed = completedJourneys.includes(journey.id)
+
+            return (
+              <li key={journey.id}>
+                <button
+                  type="button"
+                  className={cn(
+                    'border-border hover:bg-surface/80 flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors',
+                    accent.section,
+                  )}
+                  onClick={() => startJourneySafe(journey.id)}
+                >
+                  <span
+                    className={cn(
+                      'flex size-9 shrink-0 items-center justify-center rounded-lg border',
+                      accent.section,
+                    )}
+                  >
+                    <Icon className={cn('size-4', accent.indicator)} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className={cn('text-sm font-medium', accent.title)}>{journey.title}</span>
+                      {completed ? (
+                        <Badge variant="secondary" className="text-[10px] uppercase">
+                          Done
+                        </Badge>
+                      ) : null}
+                    </span>
+                    <span className="text-muted-foreground mt-0.5 block text-xs leading-relaxed">
+                      {journey.description}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+
+      <footer className="border-border flex shrink-0 flex-col gap-2 border-t p-3">
+        <Button type="button" variant="outline" size="sm" className="w-full" onClick={onClose}>
+          Close
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground w-full text-xs font-normal"
+          onClick={() => dismissScout()}
+        >
+          Don&apos;t show again
+        </Button>
+      </footer>
+    </div>
   )
 }
 
@@ -339,9 +484,23 @@ export function ScoutPanel() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [panelOpen, handleClose])
 
-  if (!panelOpen || !activeJourneyId) {
+  if (!panelOpen) {
     return null
   }
+
+  const panelBody = activeJourneyId ? (
+    <ScoutPanelBody
+      collapsed={collapsed}
+      onToggleCollapsed={() => setCollapsed((value) => !value)}
+      onClose={handleClose}
+    />
+  ) : (
+    <ScoutWelcomePanelBody
+      collapsed={collapsed}
+      onToggleCollapsed={() => setCollapsed((value) => !value)}
+      onClose={handleClose}
+    />
+  )
 
   return (
     <>
@@ -352,11 +511,7 @@ export function ScoutPanel() {
         )}
         aria-label="Scoper Scout guide"
       >
-        <ScoutPanelBody
-          collapsed={collapsed}
-          onToggleCollapsed={() => setCollapsed((value) => !value)}
-          onClose={handleClose}
-        />
+        {panelBody}
       </aside>
 
       <div
@@ -378,11 +533,19 @@ export function ScoutPanel() {
         </button>
         {mobileExpanded ? (
           <div className="border-border bg-workspace max-h-[min(70svh,28rem)] border-t">
-            <ScoutPanelBody
-              collapsed={false}
-              onToggleCollapsed={() => undefined}
-              onClose={handleClose}
-            />
+            {activeJourneyId ? (
+              <ScoutPanelBody
+                collapsed={false}
+                onToggleCollapsed={() => undefined}
+                onClose={handleClose}
+              />
+            ) : (
+              <ScoutWelcomePanelBody
+                collapsed={false}
+                onToggleCollapsed={() => undefined}
+                onClose={handleClose}
+              />
+            )}
           </div>
         ) : null}
       </div>

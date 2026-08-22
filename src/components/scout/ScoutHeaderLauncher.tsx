@@ -58,6 +58,10 @@ export function ScoutHeaderLauncher() {
       setPanelOpen(!panelOpen)
       return
     }
+    if (panelOpen) {
+      setPanelOpen(false)
+      return
+    }
     setMenuOpen(true)
   }
 
@@ -130,6 +134,16 @@ export function ScoutHeaderLauncher() {
                     <MenuOptionContent title="Close guide" description="Hide the Scout panel" />
                   </DropdownMenuItem>
                 ) : null}
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+            </>
+          ) : panelOpen ? (
+            <>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Scout welcome</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setPanelOpen(false)}>
+                  <MenuOptionContent title="Close welcome panel" description="Hide the Scout panel" />
+                </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
             </>

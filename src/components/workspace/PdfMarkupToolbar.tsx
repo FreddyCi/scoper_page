@@ -17,6 +17,7 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { PDF_MARKUP_TOOL_SHORTCUT_LABEL } from '@/lib/pdf-markup-tool-shortcuts'
 import { VoiceNotationControl } from '@/components/workspace/voice-notation-control'
@@ -234,6 +235,9 @@ export function PdfMarkupToolbar({
                 delay={300}
                 render={
                   <Button
+                    {...(entry.id === 'stamp'
+                      ? scoutTargetProps(SCOUT_TARGETS.markStampTool)
+                      : {})}
                     type="button"
                     size="icon-xs"
                     variant="ghost"

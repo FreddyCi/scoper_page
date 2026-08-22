@@ -392,17 +392,19 @@ flowchart TD
 ### **ID:** BDA-292
 
 **Title:** Scout targets — proposal, mark, takeoff  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-290  
 **Priority:** High  
 **Description:** Targets on [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx) (context, readiness, build profile, generate volume, export), [`PdfMarkupToolbar.tsx`](../src/components/workspace/PdfMarkupToolbar.tsx) / mark mode toggle, [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx) footer takeoff pill, [`drawing-takeoff-panel.tsx`](../src/components/workspace/drawing-takeoff-panel.tsx) rows + CSV export.  
 **Completed Changes:**
-- 🔄 Proposal journey targets
-- 🔄 Mark toolbar + takeoff targets
+- ✅ Proposal: `proposalSetupPanel`, `proposalCompanyContext`, `proposalBuildProfile`, `proposalGenerateVolume` (first volume), `proposalExportMarkdown` — [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx), [`ProposalVolumeRow.tsx`](../src/components/workspace/ProposalVolumeRow.tsx)
+- ✅ Mark: `markToolbar` — View/Mark toggle [`PdfViewerToolbar.tsx`](../src/components/workspace/PdfViewerToolbar.tsx); `markStampTool` — stamp button [`PdfMarkupToolbar.tsx`](../src/components/workspace/PdfMarkupToolbar.tsx)
+- ✅ Takeoff: `takeoffFooterPill`, `takeoffCsvExport` — [`SplitDocumentView.tsx`](../src/components/workspace/SplitDocumentView.tsx); `takeoffPanel` — [`drawing-takeoff-panel.tsx`](../src/components/workspace/drawing-takeoff-panel.tsx)
 **Test Strategy:** Static grep registry ⊆ codebase; manual B/C spotlight checks.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ Static grep: all ten proposal/mark/takeoff targets instrumented
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-280 journeys B/C
 
 ---

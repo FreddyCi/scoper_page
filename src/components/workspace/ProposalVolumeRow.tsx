@@ -21,6 +21,7 @@ import type {
   ProposalVolumeSection,
   ProposalVolumeStatus,
 } from '@/lib/types'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 
@@ -215,6 +216,8 @@ export type ProposalVolumeRowProps = {
   onGenerate?: (volumeId: string) => void
   generateDisabled?: boolean
   generateDisabledReason?: string
+  /** Spotlight anchor on per-volume generate control (BDA-292). */
+  markGenerateTarget?: boolean
 }
 
 export function ProposalVolumeRow({
@@ -225,6 +228,7 @@ export function ProposalVolumeRow({
   onGenerate,
   generateDisabled = false,
   generateDisabledReason,
+  markGenerateTarget = false,
 }: ProposalVolumeRowProps) {
   const previewId = useId()
   const [expanded, setExpanded] = useState(false)
@@ -371,6 +375,9 @@ export function ProposalVolumeRow({
           ) : null}
           {showVolumeGenerateAction ? (
             <Button
+              {...(markGenerateTarget
+                ? scoutTargetProps(SCOUT_TARGETS.proposalGenerateVolume)
+                : {})}
               type="button"
               variant="outline"
               size="sm"

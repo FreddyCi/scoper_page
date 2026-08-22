@@ -26,6 +26,7 @@ import { canExportProposalProfile } from '@/lib/proposal-export-quality'
 import { beginBlobSave } from '@/lib/download-blob'
 import { PROPOSAL_CONTEXT_MIN_LENGTH } from '@/lib/proposal-readiness'
 import { summarizeProposalProfileGeneration } from '@/lib/proposal-volume-section'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
@@ -193,7 +194,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
 
   return (
     <div className={cn('flex flex-col gap-4', className)}>
-      <Card className="shrink-0">
+      <Card {...scoutTargetProps(SCOUT_TARGETS.proposalSetupPanel)} className="shrink-0">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Proposal setup</CardTitle>
           <CardDescription className="text-xs leading-relaxed">
@@ -246,6 +247,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             <div className="flex min-w-0 flex-col gap-2">
               <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
               <Textarea
+                {...scoutTargetProps(SCOUT_TARGETS.proposalCompanyContext)}
                 id="proposal-company-context"
                 value={companyContext}
                 onChange={(event) => setCompanyContext(event.target.value)}
@@ -271,6 +273,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                 />
               ) : (
                 <Button
+                  {...scoutTargetProps(SCOUT_TARGETS.proposalBuildProfile)}
                   type="button"
                   className="w-full"
                   disabled={!canBuildProfile}
@@ -334,7 +337,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   'pointer-events-none',
               )}
             >
-              {profile.volumes.map((volume) => (
+              {profile.volumes.map((volume, volumeIndex) => (
                 <ProposalVolumeRow
                   key={volume.id}
                   volume={volume}
@@ -343,6 +346,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   onGenerate={(volumeId) => void runGenerateProposalVolume(volumeId)}
                   generateDisabled={volumeGenerateDisabled}
                   generateDisabledReason={volumeGenerateDisabledReason}
+                  markGenerateTarget={volumeIndex === 0}
                 />
               ))}
             </ul>
@@ -380,6 +384,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   </Button>
                 ) : null}
                 <Button
+                  {...scoutTargetProps(SCOUT_TARGETS.proposalExportMarkdown)}
                   type="button"
                   variant="outline"
                   className="sm:flex-1"

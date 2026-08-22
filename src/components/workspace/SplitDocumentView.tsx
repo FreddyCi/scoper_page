@@ -262,6 +262,7 @@ function SplitDocumentViewFooter({
         </span>
         {windowMarkCount > 0 && onTakeoffOpenClick ? (
           <button
+            {...scoutTargetProps(SCOUT_TARGETS.takeoffFooterPill)}
             type="button"
             className="rounded-pill bg-rose-50 text-rose-900 hover:bg-rose-100/90 inline-flex items-center px-3 py-1 text-xs font-medium transition-colors"
             onClick={onTakeoffOpenClick}
@@ -414,6 +415,7 @@ function SplitDocumentViewFooter({
                     <DropdownMenuItem
                       className={brandMenuItemClass('rose')}
                       onClick={() => onExportTakeoffCsvClick?.()}
+                      {...scoutTargetProps(SCOUT_TARGETS.takeoffCsvExport)}
                     >
                       <MenuOptionContent
                         title="Export takeoff CSV"

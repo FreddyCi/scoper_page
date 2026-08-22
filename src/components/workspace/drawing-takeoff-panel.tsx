@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import type { DrawingTakeoffRow } from '@/lib/drawing-takeoff'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 
 export type DrawingTakeoffPanelProps = {
   open: boolean
@@ -81,7 +82,10 @@ export function DrawingTakeoffPanel({
             on the plan.
           </SheetDescription>
         </SheetHeader>
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4">
+        <div
+          {...scoutTargetProps(SCOUT_TARGETS.takeoffPanel)}
+          className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-4"
+        >
           {rows.length === 0 ? (
             <Card
               size="sm"

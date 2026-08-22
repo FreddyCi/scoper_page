@@ -8,6 +8,7 @@ import type { ReactNode } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 
 type PdfViewerToolbarProps = {
@@ -154,6 +155,7 @@ export function PdfViewerToolbar({
 
       {showMarkToggle ? (
         <Tabs
+          {...scoutTargetProps(SCOUT_TARGETS.markToolbar)}
           value={pdfPaneMode}
           onValueChange={(value) => onMarkModeChange?.(value === 'mark')}
         >

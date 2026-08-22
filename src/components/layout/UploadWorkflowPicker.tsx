@@ -1,3 +1,5 @@
+import { CircleCheckIcon, CircleIcon } from 'lucide-react'
+
 import { Badge } from '@/components/ui/badge'
 import {
   featureCardAccent,
@@ -45,7 +47,7 @@ export function UploadWorkflowPicker({ className }: { className?: string }) {
             aria-pressed={selected}
             onClick={() => selectUploadWorkflow(action.id)}
             className={cn(
-              'border-border/70 rounded-xl border px-3 py-3 text-left transition-[border-color,box-shadow]',
+              'border-border/70 relative rounded-xl border px-3 py-3 text-left transition-[border-color,box-shadow]',
               featureCardAccent(index),
               selected && 'ring-primary/35 ring-2',
               disabled
@@ -53,16 +55,22 @@ export function UploadWorkflowPicker({ className }: { className?: string }) {
                 : 'hover:border-border cursor-pointer',
             )}
           >
-            <div className="flex flex-wrap items-center gap-2">
+            {selected ? (
+              <CircleCheckIcon
+                className="text-primary absolute top-2.5 right-2.5 size-4"
+                aria-hidden
+              />
+            ) : (
+              <CircleIcon
+                className="text-muted-foreground/45 absolute top-2.5 right-2.5 size-4"
+                aria-hidden
+              />
+            )}
+            <div className="flex flex-wrap items-center gap-2 pr-5">
               <span className={cn(featureCardTitleClass, 'text-base')}>{action.label}</span>
               {disabled ? (
                 <Badge variant="secondary" className="text-[10px] font-medium tracking-wide uppercase">
                   Coming soon
-                </Badge>
-              ) : null}
-              {selected ? (
-                <Badge variant="secondary" className="text-[10px] font-medium tracking-wide uppercase">
-                  Selected
                 </Badge>
               ) : null}
             </div>

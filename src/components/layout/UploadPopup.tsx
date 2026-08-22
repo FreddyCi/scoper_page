@@ -23,10 +23,6 @@ import {
   ProgressLabel,
   ProgressValue,
 } from '@/components/ui/progress'
-import {
-  featureCardAccent,
-  featureCardDescriptionClass,
-} from '@/components/workspace/feature-card-styles'
 import { PdfIngestOptionsPanel } from '@/components/workspace/PdfIngestOptionsPanel'
 import { UploadWorkflowPicker } from '@/components/layout/UploadWorkflowPicker'
 import type { PendingUpload } from '@/hooks/use-upload-queue'
@@ -144,7 +140,6 @@ export function UploadPopup({
   const inputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const copy = UPLOAD_INTENT_COPY[intent]
-  const highlightAccent = featureCardAccent(intent === 'rfp' ? 0 : 2)
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
@@ -265,18 +260,6 @@ export function UploadPopup({
                 {copy.dropTitle}
               </p>
               <p className="text-muted-foreground mt-1.5 text-xs leading-relaxed">{copy.dropHint}</p>
-
-              <div
-                className={cn(
-                  'border-border/50 mx-auto mt-4 max-w-sm rounded-xl border px-3.5 py-2.5 text-left shadow-sm',
-                  highlightAccent,
-                )}
-              >
-                <p className="text-foreground text-xs font-semibold">{copy.highlight.label}</p>
-                <p className={cn(featureCardDescriptionClass, 'mt-0.5 text-left text-[11px]')}>
-                  {copy.highlight.description}
-                </p>
-              </div>
 
               <input
                 ref={inputRef}

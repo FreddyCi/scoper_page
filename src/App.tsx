@@ -56,6 +56,7 @@ import { runExportDocumentMarkdownHarness } from '@/services/export-document-mar
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
+import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
   return import.meta.env.VITE_RUN_CREEP_HARNESS === 'true'
@@ -64,9 +65,11 @@ function shouldRunLegacyCreepHarnesses(): boolean {
 function App() {
   useEffect(() => {
     exposeScoperDevGlobals()
+    const unsubscribeScoutSync = subscribeScoutStorageSync()
     void initScoperEcpEnvironment().catch((error) => {
       console.error('[ecp-init]', error)
     })
+    return unsubscribeScoutSync
   }, [])
 
   const runDevHarnessChain = useCallback(async () => {
@@ -76,6 +79,7 @@ function App() {
       runScoperDevToolsHarness()
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
+      runScoutStoreHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

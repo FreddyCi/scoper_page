@@ -59,18 +59,20 @@ flowchart TD
 ### **ID:** BDA-277
 
 **Title:** Scout Zustand store and persistence  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** New [`src/store/scout-store.ts`](../src/store/scout-store.ts): `activeJourney`, `stepIndex`, `completedJourneys[]`, `panelOpen`, `dismissed`, `awaitingManualContinue`, optional `exportTriggered` flags for CSV/md steps. Persist to `localStorage` key `scoper.scout.v1` on change; hydrate on init. Actions: `startJourney(id)`, `advanceStep()`, `completeJourney()`, `dismissScout()`, `setPanelOpen()`, `resetScoutProgress()`. Export selectors for React hooks.  
 **Completed Changes:**
-- 🔄 Create scout-store with types `ScoutJourneyId`
-- 🔄 localStorage read/write with try/catch (private mode safe)
-- 🔄 Storage sync across tabs via `storage` event optional
+- ✅ [`src/lib/scout/types.ts`](../src/lib/scout/types.ts) — `ScoutJourneyId`, export flags, persisted snapshot
+- ✅ [`src/store/scout-store.ts`](../src/store/scout-store.ts) — Zustand store, localStorage read/write, cross-tab `storage` sync
+- ✅ Selectors: `selectActiveScoutJourney`, `selectScoutPanelOpen`, `selectScoutStepIndex`, `selectScoutDismissed`, `selectIsScoutJourneyComplete`, `selectScoutExportTriggered`
+- ✅ `runScoutStoreHarness` + wired in [`App.tsx`](../src/App.tsx) dev chain after session store harness
 **Test Strategy:** Unit-style dev harness or `runScoutStoreHarness`: start journey → advance → reload state from serialized JSON → `tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutStoreHarness` covers start, advance, export flags, persistence round-trip, complete, dismiss, reset
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Architecture; [`session-store.ts`](../src/store/session-store.ts) pattern; `.github/copilot-instructions.md` §State Management
 
 ---

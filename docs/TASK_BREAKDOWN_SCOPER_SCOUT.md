@@ -549,16 +549,18 @@ flowchart TD
 ### **ID:** BDA-303
 
 **Title:** Install shadcn Questionnaire component  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** None  
 **Priority:** Critical  
 **Description:** Add styled Questionnaire to the UI kit: `npx shadcn@latest add questionnaire` → [`src/components/ui/questionnaire.tsx`](../src/components/ui/questionnaire.tsx). Verify `@shadcn/react` peer version; export all parts used by onboarding (`Questionnaire`, `QuestionnaireActions`, `QuestionnaireChoice`, `QuestionnaireChoices`, `QuestionnaireDescription`, `QuestionnaireError`, `QuestionnaireInput`, `QuestionnaireItem`, `QuestionnaireNext`, `QuestionnairePrevious`, `QuestionnaireProgress`, `QuestionnaireSkip`, `QuestionnaireSubmit`, `QuestionnaireTitle`). Smoke-render a one-item demo in dev harness or Storybook-less mount.  
 **Completed Changes:**
-- 🔄 CLI add + import paths aligned to `@/` aliases
-- 🔄 Tailwind / base-nova styling matches existing [`button.tsx`](../src/components/ui/button.tsx) patterns
+- ✅ `pnpm dlx shadcn@latest add questionnaire` → [`questionnaire.tsx`](../src/components/ui/questionnaire.tsx) (base-nova styling, `@/` imports)
+- ✅ Upgraded [`@shadcn/react`](../package.json) `0.2.1` → `0.3.0` for `./questionnaire` headless export
+- ✅ All onboarding parts exported (+ `QuestionnaireChoiceDescription` helper)
+- ✅ [`questionnaire-harness.tsx`](../src/components/ui/questionnaire-harness.tsx) — one-item smoke render (progress + Next/Submit); wired in `App.tsx`
 **Test Strategy:** `pnpm exec tsc -b`; minimal render harness — progress + next/submit without throw.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; `runQuestionnaireHarness` renders progress and navigation controls
 **Assigned:** Unassigned  
 **Context/Artifacts:** [Questionnaire usage docs](https://ui.shadcn.com/docs/components/questionnaire#usage); [Questionnaire accessibility](https://ui.shadcn.com/docs/react/questionnaire#accessibility)
 

@@ -6,6 +6,7 @@ import {
 import { beginBlobSave } from '@/lib/download-blob'
 import type { ScoutActionId } from '@/lib/scout/types'
 import { SCOUT_UI_EVENTS, dispatchScoutUiEvent } from '@/lib/scout/scout-ui-events'
+import { loadSampleEvaluationWorkspace } from '@/services/load-sample-documents'
 import { downloadDrawingTakeoffCsv } from '@/services/export-drawing-takeoff-csv'
 import { downloadRfpComplianceCsv } from '@/services/export-rfp-compliance-csv'
 import { fetchPdfDrawingAnnotationsForDoc } from '@/services/pdf-drawing-annotations'
@@ -187,7 +188,14 @@ export async function runScoutAction(
         return succeed()
 
       case 'load_sample_evaluation':
-        return deferred('load_sample_evaluation', 'BDA-283')
+        try {
+          await loadSampleEvaluationWorkspace()
+          return succeed()
+        } catch (error) {
+          return fail(
+            error instanceof Error ? error.message : 'Sample evaluation workspace load failed',
+          )
+        }
 
       case 'load_sample_proposal':
         return deferred('load_sample_proposal', 'BDA-284')

@@ -41,6 +41,7 @@ import {
 } from '@/services/drawing-markup-dev-harnesses'
 import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
+import { runLoadSampleEvaluationHarness } from '@/services/load-sample-documents'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
   runIngestHarness,
@@ -113,6 +114,7 @@ function App() {
       await runDocumentRoleHarness()
       await runBuildRfpProfilesHarness()
       await runContractKeywordReviewHarness()
+      await runLoadSampleEvaluationHarness()
       await runScoperHarness()
       await runChatVoiceAsyncHarnesses()
       await runDemoExtensionsHarness()

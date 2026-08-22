@@ -22,7 +22,7 @@ export const evaluateRfpJourney: ScoutJourney = {
       id: 'load-sample',
       title: 'Load the sample bid package',
       body:
-        'We will ingest a sample IT services RFP and a demo bidder response so you can see qualification cards without uploading your own files.',
+        'We will ingest a DPR construction MSA and a contract keyword checklist so you can see shall/must compliance and keyword review without uploading your own files.',
       action: 'load_sample_evaluation',
     },
     {

@@ -4,7 +4,17 @@ Redacted, synthetic procurement documents for local demo and QA. **Not real cont
 
 Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm build` so the app can fetch them at `/sample/...`.
 
-## RFP pack (upload together for qualification demo)
+## Construction evaluation pack (Scout evaluate journey)
+
+| File | Role | Use in app |
+|------|------|------------|
+| [`dpr-msa-pro-bel-2025.pdf`](dpr-msa-pro-bel-2025.pdf) | Contract / MSA baseline | Evaluation baseline — shall/must matrix |
+| [`contract-keyword-check.docx`](contract-keyword-check.docx) | Keyword checklist | Contract keyword review profile |
+| [`windows-drawing.pdf`](windows-drawing.pdf) | Plan drawing | Mark / takeoff journey (BDA-285) |
+
+Loaded together by `loadSampleEvaluationWorkspace()` for the Scout **Evaluate an RFP** tour.
+
+## RFP pack (legacy IT-services demo)
 
 | File | Role | Use in app |
 |------|------|------------|
@@ -13,7 +23,7 @@ Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm 
 | [`bidder-contoso-response.pdf`](bidder-contoso-response.pdf) | Bidder B | Weaker match (gaps on cert, insurance, pricing) |
 | [`demo-bidder-response.pdf`](demo-bidder-response.pdf) | Bidder demo | Quick upload — strong match for qualification demos |
 
-### Suggested workflow
+### Suggested workflow (legacy pack)
 
 1. Start dev server: `pnpm dev`
 2. Choose **Analyse RFP** on the landing page

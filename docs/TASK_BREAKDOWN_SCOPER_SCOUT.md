@@ -189,18 +189,20 @@ flowchart TD
 ### **ID:** BDA-283
 
 **Title:** loadSampleEvaluationWorkspace  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-282  
 **Priority:** Critical  
-**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`rfp-it-services.pdf`](../public/sample/rfp-it-services.pdf) + [`demo-bidder-response.pdf`](../public/sample/demo-bidder-response.pdf), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
+**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`dpr-msa-pro-bel-2025.pdf`](../public/sample/dpr-msa-pro-bel-2025.pdf) + [`contract-keyword-check.docx`](../public/sample/contract-keyword-check.docx), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
 **Completed Changes:**
-- 🔄 Shared `fetchSampleFile(url, filename)`
-- 🔄 Full evaluation orchestration
-- 🔄 `runLoadSampleEvaluationHarness` in dev chain
+- ✅ Shared `fetchSampleFile(url, filename)` + construction sample URLs in `sample/` and `public/sample/`
+- ✅ `loadSampleEvaluationWorkspace` — MSA baseline + keyword checklist, `runRfpQualification` + `runContractKeywordReview`
+- ✅ `load_sample_evaluation` scout action wired; evaluate journey copy updated
+- ✅ `runLoadSampleEvaluationHarness` in App dev chain; binary fixtures copied via `generate-sample-pdfs.mjs`
 **Test Strategy:** Harness in browser/dev: after call, `documents.length >= 2`, `evaluationDocId` set, optionally profiles if WebGPU up.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runLoadSampleEvaluationHarness` asserts docs, baseline, checklist ids, profiles view
+**Assigned:** Completed  
 **Context/Artifacts:** [`ingest-router.ts`](../src/services/ingest-router.ts); [`ResultsProfileGrid.tsx`](../src/components/workspace/ResultsProfileGrid.tsx) existing demo button
 
 ---

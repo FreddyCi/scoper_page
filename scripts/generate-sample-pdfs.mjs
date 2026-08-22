@@ -2,7 +2,7 @@
  * Generate minimal text PDFs for the demo corpus (BDA-091).
  * Pure PDF 1.4 — no external PDF library required.
  */
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -138,6 +138,23 @@ for (const doc of CORPUS) {
 }
 
 console.log('[generate-sample-pdfs] corpus ready in sample/ and public/sample/')
+
+/** Binary fixtures checked into sample/ — Scout construction demo + plan drawing (BDA-283 / BDA-285). */
+const BINARY_FIXTURES = [
+  'dpr-msa-pro-bel-2025.pdf',
+  'contract-keyword-check.docx',
+  'windows-drawing.pdf',
+]
+
+for (const filename of BINARY_FIXTURES) {
+  const source = join(sampleDir, filename)
+  if (!existsSync(source)) {
+    console.warn(`[generate-sample-pdfs] skip missing binary fixture: ${filename}`)
+    continue
+  }
+  copyFileSync(source, join(publicSampleDir, filename))
+  console.log(`[generate-sample-pdfs] copied ${filename}`)
+}
 
 await import('./generate-sample-office.mjs').catch((error) => {
   console.error('[generate-sample-pdfs] office fixture generation failed:', error.message)

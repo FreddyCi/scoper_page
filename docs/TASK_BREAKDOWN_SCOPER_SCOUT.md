@@ -8,13 +8,13 @@
 
 **Package manager:** pnpm
 
-**Task ID prefix:** `BDA-277`–`BDA-299` (continues after BDA-276 compliance matrix / takeoff)
+**Task ID prefix:** `BDA-277`–`BDA-309` (continues after BDA-276 compliance matrix / takeoff)
 
-**Status:** **To Do** — planning complete; implementation not started
+**Status:** **In progress** — Phase 1–2 foundation and sample loaders largely complete; UI, targets, journeys, company onboarding, and QA remain
 
-**Sequence:** Foundation → sample loaders → Scout UI → target instrumentation → journey wiring → entry points → QA/docs.
+**Sequence:** Foundation → sample loaders → Scout UI → target instrumentation → journey wiring → entry points → **company profile onboarding** → QA/docs.
 
-**Explicit non-goals (v1):** Server analytics; Driver.js / third-party tour libs; full share-pack demo import for Journey A (optional v1.1); Tauri-only Scout; translating get_scoper `scout-chat`; LLM-driven tour narration; i18n.
+**Explicit non-goals (v1):** Server analytics; Driver.js / third-party tour libs; full share-pack demo import for Journey A (optional v1.1); Tauri-only Scout; translating get_scoper `scout-chat`; LLM-driven tour narration; i18n; **cloud-synced company profile / auth account** (localStorage only in v1).
 
 ---
 
@@ -30,6 +30,7 @@
 | **localStorage** | Key `scoper.scout.v1` — resume tour after reload; “Don’t show again” respected. |
 | **Reuse help styling** | [`brand-menu.tsx`](../src/components/ui/brand-menu.tsx) accents (emerald / sky / rose per journey). |
 | **Sample-first** | Each journey loads bundled assets under [`public/sample/`](../public/sample/) — no upload required to finish tour. |
+| **Company profile** | Structured onboarding via shadcn Questionnaire → persisted profile + derived `companyContext` for AI (qualification, proposal, chat). |
 
 ---
 
@@ -44,11 +45,14 @@ flowchart TD
   P4 --> P5
   P3 --> P6[Phase6 entry_points]
   P5 --> P6
-  P5 --> P7[Phase7 QA_docs]
-  P6 --> P7
+  P6 --> P8[Phase8 company_onboarding]
+  P8 --> P7[Phase7 QA_docs]
+  P5 --> P7
 ```
 
-**Recommended ship order:** Phase 1 → 2 ∥ 3 → 4 → 5 (A → B → C) → 6 → 7.
+**Recommended ship order:** Phase 1 → 2 ∥ 3 → 4 → 5 (A → B → C) → 6 → **8** → 7.
+
+**Company onboarding note:** Phase 8 can start in parallel with Phase 3 once `@shadcn/react` Questionnaire is installed (BDA-303) — it does not block Scout panel/spotlight work but should land before manual QA sign-off (BDA-302).
 
 ---
 
@@ -501,6 +505,141 @@ flowchart TD
 
 ---
 
+## Phase 8: Company profile onboarding (Questionnaire)
+
+> **Purpose:** Multi-step business profile so on-device AI understands the responder (trade, certs, insurance, differentiators) — feeds `companyContext`, proposal readiness, and qualification relink.
+
+**Component reference:** [shadcn Questionnaire](https://ui.shadcn.com/docs/components/questionnaire) — `@shadcn/react` headless behavior + styled parts (`Questionnaire`, `QuestionnaireItem`, `QuestionnaireChoices`, `QuestionnaireInput`, `QuestionnaireProgress`, `QuestionnaireActions`, skip/submit). `@shadcn/react` is already in [`package.json`](../package.json).
+
+### **ID:** BDA-303
+
+**Title:** Install shadcn Questionnaire component  
+**Status:** To Do  
+**Dependencies:** None  
+**Priority:** Critical  
+**Description:** Add styled Questionnaire to the UI kit: `npx shadcn@latest add questionnaire` → [`src/components/ui/questionnaire.tsx`](../src/components/ui/questionnaire.tsx). Verify `@shadcn/react` peer version; export all parts used by onboarding (`Questionnaire`, `QuestionnaireActions`, `QuestionnaireChoice`, `QuestionnaireChoices`, `QuestionnaireDescription`, `QuestionnaireError`, `QuestionnaireInput`, `QuestionnaireItem`, `QuestionnaireNext`, `QuestionnairePrevious`, `QuestionnaireProgress`, `QuestionnaireSkip`, `QuestionnaireSubmit`, `QuestionnaireTitle`). Smoke-render a one-item demo in dev harness or Storybook-less mount.  
+**Completed Changes:**
+- 🔄 CLI add + import paths aligned to `@/` aliases
+- 🔄 Tailwind / base-nova styling matches existing [`button.tsx`](../src/components/ui/button.tsx) patterns
+**Test Strategy:** `pnpm exec tsc -b`; minimal render harness — progress + next/submit without throw.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [Questionnaire usage docs](https://ui.shadcn.com/docs/components/questionnaire#usage); [Questionnaire accessibility](https://ui.shadcn.com/docs/react/questionnaire#accessibility)
+
+---
+
+### **ID:** BDA-304
+
+**Title:** Company profile schema and questionnaire items  
+**Status:** To Do  
+**Dependencies:** BDA-303  
+**Priority:** Critical  
+**Description:** New [`src/lib/company-profile/schema.ts`](../src/lib/company-profile/schema.ts) + [`questionnaire-items.ts`](../src/lib/company-profile/questionnaire-items.ts): typed `CompanyProfile` (legal name, trade/discipline, service geography, headcount band, certifications, insurance limits, bonding, differentiators, optional freeform). Define `items` collection for Questionnaire — mix of **single-choice**, **multiple-choice**, **freeform** (`QuestionnaireInput` alongside choices), and **skippable** optional steps (`QuestionnaireSkip`). Construction wedge copy (sub/GC, fall protection, envelope, etc.). Optional Zod schema for submit validation + custom validation return-to-step pattern from docs.  
+**Completed Changes:**
+- 🔄 `CompanyProfile` type + default empty state
+- 🔄 `COMPANY_ONBOARDING_ITEMS` const (name, required, prompt, description, choices, input)
+- 🔄 `parseCompanyProfileFromFormData` / answer normalizers
+**Test Strategy:** Unit harness: each item has unique `name`; required items reject empty submit; skipped optional items omitted from profile.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [`proposal-readiness.ts`](../src/lib/proposal-readiness.ts) `PROPOSAL_CONTEXT_MIN_LENGTH`; [`proposal-context-quality.ts`](../src/lib/proposal-context-quality.ts)
+
+---
+
+### **ID:** BDA-305
+
+**Title:** Company profile store and persistence  
+**Status:** To Do  
+**Dependencies:** BDA-304  
+**Priority:** Critical  
+**Description:** New [`src/store/company-profile-store.ts`](../src/store/company-profile-store.ts): Zustand + `localStorage` key `scoper.company-profile.v1` — `profile`, `completedAt`, `onboardingStep` (for resume). Actions: `saveProfile`, `updatePartialProfile`, `setOnboardingResumeState`, `clearCompanyProfile`, `markOnboardingComplete`. Selectors: `selectHasCompletedOnboarding`, `selectCompanyProfile`. Hydrate on app init; cross-tab sync optional (mirror scout-store pattern).  
+**Completed Changes:**
+- 🔄 Persisted snapshot type + read/write helpers
+- 🔄 `runCompanyProfileStoreHarness` — round-trip JSON
+**Test Strategy:** Harness: save → serialize → reload → fields match; clear resets selectors.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [`scout-store.ts`](../src/store/scout-store.ts) persistence pattern; [`session-store.ts`](../src/store/session-store.ts) `writeCompanyContextPreference`
+
+---
+
+### **ID:** BDA-306
+
+**Title:** CompanyOnboardingQuestionnaire UI  
+**Status:** To Do  
+**Dependencies:** BDA-303, BDA-304, BDA-305  
+**Priority:** Critical  
+**Description:** [`src/components/onboarding/CompanyOnboardingQuestionnaire.tsx`](../src/components/onboarding/CompanyOnboardingQuestionnaire.tsx): compose Questionnaire inside **Dialog** (first visit) and **Card** variant (inline in setup panels). Map `COMPANY_ONBOARDING_ITEMS` → `QuestionnaireItem` tree per shadcn usage docs. Support **resume** (`defaultValues` + saved active item from store), **conditional items** (disable trade-specific follow-ups), keyboard shortcuts on choices where helpful. Submit handler persists profile via store; host owns close/cancel. Reuse [`brand-menu.tsx`](../src/components/ui/brand-menu.tsx) / workspace card spacing.  
+**Completed Changes:**
+- 🔄 Dialog + Card exports
+- 🔄 Progress, Previous/Next/Skip/Submit actions
+- 🔄 Fieldset/legend a11y — visible labels on all `QuestionnaireInput`
+**Test Strategy:** Manual: complete flow, skip optional step, reload mid-flow resumes; `tsc -b`.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [Questionnaire Dialog example](https://ui.shadcn.com/docs/components/questionnaire#dialog); [Questionnaire resume](https://ui.shadcn.com/docs/components/questionnaire#resume)
+
+---
+
+### **ID:** BDA-307
+
+**Title:** Profile → companyContext and AI prompt serializer  
+**Status:** To Do  
+**Dependencies:** BDA-304, BDA-305  
+**Priority:** High  
+**Description:** [`src/lib/company-profile/to-company-context.ts`](../src/lib/company-profile/to-company-context.ts): pure `companyProfileToContext(profile) → string` — narrative paragraph(s) for proposal generation, RFP qualification relink ([`use-relink-rfp-profiles.ts`](../src/hooks/use-relink-rfp-profiles.ts)), and chat agent context. On save/submit: `useSessionStore.getState().setCompanyContext(...)` so existing readiness gates pass. Optional structured snippet block for share-pack export later. Wire [`assessProposalContextQuality`](../src/lib/proposal-context-quality.ts) to score derived context.  
+**Completed Changes:**
+- 🔄 Serializer + minimum length guarantee (≥ `PROPOSAL_CONTEXT_MIN_LENGTH`)
+- 🔄 `runCompanyContextSerializerHarness` — known fixture → stable string contains trade + certs
+**Test Strategy:** Harness: sample Pro-Bel-like profile → context length + quality not `empty`; session store updated on mock submit.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [`build-proposal-volumes.ts`](../src/services/build-proposal-volumes.ts); [`build-rfp-profiles.ts`](../src/services/build-rfp-profiles.ts) `companyContext` option
+
+---
+
+### **ID:** BDA-308
+
+**Title:** Onboarding entry points and setup gating  
+**Status:** To Do  
+**Dependencies:** BDA-306, BDA-307, BDA-298  
+**Priority:** High  
+**Description:** Surface company onboarding when profile incomplete: (1) **First visit** — after Scout journey picker or alongside BDA-298 auto-open, prompt “Tell us about your company” (dismissible, not blocking upload path). (2) **Proposal setup** — [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx) / [`ProposalSetupGateList.tsx`](../src/components/workspace/ProposalSetupGateList.tsx): replace raw textarea-first empty state with “Complete company profile” CTA opening questionnaire; keep freeform edit after submit. (3) **Evaluation setup** — [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx) org context area: link to edit profile. (4) Optional Scout target `company-profile-setup` for generate-proposal journey step 2. Do not wipe docs on profile edit.  
+**Completed Changes:**
+- 🔄 Entry point components + `data-scout-target` hook (when BDA-292 lands)
+- 🔄 `hasContext` true after questionnaire submit without manual paste
+**Test Strategy:** Incognito: dismiss onboarding → upload still works; complete onboarding → proposal readiness shows hasContext; edit profile updates context string.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** BDA-284 pre-fill stub; [`load-sample-proposal.ts`](../src/services/load-sample-proposal.ts) — sample tour may skip onboarding via explicit flag later
+
+---
+
+### **ID:** BDA-309
+
+**Title:** Company onboarding harnesses and QA  
+**Status:** To Do  
+**Dependencies:** BDA-305, BDA-307, BDA-308  
+**Priority:** High  
+**Description:** [`src/lib/company-profile/company-profile-harness.ts`](../src/lib/company-profile/company-profile-harness.ts): store round-trip, serializer length/quality, questionnaire item registry integrity. Chain in [`App.tsx`](../src/App.tsx) dev harness block. Extend [`scripts/run-scout-qa-static.mjs`](../scripts/run-scout-qa-static.mjs) (BDA-300) or add `qa:company-profile` script: assert `questionnaire.tsx` exists, all item `name`s unique, schema files present. Update manual QA checklist (BDA-302) with onboarding rows.  
+**Completed Changes:**
+- 🔄 Dev harness wired
+- 🔄 Static script + package.json script optional
+- 🔄 Manual QA rows 16–18
+**Test Strategy:** `pnpm dev` — no `[dev-harness]` throw from company profile chain; static script exit 0.  
+**Test Results:**
+- 🔄 Pending implementation  
+**Assigned:** Unassigned  
+**Context/Artifacts:** [`compliance-matrix-dev-harnesses.ts`](../src/services/compliance-matrix-dev-harnesses.ts) pattern
+
+---
+
 ## Phase 7: QA, harnesses, and documentation
 
 > **Purpose:** Ship confidence and maintainability
@@ -527,7 +666,7 @@ flowchart TD
 
 **Title:** Static QA script and pnpm qa:scout  
 **Status:** To Do  
-**Dependencies:** BDA-290, BDA-291, BDA-292, BDA-299  
+**Dependencies:** BDA-290, BDA-291, BDA-292, BDA-299, BDA-309  
 **Priority:** High  
 **Description:** [`scripts/run-scout-qa-static.mjs`](../scripts/run-scout-qa-static.mjs): verify all `SCOUT_TARGETS` appear in `src/`, journey step counts, files exist (`ScoutPanel`, loaders, store). Add `"qa:scout"` to [`package.json`](../package.json) running static script + `tsc -b`. Update [`run-qa-automation.mjs`](../scripts/run-qa-automation.mjs) optional inclusion.  
 **Completed Changes:**
@@ -545,7 +684,7 @@ flowchart TD
 
 **Title:** Product spec and PRD links  
 **Status:** To Do  
-**Dependencies:** BDA-294, BDA-295, BDA-296  
+**Dependencies:** BDA-294, BDA-295, BDA-296, BDA-308  
 **Priority:** Medium  
 **Description:** Create [`docs/plans/scoper_scout.md`](plans/scoper_scout.md) (journeys, copy, naming, non-goals). Update [PRD.md](PRD.md) §6.3 Empty → Loaded + §7 P1 user story for guided onboarding. Link from [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) Related documents and [ARCHITECTURE.md](ARCHITECTURE.md). Update cursor plan todo statuses when phases complete.  
 **Completed Changes:**
@@ -563,7 +702,7 @@ flowchart TD
 
 **Title:** Manual QA checklist and sign-off  
 **Status:** To Do  
-**Dependencies:** BDA-294, BDA-295, BDA-296, BDA-300  
+**Dependencies:** BDA-294, BDA-295, BDA-296, BDA-300, BDA-309  
 **Priority:** Critical  
 **Description:** Peer manual QA: Chrome desktop, incognito first visit, each journey end-to-end < 10 min. Fill checklist below; update this file status to **Implemented** when automated + manual pass. Append results to [QA_RESULTS.md](QA_RESULTS.md) optional section.  
 **Completed Changes:**
@@ -617,6 +756,12 @@ flowchart TD
 14. [ ] “Don't show again” stops auto-open; launcher still works.
 15. [ ] Non-regression — upload own files path unchanged; chat sidebar unaffected.
 
+**Manual UI — Company profile onboarding (BDA-303–309):**
+
+16. [ ] First visit — company profile dialog opens (dismissible); skip does not block upload.
+17. [ ] Complete questionnaire — trade, certs, insurance captured; proposal setup shows `hasContext`.
+18. [ ] Reload mid-questionnaire — resume restores step + answers; submit updates evaluation org context.
+
 **Sign-off**
 
 | Field | Value |
@@ -655,6 +800,13 @@ flowchart TD
 | BDA-296 | Wire Mark and takeoff journey actions | 5 |
 | BDA-297 | Header Scout launcher and resume | 6 |
 | BDA-298 | First-visit auto-open Scout panel | 6 |
+| BDA-303 | Install shadcn Questionnaire component | 8 |
+| BDA-304 | Company profile schema and questionnaire items | 8 |
+| BDA-305 | Company profile store and persistence | 8 |
+| BDA-306 | CompanyOnboardingQuestionnaire UI | 8 |
+| BDA-307 | Profile → companyContext and AI serializer | 8 |
+| BDA-308 | Onboarding entry points and setup gating | 8 |
+| BDA-309 | Company onboarding harnesses and QA | 8 |
 | BDA-299 | Scout dev harnesses | 7 |
 | BDA-300 | Static QA script and pnpm qa:scout | 7 |
 | BDA-301 | Product spec and PRD links | 7 |
@@ -667,3 +819,4 @@ flowchart TD
 | Version | Date | Notes |
 |---------|------|-------|
 | v1.0 | 2026-08-21 | Initial atomic breakdown BDA-277–302 from scoper_scout onboarding plan |
+| v1.1 | 2026-08-21 | Phase 8 company profile onboarding BDA-303–309 (shadcn Questionnaire) |

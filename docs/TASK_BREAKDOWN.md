@@ -1079,7 +1079,7 @@ flowchart LR
 - [TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) — PDF drawing markup / Mark mode (BDA-220–241)
 - [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) — Mark voice notation / hold Space dictation (BDA-242–258)
 - [TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) — Shall matrix, instructions card, stamp takeoff (BDA-259–276; **Implemented** — peer manual UI pending)
-- [TASK_BREAKDOWN_SCOPER_SCOUT.md](TASK_BREAKDOWN_SCOPER_SCOUT.md) — Scoper Scout onboarding / guided journeys (BDA-277–302; **To Do**)
+- [TASK_BREAKDOWN_SCOPER_SCOUT.md](TASK_BREAKDOWN_SCOPER_SCOUT.md) — Scoper Scout onboarding / guided journeys (BDA-277–309; **In progress**)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 

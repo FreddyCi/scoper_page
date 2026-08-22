@@ -1,5 +1,7 @@
 import type { QuestionnaireItemDefinition } from '@shadcn/react/questionnaire'
 
+import type { CompanyProfile } from '@/lib/company-profile/schema'
+
 export type CompanyOnboardingChoice = {
   value: string
   label: string
@@ -269,4 +271,33 @@ export function getCompanyOnboardingItem(name: string): CompanyOnboardingItem | 
 
 export function isSkippableCompanyOnboardingItem(name: string): boolean {
   return getCompanyOnboardingItem(name)?.skippable === true
+}
+
+/** Conditional disable — e.g. bonding not relevant for suppliers (BDA-306). */
+export function isCompanyOnboardingItemDisabled(
+  itemName: string,
+  profile: Pick<CompanyProfile, 'role' | 'tradeDiscipline'>,
+): boolean {
+  if (itemName === 'bondingCapacity' && profile.role === 'supplier') {
+    return true
+  }
+  return false
+}
+
+/** Build Questionnaire `items` with runtime disable flags from draft profile. */
+export function buildCompanyOnboardingQuestionnaireItems(
+  profile: Pick<CompanyProfile, 'role' | 'tradeDiscipline'>,
+): QuestionnaireItemDefinition[] {
+  return COMPANY_ONBOARDING_ITEMS.map((item) => {
+    const disabled = item.disabled === true || isCompanyOnboardingItemDisabled(item.name, profile)
+    return {
+      name: item.name,
+      required: item.required && !disabled,
+      disabled,
+      choices: item.choices?.map((choice) => ({
+        value: choice.value,
+        disabled: choice.disabled,
+      })),
+    }
+  })
 }

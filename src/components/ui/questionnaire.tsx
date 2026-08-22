@@ -7,10 +7,12 @@ import { CheckIcon } from "lucide-react"
 
 function Questionnaire({
   className,
+  ref,
   ...props
-}: React.ComponentProps<typeof QuestionnairePrimitive.Root>) {
+}: React.ComponentPropsWithRef<typeof QuestionnairePrimitive.Root>) {
   return (
     <QuestionnairePrimitive.Root
+      ref={ref}
       data-slot="questionnaire"
       className={cn("flex w-full min-w-0 flex-col gap-4", className)}
       {...props}

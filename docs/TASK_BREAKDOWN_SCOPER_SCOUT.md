@@ -607,17 +607,19 @@ flowchart TD
 ### **ID:** BDA-306
 
 **Title:** CompanyOnboardingQuestionnaire UI  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-303, BDA-304, BDA-305  
 **Priority:** Critical  
 **Description:** [`src/components/onboarding/CompanyOnboardingQuestionnaire.tsx`](../src/components/onboarding/CompanyOnboardingQuestionnaire.tsx): compose Questionnaire inside **Dialog** (first visit) and **Card** variant (inline in setup panels). Map `COMPANY_ONBOARDING_ITEMS` → `QuestionnaireItem` tree per shadcn usage docs. Support **resume** (`defaultValues` + saved active item from store), **conditional items** (disable trade-specific follow-ups), keyboard shortcuts on choices where helpful. Submit handler persists profile via store; host owns close/cancel. Reuse [`brand-menu.tsx`](../src/components/ui/brand-menu.tsx) / workspace card spacing.  
 **Completed Changes:**
-- 🔄 Dialog + Card exports
-- 🔄 Progress, Previous/Next/Skip/Submit actions
-- 🔄 Fieldset/legend a11y — visible labels on all `QuestionnaireInput`
+- ✅ [`CompanyOnboardingQuestionnaire.tsx`](../src/components/onboarding/CompanyOnboardingQuestionnaire.tsx) — `CompanyOnboardingQuestionnaireCore`, `CompanyOnboardingQuestionnaireDialog`, `CompanyOnboardingQuestionnaireCard`
+- ✅ Maps all `COMPANY_ONBOARDING_ITEMS` with choice descriptions, freeform inputs, skip/previous/next/submit, letter shortcuts
+- ✅ Resume via store `onboardingStep` + `companyProfileToFormDefaults`; mid-flow `setOnboardingResumeState` on step change
+- ✅ Conditional disable: bonding hidden for suppliers; validation return-to-step via `firstInvalidItem`
+- ✅ [`form-defaults.ts`](../src/lib/company-profile/form-defaults.ts); [`company-onboarding-questionnaire-harness.tsx`](../src/components/onboarding/company-onboarding-questionnaire-harness.tsx)
 **Test Strategy:** Manual: complete flow, skip optional step, reload mid-flow resumes; `tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; dev harness smoke-renders card variant with progress + controls
 **Assigned:** Unassigned  
 **Context/Artifacts:** [Questionnaire Dialog example](https://ui.shadcn.com/docs/components/questionnaire#dialog); [Questionnaire resume](https://ui.shadcn.com/docs/components/questionnaire#resume)
 

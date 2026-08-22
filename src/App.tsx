@@ -76,6 +76,7 @@ import { runScoutFirstVisitHarness } from '@/lib/scout/scout-first-visit'
 import { runScoutHeaderLauncherHarness } from '@/lib/scout/scout-journey-start-bridge'
 import { runScoutMarkTakeoffJourneyHarness } from '@/lib/scout/mark-takeoff-journey-harness'
 import { runCompanyProfileHarness } from '@/lib/company-profile/company-profile-harness'
+import { runCompanyOnboardingQuestionnaireHarness } from '@/components/onboarding/company-onboarding-questionnaire-harness'
 import { runQuestionnaireHarness } from '@/components/ui/questionnaire-harness'
 import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
 import { runScoutJourneysHarness } from '@/lib/scout/journeys-harness'
@@ -122,6 +123,7 @@ function App() {
       runQuestionnaireHarness()
       runCompanyProfileHarness()
       runCompanyProfileStoreHarness()
+      runCompanyOnboardingQuestionnaireHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

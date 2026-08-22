@@ -323,17 +323,20 @@ flowchart TD
 ### **ID:** BDA-289
 
 **Title:** Journey start confirm and reset guard  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-282, BDA-287  
 **Priority:** High  
 **Description:** [`src/lib/scout/session-guard.ts`](../src/lib/scout/session-guard.ts) + dialog component: `confirmStartJourney(journeyId)` — if `documents.length > 0` or chat messages exist, show confirm before `resetSession()` + start; else start immediately. Wire into journey picker and header “Switch journey”.  
 **Completed Changes:**
-- 🔄 Confirm dialog (shadcn AlertDialog or existing pattern)
-- 🔄 `startJourneySafe()` used by all entry points
+- ✅ [`session-guard.ts`](../src/lib/scout/session-guard.ts) — `shouldConfirmJourneyStart`, `applyJourneyStart`, `confirmStartJourney`, `startJourneySafe`
+- ✅ [`ScoutJourneyStartConfirmDialog.tsx`](../src/components/scout/ScoutJourneyStartConfirmDialog.tsx) + [`dialog.tsx`](../src/components/ui/dialog.tsx) (base-ui)
+- ✅ [`ScoutProvider.tsx`](../src/components/scout/ScoutProvider.tsx) exposes `startJourneySafe` / `startJourney` via `useScout()` for picker + header entry points
+- ✅ `runScoutSessionGuardHarness` in dev harness chain
 **Test Strategy:** Manual: docs loaded → start new journey prompts; empty session → no prompt.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutSessionGuardHarness` validates empty vs populated session + apply reset
+**Assigned:** Completed  
 **Context/Artifacts:** [`session-store.ts`](../src/store/session-store.ts) `resetSession`
 
 ---

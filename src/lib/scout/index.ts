@@ -67,6 +67,16 @@ export {
   SCOUT_SPOTLIGHT_PAD,
 } from '@/lib/scout/spotlight-geometry'
 export type { ScoutSpotlightRect } from '@/lib/scout/spotlight-geometry'
+export {
+  applyJourneyStart,
+  confirmStartJourney,
+  journeyStartConfirmCopy,
+  readSessionGuardSnapshot,
+  runScoutSessionGuardHarness,
+  sessionHasWorkspaceContent,
+  shouldConfirmJourneyStart,
+} from '@/lib/scout/session-guard'
+export type { JourneyStartConfirmCopy, SessionGuardSnapshot } from '@/lib/scout/session-guard'
 
 export type { ScoutActionResult, RunScoutActionOptions } from '@/lib/scout/actions'
 export { runScoutAction, ScoutActionDeferredError } from '@/lib/scout/actions'

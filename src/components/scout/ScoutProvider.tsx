@@ -2,12 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useShallow } from 'zustand/react/shallow'
 
 import { ScoutPanel } from '@/components/scout/ScoutPanel'
+import { ScoutJourneyStartConfirmDialog } from '@/components/scout/ScoutJourneyStartConfirmDialog'
 import { ScoutSpotlight } from '@/components/scout/ScoutSpotlight'
 import { ScoutContextProvider, type ScoutContextValue } from '@/components/scout/scout-context'
 import type { ScoutCompletionContext } from '@/lib/scout/completion'
 import { getScoutJourney } from '@/lib/scout/journeys-map'
 import { SCOUT_UI_EVENTS } from '@/lib/scout/scout-ui-events'
 import { shouldAutoAdvanceScoutStep } from '@/lib/scout/scout-step-engine'
+import {
+  applyJourneyStart,
+  confirmStartJourney,
+} from '@/lib/scout/session-guard'
 import type { ScoutJourneyId } from '@/lib/scout/types'
 import { fetchPdfDrawingAnnotationsForDoc } from '@/services/pdf-drawing-annotations'
 import { useSessionStore } from '@/store/session-store'
@@ -95,10 +100,12 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
   const completedJourneys = useScoutStore((s) => s.completedJourneys)
 
   const advanceStep = useScoutStore((s) => s.advanceStep)
-  const startJourney = useScoutStore((s) => s.startJourney)
   const setPanelOpen = useScoutStore((s) => s.setPanelOpen)
   const setAwaitingManualContinue = useScoutStore((s) => s.setAwaitingManualContinue)
   const dismissScout = useScoutStore((s) => s.dismissScout)
+
+  const [pendingJourneyId, setPendingJourneyId] = useState<ScoutJourneyId | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const completionContext = useScoutCompletionContext(activeJourney)
   const autoAdvanceLockRef = useRef<string | null>(null)
@@ -167,6 +174,30 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
     setPanelOpen(false)
   }, [setPanelOpen])
 
+  const startJourneySafe = useCallback((journeyId: ScoutJourneyId) => {
+    confirmStartJourney(journeyId, {
+      onConfirmRequired: (id) => {
+        setPendingJourneyId(id)
+        setConfirmOpen(true)
+      },
+    })
+  }, [])
+
+  const handleConfirmJourneyStart = useCallback(() => {
+    if (pendingJourneyId) {
+      applyJourneyStart(pendingJourneyId)
+    }
+    setConfirmOpen(false)
+    setPendingJourneyId(null)
+  }, [pendingJourneyId])
+
+  const handleConfirmOpenChange = useCallback((open: boolean) => {
+    setConfirmOpen(open)
+    if (!open) {
+      setPendingJourneyId(null)
+    }
+  }, [])
+
   const contextValue = useMemo<ScoutContextValue>(
     () => ({
       activeJourney,
@@ -179,7 +210,8 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
       togglePanel,
       openPanel,
       closePanel,
-      startJourney,
+      startJourney: startJourneySafe,
+      startJourneySafe,
       dismissScout,
     }),
     [
@@ -191,7 +223,7 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
       togglePanel,
       openPanel,
       closePanel,
-      startJourney,
+      startJourneySafe,
       dismissScout,
     ],
   )
@@ -201,6 +233,12 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
       {children}
       <ScoutSpotlight />
       <ScoutPanel />
+      <ScoutJourneyStartConfirmDialog
+        open={confirmOpen}
+        journeyId={pendingJourneyId}
+        onOpenChange={handleConfirmOpenChange}
+        onConfirm={handleConfirmJourneyStart}
+      />
     </ScoutContextProvider>
   )
 }

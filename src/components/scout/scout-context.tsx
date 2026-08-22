@@ -13,6 +13,9 @@ export type ScoutContextValue = {
   togglePanel: () => void
   openPanel: () => void
   closePanel: () => void
+  /** Resets workspace when needed; prompts if documents or chat exist (BDA-289). */
+  startJourneySafe: (journeyId: ScoutJourneyId) => void
+  /** Alias for `startJourneySafe` — picker and header entry points. */
   startJourney: (journeyId: ScoutJourneyId) => void
   dismissScout: () => void
 }

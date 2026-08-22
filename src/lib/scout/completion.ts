@@ -110,7 +110,12 @@ function generateProposalStepComplete(
         session.evaluationDocId != null
       )
     case 'setup-panel':
-      return session.mode === 'proposal' && session.workspaceView === 'profiles' && setup.hasRfp
+      return (
+        session.mode === 'proposal' &&
+        session.workspaceView === 'profiles' &&
+        setup.hasRfp &&
+        setup.hasContext
+      )
     case 'build-profile':
       return setup.hasProfile
     case 'generate-volume':

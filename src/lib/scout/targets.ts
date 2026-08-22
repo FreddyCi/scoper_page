@@ -35,6 +35,8 @@ export const SCOUT_TARGETS = {
 
   /** Proposal mode — generation panel root */
   proposalSetupPanel: 'proposal-setup-panel',
+  /** Proposal — company profile onboarding CTA / questionnaire entry */
+  companyProfileSetup: 'company-profile-setup',
   /** Proposal — company / responder context field */
   proposalCompanyContext: 'proposal-company-context',
   /** Proposal — build requirements profile */

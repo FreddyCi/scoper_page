@@ -21,10 +21,10 @@ export const generateProposalJourney: ScoutJourney = {
     },
     {
       id: 'setup-panel',
-      title: 'Review proposal setup',
+      title: 'Complete your company profile',
       body:
-        'Confirm the solicitation RFP is selected, add your company as the responder, and check the readiness checklist — context stays on your machine and steers volume outlines.',
-      target: SCOUT_TARGETS.proposalSetupPanel,
+        'Open the company profile questionnaire to describe your trade, certifications, and differentiators — we pre-fill responder context for volume outlines. You can refine the text afterward; uploads and documents stay in place.',
+      target: SCOUT_TARGETS.companyProfileSetup,
       action: 'navigate_profiles',
     },
     {

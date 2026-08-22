@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
+import { CompanyProfileEditLink } from '@/components/onboarding/CompanyProfileEditLink'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
@@ -385,18 +386,19 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
           </section>
 
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <Label htmlFor="company-context" className="leading-snug">
                 Your organization
               </Label>
-              <Textarea
+              <CompanyProfileEditLink label="Set up company profile" />
+            </div>
+            <Textarea
                 id="company-context"
                 value={companyContext}
                 onChange={(event) => setCompanyContext(event.target.value)}
                 rows={4}
                 placeholder="e.g. Enterprise IT buyer · requires CMMI L3 · $2M liability minimum · fixed-fee pricing preferred"
               />
-            </div>
             <CompanyContextAssistant
               companyContext={companyContext}
               onApply={setCompanyContext}

@@ -648,16 +648,19 @@ flowchart TD
 ### **ID:** BDA-308
 
 **Title:** Onboarding entry points and setup gating  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-306, BDA-307, BDA-298  
 **Priority:** High  
 **Description:** Surface company onboarding when profile incomplete: (1) **First visit** — after Scout journey picker or alongside BDA-298 auto-open, prompt “Tell us about your company” (dismissible, not blocking upload path). (2) **Proposal setup** — [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx) / [`ProposalSetupGateList.tsx`](../src/components/workspace/ProposalSetupGateList.tsx): replace raw textarea-first empty state with “Complete company profile” CTA opening questionnaire; keep freeform edit after submit. (3) **Evaluation setup** — [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx) org context area: link to edit profile. (4) Optional Scout target `company-profile-setup` for generate-proposal journey step 2. Do not wipe docs on profile edit.  
 **Completed Changes:**
-- 🔄 Entry point components + `data-scout-target` hook (when BDA-292 lands)
-- 🔄 `hasContext` true after questionnaire submit without manual paste
+- ✅ [`CompanyOnboardingEntryHost.tsx`](../src/components/onboarding/CompanyOnboardingEntryHost.tsx) — first-visit auto-open dialog; dismiss persists `onboardingPromptDismissed`
+- ✅ [`CompanyProfileSetupPrompt.tsx`](../src/components/onboarding/CompanyProfileSetupPrompt.tsx) + [`CompanyProfileEditLink.tsx`](../src/components/onboarding/CompanyProfileEditLink.tsx) — proposal CTA + eval edit link
+- ✅ Proposal panel empty state → questionnaire CTA; post-submit textarea + edit link; gate list compact CTA
+- ✅ `SCOUT_TARGETS.companyProfileSetup`; generate-proposal journey step 2 retargeted
+- ✅ [`onboarding-entry.ts`](../src/lib/company-profile/onboarding-entry.ts) + store dialog/dismiss actions
 **Test Strategy:** Incognito: dismiss onboarding → upload still works; complete onboarding → proposal readiness shows hasContext; edit profile updates context string.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; `runCompanyOnboardingEntryHarness` wired in dev chain
 **Assigned:** Unassigned  
 **Context/Artifacts:** BDA-284 pre-fill stub; [`load-sample-proposal.ts`](../src/services/load-sample-proposal.ts) — sample tour may skip onboarding via explicit flag later
 

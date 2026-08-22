@@ -12,6 +12,8 @@ export type CompanyProfilePersistedSnapshot = {
   profile: CompanyProfile
   completedAt: string | null
   onboardingStep: string | null
+  /** First-visit prompt dismissed without completing onboarding (BDA-308). */
+  onboardingPromptDismissed: boolean
 }
 
 export type CompanyProfileResumeState = {
@@ -20,12 +22,17 @@ export type CompanyProfileResumeState = {
 }
 
 export type CompanyProfileState = CompanyProfilePersistedSnapshot & {
+  /** Transient — questionnaire dialog open (not persisted). */
+  onboardingDialogOpen: boolean
   saveProfile: (profile: CompanyProfile) => void
   updatePartialProfile: (patch: Partial<CompanyProfile>) => void
   setOnboardingResumeState: (state: CompanyProfileResumeState) => void
   clearCompanyProfile: () => void
   markOnboardingComplete: (profile?: CompanyProfile) => void
   hydrateFromPersisted: (snapshot: CompanyProfilePersistedSnapshot) => void
+  openCompanyOnboardingDialog: () => void
+  closeCompanyOnboardingDialog: () => void
+  dismissOnboardingPrompt: () => void
 }
 
 export function createDefaultCompanyProfileSnapshot(): CompanyProfilePersistedSnapshot {
@@ -33,6 +40,7 @@ export function createDefaultCompanyProfileSnapshot(): CompanyProfilePersistedSn
     profile: createEmptyCompanyProfile(),
     completedAt: null,
     onboardingStep: null,
+    onboardingPromptDismissed: false,
   }
 }
 
@@ -48,6 +56,10 @@ function normalizeOnboardingStep(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
+function normalizeOnboardingPromptDismissed(value: unknown): boolean {
+  return value === true
+}
+
 /** Parse JSON from localStorage into a safe snapshot (BDA-305). */
 export function parseCompanyProfilePersistedSnapshot(
   raw: string | null,
@@ -61,6 +73,7 @@ export function parseCompanyProfilePersistedSnapshot(
       profile: parsePersistedCompanyProfile(parsed.profile),
       completedAt: normalizeCompletedAt(parsed.completedAt),
       onboardingStep: normalizeOnboardingStep(parsed.onboardingStep),
+      onboardingPromptDismissed: normalizeOnboardingPromptDismissed(parsed.onboardingPromptDismissed),
     }
   } catch {
     return defaults
@@ -88,6 +101,7 @@ function pickPersisted(state: CompanyProfileState): CompanyProfilePersistedSnaps
     profile: state.profile,
     completedAt: state.completedAt,
     onboardingStep: state.onboardingStep,
+    onboardingPromptDismissed: state.onboardingPromptDismissed,
   }
 }
 
@@ -114,6 +128,7 @@ const hydrated = readCompanyProfilePersistedSnapshot()
 
 export const useCompanyProfileStore = create<CompanyProfileState>((set, get) => ({
   ...hydrated,
+  onboardingDialogOpen: false,
 
   saveProfile: (profile) => {
     withPersist(set, get, { profile: parsePersistedCompanyProfile(profile) })
@@ -145,7 +160,9 @@ export const useCompanyProfileStore = create<CompanyProfileState>((set, get) => 
       profile: profile ? parsePersistedCompanyProfile(profile) : state.profile,
       completedAt: new Date().toISOString(),
       onboardingStep: null,
+      onboardingPromptDismissed: false,
     }))
+    set({ onboardingDialogOpen: false })
   },
 
   hydrateFromPersisted: (snapshot) => {
@@ -155,7 +172,22 @@ export const useCompanyProfileStore = create<CompanyProfileState>((set, get) => 
       profile: parsePersistedCompanyProfile(snapshot.profile),
       completedAt: normalizeCompletedAt(snapshot.completedAt),
       onboardingStep: normalizeOnboardingStep(snapshot.onboardingStep),
+      onboardingPromptDismissed: normalizeOnboardingPromptDismissed(snapshot.onboardingPromptDismissed),
+      onboardingDialogOpen: false,
     })
+  },
+
+  openCompanyOnboardingDialog: () => {
+    set({ onboardingDialogOpen: true })
+  },
+
+  closeCompanyOnboardingDialog: () => {
+    set({ onboardingDialogOpen: false })
+  },
+
+  dismissOnboardingPrompt: () => {
+    withPersist(set, get, { onboardingPromptDismissed: true })
+    set({ onboardingDialogOpen: false })
   },
 }))
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useShallow } from 'zustand/react/shallow'
 
 import { ScoutPanel } from '@/components/scout/ScoutPanel'
+import { CompanyOnboardingEntryHost } from '@/components/onboarding/CompanyOnboardingEntryHost'
 import { ScoutJourneyStartConfirmDialog } from '@/components/scout/ScoutJourneyStartConfirmDialog'
 import { ScoutSpotlight } from '@/components/scout/ScoutSpotlight'
 import { ScoutContextProvider, type ScoutContextValue } from '@/components/scout/scout-context'
@@ -275,6 +276,7 @@ export function ScoutProvider({ children }: ScoutProviderProps) {
       {children}
       <ScoutSpotlight />
       <ScoutPanel />
+      <CompanyOnboardingEntryHost />
       <ScoutJourneyStartConfirmDialog
         open={confirmOpen}
         journeyId={pendingJourneyId}

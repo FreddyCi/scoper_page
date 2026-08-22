@@ -1,9 +1,15 @@
 import { AlertTriangleIcon, CheckIcon, CircleIcon } from 'lucide-react'
 
 import type { CanExportProposalProfileResult } from '@/lib/proposal-export-quality'
+import { CompanyProfileSetupPrompt } from '@/components/onboarding/CompanyProfileSetupPrompt'
+import { shouldShowCompanyProfileSetupCta } from '@/lib/company-profile/onboarding-entry'
 import { getProposalContextGateState } from '@/lib/proposal-setup-quality-gates'
 import type { ProposalSetupState } from '@/lib/proposal-readiness'
 import { cn } from '@/lib/utils'
+import {
+  selectHasCompletedOnboarding,
+  useCompanyProfileStore,
+} from '@/store/company-profile-store'
 
 function gateLabels(variant: 'default' | 'compact') {
   return variant === 'compact'
@@ -118,6 +124,8 @@ export function ProposalSetupGateList({
   checklist = 'vertical',
 }: ProposalSetupGateListProps) {
   const contextGate = getProposalContextGateState(companyContext, setup)
+  const hasCompletedOnboarding = useCompanyProfileStore(selectHasCompletedOnboarding)
+  const showProfileSetupCta = shouldShowCompanyProfileSetupCta(hasCompletedOnboarding, companyContext)
 
   const showExportGate = exportGate != null
   const showPackageWarnings = packageWarnings.length > 0
@@ -131,6 +139,10 @@ export function ProposalSetupGateList({
           exportGate={exportGate}
           variant={variant}
         />
+      ) : null}
+
+      {showProfileSetupCta && checklist === 'vertical' ? (
+        <CompanyProfileSetupPrompt variant="compact" />
       ) : null}
 
       {setup.hasContext && !contextGate.ok && contextGate.blockingWarnings.length > 0 ? (

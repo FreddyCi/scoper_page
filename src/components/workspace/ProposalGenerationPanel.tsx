@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
+import { CompanyProfileEditLink } from '@/components/onboarding/CompanyProfileEditLink'
+import { CompanyProfileSetupPrompt } from '@/components/onboarding/CompanyProfileSetupPrompt'
 import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateList'
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import {
@@ -34,6 +36,11 @@ import {
   useProposalSetupState,
   useSessionStore,
 } from '@/store/session-store'
+import {
+  selectHasCompletedOnboarding,
+  useCompanyProfileStore,
+} from '@/store/company-profile-store'
+import { shouldShowCompanyProfileSetupCta } from '@/lib/company-profile/onboarding-entry'
 
 type ProposalGenerationPanelProps = {
   className?: string
@@ -55,6 +62,8 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
 
   const setup = useProposalSetupState()
   const profile = useProposalRequirementsProfile()
+  const hasCompletedOnboarding = useCompanyProfileStore(selectHasCompletedOnboarding)
+  const showProfileSetupCta = shouldShowCompanyProfileSetupCta(hasCompletedOnboarding, companyContext)
 
   const [buildingProfile, setBuildingProfile] = useState(false)
   const [exportingProposal, setExportingProposal] = useState(false)
@@ -245,20 +254,29 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             </div>
 
             <div className="flex min-w-0 flex-col gap-2">
-              <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
-              <Textarea
-                {...scoutTargetProps(SCOUT_TARGETS.proposalCompanyContext)}
-                id="proposal-company-context"
-                value={companyContext}
-                onChange={(event) => setCompanyContext(event.target.value)}
-                placeholder="Certifications, past performance, team size, geographic coverage…"
-                className="min-h-[7rem] flex-1 resize-y text-sm sm:min-h-[10rem]"
-                disabled={buildingProfile || proposalGenerating}
-              />
-              <p className="text-muted-foreground text-xs">
-                At least {PROPOSAL_CONTEXT_MIN_LENGTH} characters required before building the
-                proposal profile.
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
+                {!showProfileSetupCta ? <CompanyProfileEditLink /> : null}
+              </div>
+              {showProfileSetupCta ? (
+                <CompanyProfileSetupPrompt disabled={buildingProfile || proposalGenerating} />
+              ) : (
+                <>
+                  <Textarea
+                    {...scoutTargetProps(SCOUT_TARGETS.proposalCompanyContext)}
+                    id="proposal-company-context"
+                    value={companyContext}
+                    onChange={(event) => setCompanyContext(event.target.value)}
+                    placeholder="Certifications, past performance, team size, geographic coverage…"
+                    className="min-h-[7rem] flex-1 resize-y text-sm sm:min-h-[10rem]"
+                    disabled={buildingProfile || proposalGenerating}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    At least {PROPOSAL_CONTEXT_MIN_LENGTH} characters required before building the
+                    proposal profile.
+                  </p>
+                </>
+              )}
 
               {profileBuildError ? (
                 <p className="text-destructive text-xs leading-relaxed" role="alert">

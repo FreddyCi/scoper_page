@@ -25,6 +25,7 @@
     "qa:scout": "node scripts/run-scout-qa-static.mjs",
     "qa:v1": "node scripts/run-qa-v1-automation.mjs",
     "prepare:hosting": "node scripts/prepare-static-hosting.mjs",
+    "deploy:scout": "pnpm build && pnpm exec wrangler deploy",
     "lint": "oxlint",
     "preview": "vite preview",
     "postinstall": "pnpm copy:assets"
@@ -66,6 +67,14 @@
     "oxlint": "^1.71.0",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.9.3",
-    "vite": "^7.2.2"
+    "vite": "^7.2.2",
+    "wrangler": "^4.14.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "workerd",
+      "esbuild",
+      "sharp"
+    ]
   }
 }

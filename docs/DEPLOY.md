@@ -108,6 +108,36 @@ Add the domain in Pages → **Custom domains**. No special WASM config needed be
 
 ---
 
+## Cloudflare Workers (`scout`)
+
+Use the **`scout` Worker** for the full RFP app (e.g. `scout.myscoper.app`). Keep **`myscoper.app`** on the separate Pages splash project.
+
+### Deploy
+
+```bash
+pnpm install
+npx wrangler login    # once
+pnpm deploy:scout     # build dist/ + wrangler deploy
+```
+
+`wrangler.jsonc` serves `dist/` with SPA fallback (`not_found_handling: single-page-application`). `public/_headers` is copied into `dist/` on build for COOP/COEP and WASM MIME types.
+
+### Custom domain
+
+In Cloudflare → **Workers & Pages** → **scout** → **Settings** → **Domains & Routes**, add `scout.myscoper.app` (proxied). Or ask the Cloudflare agent to create a proxied CNAME:
+
+| Type | Name | Content |
+|------|------|---------|
+| CNAME | `scout` | `scout.<account>.workers.dev` (or value shown in dashboard) |
+
+Verify after deploy:
+
+```bash
+DEPLOY_URL=https://scout.myscoper.app pnpm verify:deploy
+```
+
+---
+
 ## MIME types (all hosts)
 
 LiteParse and DuckDB **fail to instantiate** if `.wasm` is served as `text/plain`.

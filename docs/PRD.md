@@ -3,7 +3,7 @@
 
 **Author:** Scoper Page team  
 **Date:** 2026-07-27  
-**Version:** v1.3  
+**Version:** v1.4  
 **Status:** Draft  
 
 **Related plan:** [browser_doc_agent_demo_9dbcbc83.plan.md](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
@@ -47,6 +47,7 @@ Browser Doc Agent Demo is a **standalone, browser-only** web application that le
 * **RFP compliance matrix + CSV** — heuristic shall/must extract on baseline blocks; editable per-bidder scores; matrix CSV with instructions preamble ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
 * **Instructions card** — due date, Q&A deadline, page limits, and volume headings on evaluation/proposal panels with citations ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
 * **Stamp takeoff list + CSV** — doc-wide window-stamp counts (page, color, voice note); jump-to-mark from split view ([`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md))
+* **Scoper Scout guided onboarding** — three spotlight journeys (evaluate RFP, generate proposal, mark/takeoff) with bundled samples, resume state, and company profile questionnaire ([`plans/scoper_scout.md`](plans/scoper_scout.md), [`TASK_BREAKDOWN_SCOPER_SCOUT.md`](TASK_BREAKDOWN_SCOPER_SCOUT.md))
 * IndexedDB session restore for chat KV cache (bitgpu) and workspace state
 * Model picker (Bonsai 1.7B default, 4B optional)
 * Voice input on composer (defer post-MVP)
@@ -249,17 +250,29 @@ This PRD **does not** define:
 
 **Trigger:** First visit or new session with no documents  
 
-**Steps:**
+**Paths:**
+
+1. **Default** — WorkspaceLanding (greeting, quick actions, command card)
+2. **Scoper Scout (first visit)** — Optional auto-open Scout panel with journey picker or welcome tour list; dismissible company profile dialog; does not block upload ([`plans/scoper_scout.md`](plans/scoper_scout.md), [`TASK_BREAKDOWN_SCOPER_SCOUT.md`](TASK_BREAKDOWN_SCOPER_SCOUT.md))
+
+**Steps (default path):**
 
 1. Workspace shows WorkspaceLanding (greeting, quick actions, command card)
-2. User attaches files and submits task
+2. User attaches files and submits task **or** starts a Scout journey (sample loaders ingest bundled fixtures)
 3. Parse progress in upload popup / status footer pill
 4. Workspace transitions to Profiles or SplitDocumentView
 5. Chat sidebar streams analysis summary
 
-**Expected outcome:** Clear progression from marketing-style landing to working analysis UI  
+**Scout journey path (optional):**
 
-**Edge cases:** Chat collapsed → command card is sole input; parse failure → inline error on affected file
+1. User picks **Evaluate RFP**, **Generate Proposal**, or **Mark / takeoff** — or dismisses Scout and uploads own files
+2. Bundled samples load without manual upload where the journey provides `load_sample_*` actions
+3. Spotlight highlights setup controls; panel **Do this** runs real qualification, export, or markup actions
+4. Company profile questionnaire may pre-fill responder context for proposal setup (localStorage only)
+
+**Expected outcome:** Clear progression from marketing-style landing to working analysis UI — via upload **or** guided sample tour  
+
+**Edge cases:** Chat collapsed → command card is sole input; parse failure → inline error on affected file; Scout dismissed → header launcher still reopens panel; starting new journey with existing docs → confirm before session reset
 
 ---
 
@@ -279,6 +292,8 @@ This PRD **does not** define:
 2. **As a** user, **I want** to collapse the chat panel, **so that** I get full workspace width for profile comparison.
 3. **As a** user, **I want** to comment on a highlighted block, **so that** I can capture review notes in session.
 4. **As a** user, **I want** Word and Excel support, **so that** I'm not limited to PDF-only workflows.
+5. **As a** first-time visitor, **I want** a guided Scout tour with sample bid packages, **so that** I see qualification, proposal setup, or plan takeoff without uploading my own files first ([`plans/scoper_scout.md`](plans/scoper_scout.md)).
+6. **As a** proposal manager, **I want** a short company profile questionnaire that pre-fills responder context, **so that** proposal readiness passes without pasting boilerplate into a textarea.
 
 ### Could-Have (P2)
 
@@ -561,6 +576,7 @@ type CitationRef = {
 ### 17.2 References
 
 * [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
+* [Scoper Scout plan](plans/scoper_scout.md) · [TASK_BREAKDOWN_SCOPER_SCOUT.md](TASK_BREAKDOWN_SCOPER_SCOUT.md)
 * [bitgpu](https://github.com/stfurkan/bitgpu)
 * [LiteParse browser usage](https://developers.llamaindex.ai/liteparse/guides/browser-usage/)
 * [LiteParse visual citations](https://developers.llamaindex.ai/liteparse/guides/visual-citations/)
@@ -572,6 +588,7 @@ type CitationRef = {
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
+| v1.4 | 2026-08-22 | — | §6.3 Scout empty→loaded path; §7 P1 guided onboarding + company profile stories; secondary goal Scoper Scout (BDA-301) |
 | v1.3 | 2026-08-21 | — | Secondary goals + §14: compliance matrix CSV, instructions card, stamp takeoff; §16 non-goals clarified (BDA-275) |
 | v1.2 | 2026-08-21 | — | Secondary goal: hold-Space mark voice notation (BDA-242–258) |
 | v1.1 | 2026-08-03 | — | Secondary goal: PDF Mark drawing markup; viewer + export notes; scoped non-goals for drawing v1 (BDA-241) |
@@ -593,4 +610,5 @@ type CitationRef = {
 - Drawing markup tasks: [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) (BDA-220–241)
 - Mark voice notation: [`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) (BDA-242–258)
 - Compliance matrix, instructions card, stamp takeoff: [`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) (BDA-259–276)
+- Scoper Scout guided onboarding: [`plans/scoper_scout.md`](plans/scoper_scout.md) · [`TASK_BREAKDOWN_SCOPER_SCOUT.md`](TASK_BREAKDOWN_SCOPER_SCOUT.md) (BDA-277–309)
 - Wireframes: [`docs/main.png`](main.png), [`docs/Screenshot 2026-07-27 at 2.49.33 PM.png`](Screenshot%202026-07-27%20at%202.49.33%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.51.53 PM.png`](Screenshot%202026-07-27%20at%202.51.53%E2%80%AFPM.png), [`docs/Screenshot 2026-07-27 at 2.50.23 PM.png`](Screenshot%202026-07-27%20at%202.50.23%E2%80%AFPM.png)

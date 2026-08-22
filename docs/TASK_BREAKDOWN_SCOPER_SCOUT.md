@@ -10,9 +10,9 @@
 
 **Task ID prefix:** `BDA-277`–`BDA-309` (continues after BDA-276 compliance matrix / takeoff)
 
-**Status:** **In progress** — Phase 1–2 foundation and sample loaders largely complete; UI, targets, journeys, company onboarding, and QA remain
+**Status:** **Implemented** — automated QA pass (`pnpm qa:scout`, `pnpm qa:company-profile`); peer manual UI sign-off pending (BDA-302)
 
-**Sequence:** Foundation → sample loaders → Scout UI → target instrumentation → journey wiring → entry points → **company profile onboarding** → QA/docs.
+**Sequence:** Foundation → sample loaders → Scout UI → target instrumentation → journey wiring → entry points → company profile onboarding → QA/docs ✅ (manual checklist pending).
 
 **Explicit non-goals (v1):** Server analytics; Driver.js / third-party tour libs; full share-pack demo import for Journey A (optional v1.1); Tauri-only Scout; translating get_scoper `scout-chat`; LLM-driven tour narration; i18n; **cloud-synced company profile / auth account** (localStorage only in v1).
 
@@ -732,16 +732,17 @@ flowchart TD
 ### **ID:** BDA-301
 
 **Title:** Product spec and PRD links  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-294, BDA-295, BDA-296, BDA-308  
 **Priority:** Medium  
 **Description:** Create [`docs/plans/scoper_scout.md`](plans/scoper_scout.md) (journeys, copy, naming, non-goals). Update [PRD.md](PRD.md) §6.3 Empty → Loaded + §7 P1 user story for guided onboarding. Link from [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) Related documents and [ARCHITECTURE.md](ARCHITECTURE.md). Update cursor plan todo statuses when phases complete.  
 **Completed Changes:**
-- 🔄 plans/scoper_scout.md
-- 🔄 PRD + TASK_BREAKDOWN + ARCHITECTURE links
+- ✅ [`plans/scoper_scout.md`](plans/scoper_scout.md) — journeys, naming, copy guidelines, architecture table, non-goals, QA commands
+- ✅ [PRD.md](PRD.md) v1.4 — §6.3 Scout path, §7 P1 stories (guided tour + company profile), §2 secondary goal, references
+- ✅ [TASK_BREAKDOWN.md](TASK_BREAKDOWN.md) + [ARCHITECTURE.md](ARCHITECTURE.md) cross-links; breakdown status → Implemented (manual QA pending)
 **Test Strategy:** Docs review only.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ Docs review complete
 **Assigned:** Unassigned  
 **Context/Artifacts:** Plan § Docs and QA
 
@@ -868,5 +869,6 @@ flowchart TD
 
 | Version | Date | Notes |
 |---------|------|-------|
+| v1.1 | 2026-08-22 | BDA-277–301 implemented; `plans/scoper_scout.md`; PRD v1.4 links; manual QA (BDA-302) pending |
 | v1.0 | 2026-08-21 | Initial atomic breakdown BDA-277–302 from scoper_scout onboarding plan |
 | v1.1 | 2026-08-21 | Phase 8 company profile onboarding BDA-303–309 (shadcn Questionnaire) |

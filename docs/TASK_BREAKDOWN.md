@@ -1079,7 +1079,8 @@ flowchart LR
 - [TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) — PDF drawing markup / Mark mode (BDA-220–241)
 - [TASK_BREAKDOWN_MARK_VOICE_NOTATION.md](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md) — Mark voice notation / hold Space dictation (BDA-242–258)
 - [TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md) — Shall matrix, instructions card, stamp takeoff (BDA-259–276; **Implemented** — peer manual UI pending)
-- [TASK_BREAKDOWN_SCOPER_SCOUT.md](TASK_BREAKDOWN_SCOPER_SCOUT.md) — Scoper Scout onboarding / guided journeys (BDA-277–309; **In progress**)
+- [plans/scoper_scout.md](plans/scoper_scout.md) — Scoper Scout product spec (journeys, copy, non-goals)
+- [TASK_BREAKDOWN_SCOPER_SCOUT.md](TASK_BREAKDOWN_SCOPER_SCOUT.md) — Scoper Scout implementation (BDA-277–309; **Implemented** — peer manual UI pending)
 - [Implementation plan](/Users/christopherkruger/.cursor/plans/browser_doc_agent_demo_9dbcbc83.plan.md)
 - Wireframes: [`docs/main.png`](main.png), Screenshot refs in `docs/`
 
@@ -1087,6 +1088,7 @@ flowchart LR
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.1 | 2026-08-22 | BDA-301: `plans/scoper_scout.md`; Scout links in PRD §6.3 / §7 P1; TASK_BREAKDOWN_SCOPER_SCOUT Implemented (manual QA pending) |
 | v2.0 | 2026-08-21 | Link TASK_BREAKDOWN_SCOPER_SCOUT.md (BDA-277–302 Scoper Scout onboarding) |
 | v1.9 | 2026-08-21 | BDA-276: compliance matrix / takeoff breakdown Implemented (automated QA pass) |
 | v1.8 | 2026-08-21 | BDA-275: PRD §16 + ARCHITECTURE links for compliance matrix / takeoff breakdown |

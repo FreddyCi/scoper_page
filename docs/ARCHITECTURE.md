@@ -68,13 +68,16 @@ flowchart TB
 3. **Citations** — Criteria, flags, and chat tool results emit `CitationRef` objects. `focusCitation()` drives split view: OCR text pane + PDF.js original with bbox highlight.
 4. **Chat** — User messages go through ECP-governed `find_clause` (and future tools). bitgpu streams Bonsai 1.7B from jsDelivr; weights cached in Cache Storage (`scoper-model-v1`).
 5. **Voice input (optional)** — Mic toggle in the chat composer captures audio locally (`getUserMedia`), resamples to 16 kHz chunks, and transcribes in `whisper.worker` via Transformers.js (WebGPU with WASM fallback). Partial text merges into the **composer draft only**; the user reviews and taps **Send** — same `sendChatPrompt` path as typed chat. Whisper weights load lazily on first mic use; stopping voice or sending chat can `dispose` the Whisper worker to avoid WebGPU contention with Scoper.
-6. **Comments** — Block-level review notes stored in DuckDB `comments` table for the session.
+6. **Scoper Scout (optional)** — First visit may auto-open a workspace-column panel with three guided journeys. Spotlight targets (`data-scout-target`) highlight setup controls; **Do this** actions call the same services as manual UI (qualify, export CSV, build proposal profile, mark/takeoff). Tour state persists in `localStorage` (`scoper.scout.v1`); company profile onboarding persists separately (`scoper.company-profile.v1`). See [`plans/scoper_scout.md`](plans/scoper_scout.md).
+7. **Comments** — Block-level review notes stored in DuckDB `comments` table for the session.
 
 ## Key modules
 
 | Area | Path |
 |------|------|
 | Session / mode | `src/store/session-store.ts` |
+| Scout onboarding | `src/store/scout-store.ts`, `src/lib/scout/`, `src/components/scout/` |
+| Company profile | `src/store/company-profile-store.ts`, `src/lib/company-profile/` |
 | Ingest | `src/services/ingest-router.ts`, `*-ingest.ts` |
 | RFP profiles | `src/services/build-rfp-profiles.ts` |
 | Scope creep | `src/services/compare-scope.ts` |
@@ -100,6 +103,7 @@ After first load:
 - Chat voice (Whisper WebGPU): [`TASK_BREAKDOWN_CHAT_VOICE.md`](TASK_BREAKDOWN_CHAT_VOICE.md)
 - Drawing PDF markup + mark voice notation: [`TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md`](TASK_BREAKDOWN_DRAWING_PDF_MARKUP.md) · [`TASK_BREAKDOWN_MARK_VOICE_NOTATION.md`](TASK_BREAKDOWN_MARK_VOICE_NOTATION.md)
 - Compliance matrix, instructions card, stamp takeoff: [`TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md`](TASK_BREAKDOWN_COMPLIANCE_MATRIX_TAKEOFF.md)
+- Scoper Scout guided onboarding: [`plans/scoper_scout.md`](plans/scoper_scout.md) · [`TASK_BREAKDOWN_SCOPER_SCOUT.md`](TASK_BREAKDOWN_SCOPER_SCOUT.md)
 - Proposal sectional UCW + analyze→propose loop: [`PROPOSAL_CONTEXT_AND_SECTIONS.md`](PROPOSAL_CONTEXT_AND_SECTIONS.md) · [`TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md`](TASK_BREAKDOWN_ANALYZE_PROPOSE_LOOP.md)
 - MVP QA: [`QA_SCRIPT.md`](QA_SCRIPT.md) · [`QA_RESULTS.md`](QA_RESULTS.md)
 - Full v1 QA: [`QA_V1_SCRIPT.md`](QA_V1_SCRIPT.md) · [`QA_V1_RESULTS.md`](QA_V1_RESULTS.md)

@@ -569,17 +569,17 @@ flowchart TD
 ### **ID:** BDA-304
 
 **Title:** Company profile schema and questionnaire items  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-303  
 **Priority:** Critical  
 **Description:** New [`src/lib/company-profile/schema.ts`](../src/lib/company-profile/schema.ts) + [`questionnaire-items.ts`](../src/lib/company-profile/questionnaire-items.ts): typed `CompanyProfile` (legal name, trade/discipline, service geography, headcount band, certifications, insurance limits, bonding, differentiators, optional freeform). Define `items` collection for Questionnaire — mix of **single-choice**, **multiple-choice**, **freeform** (`QuestionnaireInput` alongside choices), and **skippable** optional steps (`QuestionnaireSkip`). Construction wedge copy (sub/GC, fall protection, envelope, etc.). Optional Zod schema for submit validation + custom validation return-to-step pattern from docs.  
 **Completed Changes:**
-- 🔄 `CompanyProfile` type + default empty state
-- 🔄 `COMPANY_ONBOARDING_ITEMS` const (name, required, prompt, description, choices, input)
-- 🔄 `parseCompanyProfileFromFormData` / answer normalizers
+- ✅ [`schema.ts`](../src/lib/company-profile/schema.ts) — `CompanyProfile`, `createEmptyCompanyProfile`, `validateCompanyProfile` (+ `firstInvalidItem` for return-to-step), normalizers, `parseCompanyProfileFromFormData`
+- ✅ [`questionnaire-items.ts`](../src/lib/company-profile/questionnaire-items.ts) — `COMPANY_ONBOARDING_ITEMS` (10 steps: single, multi, freeform+presets, skippable optional); `companyOnboardingQuestionnaireItems()` for Questionnaire `items` prop
+- ✅ [`company-profile-harness.ts`](../src/lib/company-profile/company-profile-harness.ts) — unique names, required reject empty, skipped optional omitted
 **Test Strategy:** Unit harness: each item has unique `name`; required items reject empty submit; skipped optional items omitted from profile.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; `runCompanyProfileHarness` wired in `App.tsx`
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`proposal-readiness.ts`](../src/lib/proposal-readiness.ts) `PROPOSAL_CONTEXT_MIN_LENGTH`; [`proposal-context-quality.ts`](../src/lib/proposal-context-quality.ts)
 

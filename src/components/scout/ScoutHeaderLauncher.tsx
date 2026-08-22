@@ -1,25 +1,23 @@
 import { useState } from 'react'
 import {
   ChevronDownIcon,
-  ClipboardCheckIcon,
-  FileTextIcon,
-  Grid2X2Icon,
   MapPinIcon,
-  type LucideIcon,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
+  BrandDropdownContent,
+  BrandMenuSection,
+  brandMenuItemClass,
+} from '@/components/ui/brand-menu'
+import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { MenuOptionContent } from '@/components/ui/menu-option-content'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { brandAccentStyles } from '@/lib/brand-accent'
 import { listDefinedScoutJourneys } from '@/lib/scout/journeys-map'
 import {
   requestScoutJourneyStart,
@@ -35,10 +33,10 @@ import {
   useScoutStore,
 } from '@/store/scout-store'
 
-const JOURNEY_MENU_ICONS: Record<ScoutJourneyId, LucideIcon> = {
-  evaluate_rfp: ClipboardCheckIcon,
-  generate_proposal: FileTextIcon,
-  mark_takeoff: Grid2X2Icon,
+const JOURNEY_EYEBROW: Record<ScoutJourneyId, string> = {
+  evaluate_rfp: 'Bid qualification',
+  generate_proposal: 'Proposal drafting',
+  mark_takeoff: 'Plan markup',
 }
 
 /** Header compass control — toggle Scout panel, resume tour, optional journey switcher (BDA-297). */
@@ -118,57 +116,82 @@ export function ScoutHeaderLauncher() {
           }
         />
 
-        <DropdownMenuContent align="end" className="w-72">
+        <BrandDropdownContent align="end" sideOffset={8}>
           {activeJourney ? (
-            <>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Current tour</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setPanelOpen(true)}>
+            <BrandMenuSection accent="neutral">
+              <div className="flex flex-col gap-1 p-1.5">
+                <DropdownMenuItem
+                  className={brandMenuItemClass('neutral')}
+                  onClick={() => setPanelOpen(true)}
+                >
                   <MenuOptionContent
                     title="Resume tour"
                     description="Reopen the Scout guide where you left off"
+                    titleClassName={brandAccentStyles('neutral').title}
                   />
                 </DropdownMenuItem>
                 {panelOpen ? (
-                  <DropdownMenuItem onClick={() => setPanelOpen(false)}>
-                    <MenuOptionContent title="Close guide" description="Hide the Scout panel" />
+                  <DropdownMenuItem
+                    className={brandMenuItemClass('neutral')}
+                    onClick={() => setPanelOpen(false)}
+                  >
+                    <MenuOptionContent
+                      title="Close guide"
+                      description="Hide the Scout panel"
+                      titleClassName={brandAccentStyles('neutral').title}
+                    />
                   </DropdownMenuItem>
                 ) : null}
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-            </>
+              </div>
+            </BrandMenuSection>
           ) : panelOpen ? (
-            <>
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Scout welcome</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => setPanelOpen(false)}>
-                  <MenuOptionContent title="Close welcome panel" description="Hide the Scout panel" />
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-            </>
-          ) : null}
-
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Start a tour</DropdownMenuLabel>
-            {journeys.map((journey) => {
-              const Icon = JOURNEY_MENU_ICONS[journey.id]
-              const completed = completedJourneys.includes(journey.id)
-
-              return (
-                <DropdownMenuItem key={journey.id} onClick={() => handleStartJourney(journey.id)}>
-                  <Icon className="text-muted-foreground size-4 shrink-0" />
+            <BrandMenuSection accent="neutral">
+              <div className="flex flex-col gap-1 p-1.5">
+                <DropdownMenuItem
+                  className={brandMenuItemClass('neutral')}
+                  onClick={() => setPanelOpen(false)}
+                >
                   <MenuOptionContent
-                    title={journey.title}
-                    description={
-                      completed ? `${journey.description} · Completed before` : journey.description
-                    }
+                    title="Close welcome panel"
+                    description="Hide the Scout panel"
+                    titleClassName={brandAccentStyles('neutral').title}
                   />
                 </DropdownMenuItem>
-              )
-            })}
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
+              </div>
+            </BrandMenuSection>
+          ) : null}
+
+          {journeys.map((journey) => {
+            const accent = journey.accent
+            const styles = brandAccentStyles(accent)
+            const completed = completedJourneys.includes(journey.id)
+            const description = completed
+              ? `${journey.description} · Completed before`
+              : journey.description
+
+            return (
+              <BrandMenuSection key={journey.id} accent={accent}>
+                <div className="px-3 pt-3 pb-1">
+                  <p className={cn('text-[11px] font-semibold tracking-wide uppercase', styles.title)}>
+                    {JOURNEY_EYEBROW[journey.id]}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1 p-1.5 pt-0">
+                  <DropdownMenuItem
+                    className={brandMenuItemClass(accent, activeJourney === journey.id)}
+                    onClick={() => handleStartJourney(journey.id)}
+                  >
+                    <MenuOptionContent
+                      title={journey.title}
+                      description={description}
+                      titleClassName={styles.title}
+                    />
+                  </DropdownMenuItem>
+                </div>
+              </BrandMenuSection>
+            )
+          })}
+        </BrandDropdownContent>
       </DropdownMenu>
     </div>
   )

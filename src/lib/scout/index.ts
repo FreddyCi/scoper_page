@@ -63,4 +63,9 @@ export { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
 export type { ScoutActionResult, RunScoutActionOptions } from '@/lib/scout/actions'
 export { runScoutAction, ScoutActionDeferredError } from '@/lib/scout/actions'
 export { runScoutActionsHarness } from '@/lib/scout/actions-harness'
+export {
+  scoutActionLabel,
+  scoutStepStatus,
+  SCOUT_ACTION_LABELS,
+} from '@/lib/scout/scout-action-labels'
 export { SCOUT_UI_EVENTS, dispatchScoutUiEvent } from '@/lib/scout/scout-ui-events'

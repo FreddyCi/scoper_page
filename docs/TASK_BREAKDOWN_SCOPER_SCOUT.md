@@ -260,18 +260,20 @@ flowchart TD
 ### **ID:** BDA-286
 
 **Title:** ScoutPanel checklist component  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-277, BDA-279, BDA-280  
 **Priority:** Critical  
 **Description:** [`src/components/scout/ScoutPanel.tsx`](../src/components/scout/ScoutPanel.tsx): collapsible panel (workspace column, fixed width ~320px or bottom sheet on narrow). Shows journey title, step list with done/current/upcoming states, current step body copy, primary **Do this** button (calls `runScoutAction`), secondary Skip step / End tour. Uses [`BrandMenuSection`](../src/components/ui/brand-menu.tsx) styling. Keyboard: Escape closes panel.  
 **Completed Changes:**
-- 🔄 Panel layout + step list UI
-- 🔄 Primary/secondary actions
-- 🔄 Collapse toggle
+- ✅ [`ScoutPanel.tsx`](../src/components/scout/ScoutPanel.tsx) — desktop sidebar (w-80, collapsible) + mobile bottom sheet
+- ✅ Step checklist (done/current/upcoming), BrandMenuSection step body, action error inline
+- ✅ Primary `runScoutAction` + Skip step / End tour; Escape closes panel
+- ✅ [`scout-action-labels.ts`](../src/lib/scout/scout-action-labels.ts) + `runScoutPanelHarness`; mounted in [`AppShell.tsx`](../src/components/layout/AppShell.tsx)
 **Test Strategy:** Storybook-less manual: mount in AppShell stub with mock store; `tsc -b`.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutPanelHarness` validates step status + action labels
+**Assigned:** Completed  
 **Context/Artifacts:** [`ExtractViewHelpButton`](../src/components/workspace/SplitDocumentView.tsx) copy pattern
 
 ---

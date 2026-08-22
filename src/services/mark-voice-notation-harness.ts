@@ -1,3 +1,4 @@
+import { runCommentDraftDictationHarness } from '@/hooks/use-comment-draft-dictation'
 import { runMarkDictationMergeHarness } from '@/hooks/use-mark-dictation'
 import { runSpeechNotesHarness } from '@/lib/speech-notes'
 
@@ -5,4 +6,5 @@ import { runSpeechNotesHarness } from '@/lib/speech-notes'
 export function runMarkVoiceNotationUnitHarnesses(): void {
   runSpeechNotesHarness()
   runMarkDictationMergeHarness()
+  runCommentDraftDictationHarness()
 }

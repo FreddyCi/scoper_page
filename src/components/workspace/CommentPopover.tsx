@@ -6,6 +6,7 @@ import {
   CommentAuthorAvatar,
   ReviewerIdentityFields,
 } from '@/components/workspace/CommentAuthorAvatar'
+import { CommentDraftDictationField } from '@/components/workspace/comment-draft-dictation-field'
 import { useBlockComments } from '@/hooks/use-block-comments'
 import type { BlockRecord } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -284,17 +285,23 @@ export function BlockCommentPopover({
                 reviewerName={reviewerName}
                 onReviewerNameChange={setReviewerName}
               />
-              <textarea
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder={
-                  isMarkdown
-                    ? 'e.g. Add bullet points, clarify wording, expand this section…'
-                    : 'Add a review note for this block…'
-                }
-                rows={3}
-                className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
-              />
+              {isMarkdown ? (
+                <textarea
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  placeholder="e.g. Add bullet points, clarify wording, expand this section…"
+                  rows={3}
+                  className="border-border bg-surface text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none focus-visible:ring-3"
+                />
+              ) : (
+                <CommentDraftDictationField
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  placeholder="Add a review note for this block…"
+                  disabled={saving}
+                  enabled={open}
+                />
+              )}
               {error ? <p className="text-destructive text-xs">{error}</p> : null}
             </div>
           </div>

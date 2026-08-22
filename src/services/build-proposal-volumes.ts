@@ -19,6 +19,8 @@ import {
 } from '@/services/agent-activity-bridge'
 import {
   PROPOSAL_DRAFT_MIN_CHARS,
+  isLikelyPdfFilenameLine,
+  sanitizeProposalDraftMarkdown,
   validateProposalVolumeDraft,
 } from '@/lib/proposal-export-quality'
 import { computeVolumeGenerationProgress } from '@/lib/proposal-volume-section'
@@ -228,11 +230,36 @@ function excerptsForVolume(blocks: BlockRecord[], volume: ProposalVolume): strin
   for (const block of sourceBlocks) {
     const line = block.text.replace(/\s+/g, ' ').trim()
     if (line.length < 40) continue
+    if (isLikelyPdfFilenameLine(line)) continue
     lines.push(line.slice(0, 320))
     if (lines.length >= 4) break
   }
 
   return lines
+}
+
+function scoutDegradedSectionStub(
+  section: ProposalVolumeSection,
+  volume: ProposalVolume,
+  companyContext: string,
+): string {
+  const responder = companyContext.trim().slice(0, 240)
+  const requirements = volume.requirementSummary.trim().slice(0, 320)
+
+  return [
+    `## ${section.title}`,
+    '',
+    `${responder} responds to the solicitation requirements for ${section.title} under the attached master services agreement.`,
+    '',
+    '### Compliance approach',
+    requirements ||
+      'Our team aligns staffing, schedule, quality control, and subcontract coordination to the agreement terms cited in the solicitation.',
+    '',
+    '### Execution',
+    'Field supervision documents daily sign-offs, coordinates with the construction manager, and maintains the close-out records required before final acceptance. Change orders, insurance certificates, and indemnity limits follow the contract framework without exceptions unless noted in writing.',
+    '',
+    'Regenerate this section after WebGPU is available for citation-backed prose tied to retrieved RFP clauses.',
+  ].join('\n')
 }
 
 function stubSectionMarkdown(
@@ -241,10 +268,13 @@ function stubSectionMarkdown(
   excerpts: string[],
   companyContext: string,
 ): string {
-  const excerptBlock =
-    excerpts.length > 0
-      ? excerpts.map((line) => `- ${line}`).join('\n')
-      : '_Draft placeholder — connect the on-device model for full generation._'
+  const usableExcerpts = excerpts.filter((line) => !isLikelyPdfFilenameLine(line))
+
+  if (usableExcerpts.length === 0) {
+    return scoutDegradedSectionStub(section, volume, companyContext)
+  }
+
+  const excerptBlock = usableExcerpts.map((line) => `- ${line}`).join('\n')
 
   return [
     `## ${section.title}`,
@@ -357,6 +387,10 @@ async function generateSectionBody(
     )
   }
 
+  markdown = sanitizeProposalDraftMarkdown(markdown, {
+    knownFilenames: [input.rfpDoc.filename],
+  })
+
   let validation = validateProposalVolumeDraft(markdown, {
     label: input.section.title,
     minChars: PROPOSAL_SECTION_DRAFT_MIN_CHARS,
@@ -415,6 +449,10 @@ async function generateSectionBody(
       })
       markdown = regenerated.markdown
       citations = mergeSectionCitations(citations, regenerated.citations)
+
+      markdown = sanitizeProposalDraftMarkdown(markdown, {
+        knownFilenames: [input.rfpDoc.filename],
+      })
 
       validation = validateProposalVolumeDraft(markdown, {
         label: input.section.title,

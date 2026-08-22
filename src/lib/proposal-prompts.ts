@@ -177,7 +177,7 @@ export function buildSectionUserPrompt(input: SectionPromptInput): string {
       : '',
     `Volume requirements: ${volume.requirementSummary}`,
     `Section to write: ${section.title}`,
-    context.rfpFilename ? `Source document: ${context.rfpFilename}` : '',
+    context.rfpFilename ? 'Source: attached solicitation PDF (do not echo filenames in output).' : '',
     '',
     'Responder company context:',
     context.companyContext.trim(),
@@ -223,7 +223,7 @@ export function buildVolumeUserPrompt(
       ? `Solicitation refs: ${volume.solicitationRefs.join(', ')}`
       : '',
     `Requirements to address: ${volume.requirementSummary}`,
-    context.rfpFilename ? `RFP document: ${context.rfpFilename}` : '',
+    context.rfpFilename ? 'Source: attached solicitation PDF (do not echo filenames in output).' : '',
     '',
     'Responder company context:',
     context.companyContext.trim(),
@@ -304,9 +304,9 @@ export function runProposalPromptsHarness(): void {
   if (
     !parts.user.includes(context.companyContext) ||
     !parts.user.includes('Section L.1') ||
-    !parts.user.includes(context.rfpFilename!)
+    !parts.user.includes('attached solicitation PDF')
   ) {
-    throw new Error('runProposalPromptsHarness: user prompt missing context, refs, or filename')
+    throw new Error('runProposalPromptsHarness: user prompt missing context, refs, or source hint')
   }
 
   if (!combined.includes('---') || !combined.includes(parts.user)) {

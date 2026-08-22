@@ -62,10 +62,44 @@ const TOC_OR_FAKE_SECTION_PATTERNS: { pattern: RegExp; reason: string }[] = [
     reason: 'Body echoes internal volume/section ids from the proposal handoff.',
   },
   {
-    pattern: /\b[A-Z0-9][\w\s.-]{12,}\.pdf\b/,
+    pattern: /\b[A-Z0-9][\w\s.-]{12,}\.pdf\b/i,
     reason: 'Body includes raw source PDF filenames instead of proposal prose.',
   },
 ]
+
+/** Long PDF filenames echoed from prompts or cover pages — stripped before validation. */
+const RAW_PDF_FILENAME_PATTERN = /\b[A-Z0-9][\w\s.-]{12,}\.pdf\b/gi
+
+export type SanitizeProposalDraftOptions = {
+  knownFilenames?: string[]
+}
+
+/**
+ * Remove prompt leaks and raw solicitation filenames from sectional drafts before quality checks.
+ */
+export function sanitizeProposalDraftMarkdown(
+  markdown: string,
+  options: SanitizeProposalDraftOptions = {},
+): string {
+  let result = markdown.replace(/^Source document:\s*.+\.pdf\s*$/gim, '')
+
+  for (const filename of options.knownFilenames ?? []) {
+    const trimmed = filename.trim()
+    if (!trimmed) continue
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    result = result.replace(new RegExp(escaped, 'gi'), 'the solicitation document')
+  }
+
+  result = result.replace(RAW_PDF_FILENAME_PATTERN, 'the solicitation document')
+  return result.replace(/\n{3,}/g, '\n\n').trim()
+}
+
+export function isLikelyPdfFilenameLine(line: string): boolean {
+  const trimmed = line.trim()
+  if (!trimmed) return false
+  if (/^source document:\s*.+\.pdf/i.test(trimmed)) return true
+  return RAW_PDF_FILENAME_PATTERN.test(trimmed)
+}
 
 export type ValidateProposalDraftOptions = {
   /** Volume or section title for clearer error messages. */
@@ -256,6 +290,21 @@ export function runProposalExportQualityHarness(): void {
   const handoffLeak = validateProposalVolumeDraft(HARNESS_BAD_HANDOFF_LEAK)
   if (handoffLeak.ok) {
     throw new Error('runProposalExportQualityHarness: handoff id leak should fail')
+  }
+
+  const scoutFilename =
+    'DPR CONSTRUCTION - Fully Executed MSA - Pro-Bel Enterprises - 2025.pdf'
+  const filenameLeak = `## Scope of Work\n\nPer ${scoutFilename}, Pro-Bel will coordinate deliverables.\n\n${'Substantive alignment text for the master services agreement scope section. '.repeat(4)}`
+  const sanitizedFilename = sanitizeProposalDraftMarkdown(filenameLeak, {
+    knownFilenames: [scoutFilename],
+  })
+  const filenameAfterSanitize = validateProposalVolumeDraft(sanitizedFilename, {
+    label: 'Scope of Work',
+  })
+  if (!filenameAfterSanitize.ok) {
+    throw new Error(
+      `runProposalExportQualityHarness: filename sanitize should pass: ${filenameAfterSanitize.reasons.join('; ')}`,
+    )
   }
 
   const stub = validateProposalVolumeDraft(HARNESS_BAD_STUB)

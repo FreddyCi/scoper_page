@@ -57,6 +57,7 @@ import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
 import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
+import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
   return import.meta.env.VITE_RUN_CREEP_HARNESS === 'true'
@@ -80,6 +81,7 @@ function App() {
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
       runScoutStoreHarness()
+      runScoutRegistryHarness()
       runProposalUnitHarnesses()
       runComplianceMatrixUnitHarnesses()
       runDrawingMarkupUnitHarnesses()

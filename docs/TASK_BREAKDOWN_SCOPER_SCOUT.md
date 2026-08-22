@@ -80,18 +80,20 @@ flowchart TD
 ### **ID:** BDA-278
 
 **Title:** Scout types and target ID registry  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-277  
 **Priority:** Critical  
 **Description:** New [`src/lib/scout/types.ts`](../src/lib/scout/types.ts): `ScoutStep` (`id`, `title`, `body`, `target?`, `action?`, `accent`), `ScoutJourney`, `ScoutActionId` union, `ScoutTargetId` const object (all `data-scout-target` string literals). Single source of truth exported for instrumentation + journeys + QA script.  
 **Completed Changes:**
-- 🔄 Define step/journey shapes
-- 🔄 Export `SCOUT_TARGETS` registry (landing, evalPanel, matrixCsv, markToolbar, takeoffPill, etc.)
-- 🔄 Barrel export from [`src/lib/scout/index.ts`](../src/lib/scout/index.ts) if used elsewhere
+- ✅ [`types.ts`](../src/lib/scout/types.ts) — `ScoutStep`, `ScoutJourney`, `ScoutActionId`, `SCOUT_JOURNEY_ACCENTS`, `assertValidScoutSteps`
+- ✅ [`targets.ts`](../src/lib/scout/targets.ts) — `SCOUT_TARGETS` (22 anchors), `scoutTargetProps`, `queryScoutTarget`
+- ✅ [`registry-harness.ts`](../src/lib/scout/registry-harness.ts) — `runScoutRegistryHarness` wired in App dev chain
+- ✅ Barrel export from [`index.ts`](../src/lib/scout/index.ts)
 **Test Strategy:** `pnpm exec tsc -b`; QA script can import registry and assert DOM files reference each id.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutRegistryHarness` validates unique targets/actions/journeys + step shape
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Spotlight contract; [`brand-accent.ts`](../src/lib/brand-accent.ts)
 
 ---

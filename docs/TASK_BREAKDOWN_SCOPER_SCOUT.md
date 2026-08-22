@@ -281,18 +281,20 @@ flowchart TD
 ### **ID:** BDA-287
 
 **Title:** ScoutProvider and step engine  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-281, BDA-282, BDA-286  
 **Priority:** Critical  
 **Description:** [`src/components/scout/ScoutProvider.tsx`](../src/components/scout/ScoutProvider.tsx): subscribe to `useSessionStore` + scout store; on session change re-evaluate `isStepComplete` and auto-advance; mount `ScoutPanel` + `ScoutSpotlight`; expose context for header launcher. Handle `awaitingManualContinue` for welcome/done steps. Integrate in [`App.tsx`](../src/App.tsx) or [`AppShell.tsx`](../src/components/layout/AppShell.tsx) inside workspace column wrapper.  
 **Completed Changes:**
-- 🔄 Session subscription + auto-advance
-- 🔄 Provider context
-- 🔄 AppShell integration point
+- ✅ [`ScoutProvider.tsx`](../src/components/scout/ScoutProvider.tsx) — session subscription, auto-advance via `shouldAutoAdvanceScoutStep`, completion context (stamps/takeoff events)
+- ✅ [`scout-context.tsx`](../src/components/scout/scout-context.tsx) — `useScout()` for header launcher (BDA-297)
+- ✅ [`ScoutSpotlight.tsx`](../src/components/scout/ScoutSpotlight.tsx) — minimal cutout overlay (BDA-288 base)
+- ✅ [`scout-step-engine.ts`](../src/lib/scout/scout-step-engine.ts) + harness; `ScoutProvider` wraps workspace in AppShell
 **Test Strategy:** Dev: start journey → complete predicates fire → step index increments; no infinite loop.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutStepEngineHarness` validates welcome/manual/closed-panel gating + load-sample advance
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Architecture flowchart
 
 ---

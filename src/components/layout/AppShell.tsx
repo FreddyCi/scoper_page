@@ -7,7 +7,7 @@ import {
   shellPanelMinWidthClass,
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
-import { ScoutPanel } from '@/components/scout/ScoutPanel'
+import { ScoutProvider } from '@/components/scout/ScoutProvider'
 import { ShareWorkspaceSheet } from '@/components/layout/ShareWorkspaceSheet'
 import { ProposalSetupFooterChecklist } from '@/components/layout/ProposalSetupFooterChecklist'
 import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
@@ -85,32 +85,33 @@ export function AppShell({ children }: AppShellProps) {
                 )}
               >
                 <UploadQueueProvider>
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-14">
-                    {children ?? <WorkspaceContent />}
-                  </div>
-                  <ScoutPanel />
+                  <ScoutProvider>
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-14">
+                      {children ?? <WorkspaceContent />}
+                    </div>
 
-                  <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-transparent px-[var(--spacing-panel)] pt-1 pb-3 text-xs text-subtle-foreground">
-                    <div className="pointer-events-auto justify-self-start">
-                      <UploadFab />
-                    </div>
-                    <div className="pointer-events-auto justify-self-center">
-                      <ProposalSetupFooterChecklist />
-                    </div>
-                    <div className="pointer-events-auto flex justify-self-end items-center gap-1">
-                      <ShareWorkspaceSheet />
-                      <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={!hasSessionContent}
-                      className="text-subtle-foreground hover:text-foreground pointer-events-auto h-7 px-2 text-xs font-normal"
-                      onClick={() => resetSession()}
-                    >
-                      Clear workspace
-                    </Button>
-                    </div>
-                  </footer>
+                    <footer className="pointer-events-none absolute inset-x-0 bottom-0 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-2 bg-transparent px-[var(--spacing-panel)] pt-1 pb-3 text-xs text-subtle-foreground">
+                      <div className="pointer-events-auto justify-self-start">
+                        <UploadFab />
+                      </div>
+                      <div className="pointer-events-auto justify-self-center">
+                        <ProposalSetupFooterChecklist />
+                      </div>
+                      <div className="pointer-events-auto flex justify-self-end items-center gap-1">
+                        <ShareWorkspaceSheet />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={!hasSessionContent}
+                          className="text-subtle-foreground hover:text-foreground pointer-events-auto h-7 px-2 text-xs font-normal"
+                          onClick={() => resetSession()}
+                        >
+                          Clear workspace
+                        </Button>
+                      </div>
+                    </footer>
+                  </ScoutProvider>
                 </UploadQueueProvider>
               </section>
 

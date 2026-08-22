@@ -104,14 +104,6 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
       const result = await runScoutAction(actionId)
       if (!result.ok) {
         setActionError(result.error ?? 'Action failed')
-        return
-      }
-      if (
-        actionId !== 'continue' &&
-        actionId !== 'complete_journey' &&
-        !currentStep.manualContinue
-      ) {
-        advanceStep()
       }
     } catch (error) {
       setActionError(error instanceof Error ? error.message : 'Action failed')

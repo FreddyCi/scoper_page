@@ -59,6 +59,7 @@ export {
   scoutStepKey,
 } from '@/lib/scout/completion'
 export { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
+export { runScoutStepEngineHarness, shouldAutoAdvanceScoutStep } from '@/lib/scout/scout-step-engine'
 
 export type { ScoutActionResult, RunScoutActionOptions } from '@/lib/scout/actions'
 export { runScoutAction, ScoutActionDeferredError } from '@/lib/scout/actions'

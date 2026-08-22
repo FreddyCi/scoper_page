@@ -1,20 +1,26 @@
 import { evaluateRfpJourney } from '@/lib/scout/journeys/evaluate-rfp'
+import { generateProposalJourney } from '@/lib/scout/journeys/generate-proposal'
+import { markTakeoffJourney } from '@/lib/scout/journeys/mark-takeoff'
 import type { ScoutJourney, ScoutJourneyId } from '@/lib/scout/types'
+import { SCOUT_JOURNEY_ACCENTS } from '@/lib/scout/types'
 
-const SCOUT_JOURNEYS: Partial<Record<ScoutJourneyId, ScoutJourney>> = {
+const SCOUT_JOURNEYS: Record<ScoutJourneyId, ScoutJourney> = {
   evaluate_rfp: evaluateRfpJourney,
+  generate_proposal: generateProposalJourney,
+  mark_takeoff: markTakeoffJourney,
 }
 
 /** Resolve a journey definition by id (BDA-279+). */
 export function getScoutJourney(journeyId: ScoutJourneyId): ScoutJourney {
-  const journey = SCOUT_JOURNEYS[journeyId]
-  if (!journey) {
-    throw new Error(`getScoutJourney: journey "${journeyId}" is not defined yet`)
-  }
-  return journey
+  return SCOUT_JOURNEYS[journeyId]
 }
 
-/** Registered journeys for harness iteration. */
+/** All registered journeys for harness iteration. */
 export function listDefinedScoutJourneys(): ScoutJourney[] {
-  return Object.values(SCOUT_JOURNEYS).filter((journey): journey is ScoutJourney => journey != null)
+  return Object.values(SCOUT_JOURNEYS)
+}
+
+/** Expected accent for a journey id (harness helper). */
+export function expectedScoutJourneyAccent(journeyId: ScoutJourneyId): string {
+  return SCOUT_JOURNEY_ACCENTS[journeyId]
 }

@@ -29,7 +29,20 @@ export { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
 export {
   evaluateRfpJourney,
   EVALUATE_RFP_JOURNEY_STEP_COUNT,
+  generateProposalJourney,
+  GENERATE_PROPOSAL_JOURNEY_STEP_COUNT,
+  markTakeoffJourney,
+  MARK_TAKEOFF_JOURNEY_STEP_COUNT,
 } from '@/lib/scout/journeys'
 
-export { getScoutJourney, listDefinedScoutJourneys } from '@/lib/scout/journeys-map'
-export { runEvaluateRfpJourneyHarness } from '@/lib/scout/journeys-harness'
+export {
+  getScoutJourney,
+  listDefinedScoutJourneys,
+  expectedScoutJourneyAccent,
+} from '@/lib/scout/journeys-map'
+export {
+  runEvaluateRfpJourneyHarness,
+  runGenerateProposalJourneyHarness,
+  runMarkTakeoffJourneyHarness,
+  runScoutJourneysHarness,
+} from '@/lib/scout/journeys-harness'

@@ -122,18 +122,20 @@ flowchart TD
 ### **ID:** BDA-280
 
 **Title:** Proposal and mark journey definitions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-278  
 **Priority:** Critical  
-**Description:** [`src/lib/scout/journeys/generate-proposal.ts`](../src/lib/scout/journeys/generate-proposal.ts) — 6 steps (load sample, setup panel, build requirements profile, generate one volume, export markdown, done). [`src/lib/scout/journeys/mark-takeoff.ts`](../src/lib/scout/journeys/mark-takeoff.ts) — 7 steps (load drawing, mark mode, place/view stamps, takeoff panel, jump to mark, export takeoff CSV, done). Register in journeys index + [`src/lib/scout/journeys.ts`](../src/lib/scout/journeys.ts) map by `ScoutJourneyId`.  
+**Description:** [`src/lib/scout/journeys/generate-proposal.ts`](../src/lib/scout/journeys/generate-proposal.ts) — 6 steps (load sample, setup panel, build requirements profile, generate one volume, export markdown, done). [`src/lib/scout/journeys/mark-takeoff.ts`](../src/lib/scout/journeys/mark-takeoff.ts) — 7 steps (load drawing, mark mode, place/view stamps, takeoff panel, jump to mark, export takeoff CSV, done). Register in journeys index + [`src/lib/scout/journeys-map.ts`](../src/lib/scout/journeys-map.ts) map by `ScoutJourneyId`.  
 **Completed Changes:**
-- 🔄 Proposal journey 6 steps, accent sky
-- 🔄 Mark/takeoff journey 7 steps, accent rose
-- 🔄 `getJourney(id)` helper
+- ✅ [`generate-proposal.ts`](../src/lib/scout/journeys/generate-proposal.ts) — 6 steps, accent `violet`
+- ✅ [`mark-takeoff.ts`](../src/lib/scout/journeys/mark-takeoff.ts) — 7 steps, accent `rose`
+- ✅ [`journeys-map.ts`](../src/lib/scout/journeys-map.ts) — all three journeys registered; `getScoutJourney` no longer partial
+- ✅ `runGenerateProposalJourneyHarness`, `runMarkTakeoffJourneyHarness`, `runScoutJourneysHarness`
 **Test Strategy:** Harness: proposal 6 steps, mark 7 steps; target ids valid.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ `runScoutJourneysHarness` validates all three journeys
+**Assigned:** Completed  
 **Context/Artifacts:** Plan § Journey B/C; [`ProposalGenerationPanel.tsx`](../src/components/workspace/ProposalGenerationPanel.tsx); [`drawing-takeoff-panel.tsx`](../src/components/workspace/drawing-takeoff-panel.tsx)
 
 ---

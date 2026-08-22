@@ -693,16 +693,18 @@ flowchart TD
 ### **ID:** BDA-299
 
 **Title:** Scout dev harnesses  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-281, BDA-283, BDA-284, BDA-285  
 **Priority:** High  
 **Description:** [`src/services/scout-dev-harnesses.ts`](../src/services/scout-dev-harnesses.ts): store round-trip, completion predicates matrix, journey registry integrity, sample loader smoke (mock fetch where needed). Chain in [`App.tsx`](../src/App.tsx) dev harness block after existing QA chains.  
 **Completed Changes:**
-- 🔄 Harness functions + throws on mismatch
-- 🔄 App.tsx wiring
+- ✅ [`scout-dev-harnesses.ts`](../src/services/scout-dev-harnesses.ts) — `runScoutUnitHarnesses`, `runScoutAsyncUnitHarnesses`, `runScoutSampleLoaderSmokeHarness`, `runScoutDevHarnesses`
+- ✅ Chains store, registry, journeys, completion, panel/spotlight/session/step engine, launcher, first visit, actions, journey wiring
+- ✅ Sample loader smoke — journey `load-sample` action registry + mock fetch + bundled `/sample/` fetch
+- ✅ App.tsx consolidated to two Scout harness calls
 **Test Strategy:** `pnpm dev` console — no `[dev-harness]` throw from scout chain.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; dev chain uses `runScoutUnitHarnesses` + `runScoutAsyncUnitHarnesses`
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`compliance-matrix-dev-harnesses.ts`](../src/services/compliance-matrix-dev-harnesses.ts) pattern
 

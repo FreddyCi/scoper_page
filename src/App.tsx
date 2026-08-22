@@ -59,23 +59,14 @@ import { runExportDocumentMarkdownHarness } from '@/services/export-document-mar
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
-import { runScoutStoreHarness, subscribeScoutStorageSync } from '@/store/scout-store'
+import { subscribeScoutStorageSync } from '@/store/scout-store'
 import { subscribeCompanyProfileStorageSync } from '@/store/company-profile-store'
-import { runScoutRegistryHarness } from '@/lib/scout/registry-harness'
-import { runScoutSessionGuardHarness } from '@/lib/scout/session-guard'
-import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry'
-import { runScoutPanelHarness } from '@/components/scout/ScoutPanel'
-import { runScoutStepEngineHarness } from '@/lib/scout/scout-step-engine'
-import { runScoutActionsHarness } from '@/lib/scout/actions-harness'
-import { runScoutEvaluateRfpJourneyHarness } from '@/lib/scout/evaluate-rfp-journey-harness'
-import { runScoutGenerateProposalJourneyHarness } from '@/lib/scout/generate-proposal-journey-harness'
-import { runScoutFirstVisitHarness } from '@/lib/scout/scout-first-visit'
-import { runScoutHeaderLauncherHarness } from '@/lib/scout/scout-journey-start-bridge'
-import { runScoutMarkTakeoffJourneyHarness } from '@/lib/scout/mark-takeoff-journey-harness'
+import {
+  runScoutAsyncUnitHarnesses,
+  runScoutUnitHarnesses,
+} from '@/services/scout-dev-harnesses'
 import { runCompanyProfileUnitHarnesses } from '@/lib/company-profile/company-profile-dev-harnesses'
 import { runQuestionnaireHarness } from '@/components/ui/questionnaire-harness'
-import { runScoutCompletionHarness } from '@/lib/scout/completion-harness'
-import { runScoutJourneysHarness } from '@/lib/scout/journeys-harness'
 
 function shouldRunLegacyCreepHarnesses(): boolean {
   return import.meta.env.VITE_RUN_CREEP_HARNESS === 'true'
@@ -102,20 +93,8 @@ function App() {
       runScoperDevToolsHarness()
       await runEcpEnvironmentHarness()
       runSessionStoreHarness()
-      runScoutStoreHarness()
-      runScoutRegistryHarness()
-      runScoutJourneysHarness()
-      runScoutCompletionHarness()
-      runScoutPanelHarness()
-      runScoutSpotlightGeometryHarness()
-      runScoutSessionGuardHarness()
-      runScoutStepEngineHarness()
-      await runScoutActionsHarness()
-      await runScoutEvaluateRfpJourneyHarness()
-      await runScoutGenerateProposalJourneyHarness()
-      await runScoutMarkTakeoffJourneyHarness()
-      runScoutHeaderLauncherHarness()
-      runScoutFirstVisitHarness()
+      runScoutUnitHarnesses()
+      await runScoutAsyncUnitHarnesses()
       runQuestionnaireHarness()
       runCompanyProfileUnitHarnesses()
       runProposalUnitHarnesses()

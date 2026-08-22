@@ -3,6 +3,8 @@
 interface ImportMetaEnv {
   /** On-device KV context window: 4096 or 8192 (default 8192). */
   readonly VITE_SCOPER_MAX_SEQ_LEN?: string
+  /** Override DuckDB WASM URL (scout Worker deploy — file exceeds 25 MiB limit). */
+  readonly VITE_DUCKDB_WASM_URL?: string
 }
 
 interface ImportMeta {

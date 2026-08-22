@@ -10,7 +10,7 @@ import type {
 import { DUCKDB_MIGRATION_STATEMENTS, DUCKDB_SCHEMA_STATEMENTS } from '@/lib/duckdb-schema'
 import type { BlockRecord, DocumentMeta } from '@/lib/types'
 
-const WASM_URL = '/duckdb/duckdb-eh.wasm'
+const WASM_URL = import.meta.env.VITE_DUCKDB_WASM_URL ?? '/duckdb/duckdb-eh.wasm'
 const EH_WORKER_URL = '/duckdb/duckdb-browser-eh.worker.js'
 
 let db: AsyncDuckDB | null = null

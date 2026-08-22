@@ -1,0 +1,24 @@
+# duckdb-eh.wasm is ~34 MiB (Workers limit 25 MiB). Loaded via VITE_DUCKDB_WASM_URL in scout mode.
+duckdb/duckdb-eh.wasm
+
+# Pages SPA fallback — Workers uses wrangler.jsonc not_found_handling instead.
+_redirects
+
+# macOS metadata — never deploy.
+.DS_Store
+**/.DS_Store
+
+# Legacy / harness corpus — Scout tours use a pruned subset (see scout-sample-manifest.mjs).
+sample/files/Model-RfP-Final_0.pdf
+sample/plan-windows-sample.pdf
+sample/rfp-it-services.pdf
+sample/bidder-acme-response.pdf
+sample/bidder-contoso-response.pdf
+sample/demo-bidder-response.pdf
+sample/minimal.pdf
+sample/minimal.docx
+sample/minimal.xlsx
+sample/scanned.pdf
+sample/ocr-test.png
+sample/files/bidder_a_vertex_grid.pdf
+sample/files/bidder_b_meridian.pdf

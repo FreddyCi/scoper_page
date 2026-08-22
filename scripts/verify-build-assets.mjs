@@ -4,17 +4,40 @@ import { join } from 'node:path'
 const distDir = join(process.cwd(), 'dist')
 const assetsDir = join(distDir, 'assets')
 
-const REQUIRED_PUBLIC_PATHS = [
-  'index.html',
-  '404.html',
-  '_headers',
-  '_redirects',
-  'duckdb/duckdb-eh.wasm',
-  'duckdb/duckdb-browser-eh.worker.js',
-  'liteparse/liteparse_wasm_bg.wasm',
-  'pdfjs/pdf.worker.min.mjs',
-  'tesseract/worker.min.js',
-]
+const scoutDeploy = process.argv.includes('--scout')
+
+const scoutSamplePaths = scoutDeploy
+  ? [
+      'sample/dpr-msa-pro-bel-2025.pdf',
+      'sample/contract-keyword-check.docx',
+      'sample/windows-drawing.pdf',
+      'sample/files/buyer-rubric.md',
+    ]
+  : []
+
+const REQUIRED_PUBLIC_PATHS = scoutDeploy
+  ? [
+      'index.html',
+      '404.html',
+      '_headers',
+      'duckdb/duckdb-browser-eh.worker.js',
+      'liteparse/liteparse_wasm_bg.wasm',
+      'pdfjs/pdf.worker.min.mjs',
+      'tesseract/worker.min.js',
+      '.assetsignore',
+      ...scoutSamplePaths,
+    ]
+  : [
+      'index.html',
+      '404.html',
+      '_headers',
+      '_redirects',
+      'duckdb/duckdb-eh.wasm',
+      'duckdb/duckdb-browser-eh.worker.js',
+      'liteparse/liteparse_wasm_bg.wasm',
+      'pdfjs/pdf.worker.min.mjs',
+      'tesseract/worker.min.js',
+    ]
 
 const REQUIRED_WORKER_CHUNKS = ['duckdb.worker', 'liteparse.worker', 'scoper.worker']
 
@@ -46,4 +69,6 @@ for (const workerChunk of REQUIRED_WORKER_CHUNKS) {
   }
 }
 
-console.log('[verify-build-assets] dist HTML, WASM, public workers, and Vite worker chunks present')
+console.log(
+  `[verify-build-assets] dist HTML, WASM, public workers, and Vite worker chunks present${scoutDeploy ? ' (scout deploy)' : ''}`,
+)

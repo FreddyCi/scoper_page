@@ -1,12 +1,12 @@
-# Native/install scripts: allow only what this browser app needs (pnpm 10+ supply-chain).
+# Native/install scripts: allow only what this browser app needs (pnpm 11+ supply-chain).
 allowBuilds:
   esbuild: true
   tesseract.js: true
+  workerd: true # wrangler deploy / local Workers runtime
   # Optional @huggingface/transformers Node tooling — browser uses onnxruntime-web + WASM in workers.
   onnxruntime-node: false
   protobufjs: false
   sharp: false
-  workerd: false
 
 minimumReleaseAgeExclude:
   - '@llamaindex/liteparse-wasm@2.10.0'

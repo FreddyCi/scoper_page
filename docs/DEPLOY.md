@@ -117,8 +117,16 @@ Use the **`scout` Worker** for the full RFP app (e.g. `scout.myscoper.app`). Kee
 ```bash
 pnpm install
 npx wrangler login    # once
-pnpm deploy:scout     # build dist/ + wrangler deploy
+pnpm deploy:scout     # scout build + wrangler deploy
 ```
+
+`build:scout` uses `.env.scout` and writes `dist/.assetsignore` so Wrangler skips:
+
+- `duckdb/duckdb-eh.wasm` — ~34 MiB (over Workers’ 25 MiB/file limit); loaded from jsDelivr via `VITE_DUCKDB_WASM_URL`.
+- `_redirects` — removed from `dist/` (Workers SPA uses `wrangler.jsonc`).
+- Non-Scout samples — pruned to four Scout tour files (~21 MiB total); see `scripts/scout-sample-manifest.mjs`.
+
+`pnpm-workspace.yaml` must allow `workerd: true` under `allowBuilds`.
 
 `wrangler.jsonc` serves `dist/` with SPA fallback (`not_found_handling: single-page-application`). `public/_headers` is copied into `dist/` on build for COOP/COEP and WASM MIME types.
 

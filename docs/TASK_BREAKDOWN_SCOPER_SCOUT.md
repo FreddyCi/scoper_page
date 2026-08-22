@@ -348,17 +348,22 @@ flowchart TD
 ### **ID:** BDA-290
 
 **Title:** Scout targets — landing and evaluation  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-278, BDA-286  
 **Priority:** High  
 **Description:** Add `data-scout-target={SCOUT_TARGETS.*}` to: [`WorkspaceLanding.tsx`](../src/components/workspace/WorkspaceLanding.tsx) / journey picker, [`QuickActionCards.tsx`](../src/components/workspace/QuickActionCards.tsx), [`UploadFab.tsx`](../src/components/layout/UploadFab.tsx), [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx) (setup + run qualify), [`ResultsProfileGrid.tsx`](../src/components/workspace/ResultsProfileGrid.tsx) (first card / criterion), [`ResultsProfileCard.tsx`](../src/components/workspace/ResultsProfileCard.tsx) if needed.  
 **Completed Changes:**
-- 🔄 Targets for landing + eval journey steps 1–5
-- 🔄 No visual change when Scout inactive
+- ✅ `landingJourneyPicker` — [`WorkspaceLanding.tsx`](../src/components/workspace/WorkspaceLanding.tsx) hero / future picker slot
+- ✅ `quickActions` — [`QuickActionCards.tsx`](../src/components/workspace/QuickActionCards.tsx)
+- ✅ `uploadFab` — [`UploadFab.tsx`](../src/components/layout/UploadFab.tsx)
+- ✅ `evalPanel`, `evalRunQualify` — [`RfpEvaluationPanel.tsx`](../src/components/workspace/RfpEvaluationPanel.tsx)
+- ✅ `resultsProfileGrid`, `firstProfileCriterion` — [`ResultsProfileGrid.tsx`](../src/components/workspace/ResultsProfileGrid.tsx) + [`ResultsProfileCard.tsx`](../src/components/workspace/ResultsProfileCard.tsx) (`markFirstCriterion`)
+- ✅ No visual change when Scout inactive (`data-scout-target` only)
 **Test Strategy:** QA script greps each target id in expected files; manual spotlight hit-test.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ Static grep: all seven BDA-290 targets present in expected component files
+**Assigned:** Completed  
 **Context/Artifacts:** BDA-279 step targets
 
 ---

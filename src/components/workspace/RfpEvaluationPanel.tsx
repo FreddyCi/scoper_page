@@ -19,6 +19,7 @@ import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
 import type { CitationRef } from '@/lib/types'
 import { draftCompanyContext } from '@/lib/draft-company-context'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleBidderResponse } from '@/services/load-sample-documents'
@@ -288,6 +289,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
 
   return (
     <Card
+      {...scoutTargetProps(SCOUT_TARGETS.evalPanel)}
       className={cn(
         'border-border bg-surface shadow-panel flex h-full min-h-0 flex-col gap-0 overflow-hidden rounded-xl border py-0 ring-0',
         className,
@@ -438,6 +440,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
 
           <div className="flex gap-2">
             <Button
+              {...scoutTargetProps(SCOUT_TARGETS.evalRunQualify)}
               type="button"
               size="sm"
               className="min-w-0 flex-1"

@@ -7,6 +7,7 @@ import {
 } from '@/components/workspace/feature-card-styles'
 import { Badge } from '@/components/ui/badge'
 import { UPLOAD_SUGGESTIONS, uploadIntentFromSuggestionId, workspaceModeForSuggestionId } from '@/lib/upload-suggestions'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -18,6 +19,7 @@ export function QuickActionCards({ className }: { className?: string }) {
 
   return (
     <div
+      {...scoutTargetProps(SCOUT_TARGETS.quickActions)}
       className={cn(
         'grid w-full max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3',
         className,

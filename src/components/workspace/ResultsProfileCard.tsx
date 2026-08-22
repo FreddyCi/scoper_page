@@ -2,6 +2,7 @@ import { MapPinIcon } from 'lucide-react'
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { docMentionLabel } from '@/lib/chat-mentions'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef, CriterionStatus, RfpResultsProfile, RfpVerdict } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -38,12 +39,15 @@ function countByStatus(criteria: RfpResultsProfile['criteria']) {
 type ResultsProfileCardProps = {
   profile: RfpResultsProfile
   onCriterionClick?: (citation: CitationRef) => void
+  /** Spotlight anchor for the first criterion row (BDA-290). */
+  markFirstCriterion?: boolean
   className?: string
 }
 
 export function ResultsProfileCard({
   profile,
   onCriterionClick,
+  markFirstCriterion = false,
   className,
 }: ResultsProfileCardProps) {
   const documents = useSessionStore((state) => state.documents)
@@ -105,14 +109,26 @@ export function ResultsProfileCard({
       </CardHeader>
 
       <CardContent className="space-y-2 px-4 py-4">
-        {profile.criteria.map((criterion) => (
-          <CriterionRow
-            key={criterion.id}
-            criterion={criterion}
-            onCriterionClick={onCriterionClick}
-            chatPromptOptions={chatPromptOptions}
-          />
-        ))}
+        {profile.criteria.map((criterion, index) => {
+          const row = (
+            <CriterionRow
+              key={criterion.id}
+              criterion={criterion}
+              onCriterionClick={onCriterionClick}
+              chatPromptOptions={chatPromptOptions}
+            />
+          )
+
+          if (markFirstCriterion && index === 0) {
+            return (
+              <div key={criterion.id} {...scoutTargetProps(SCOUT_TARGETS.firstProfileCriterion)}>
+                {row}
+              </div>
+            )
+          }
+
+          return row
+        })}
       </CardContent>
 
       <CardFooter className="border-border/70 bg-workspace-muted/40 border-t px-4 py-3">

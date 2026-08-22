@@ -4,6 +4,7 @@ import { ClipboardCheckIcon, SparklesIcon, UploadIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ResultsProfileCard } from '@/components/workspace/ResultsProfileCard'
 import type { CitationRef, RfpResultsProfile } from '@/lib/types'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleBidderResponse } from '@/services/load-sample-documents'
@@ -126,7 +127,7 @@ export function ResultsProfileGrid({
 }: ResultsProfileGridProps) {
   if (profiles.length === 0) {
     return (
-      <div className={cn('min-h-0 flex-1', className)}>
+      <div {...scoutTargetProps(SCOUT_TARGETS.resultsProfileGrid)} className={cn('min-h-0 flex-1', className)}>
         <EmptyQualificationState />
       </div>
     )
@@ -141,7 +142,10 @@ export function ResultsProfileGrid({
   }
 
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
+    <div
+      {...scoutTargetProps(SCOUT_TARGETS.resultsProfileGrid)}
+      className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}
+    >
       <header className="flex shrink-0 flex-col gap-1">
         <div className="flex items-center gap-2">
           <ClipboardCheckIcon className="text-muted-foreground size-4" />
@@ -157,11 +161,12 @@ export function ResultsProfileGrid({
 
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto pb-2">
         <div className="flex flex-col gap-4">
-          {profiles.map((profile) => (
+          {profiles.map((profile, profileIndex) => (
             <ResultsProfileCard
               key={profile.profile_id}
               profile={profile}
               onCriterionClick={handleCriterionClick}
+              markFirstCriterion={profileIndex === 0}
               className="w-full min-w-0"
             />
           ))}

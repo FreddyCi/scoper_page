@@ -3,6 +3,7 @@ import { LayersPlusIcon } from 'lucide-react'
 import { useUploadQueueContext } from '@/components/layout/UploadQueueProvider'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -19,6 +20,7 @@ export function UploadFab({ className }: UploadFabProps) {
   return (
     <div className={cn('relative', className)}>
       <Button
+        {...scoutTargetProps(SCOUT_TARGETS.uploadFab)}
         type="button"
         size="icon"
         variant="secondary"

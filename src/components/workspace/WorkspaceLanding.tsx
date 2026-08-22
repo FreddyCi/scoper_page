@@ -1,4 +1,5 @@
 import { QuickActionCards } from '@/components/workspace/QuickActionCards'
+import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 
 type WorkspaceLandingProps = {
@@ -13,7 +14,10 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
         className,
       )}
     >
-      <div className="flex w-full max-w-3xl flex-col items-center text-center">
+      <div
+        {...scoutTargetProps(SCOUT_TARGETS.landingJourneyPicker)}
+        className="flex w-full max-w-3xl flex-col items-center text-center"
+      >
         <p className="text-subtle-foreground text-xs font-medium tracking-[0.2em] uppercase">
           Scoper Doc Agent
         </p>

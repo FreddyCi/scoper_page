@@ -38,8 +38,8 @@ export function CommentDraftDictationField({
 
   return (
     <div className={cn('space-y-1.5', className)}>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-muted-foreground text-[11px] leading-snug">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-muted-foreground min-w-0 flex-1 text-[11px] leading-snug">
           {isDictating
             ? 'Listening… release the mic to add speech to your note'
             : speechNotesAvailable

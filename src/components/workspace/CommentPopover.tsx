@@ -300,6 +300,7 @@ export function BlockCommentPopover({
                   placeholder="Add a review note for this block…"
                   disabled={saving}
                   enabled={open}
+                  className="mt-6"
                 />
               )}
               {error ? <p className="text-destructive text-xs">{error}</p> : null}

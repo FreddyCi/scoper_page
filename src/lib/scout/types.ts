@@ -14,6 +14,7 @@ export type ScoutActionId =
   | 'run_qualification'
   | 'enable_mark_mode'
   | 'open_takeoff_panel'
+  | 'jump_to_takeoff_mark'
   | 'export_matrix_csv'
   | 'export_proposal_markdown'
   | 'export_takeoff_csv'
@@ -34,6 +35,7 @@ export const SCOUT_ACTION_IDS: readonly ScoutActionId[] = [
   'run_qualification',
   'enable_mark_mode',
   'open_takeoff_panel',
+  'jump_to_takeoff_mark',
   'export_matrix_csv',
   'export_proposal_markdown',
   'export_takeoff_csv',

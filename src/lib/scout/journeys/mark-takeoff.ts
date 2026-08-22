@@ -43,8 +43,9 @@ export const markTakeoffJourney: ScoutJourney = {
       id: 'jump-to-mark',
       title: 'Jump to a stamp',
       body:
-        'Click any takeoff row to fly the viewer to that page with the mark selected — verify counts against the plan before you export.',
+        'Click any takeoff row to fly the viewer to that page with the mark selected — or use the button below to jump to the first stamp automatically.',
       target: SCOUT_TARGETS.takeoffPanel,
+      action: 'jump_to_takeoff_mark',
     },
     {
       id: 'export-csv',

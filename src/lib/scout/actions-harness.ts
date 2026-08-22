@@ -46,6 +46,11 @@ export async function runScoutActionsHarness(): Promise<void> {
     throw new Error(`runScoutActionsHarness: open_takeoff_panel failed: ${takeoff.error}`)
   }
 
+  const jump = await runScoutAction('jump_to_takeoff_mark')
+  if (jump.ok) {
+    throw new Error('runScoutActionsHarness: jump_to_takeoff_mark should fail without plan stamps')
+  }
+
   const share = await runScoutAction('open_share_sheet')
   if (!share.ok) {
     throw new Error(`runScoutActionsHarness: open_share_sheet failed: ${share.error}`)
@@ -92,7 +97,7 @@ export async function runScoutActionsHarness(): Promise<void> {
     throw new Error(`runScoutActionsHarness: complete_journey failed: ${done.error}`)
   }
 
-  if (SCOUT_ACTION_IDS.length !== 18) {
+  if (SCOUT_ACTION_IDS.length !== 19) {
     throw new Error('runScoutActionsHarness: update harness when SCOUT_ACTION_IDS changes')
   }
 }

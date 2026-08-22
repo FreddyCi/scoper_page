@@ -38,8 +38,16 @@ function useScoutCompletionContext(activeJourney: ScoutJourneyId | null): ScoutC
       setContext((previous) => ({ ...previous, takeoffPanelOpen: true }))
     }
 
+    function onMarkJump() {
+      setContext((previous) => ({ ...previous, markJumpTriggered: true }))
+    }
+
     window.addEventListener(SCOUT_UI_EVENTS.openTakeoffPanel, onTakeoffOpen)
-    return () => window.removeEventListener(SCOUT_UI_EVENTS.openTakeoffPanel, onTakeoffOpen)
+    window.addEventListener(SCOUT_UI_EVENTS.markJumpTriggered, onMarkJump)
+    return () => {
+      window.removeEventListener(SCOUT_UI_EVENTS.openTakeoffPanel, onTakeoffOpen)
+      window.removeEventListener(SCOUT_UI_EVENTS.markJumpTriggered, onMarkJump)
+    }
   }, [])
 
   useEffect(() => {

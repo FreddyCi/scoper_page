@@ -41,6 +41,11 @@ import { beginBlobSave } from '@/lib/download-blob'
 import { blockToCitation } from '@/lib/types'
 import type { DocumentMeta, PdfDrawingAnnotation, WorkspaceMode } from '@/lib/types'
 import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
+import {
+  SCOUT_UI_EVENTS,
+  dispatchScoutUiEvent,
+  type ScoutJumpToTakeoffMarkDetail,
+} from '@/lib/scout/scout-ui-events'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
@@ -653,6 +658,7 @@ export function SplitDocumentView({
   const openTakeoffPanel = useCallback(() => {
     setTakeoffPanelOpen(true)
     void refreshDrawingMarkCount()
+    dispatchScoutUiEvent(SCOUT_UI_EVENTS.openTakeoffPanel)
   }, [refreshDrawingMarkCount])
 
   const handleTakeoffRowActivate = useCallback(
@@ -673,9 +679,45 @@ export function SplitDocumentView({
         annotationId,
         seq: Date.now(),
       })
+      dispatchScoutUiEvent(SCOUT_UI_EVENTS.markJumpTriggered)
     },
     [activeTab, layoutKind, pdfFocusLayout],
   )
+
+  useEffect(() => {
+    function onScoutOpenTakeoffPanel() {
+      setTakeoffPanelOpen(true)
+      void refreshDrawingMarkCount()
+    }
+
+    function onScoutJumpToTakeoffMark(event: Event) {
+      const detail = (event as CustomEvent<ScoutJumpToTakeoffMarkDetail>).detail
+      if (!detail?.annotationId) return
+
+      const pdfViewerVisible =
+        (layoutKind === 'pdf' && pdfFocusLayout !== 'normal') ||
+        activeTab === 'extract' ||
+        activeTab === 'original'
+      if (!pdfViewerVisible) {
+        setActiveTab('extract')
+      }
+
+      setTakeoffPanelOpen(true)
+      void refreshDrawingMarkCount()
+      setMarkFocusRequest({
+        page: detail.page,
+        annotationId: detail.annotationId,
+        seq: Date.now(),
+      })
+    }
+
+    window.addEventListener(SCOUT_UI_EVENTS.openTakeoffPanel, onScoutOpenTakeoffPanel)
+    window.addEventListener(SCOUT_UI_EVENTS.jumpToTakeoffMark, onScoutJumpToTakeoffMark)
+    return () => {
+      window.removeEventListener(SCOUT_UI_EVENTS.openTakeoffPanel, onScoutOpenTakeoffPanel)
+      window.removeEventListener(SCOUT_UI_EVENTS.jumpToTakeoffMark, onScoutJumpToTakeoffMark)
+    }
+  }, [activeTab, layoutKind, pdfFocusLayout, refreshDrawingMarkCount])
 
   useEffect(() => {
     void refreshDrawingMarkCount()

@@ -4,6 +4,7 @@ import {
   proposalExportFilename,
 } from '@/lib/assemble-proposal-markdown'
 import { beginBlobSave } from '@/lib/download-blob'
+import { aggregateDrawingTakeoff } from '@/lib/drawing-takeoff'
 import type { ScoutActionId } from '@/lib/scout/types'
 import { SCOUT_UI_EVENTS, dispatchScoutUiEvent } from '@/lib/scout/scout-ui-events'
 import {
@@ -208,6 +209,38 @@ async function exportTakeoffCsv(): Promise<ScoutActionResult> {
   }
 }
 
+async function jumpToTakeoffMark(): Promise<ScoutActionResult> {
+  const session = useSessionStore.getState()
+  const docId = session.activeDocId
+  if (!docId) {
+    return fail('Open a plan drawing before jumping to a stamp')
+  }
+
+  try {
+    const annotations = await fetchPdfDrawingAnnotationsForDoc(docId)
+    const rows = aggregateDrawingTakeoff(annotations)
+    if (rows.length === 0) {
+      return fail('No window stamps found for takeoff jump')
+    }
+
+    const firstRow = rows[0]!
+    const annotationId = firstRow.annotationIds[0]
+    if (!annotationId) {
+      return fail('Takeoff row is missing an annotation id')
+    }
+
+    dispatchScoutUiEvent(SCOUT_UI_EVENTS.openTakeoffPanel)
+    dispatchScoutUiEvent(SCOUT_UI_EVENTS.jumpToTakeoffMark, {
+      page: firstRow.page,
+      annotationId,
+    })
+    dispatchScoutUiEvent(SCOUT_UI_EVENTS.markJumpTriggered)
+    return succeed()
+  } catch (error) {
+    return fail(error instanceof Error ? error.message : 'Takeoff jump failed')
+  }
+}
+
 /**
  * Dispatch a Scout coach action to session store, services, or UI events (BDA-282).
  * Sample loaders return `{ deferred: true }` until BDA-283–285 land.
@@ -253,6 +286,9 @@ export async function runScoutAction(
       case 'open_takeoff_panel':
         dispatchScoutUiEvent(SCOUT_UI_EVENTS.openTakeoffPanel)
         return succeed()
+
+      case 'jump_to_takeoff_mark':
+        return jumpToTakeoffMark()
 
       case 'open_share_sheet':
         dispatchScoutUiEvent(SCOUT_UI_EVENTS.openShareSheet)

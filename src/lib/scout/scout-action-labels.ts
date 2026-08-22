@@ -11,6 +11,7 @@ export const SCOUT_ACTION_LABELS: Record<ScoutActionId, string> = {
   run_qualification: 'Run qualification',
   enable_mark_mode: 'Enable Mark mode',
   open_takeoff_panel: 'Open takeoff sheet',
+  jump_to_takeoff_mark: 'Jump to first stamp',
   export_matrix_csv: 'Export matrix CSV',
   export_proposal_markdown: 'Export proposal markdown',
   export_takeoff_csv: 'Export takeoff CSV',

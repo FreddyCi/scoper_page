@@ -478,16 +478,19 @@ flowchart TD
 ### **ID:** BDA-296
 
 **Title:** Wire Mark and takeoff journey actions  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-285, BDA-292, BDA-293  
 **Priority:** High  
 **Description:** Wire mark journey: `loadSampleMarkupWorkspace`, enable `pdfMarkDrawingMode` + stamp tool, pre-seeded stamps or guided placement step, open takeoff sheet, programmatic or user jump-to-mark, export takeoff CSV + flag, done. Connect [`export-drawing-takeoff-csv.ts`](../src/services/export-drawing-takeoff-csv.ts).  
 **Completed Changes:**
-- 🔄 All 7 steps wired
-- 🔄 Pre-seeded stamp path documented in harness
+- ✅ All 7 steps wired in [`mark-takeoff.ts`](../src/lib/scout/journeys/mark-takeoff.ts) with actions: `load_sample_markup`, `enable_mark_mode`, auto `place-stamps` (≥2 stamps), `open_takeoff_panel`, `jump_to_takeoff_mark`, `export_takeoff_csv`, `complete_journey`
+- ✅ New `jump_to_takeoff_mark` action opens takeoff panel + focuses first stamp; row clicks dispatch `markJumpTriggered` for manual completion
+- ✅ `SplitDocumentView` listens for `openTakeoffPanel` / `jumpToTakeoffMark` scout UI events; footer pill opens panel and notifies scout context
+- ✅ Pre-seeded stamp path in [`load-sample-markup.ts`](../src/services/load-sample-markup.ts) (`seedSampleMarkupWindowStamps`, ≥3 demo stamps)
+- ✅ [`mark-takeoff-journey-harness.ts`](../src/lib/scout/mark-takeoff-journey-harness.ts) validates step→action map; wired in `App.tsx`
 **Test Strategy:** Manual Journey C with `plan-windows-sample.pdf`; takeoff CSV downloads.  
 **Test Results:**
-- 🔄 Pending implementation  
+- ✅ `pnpm exec tsc -b` passes; dev harness chain includes mark/takeoff journey wiring
 **Assigned:** Unassigned  
 **Context/Artifacts:** [`drawing-takeoff.ts`](../src/lib/drawing-takeoff.ts)
 

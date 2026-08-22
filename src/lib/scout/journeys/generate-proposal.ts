@@ -13,7 +13,7 @@ export const generateProposalJourney: ScoutJourney = {
       id: 'load-sample',
       title: 'Load the sample solicitation package',
       body:
-        'We will ingest a sample RFP plus markdown responder context (buyer rubric notes) so you can walk through proposal setup without uploading your own files.',
+        'We will ingest the DPR construction MSA as the solicitation plus a buyer rubric markdown attachment so you can walk through proposal setup without uploading your own files.',
       action: 'load_sample_proposal',
     },
     {

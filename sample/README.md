@@ -14,6 +14,15 @@ Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm 
 
 Loaded together by `loadSampleEvaluationWorkspace()` for the Scout **Evaluate an RFP** tour.
 
+## Proposal pack (Scout generate journey)
+
+| File | Role | Use in app |
+|------|------|------------|
+| [`dpr-msa-pro-bel-2025.pdf`](dpr-msa-pro-bel-2025.pdf) | Solicitation / RFP | Proposal baseline |
+| [`files/buyer-rubric.md`](files/buyer-rubric.md) | Buyer rubric notes | Supporting context attachment |
+
+Loaded by `loadSampleProposalWorkspace()` with pre-filled Pro-Bel responder context.
+
 ## RFP pack (legacy IT-services demo)
 
 | File | Role | Use in app |

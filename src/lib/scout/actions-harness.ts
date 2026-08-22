@@ -3,10 +3,7 @@ import { SCOUT_ACTION_IDS, type ScoutActionId } from '@/lib/scout/types'
 import { useSessionStore } from '@/store/session-store'
 import { useScoutStore } from '@/store/scout-store'
 
-const SAMPLE_LOADER_ACTIONS = new Set<ScoutActionId>([
-  'load_sample_proposal',
-  'load_sample_markup',
-])
+const SAMPLE_LOADER_ACTIONS = new Set<ScoutActionId>(['load_sample_markup'])
 
 const EXPORT_ACTIONS = new Set<ScoutActionId>([
   'export_matrix_csv',

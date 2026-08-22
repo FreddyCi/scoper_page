@@ -210,18 +210,20 @@ flowchart TD
 ### **ID:** BDA-284
 
 **Title:** loadSampleProposalWorkspace  
-**Status:** To Do  
+**Status:** Done  
 **Dependencies:** BDA-282  
 **Priority:** High  
 **Description:** New [`src/services/load-sample-proposal.ts`](../src/services/load-sample-proposal.ts): ingest RFP sample + [`public/sample/files/buyer-rubric.md`](../public/sample/files/buyer-rubric.md) as context attachment; `setMode('proposal')`, `setWorkspaceView('profiles')`. Pre-fill minimal company context string for readiness if needed. Export `runLoadSampleProposalHarness`.  
 **Completed Changes:**
-- 🔄 Ingest RFP + markdown context
-- 🔄 Mode/view/mode switch
-- 🔄 Harness wired
+- ✅ [`load-sample-proposal.ts`](../src/services/load-sample-proposal.ts) — DPR MSA solicitation + `buyer-rubric.md` supporting; Pro-Bel company context pre-fill
+- ✅ Proposal post-ingest routing via `applyPostIngestModeEffects`; baseline/supporting roles
+- ✅ `load_sample_proposal` scout action wired; generate journey copy updated
+- ✅ `runLoadSampleProposalHarness` in App dev chain
 **Test Strategy:** Harness: mode `proposal`, docs include RFP + context, readiness helper not blocking stub path.  
 **Test Results:**
-- 🔄 Pending implementation  
-**Assigned:** Unassigned  
+- ✅ `pnpm exec tsc -b` passes
+- ✅ Harness asserts `hasRfp` + `hasContext`, `readyToGenerate` false until profile build
+**Assigned:** Completed  
 **Context/Artifacts:** [`getProposalSetupState`](../src/lib/proposal-readiness.ts); [`use-command-ingest.ts`](../src/hooks/use-command-ingest.ts)
 
 ---

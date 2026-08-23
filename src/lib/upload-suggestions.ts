@@ -44,12 +44,14 @@ export type UploadIntentCopy = {
 
 export const UPLOAD_INTENT_COPY: Record<UploadIntent, UploadIntentCopy> = {
   rfp: {
-    title: 'Upload RFP',
+    title: 'Upload documents',
     description:
-      'Add RFP packages and bidder responses for document review. Parsed locally in your browser — nothing is sent to a server.',
-    dropTitle: 'Drop RFP files here or click to browse',
-    dropHint: 'PDF, Word, Excel (.xlsx), LibreOffice (.ods), and Google Sheets export — select one or more files',
-    footerNote: 'RFP and bidder files open in document view for review and analysis.',
+      'Add RFP packages, bidder responses, drawings, floor plans, and supporting context. Parsed locally in your browser — nothing is sent to a server.',
+    dropTitle: 'Drop files here or click to browse',
+    dropHint:
+      'PDFs (RFPs, drawings, floor plans), Word, Excel (.xlsx), LibreOffice (.ods), and Google Sheets export — select one or more files',
+    footerNote:
+      'Uploaded files open in document view for qualification, plan markup, and chat context.',
     highlight: UPLOAD_SUGGESTIONS[0]!,
     accept: '.pdf,.doc,.docx,.xls,.xlsx,.ods',
   },

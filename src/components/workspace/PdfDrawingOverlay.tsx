@@ -1057,7 +1057,7 @@ export function PdfDrawingOverlay({
   const svgPointerActive = (pointerActive || hasVoiceNotes) && !textEditor
 
   return (
-    <div className={cn('absolute inset-0', className)}>
+    <div className={cn('pointer-events-none absolute inset-0', className)}>
       <svg
         className={cn(
           'absolute inset-0 touch-none',

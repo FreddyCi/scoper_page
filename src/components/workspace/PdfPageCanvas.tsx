@@ -269,7 +269,10 @@ export function PdfPageCanvas({
 
       {canvasLayout && scaledHighlight ? (
         <div
-          className="absolute inset-0"
+          className={cn(
+            'absolute inset-0',
+            citationRegionEditable && 'z-[4]',
+          )}
           style={{ width: canvasLayout.width, height: canvasLayout.height }}
         >
           {citationRegionEditable ? (

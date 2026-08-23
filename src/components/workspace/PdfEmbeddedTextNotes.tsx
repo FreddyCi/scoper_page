@@ -62,7 +62,7 @@ export function PdfEmbeddedTextNotes({
   }
 
   return (
-    <div className={cn('absolute inset-0 z-[2]', className)} aria-label="PDF comments">
+    <div className={cn('pointer-events-none absolute inset-0 z-[2]', className)} aria-label="PDF comments">
       {notes.map((note) => {
         const isOpen = openNoteId === note.id
         const iconSize = Math.max(20, Math.min(note.width, note.height, 26))
@@ -72,7 +72,7 @@ export function PdfEmbeddedTextNotes({
             <button
               type="button"
               className={cn(
-                'absolute flex items-center justify-center rounded-md border shadow-md transition-all',
+                'pointer-events-auto absolute flex items-center justify-center rounded-md border shadow-md transition-all',
                 'border-rose-400/90 bg-rose-500 text-white hover:bg-rose-600',
                 isOpen && 'ring-2 ring-rose-400/80 ring-offset-2 ring-offset-white',
               )}
@@ -93,7 +93,7 @@ export function PdfEmbeddedTextNotes({
             {isOpen ? (
               <div
                 className={cn(
-                  'border-border bg-surface text-foreground shadow-panel absolute max-w-[min(20rem,44vw)]',
+                  'border-border bg-surface text-foreground shadow-panel pointer-events-auto absolute max-w-[min(20rem,44vw)]',
                   'rounded-lg border border-l-[3px] border-l-rose-500 px-3.5 py-2.5',
                   'text-sm leading-relaxed',
                 )}

@@ -53,6 +53,12 @@ export function PdfViewerToolbar({
   const isDark = theme === 'dark'
   const showMarkToggle = Boolean(onMarkModeChange)
   const pdfPaneMode = markMode ? 'mark' : 'view'
+  const darkToolbarButtonClass = isDark
+    ? 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50'
+    : undefined
+  const darkModeTabClass = isDark
+    ? 'text-zinc-400 hover:text-zinc-50 data-active:bg-zinc-700 data-active:text-white'
+    : undefined
 
   return (
     <div
@@ -79,6 +85,7 @@ export function PdfViewerToolbar({
           variant="ghost"
           aria-label="Previous page"
           disabled={currentPage <= 1}
+          className={darkToolbarButtonClass}
           onClick={() => onPageChange(currentPage - 1)}
         >
           <ChevronLeftIcon className="size-4" />
@@ -116,6 +123,7 @@ export function PdfViewerToolbar({
           variant="ghost"
           aria-label="Next page"
           disabled={totalPages === 0 || currentPage >= totalPages}
+          className={darkToolbarButtonClass}
           onClick={() => onPageChange(currentPage + 1)}
         >
           <ChevronRightIcon className="size-4" />
@@ -129,6 +137,7 @@ export function PdfViewerToolbar({
           variant="ghost"
           aria-label="Zoom out"
           disabled={scale <= 0.5}
+          className={darkToolbarButtonClass}
           onClick={() => onScaleChange(Math.max(0.5, Math.round((scale - 0.25) * 100) / 100))}
         >
           <ZoomOutIcon className="size-4" />
@@ -147,6 +156,7 @@ export function PdfViewerToolbar({
           variant="ghost"
           aria-label="Zoom in"
           disabled={scale >= 3}
+          className={darkToolbarButtonClass}
           onClick={() => onScaleChange(Math.min(3, Math.round((scale + 0.25) * 100) / 100))}
         >
           <ZoomInIcon className="size-4" />
@@ -164,8 +174,8 @@ export function PdfViewerToolbar({
             aria-label="PDF pane mode"
             className={isDark ? 'bg-zinc-800' : undefined}
           >
-            <TabsTrigger value="view">View</TabsTrigger>
-            <TabsTrigger value="mark">Mark</TabsTrigger>
+            <TabsTrigger value="view" className={darkModeTabClass}>View</TabsTrigger>
+            <TabsTrigger value="mark" className={darkModeTabClass}>Mark</TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}

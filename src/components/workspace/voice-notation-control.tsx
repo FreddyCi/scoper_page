@@ -64,17 +64,25 @@ export function VoiceNotationControl({
             aria-pressed={active}
             className={cn(
               'relative',
-              active && 'bg-muted ring-1 ring-primary/50',
-              isDark && active && 'bg-zinc-800 ring-sky-500/40',
-              isDark && 'hover:bg-zinc-800 hover:text-zinc-100',
-              isCanvas && 'shadow-panel gap-1.5 pr-3',
-              isCanvas && isDark && 'bg-zinc-800 text-zinc-100',
+              isCanvas
+                ? cn(
+                    'border-border bg-surface text-foreground shadow-panel gap-1.5 border pr-3 hover:bg-muted/60',
+                    active && 'ring-1 ring-sky-400/60 bg-sky-50',
+                  )
+                : cn(
+                    active && 'bg-muted ring-1 ring-primary/50',
+                    isDark && active && 'bg-zinc-800 ring-sky-500/40',
+                    isDark && 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50',
+                  ),
               className,
             )}
             onClick={() => onNotationPickToggle()}
           >
             <MicAudioLinesIcon
-              className={cn(isCanvas ? 'size-4' : 'size-3.5', isDictating && 'animate-pulse')}
+              className={cn(
+                isCanvas ? 'size-4 text-sky-600' : 'size-3.5',
+                isDictating && 'animate-pulse',
+              )}
             />
             {isCanvas ? <span className="text-xs font-medium">Voice notation</span> : null}
             {noteCount > 0 ? (

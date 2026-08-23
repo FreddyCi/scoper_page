@@ -178,6 +178,7 @@ function toolButtonClass(active: boolean, isDark: boolean): string {
   return cn(
     active && 'ring-1 ring-primary/50 bg-muted',
     isDark && active && 'bg-zinc-800 ring-sky-500/40',
+    isDark && 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50',
   )
 }
 

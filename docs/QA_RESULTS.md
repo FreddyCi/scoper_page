@@ -188,7 +188,7 @@ Harnesses run on `pnpm dev` load (`src/App.tsx`). Each must complete without `[d
 | `pnpm dev` — scout + company profile harness chain | **Pending peer** | DevTools console must not throw `[dev-harness]` on first load |
 | Manual UI (3 journeys + company profile) | **Pending peer** | Chrome incognito; 18-step checklist (evaluate / proposal / mark / cross-cutting / onboarding) |
 
-**Fixtures:** `public/sample/dpr-msa-summit-ridge-2025.pdf`, `contract-keyword-check.docx`, `files/buyer-rubric.md`, `windows-drawing.pdf`, `demo-bidder-response.pdf`.
+**Fixtures:** `public/sample/dpr-construction-msa-2025.pdf`, `contract-keyword-check.docx`, `files/buyer-rubric.md`, `windows-drawing.pdf`, `demo-bidder-response.pdf`.
 
 ---
 

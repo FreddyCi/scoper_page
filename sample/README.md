@@ -8,7 +8,7 @@ Files are copied to `public/sample/` during `pnpm install` / `pnpm dev` / `pnpm 
 
 | File | Role | Use in app |
 |------|------|------------|
-| [`dpr-msa-summit-ridge-2025.pdf`](dpr-msa-summit-ridge-2025.pdf) | Contract / MSA baseline | Evaluation baseline — shall/must matrix |
+| [`dpr-construction-msa-2025.pdf`](dpr-construction-msa-2025.pdf) | Contract / MSA baseline | Evaluation baseline — shall/must matrix |
 | [`contract-keyword-check.docx`](contract-keyword-check.docx) | Keyword checklist | Contract keyword review profile |
 
 Loaded by `loadSampleEvaluationWorkspace()` for the Scout **Evaluate an RFP** tour.
@@ -26,8 +26,10 @@ Loaded by `loadSampleMarkupWorkspace()` for the Scout **Mark and takeoff** tour 
 
 | File | Role | Use in app |
 |------|------|------------|
-| [`dpr-msa-summit-ridge-2025.pdf`](dpr-msa-summit-ridge-2025.pdf) | Solicitation / RFP | Proposal baseline |
+| [`dpr-construction-msa-2025.pdf`](dpr-construction-msa-2025.pdf) | Solicitation / RFP | Proposal baseline |
 | [`files/buyer-rubric.md`](files/buyer-rubric.md) | Buyer rubric notes | Supporting context attachment |
+
+Source: [`docs/DPR CONSTRUCTION  - Fully Executed MSA - 2025.pdf`](../docs/DPR%20CONSTRUCTION%20%20-%20Fully%20Executed%20MSA%20-%202025.pdf) (synced by `generate-sample-pdfs.mjs`).
 
 Loaded by `loadSampleProposalWorkspace()` with pre-filled Summit Ridge Envelope responder context.
 

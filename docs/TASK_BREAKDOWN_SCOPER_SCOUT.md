@@ -196,7 +196,7 @@ flowchart TD
 **Status:** Done  
 **Dependencies:** BDA-282  
 **Priority:** Critical  
-**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`dpr-msa-summit-ridge-2025.pdf`](../public/sample/dpr-msa-summit-ridge-2025.pdf) + [`contract-keyword-check.docx`](../public/sample/contract-keyword-check.docx), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
+**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`dpr-construction-msa-2025.pdf`](../public/sample/dpr-construction-msa-2025.pdf) + [`contract-keyword-check.docx`](../public/sample/contract-keyword-check.docx), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
 **Completed Changes:**
 - ✅ Shared `fetchSampleFile(url, filename)` + construction sample URLs in `sample/` and `public/sample/`
 - ✅ `loadSampleEvaluationWorkspace` — MSA baseline + keyword checklist, `runRfpQualification` + `runContractKeywordReview`
@@ -769,7 +769,7 @@ flowchart TD
 
 ## Manual QA checklist (BDA-302)
 
-**Fixtures:** `public/sample/dpr-msa-summit-ridge-2025.pdf`, `public/sample/contract-keyword-check.docx`, `public/sample/files/buyer-rubric.md`, `public/sample/windows-drawing.pdf` (alias `plan-windows-sample.pdf`), `public/sample/demo-bidder-response.pdf`, legacy `public/sample/rfp-it-services.pdf`.
+**Fixtures:** `public/sample/dpr-construction-msa-2025.pdf`, `public/sample/contract-keyword-check.docx`, `public/sample/files/buyer-rubric.md`, `public/sample/windows-drawing.pdf` (alias `plan-windows-sample.pdf`), `public/sample/demo-bidder-response.pdf`, legacy `public/sample/rfp-it-services.pdf`.
 
 **Automated preflight (before manual pass):**
 

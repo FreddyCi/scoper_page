@@ -139,9 +139,19 @@ for (const doc of CORPUS) {
 
 console.log('[generate-sample-pdfs] corpus ready in sample/ and public/sample/')
 
+/** DPR MSA checked into docs/ — Scout evaluate + proposal tours (BDA-283 / BDA-284). */
+const MSA_FIXTURE_FILENAME = 'dpr-construction-msa-2025.pdf'
+const docsMsaSource = join(root, 'docs', 'DPR CONSTRUCTION  - Fully Executed MSA - 2025.pdf')
+if (existsSync(docsMsaSource)) {
+  for (const dir of [sampleDir, publicSampleDir]) {
+    copyFileSync(docsMsaSource, join(dir, MSA_FIXTURE_FILENAME))
+  }
+  console.log(`[generate-sample-pdfs] copied ${MSA_FIXTURE_FILENAME} from docs/`)
+}
+
 /** Binary fixtures checked into sample/ — Scout construction demo + plan drawing (BDA-283 / BDA-285). */
 const BINARY_FIXTURES = [
-  'dpr-msa-summit-ridge-2025.pdf',
+  MSA_FIXTURE_FILENAME,
   'contract-keyword-check.docx',
   'windows-drawing.pdf',
 ]

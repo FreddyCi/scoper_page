@@ -1,4 +1,5 @@
 import { ingestFiles } from '@/services/ingest-router'
+import { readScoperExportMetadata } from '@/services/import-pdf-comments'
 import {
   fetchSampleFile,
   SAMPLE_WINDOWS_DRAWING_FILENAME,
@@ -9,55 +10,50 @@ import {
   insertPdfDrawingAnnotation,
 } from '@/services/pdf-drawing-annotations'
 import { useSessionStore } from '@/store/session-store'
+import { extractScoperExportWindowStamps } from '@/lib/scoper-export-drawing-stamps'
+import { dispatchScoutUiEvent, SCOUT_UI_EVENTS } from '@/lib/scout/scout-ui-events'
 
 /** Alias URL for docs/QA — same bytes as [`windows-drawing.pdf`](../public/sample/windows-drawing.pdf). */
 export const SAMPLE_PLAN_WINDOWS_URL = '/sample/plan-windows-sample.pdf'
 export const SAMPLE_PLAN_WINDOWS_FILENAME = 'plan-windows-sample.pdf'
 
+/** Demo floor-plan sheet with pre-marked windows (Scoper burned-in export). */
+export const SAMPLE_MARKUP_DEMO_PAGE_NUM = 8
+
 export type LoadSampleMarkupOptions = {
-  /** Pre-seed window stamps for reliable takeoff demo (default true). */
+  /** Pre-seed window stamps for takeoff + jump (default true). */
   seedStamps?: boolean
 }
 
 const DEMO_STAMP_COLOR = '#E11D48'
 
-/** Insert demo window stamps on the plan PDF (BDA-285). */
-export async function seedSampleMarkupWindowStamps(docId: string): Promise<number> {
-  await insertPdfDrawingAnnotation({
-    doc_id: docId,
-    page_num: 1,
-    tool: 'stamp',
-    color: DEMO_STAMP_COLOR,
-    geometry: { kind: 'stamp', x: 0.28, y: 0.42, stampKind: 'window' },
-    voice_note: 'North elevation — typ. window',
-    authorInitials: 'Demo',
-  })
+/** Insert window stamps on the demo floor-plan sheet (page 8) from a Scoper burned-in export. */
+export async function seedSampleMarkupWindowStampsFromExport(
+  docId: string,
+  exportBytes: Uint8Array,
+  pageNum = SAMPLE_MARKUP_DEMO_PAGE_NUM,
+): Promise<number> {
+  const stamps = await extractScoperExportWindowStamps(exportBytes)
+  const demoStamps = stamps.filter((stamp) => stamp.page_num === pageNum)
 
-  await insertPdfDrawingAnnotation({
-    doc_id: docId,
-    page_num: 1,
-    tool: 'stamp',
-    color: DEMO_STAMP_COLOR,
-    geometry: { kind: 'stamp', x: 0.62, y: 0.38, stampKind: 'window' },
-    authorInitials: 'Demo',
-  })
-
-  await insertPdfDrawingAnnotation({
-    doc_id: docId,
-    page_num: 2,
-    tool: 'stamp',
-    color: DEMO_STAMP_COLOR,
-    geometry: { kind: 'stamp', x: 0.45, y: 0.55, stampKind: 'window' },
-    voice_note: 'South elevation glazing count',
-    authorInitials: 'Demo',
-  })
+  for (const stamp of demoStamps) {
+    await insertPdfDrawingAnnotation({
+      doc_id: docId,
+      page_num: stamp.page_num,
+      tool: 'stamp',
+      color: DEMO_STAMP_COLOR,
+      geometry: { kind: 'stamp', x: stamp.x, y: stamp.y, stampKind: 'window' },
+      authorInitials: 'Demo',
+    })
+  }
 
   const annotations = await fetchPdfDrawingAnnotationsForDoc(docId)
   return annotations.filter((row) => row.geometry.kind === 'stamp').length
 }
 
 /**
- * Ingest the Windows plan drawing, open split view, and optionally seed demo stamps (BDA-285).
+ * Ingest the Windows Scoper export plan, open split view on the marked floor plan,
+ * and seed takeoff rows from burned-in stamp geometry (BDA-285).
  */
 export async function loadSampleMarkupWorkspace(
   options: LoadSampleMarkupOptions = {},
@@ -66,6 +62,9 @@ export async function loadSampleMarkupWorkspace(
   const store = useSessionStore.getState()
 
   const file = await fetchSampleFile(SAMPLE_WINDOWS_DRAWING_URL, SAMPLE_WINDOWS_DRAWING_FILENAME)
+  const exportBytes = new Uint8Array(await file.arrayBuffer())
+  const scoperMeta = await readScoperExportMetadata(exportBytes, file.name)
+
   const { results, errors } = await ingestFiles([file], {
     ocrEnabled: false,
     skipPdfTextExtract: true,
@@ -86,7 +85,30 @@ export async function loadSampleMarkupWorkspace(
   store.setWorkspaceView('split')
 
   if (seedStamps) {
-    await seedSampleMarkupWindowStamps(planResult.doc_id)
+    const stampCount = await seedSampleMarkupWindowStampsFromExport(
+      planResult.doc_id,
+      exportBytes,
+    )
+
+    if (
+      scoperMeta.isScoperExport &&
+      scoperMeta.commentMode === 'burned-in' &&
+      stampCount > 0
+    ) {
+      store.setSuppressDrawingOverlayPreview(planResult.doc_id, true)
+    }
+
+    const annotations = await fetchPdfDrawingAnnotationsForDoc(planResult.doc_id)
+    const page8Stamp = annotations.find(
+      (row) =>
+        row.geometry.kind === 'stamp' && row.page_num === SAMPLE_MARKUP_DEMO_PAGE_NUM,
+    )
+    if (page8Stamp) {
+      dispatchScoutUiEvent(SCOUT_UI_EVENTS.jumpToTakeoffMark, {
+        page: SAMPLE_MARKUP_DEMO_PAGE_NUM,
+        annotationId: page8Stamp.annotation_id,
+      })
+    }
   }
 }
 
@@ -115,7 +137,20 @@ export async function runLoadSampleMarkupHarness(): Promise<void> {
 
   const annotations = await fetchPdfDrawingAnnotationsForDoc(after.activeDocId)
   const stampCount = annotations.filter((row) => row.geometry.kind === 'stamp').length
-  if (stampCount < 2) {
-    throw new Error(`runLoadSampleMarkupHarness: expected ≥2 stamps, got ${stampCount}`)
+  if (stampCount < 1) {
+    throw new Error(`runLoadSampleMarkupHarness: expected stamps on page ${SAMPLE_MARKUP_DEMO_PAGE_NUM}, got ${stampCount}`)
+  }
+
+  const page8Count = annotations.filter(
+    (row) => row.geometry.kind === 'stamp' && row.page_num === SAMPLE_MARKUP_DEMO_PAGE_NUM,
+  ).length
+  if (page8Count < 1) {
+    throw new Error(
+      `runLoadSampleMarkupHarness: expected stamps on page ${SAMPLE_MARKUP_DEMO_PAGE_NUM}, got ${page8Count}`,
+    )
+  }
+
+  if (!after.suppressDrawingOverlayPreviewDocIds.includes(after.activeDocId)) {
+    throw new Error('runLoadSampleMarkupHarness: expected burned-in overlay preview suppressed')
   }
 }

@@ -17,7 +17,7 @@ export const SAMPLE_CONTRACT_CHECKLIST_FILENAME = 'Contract Key Word Check.docx'
 
 /** Plan drawing for mark/takeoff journey (BDA-285). */
 export const SAMPLE_WINDOWS_DRAWING_URL = '/sample/windows-drawing.pdf'
-export const SAMPLE_WINDOWS_DRAWING_FILENAME = 'Windows_Drawing.pdf'
+export const SAMPLE_WINDOWS_DRAWING_FILENAME = 'Windows_Drawing-scoper-export.pdf'
 
 /** Fetch a bundled sample from `/public/sample/` as a browser File. */
 export async function fetchSampleFile(url: string, filename: string): Promise<File> {

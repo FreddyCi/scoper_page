@@ -193,6 +193,8 @@ export type SessionState = {
   reviewerName: string
   /** PDF Original pane — mark drawing mode (toolbar in BDA-234). */
   pdfMarkDrawingMode: boolean
+  /** Hide vector overlay for burned-in Scoper export samples (marks remain in takeoff DB). */
+  suppressDrawingOverlayPreviewDocIds: string[]
   pdfMarkTool: PdfMarkSessionTool
   pdfMarkColor: string
   pdfMarkStrokeWidth: PdfMarkupStrokeWidth
@@ -239,6 +241,7 @@ export type SessionState = {
   setCompanyContext: (context: string) => void
   setReviewerName: (name: string) => void
   setPdfMarkDrawingMode: (enabled: boolean) => void
+  setSuppressDrawingOverlayPreview: (docId: string, suppressed: boolean) => void
   setPdfMarkTool: (tool: PdfMarkSessionTool) => void
   setPdfMarkColor: (color: string) => void
   setPdfMarkStrokeWidth: (strokeWidth: PdfMarkupStrokeWidth) => void
@@ -323,6 +326,7 @@ const initialState = {
   companyContext: readCompanyContextPreference(),
   reviewerName: readReviewerNamePreference(),
   pdfMarkDrawingMode: false,
+  suppressDrawingOverlayPreviewDocIds: [] as string[],
   pdfMarkTool: 'pen' as PdfMarkSessionTool,
   pdfMarkColor: PDF_MARKUP_COLOR_ROSE,
   pdfMarkStrokeWidth: 4 as PdfMarkupStrokeWidth,
@@ -486,6 +490,18 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   setPdfMarkDrawingMode: (pdfMarkDrawingMode) => set({ pdfMarkDrawingMode }),
+
+  setSuppressDrawingOverlayPreview: (docId, suppressed) =>
+    set((state) => {
+      const has = state.suppressDrawingOverlayPreviewDocIds.includes(docId)
+      if (suppressed && has) return state
+      if (!suppressed && !has) return state
+      return {
+        suppressDrawingOverlayPreviewDocIds: suppressed
+          ? [...state.suppressDrawingOverlayPreviewDocIds, docId]
+          : state.suppressDrawingOverlayPreviewDocIds.filter((id) => id !== docId),
+      }
+    }),
 
   setPdfMarkTool: (pdfMarkTool) => set({ pdfMarkTool }),
 

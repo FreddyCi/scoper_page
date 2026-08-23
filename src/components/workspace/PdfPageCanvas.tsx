@@ -55,6 +55,8 @@ type PdfPageCanvasProps = {
   onNotationPickToggle?: () => void
   noteCount?: number
   theme?: 'light' | 'dark'
+  /** Burned-in Scoper export — hide vector overlay; marks stay in takeoff DB. */
+  drawingOverlayPreviewSuppressed?: boolean
   className?: string
 }
 
@@ -117,6 +119,7 @@ export function PdfPageCanvas({
   onNotationPickToggle,
   noteCount = 0,
   theme = 'light',
+  drawingOverlayPreviewSuppressed = false,
   className,
 }: PdfPageCanvasProps) {
   const markModeActive = markMode || markDrawingMode
@@ -254,7 +257,8 @@ export function PdfPageCanvas({
       ? { width: canvasLayout.width, height: canvasLayout.height }
       : null
   const showDrawingOverlay =
-    drawingViewport != null && (markModeActive || drawingAnnotations.length > 0)
+    drawingViewport != null &&
+    (markModeActive || (!drawingOverlayPreviewSuppressed && drawingAnnotations.length > 0))
   /** Citation block adjust is mutually exclusive with mark mode (BDA-233). */
   const citationRegionEditable = editable && !markModeActive
 

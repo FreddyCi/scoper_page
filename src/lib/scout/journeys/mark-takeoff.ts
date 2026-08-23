@@ -13,7 +13,7 @@ export const markTakeoffJourney: ScoutJourney = {
       id: 'load-sample',
       title: 'Load the sample plan sheet',
       body:
-        'We will ingest the Windows plan drawing PDF. The tour pre-places sample window stamps so you can focus on takeoff and export — you can also place stamps yourself in Mark mode.',
+        'We ingest your marked Windows plan export (page 8 floor plan). Window stamps are burned into the PDF and wired into the takeoff sheet for export.',
       action: 'load_sample_markup',
     },
     {

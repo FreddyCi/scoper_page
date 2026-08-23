@@ -84,6 +84,9 @@ export function DocumentViewer({
   const pdfMarkTool = useSessionStore((state) => state.pdfMarkTool)
   const pdfMarkColor = useSessionStore((state) => state.pdfMarkColor)
   const pdfMarkStrokeWidth = useSessionStore((state) => state.pdfMarkStrokeWidth)
+  const drawingOverlayPreviewSuppressed = useSessionStore((state) =>
+    state.suppressDrawingOverlayPreviewDocIds.includes(document.doc_id),
+  )
   const setPdfMarkDrawingMode = useSessionStore((state) => state.setPdfMarkDrawingMode)
   const applyPdfMarkupToolbarChange = useSessionStore((state) => state.applyPdfMarkupToolbarChange)
   const setPdfMarkTool = useSessionStore((state) => state.setPdfMarkTool)
@@ -697,6 +700,7 @@ export function DocumentViewer({
                   .length
               }
               theme={theme}
+              drawingOverlayPreviewSuppressed={drawingOverlayPreviewSuppressed}
             />
           </div>
         )}

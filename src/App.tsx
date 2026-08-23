@@ -43,6 +43,7 @@ import { runDocumentRoleHarness } from '@/services/document-roles'
 import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runLoadSampleEvaluationHarness } from '@/services/load-sample-documents'
 import { runLoadSampleMarkupHarness } from '@/services/load-sample-markup'
+import { runScoperExportDrawingStampsHarness } from '@/lib/scoper-export-drawing-stamps'
 import { runLoadSampleProposalHarness } from '@/services/load-sample-proposal'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
@@ -127,6 +128,7 @@ function App() {
       await runContractKeywordReviewHarness()
       await runLoadSampleEvaluationHarness()
       await runLoadSampleProposalHarness()
+      await runScoperExportDrawingStampsHarness()
       await runLoadSampleMarkupHarness()
       await runScoperHarness()
       await runChatVoiceAsyncHarnesses()

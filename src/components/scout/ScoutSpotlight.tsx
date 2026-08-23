@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import { useScoutSpotlightTracking } from '@/components/scout/use-scout-spotlight-tracking'
+import { ScoutWalkthroughArrow } from '@/components/scout/ScoutWalkthroughArrow'
 import { getScoutJourney } from '@/lib/scout/journeys-map'
 import { type BrandAccent } from '@/lib/brand-accent'
 import { SCOUT_SPOTLIGHT_PAD } from '@/lib/scout/spotlight-geometry'
@@ -111,6 +112,7 @@ export function ScoutSpotlight() {
       aria-hidden
       data-scout-spotlight="active"
     >
+      <ScoutWalkthroughArrow rect={rect} variant={stepIndex} refreshKey={refreshKey} />
       <ScoutSpotlightCutout rect={rect} ringClassName={accentRing} label={stepTitle} />
     </div>
   )

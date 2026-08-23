@@ -11,6 +11,11 @@ import {
   type ContextUsageSegmentKind,
 } from '@/lib/context-usage'
 import { getPageContextConfig } from '@/lib/page-context-manager'
+import {
+  overlayChromeGhostButtonClass,
+  overlayPanelClass,
+  overlaySectionTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 import { Button } from '@/components/ui/button'
@@ -328,7 +333,7 @@ export function ContextUsageComposerCluster({
       ? createPortal(
           <div
             ref={panelRef}
-            className="border-border bg-surface shadow-elevated fixed z-[200] rounded-xl border p-3"
+            className={cn('fixed z-[200] rounded-xl border p-3', overlayPanelClass)}
             style={{
               top: popoverPosition.top,
               left: popoverPosition.left,
@@ -339,12 +344,12 @@ export function ContextUsageComposerCluster({
             aria-label="Context usage breakdown"
           >
             <div className="mb-2 flex items-start justify-between gap-2">
-              <p className="text-foreground text-sm font-medium">Context Usage</p>
+              <p className={overlaySectionTitleClass}>Context Usage</p>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-xs"
-                className="text-muted-foreground -mr-1 -mt-0.5 shrink-0"
+                className={cn('-mr-1 -mt-0.5 shrink-0', overlayChromeGhostButtonClass)}
                 aria-label="Close context usage"
                 onClick={() => setOpen(false)}
               >

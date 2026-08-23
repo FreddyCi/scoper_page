@@ -3,6 +3,12 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { XIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import {
+  overlayChromeGhostButtonClass,
+  overlayDescriptionClass,
+  overlayPanelClass,
+  overlayTitleClass,
+} from '@/lib/overlay-chrome'
 import { Button } from '@/components/ui/button'
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
@@ -48,7 +54,8 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          'fixed top-1/2 left-1/2 z-[200] grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border bg-popover p-6 text-popover-foreground shadow-lg transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 sm:max-w-md',
+          'fixed top-1/2 left-1/2 z-[200] grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border p-6 transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0 sm:max-w-md',
+          overlayPanelClass,
           className,
         )}
         {...props}
@@ -57,7 +64,13 @@ function DialogContent({
         {showCloseButton ? (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            render={<Button variant="ghost" className="absolute top-3 right-3" size="icon-sm" />}
+            render={
+              <Button
+                variant="ghost"
+                className={cn('absolute top-3 right-3', overlayChromeGhostButtonClass)}
+                size="icon-sm"
+              />
+            }
           >
             <XIcon />
             <span className="sr-only">Close</span>
@@ -92,7 +105,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn('font-heading text-base font-medium text-foreground', className)}
+      className={cn(overlayTitleClass, className)}
       {...props}
     />
   )
@@ -102,7 +115,7 @@ function DialogDescription({ className, ...props }: DialogPrimitive.Description.
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn('text-sm text-muted-foreground', className)}
+      className={cn(overlayDescriptionClass, className)}
       {...props}
     />
   )

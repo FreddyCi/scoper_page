@@ -26,6 +26,10 @@ import {
   UPLOAD_ACCEPT_STRING,
 } from '@/lib/upload-accept'
 import type { WorkspaceMode } from '@/lib/types'
+import {
+  overlayPanelClass,
+  overlaySectionTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -195,9 +199,9 @@ function CommandSettingsPopover({
   return (
     <div
       ref={panelRef}
-      className="border-border bg-surface shadow-elevated absolute bottom-full left-0 z-20 mb-2 w-56 rounded-lg border p-3"
+      className={cn(overlayPanelClass, 'absolute bottom-full left-0 z-20 mb-2 w-56 rounded-lg p-3')}
     >
-      <p className="text-foreground mb-2 text-xs font-medium">Settings</p>
+      <p className={cn(overlaySectionTitleClass, 'mb-2')}>Settings</p>
 
       <div className="space-y-3">
         <div>

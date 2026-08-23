@@ -25,6 +25,11 @@ import {
   scoutActionLabel,
   scoutStepStatus,
 } from '@/lib/scout/scout-action-labels'
+import {
+  overlayChromeGhostButtonClass,
+  overlayDescriptionClass,
+  overlayTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 import {
   selectActiveScoutJourney,
@@ -101,6 +106,7 @@ function ScoutWelcomePanelBody({
           type="button"
           variant="ghost"
           size="icon-sm"
+          className={overlayChromeGhostButtonClass}
           aria-label="Expand Scout panel"
           onClick={onToggleCollapsed}
         >
@@ -117,8 +123,8 @@ function ScoutWelcomePanelBody({
     <div className="flex h-full min-h-0 flex-col">
       <header className="border-border flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2.5">
         <div className="min-w-0">
-          <p className="text-foreground text-sm font-semibold">Welcome to Scoper Scout</p>
-          <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+          <p className={overlayTitleClass}>Welcome to Scoper Scout</p>
+          <p className={cn(overlayDescriptionClass, 'mt-0.5 text-xs')}>
             Pick a guided tour with sample construction docs — everything parses locally in your
             browser.
           </p>
@@ -128,7 +134,7 @@ function ScoutWelcomePanelBody({
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="max-md:hidden"
+            className={cn('max-md:hidden', overlayChromeGhostButtonClass)}
             aria-label="Collapse Scout panel"
             onClick={onToggleCollapsed}
           >
@@ -138,6 +144,7 @@ function ScoutWelcomePanelBody({
             type="button"
             variant="ghost"
             size="icon-sm"
+            className={overlayChromeGhostButtonClass}
             aria-label="Close Scout panel"
             onClick={onClose}
           >
@@ -207,7 +214,7 @@ function ScoutWelcomePanelBody({
           type="button"
           variant="ghost"
           size="sm"
-          className="text-muted-foreground w-full text-xs font-normal"
+          className={cn('text-muted-foreground w-full text-xs font-normal', overlayChromeGhostButtonClass)}
           onClick={() => dismissScout()}
         >
           Don&apos;t show again
@@ -301,6 +308,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
           type="button"
           variant="ghost"
           size="icon-sm"
+          className={overlayChromeGhostButtonClass}
           aria-label="Expand Scout panel"
           onClick={onToggleCollapsed}
         >
@@ -322,15 +330,15 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
     <div className="flex h-full min-h-0 flex-col">
       <header className="border-border flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2.5">
         <div className="min-w-0">
-          <p className={cn('text-sm font-semibold', accent.title)}>{journey.title}</p>
-          <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">{journey.description}</p>
+          <p className={cn(overlayTitleClass, accent.title)}>{journey.title}</p>
+          <p className={cn(overlayDescriptionClass, 'mt-0.5 text-xs')}>{journey.description}</p>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="max-md:hidden"
+            className={cn('max-md:hidden', overlayChromeGhostButtonClass)}
             aria-label="Collapse Scout panel"
             onClick={onToggleCollapsed}
           >
@@ -340,6 +348,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
             type="button"
             variant="ghost"
             size="icon-sm"
+            className={overlayChromeGhostButtonClass}
             aria-label="Close Scout panel"
             onClick={onClose}
           >
@@ -436,7 +445,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
             type="button"
             variant="ghost"
             size="sm"
-            className="flex-1"
+            className={cn('flex-1', overlayChromeGhostButtonClass)}
             disabled={runningAction}
             onClick={handleEndTour}
           >
@@ -447,7 +456,7 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
           type="button"
           variant="ghost"
           size="sm"
-          className="text-muted-foreground w-full text-xs font-normal"
+          className={cn('text-muted-foreground w-full text-xs font-normal', overlayChromeGhostButtonClass)}
           disabled={runningAction}
           onClick={() => dismissScout()}
         >
@@ -524,7 +533,7 @@ export function ScoutPanel() {
           aria-expanded={mobileExpanded}
           onClick={() => setMobileExpanded((value) => !value)}
         >
-          <span className="text-foreground text-sm font-semibold">Scoper Scout</span>
+          <span className={overlayTitleClass}>Scoper Scout</span>
           {mobileExpanded ? (
             <ChevronDownIcon className="text-muted-foreground size-4" aria-hidden />
           ) : (

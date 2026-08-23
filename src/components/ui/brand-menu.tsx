@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
+import { overlaySectionTitleClass } from '@/lib/overlay-chrome'
 import { brandAccentStyles, type BrandAccent } from '@/lib/brand-accent'
 import { DropdownMenuContent } from '@/components/ui/dropdown-menu'
 
@@ -54,7 +55,7 @@ export function BrandMenuSectionHeader({ accent, title, description }: BrandMenu
 
   return (
     <div className="px-3 pt-3 pb-2">
-      <p className={cn('text-sm font-semibold', styles.title)}>{title}</p>
+      <p className={cn(overlaySectionTitleClass, styles.title)}>{title}</p>
       <p className={cn('mt-1 text-xs leading-relaxed', styles.description)}>{description}</p>
     </div>
   )

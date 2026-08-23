@@ -2,6 +2,7 @@ import * as React from "react"
 import { Questionnaire as QuestionnairePrimitive } from "@shadcn/react/questionnaire"
 
 import { cn } from "@/lib/utils"
+import { overlayDescriptionClass, overlaySectionTitleClass } from "@/lib/overlay-chrome"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { CheckIcon } from "lucide-react"
 
@@ -60,7 +61,8 @@ function QuestionnaireTitle({
     <QuestionnairePrimitive.Title
       data-slot="questionnaire-title"
       className={cn(
-        "font-heading text-base leading-snug font-medium text-pretty [&:not(:has(~[data-slot=questionnaire-description]))]:mb-4",
+        overlaySectionTitleClass,
+        "leading-snug text-pretty [&:not(:has(~[data-slot=questionnaire-description]))]:mb-4",
         className
       )}
       {...props}
@@ -75,7 +77,7 @@ function QuestionnaireDescription({
   return (
     <QuestionnairePrimitive.Description
       data-slot="questionnaire-description"
-      className={cn("text-sm text-pretty text-muted-foreground", className)}
+      className={cn(overlayDescriptionClass, "text-pretty", className)}
       {...props}
     />
   )

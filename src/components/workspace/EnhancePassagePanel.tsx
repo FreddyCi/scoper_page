@@ -5,6 +5,11 @@ import { Streamdown } from 'streamdown'
 import { Button } from '@/components/ui/button'
 import { EnhancePassageShimmer } from '@/components/ui/enhance-passage-shimmer'
 import type { BlockRecord } from '@/lib/types'
+import {
+  overlayChromeGhostButtonClass,
+  overlayPanelClass,
+  overlaySectionTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 import {
   generatePassageEnhancement,
@@ -176,13 +181,14 @@ export function EnhancePassagePanel({
       role="dialog"
       aria-label="Enhance passage"
       className={cn(
-        'border-violet-200/80 bg-surface shadow-elevated absolute top-3 right-3 left-3 z-30 flex max-h-[min(34rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-xl border sm:left-auto sm:w-[min(22rem,calc(100vw-2rem))]',
+        overlayPanelClass,
+        'border-violet-200/80 absolute top-3 right-3 left-3 z-30 flex max-h-[min(34rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-xl sm:left-auto sm:w-[min(22rem,calc(100vw-2rem))]',
       )}
     >
       <div className="border-border/70 shrink-0 space-y-2 border-b px-3 py-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 space-y-1">
-            <h3 className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
+            <h3 className={cn(overlaySectionTitleClass, 'inline-flex items-center gap-1.5')}>
               <SparklesIcon className="text-violet-700 size-4 shrink-0" />
               Enhance passage
             </h3>
@@ -193,7 +199,7 @@ export function EnhancePassagePanel({
             variant="ghost"
             size="icon-sm"
             aria-label="Close enhance panel"
-            className="text-muted-foreground shrink-0"
+            className={cn('shrink-0', overlayChromeGhostButtonClass)}
             onClick={() => onOpenChange(false)}
           >
             <XIcon className="size-4" />

@@ -9,6 +9,11 @@ import {
 import { CommentDraftDictationField } from '@/components/workspace/comment-draft-dictation-field'
 import { useBlockComments } from '@/hooks/use-block-comments'
 import type { BlockRecord } from '@/lib/types'
+import {
+  overlayChromeGhostButtonClass,
+  overlayPanelClass,
+  overlaySectionTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/store/session-store'
 
@@ -186,7 +191,8 @@ export function BlockCommentPopover({
           role="dialog"
           aria-label={isMarkdown ? 'Enhance passage' : 'Block comments'}
           className={cn(
-            'border-border bg-surface shadow-elevated z-30 flex max-h-[min(34rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-lg border',
+            overlayPanelClass,
+            'z-30 flex max-h-[min(34rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-lg',
             isMarkdown && 'border-violet-200/80',
             showTrigger
               ? 'absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2rem))]'
@@ -196,7 +202,7 @@ export function BlockCommentPopover({
           <div className="border-border/70 min-w-0 shrink-0 space-y-2 border-b p-3">
             <div className="flex items-start justify-between gap-2">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <h3 className="text-foreground inline-flex items-center gap-1.5 text-sm font-semibold">
+                <h3 className={cn(overlaySectionTitleClass, 'inline-flex items-center gap-1.5')}>
                   {isMarkdown ? (
                     <>
                       <SparklesIcon className="text-violet-700 size-4 shrink-0" />
@@ -230,7 +236,7 @@ export function BlockCommentPopover({
                 variant="ghost"
                 size="icon-sm"
                 aria-label={isMarkdown ? 'Close enhance panel' : 'Close comments'}
-                className="text-muted-foreground shrink-0"
+                className={cn('shrink-0', overlayChromeGhostButtonClass)}
                 onClick={() => onOpenChange(false)}
               >
                 <XIcon className="size-4" />

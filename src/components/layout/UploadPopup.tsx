@@ -33,6 +33,12 @@ import {
   isRfpUploadFile,
 } from '@/lib/upload-accept'
 import { UPLOAD_INTENT_COPY, type UploadIntent } from '@/lib/upload-suggestions'
+import {
+  overlayChromeGhostButtonClass,
+  overlayDescriptionClass,
+  overlayPanelClass,
+  overlayTitleClass,
+} from '@/lib/overlay-chrome'
 import { cn } from '@/lib/utils'
 
 type UploadPopupProps = {
@@ -180,21 +186,22 @@ export function UploadPopup({
           aria-modal="true"
           aria-labelledby="upload-popup-title"
           className={cn(
-            'border-border bg-surface shadow-elevated pointer-events-auto flex max-h-[min(44rem,calc(100svh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-[1.25rem] border',
+            overlayPanelClass,
+            'shadow-elevated pointer-events-auto flex max-h-[min(44rem,calc(100svh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-[1.25rem]',
             className,
           )}
         >
           <div className="border-border flex items-start justify-between gap-4 border-b px-6 py-5">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 id="upload-popup-title" className="text-lg font-semibold tracking-tight">
+                <h2 id="upload-popup-title" className={cn(overlayTitleClass, 'text-2xl')}>
                   {copy.title}
                 </h2>
                 {items.length > 0 ? (
                   <Badge variant="secondary">{items.length} files</Badge>
                 ) : null}
               </div>
-              <p className="text-muted-foreground mt-1.5 max-w-lg text-sm leading-relaxed">
+              <p className={cn(overlayDescriptionClass, 'mt-1.5 max-w-lg')}>
                 {copy.description}
               </p>
             </div>
@@ -202,6 +209,7 @@ export function UploadPopup({
               type="button"
               size="icon-xs"
               variant="ghost"
+              className={overlayChromeGhostButtonClass}
               aria-label="Close"
               onClick={handleClose}
             >

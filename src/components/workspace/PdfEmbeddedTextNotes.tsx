@@ -65,17 +65,16 @@ export function PdfEmbeddedTextNotes({
     <div className={cn('absolute inset-0 z-[2]', className)} aria-label="PDF comments">
       {notes.map((note) => {
         const isOpen = openNoteId === note.id
-        const iconSize = Math.max(18, Math.min(note.width, note.height, 24))
+        const iconSize = Math.max(20, Math.min(note.width, note.height, 26))
 
         return (
           <div key={note.id}>
             <button
               type="button"
               className={cn(
-                'absolute flex items-center justify-center rounded-sm border shadow-sm transition-colors',
-                isOpen
-                  ? 'border-rose-700 bg-rose-600 text-white'
-                  : 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100',
+                'absolute flex items-center justify-center rounded-md border shadow-md transition-all',
+                'border-rose-400/90 bg-rose-500 text-white hover:bg-rose-600',
+                isOpen && 'ring-2 ring-rose-400/80 ring-offset-2 ring-offset-white',
               )}
               style={{
                 left: note.left,
@@ -88,23 +87,31 @@ export function PdfEmbeddedTextNotes({
               title={note.contents}
               onClick={() => setOpenNoteId(isOpen ? null : note.id)}
             >
-              <MessageSquareTextIcon className="size-3.5" aria-hidden />
+              <MessageSquareTextIcon className="size-3.5" strokeWidth={2.25} aria-hidden />
             </button>
 
             {isOpen ? (
               <div
-                className="absolute max-w-[min(18rem,42vw)] rounded-md border border-rose-700 bg-rose-600 px-3 py-2 text-sm leading-snug text-white shadow-lg"
+                className={cn(
+                  'border-border bg-surface text-foreground shadow-panel absolute max-w-[min(20rem,44vw)]',
+                  'rounded-lg border border-l-[3px] border-l-rose-500 px-3.5 py-2.5',
+                  'text-sm leading-relaxed',
+                )}
                 style={{
-                  left: note.left + iconSize + 6,
-                  top: Math.max(0, note.top - 4),
+                  left: note.left + iconSize + 8,
+                  top: Math.max(0, note.top - 6),
                 }}
               >
                 {note.title && note.title !== 'Notation' ? (
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-rose-100">
+                  <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">
                     {note.title}
                   </p>
-                ) : null}
-                <p>{note.contents}</p>
+                ) : (
+                  <p className="text-muted-foreground mb-1 text-[11px] font-semibold uppercase tracking-wide">
+                    Plan note
+                  </p>
+                )}
+                <p className="text-foreground font-medium">{note.contents}</p>
               </div>
             ) : null}
           </div>

@@ -364,7 +364,7 @@ export function CompanyOnboardingQuestionnaireDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex h-[min(92svh,44rem)] max-h-[min(92svh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+        className="flex max-h-[min(72svh,36rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
         showCloseButton
       >
         <DialogHeader className="shrink-0 space-y-1.5 px-6 pt-6 pb-3">

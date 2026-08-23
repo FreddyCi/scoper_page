@@ -283,8 +283,7 @@ export function UploadPopup({
             </div>
 
             {intent === 'rfp' ? (
-              <div className="border-border/70 bg-workspace/40 rounded-xl border px-3 py-2.5">
-                <p className="text-foreground mb-2.5 text-xs font-medium">PDF options</p>
+              <div className="border-border/70 bg-workspace/40 rounded-xl border px-3 py-3">
                 <PdfIngestOptionsPanel disabled={isSubmitting} />
               </div>
             ) : null}

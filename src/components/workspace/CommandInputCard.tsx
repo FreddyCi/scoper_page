@@ -243,8 +243,8 @@ function CommandSettingsPopover({
         </div>
 
         <div>
-          <p className="text-muted-foreground mb-1.5 text-xs">PDF upload</p>
-          <PdfIngestOptionsPanel />
+          <p className="text-muted-foreground mb-1.5 text-xs">PDF files</p>
+          <PdfIngestOptionsPanel showHeading={false} />
         </div>
       </div>
     </div>

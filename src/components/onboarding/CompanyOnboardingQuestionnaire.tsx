@@ -67,19 +67,28 @@ type CompanyOnboardingQuestionnaireCoreProps = {
   className?: string
   onSubmitted?: (profile: CompanyProfile) => void
   showDemoCompanyToggle?: boolean
+  /** Fixed-height dialog — scroll questions, pin nav footer (BDA-306). */
+  scrollableLayout?: boolean
 }
 
 function DemoCompanyProfileToggle({
   enabled,
   disabled,
+  className,
   onEnabledChange,
 }: {
   enabled: boolean
   disabled?: boolean
+  className?: string
   onEnabledChange: (enabled: boolean) => void
 }) {
   return (
-    <div className="border-border/70 bg-workspace/40 flex items-start justify-between gap-3 rounded-xl border px-3 py-2.5">
+    <div
+      className={cn(
+        'border-border/70 bg-workspace/40 flex items-start justify-between gap-3 rounded-xl border px-3 py-2.5',
+        className,
+      )}
+    >
       <div className="min-w-0">
         <Label
           htmlFor="demo-company-profile-toggle"
@@ -174,6 +183,7 @@ export function CompanyOnboardingQuestionnaireCore({
   className,
   onSubmitted,
   showDemoCompanyToggle = true,
+  scrollableLayout = false,
 }: CompanyOnboardingQuestionnaireCoreProps) {
   const storedProfile = useCompanyProfileStore(selectCompanyProfile)
   const onboardingStep = useCompanyProfileStore((state) => state.onboardingStep)
@@ -276,38 +286,65 @@ export function CompanyOnboardingQuestionnaireCore({
     [markOnboardingComplete, onSubmitted],
   )
 
+  const questionFields = COMPANY_ONBOARDING_ITEMS.map((item) =>
+    renderOnboardingItem(item, formDefaults, invalidItem, handleItemStatusChange),
+  )
+
+  const questionnaire = (
+    <Questionnaire
+      ref={formRef}
+      key={`${formInstanceKey}:${profileForDefaults.legalName}:${onboardingStep ?? 'new'}`}
+      className={cn(
+        'max-w-md',
+        scrollableLayout && 'flex min-h-0 flex-1 flex-col',
+      )}
+      items={questionnaireItems}
+      item={activeItem}
+      shortcuts="letters"
+      onItemChange={handleItemChange}
+      onSubmit={handleSubmit}
+    >
+      {scrollableLayout ? (
+        <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <QuestionnaireProgress />
+          {questionFields}
+        </div>
+      ) : (
+        <>
+          <QuestionnaireProgress />
+          {questionFields}
+        </>
+      )}
+
+      <QuestionnaireActions
+        className={cn(
+          scrollableLayout && 'border-border shrink-0 border-t pt-4',
+        )}
+      >
+        <QuestionnairePrevious />
+        <QuestionnaireSkip />
+        <QuestionnaireNext />
+        <QuestionnaireSubmit>Save company profile</QuestionnaireSubmit>
+      </QuestionnaireActions>
+    </Questionnaire>
+  )
+
   return (
-    <div className={cn('flex flex-col gap-4', className)}>
+    <div
+      className={cn(
+        scrollableLayout ? 'flex min-h-0 flex-1 flex-col' : 'flex flex-col gap-4',
+        className,
+      )}
+    >
       {showDemoCompanyToggle ? (
         <DemoCompanyProfileToggle
           enabled={useDemoCompany}
+          className={cn(scrollableLayout && 'mb-3 shrink-0')}
           onEnabledChange={handleDemoCompanyToggle}
         />
       ) : null}
 
-      <Questionnaire
-        ref={formRef}
-        key={`${formInstanceKey}:${profileForDefaults.legalName}:${onboardingStep ?? 'new'}`}
-        className="max-w-md"
-        items={questionnaireItems}
-        item={activeItem}
-        shortcuts="letters"
-        onItemChange={handleItemChange}
-        onSubmit={handleSubmit}
-      >
-        <QuestionnaireProgress />
-
-        {COMPANY_ONBOARDING_ITEMS.map((item) =>
-          renderOnboardingItem(item, formDefaults, invalidItem, handleItemStatusChange),
-        )}
-
-        <QuestionnaireActions>
-          <QuestionnairePrevious />
-          <QuestionnaireSkip />
-          <QuestionnaireNext />
-          <QuestionnaireSubmit>Save company profile</QuestionnaireSubmit>
-        </QuestionnaireActions>
-      </Questionnaire>
+      {questionnaire}
     </div>
   )
 }
@@ -326,8 +363,11 @@ export function CompanyOnboardingQuestionnaireDialog({
 }: CompanyOnboardingQuestionnaireDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(92svh,44rem)] overflow-y-auto sm:max-w-lg" showCloseButton>
-        <DialogHeader>
+      <DialogContent
+        className="flex h-[min(92svh,44rem)] max-h-[min(92svh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
+        showCloseButton
+      >
+        <DialogHeader className="shrink-0 space-y-1.5 px-6 pt-6 pb-3">
           <DialogTitle>Tell us about your company</DialogTitle>
           <DialogDescription>
             A short profile helps Scout qualify bids and draft proposals with your trade, certs, and
@@ -335,6 +375,8 @@ export function CompanyOnboardingQuestionnaireDialog({
           </DialogDescription>
         </DialogHeader>
         <CompanyOnboardingQuestionnaireCore
+          scrollableLayout
+          className="min-h-0 flex-1 px-6 pb-6"
           onSubmitted={(profile) => {
             onSubmitted?.(profile)
             onOpenChange(false)

@@ -14,7 +14,6 @@ import { runScoutHeaderLauncherHarness } from '@/lib/scout/scout-journey-start-b
 import { runScoutStepEngineHarness } from '@/lib/scout/scout-step-engine'
 import { runScoutSessionGuardHarness } from '@/lib/scout/session-guard'
 import { runScoutSpotlightGeometryHarness } from '@/lib/scout/spotlight-geometry'
-import { runWalkthroughArrowPathsHarness } from '@/lib/scout/walkthrough-arrow-paths'
 import {
   fetchSampleFile,
   SAMPLE_CONTRACT_CHECKLIST_FILENAME,
@@ -57,7 +56,6 @@ export function runScoutUnitHarnesses(): void {
   runScoutCompletionHarness()
   runScoutPanelHarness()
   runScoutSpotlightGeometryHarness()
-  runWalkthroughArrowPathsHarness()
   runScoutSessionGuardHarness()
   runScoutStepEngineHarness()
   runScoutHeaderLauncherHarness()

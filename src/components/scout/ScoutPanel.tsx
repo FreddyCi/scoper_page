@@ -389,7 +389,6 @@ function ScoutPanelBody({ collapsed, onToggleCollapsed, onClose }: ScoutPanelCon
           <Button
             type="button"
             className="w-full"
-            data-scout-arrow-origin
             disabled={runningAction}
             onClick={() => void handlePrimaryAction()}
           >

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import type { PDFDocumentProxy, PageViewport, RenderTask } from 'pdfjs-dist'
 
+import { PdfEmbeddedTextNotes } from '@/components/workspace/PdfEmbeddedTextNotes'
 import { PdfHighlightEditor } from '@/components/workspace/PdfHighlightEditor'
 import { PdfDrawingOverlay, type PdfDrawingShapeCommit, type PdfDrawingStampCommit, type PdfDrawingStrokeCommit, type PdfDrawingTextCommit } from '@/components/workspace/PdfDrawingOverlay'
 import { VoiceNotationControl } from '@/components/workspace/voice-notation-control'
@@ -296,6 +297,15 @@ export function PdfPageCanvas({
               }}
             />
           )}
+        </div>
+      ) : null}
+
+      {canvasLayout && viewport && !markModeActive ? (
+        <div
+          className="absolute inset-0"
+          style={{ width: canvasLayout.width, height: canvasLayout.height }}
+        >
+          <PdfEmbeddedTextNotes pdf={pdf} pageNumber={pageNumber} scale={scale} />
         </div>
       ) : null}
 

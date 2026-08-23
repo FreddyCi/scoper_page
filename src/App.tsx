@@ -44,6 +44,7 @@ import { runDuckdbHarness } from '@/services/duckdb-client'
 import { runLoadSampleEvaluationHarness } from '@/services/load-sample-documents'
 import { runLoadSampleMarkupHarness } from '@/services/load-sample-markup'
 import { runScoperExportDrawingStampsHarness } from '@/lib/scoper-export-drawing-stamps'
+import { runPdfEmbeddedTextNotesHarness } from '@/lib/pdf-embedded-text-notes'
 import { runLoadSampleProposalHarness } from '@/services/load-sample-proposal'
 import { runImportPdfCommentsHarness } from '@/services/import-pdf-comments'
 import {
@@ -129,6 +130,7 @@ function App() {
       await runLoadSampleEvaluationHarness()
       await runLoadSampleProposalHarness()
       await runScoperExportDrawingStampsHarness()
+      await runPdfEmbeddedTextNotesHarness()
       await runLoadSampleMarkupHarness()
       await runScoperHarness()
       await runChatVoiceAsyncHarnesses()

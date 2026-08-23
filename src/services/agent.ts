@@ -12,6 +12,7 @@ import type {
   FindClauseResult,
 } from '@/lib/types'
 import type { ChatMessage as ScoperChatMessage } from '@/lib/scoper-protocol'
+import { SCOPER_CHAT_SYSTEM_PROMPT } from '@/lib/scoper-chat-system'
 import { buildAssistantRichContent } from '@/services/chat-citations'
 import {
   getScoperClient,
@@ -167,6 +168,7 @@ async function streamFindClauseSummary(
   setChatContextPhase('generating')
 
   const tracker = getChatContextTracker()
+  tracker.recordSegment('system', SCOPER_CHAT_SYSTEM_PROMPT)
   const scoperMessages = buildFindClauseScoperPrompt(prompt, findResult)
   recordChatTurnText(tracker, scoperMessages.map((message) => message.content).join('\n'))
 
@@ -225,6 +227,7 @@ async function runGenericScoperTurn(
   setChatContextPhase('generating')
 
   const tracker = getChatContextTracker()
+  tracker.recordSegment('system', SCOPER_CHAT_SYSTEM_PROMPT)
   const scoperMessages = toScoperMessages(messages)
   recordChatTurnText(tracker, scoperMessages.map((message) => message.content).join('\n'))
 

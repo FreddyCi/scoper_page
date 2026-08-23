@@ -3,6 +3,7 @@
 import { createEngine, WebGPUUnavailableError } from 'bitgpu'
 import { createChat, type ChatMessage } from 'bitgpu/chat'
 
+import { SCOPER_CHAT_SYSTEM_PROMPT } from '@/lib/scoper-chat-system'
 import { fetchArrayBufferCached, fetchJsonCached } from '@/lib/scoper-cache'
 import {
   SCOPER_BONSAI_17B,
@@ -82,6 +83,8 @@ async function handleLoad() {
     tokenizerConfigUrl: SCOPER_BONSAI_17B.tokenizerConfigUrl,
     fetchJson: fetchJsonCached,
   })
+
+  await chat.prewarm([{ role: 'system', content: SCOPER_CHAT_SYSTEM_PROMPT }])
 
   postOutbound({ type: 'engine-config', maxSeqLen: effective, notice })
   postOutbound({ type: 'progress', phase: 'ready' })

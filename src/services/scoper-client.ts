@@ -10,6 +10,7 @@ import type {
 import { ScoperWebGpuUnavailableError } from '@/lib/scoper-protocol'
 import { getScoperModelCacheStatus } from '@/lib/scoper-cache'
 import { probeWebGpu } from '@/lib/scoper-webgpu'
+import { withScoperSystemMessage } from '@/lib/scoper-chat-system'
 
 type PendingRequest = {
   resolve: (value: unknown) => void
@@ -240,6 +241,8 @@ export class ScoperClient {
       throw new Error('Scoper is already generating a response')
     }
 
+    const messagesWithSystem = withScoperSystemMessage(messages)
+
     this.setState({ status: 'generating', lastError: null })
     this.abortController = options.signal ? null : new AbortController()
     const signal = options.signal ?? this.abortController?.signal
@@ -269,7 +272,7 @@ export class ScoperClient {
     void this.ensureWorker().then((worker) => {
       worker.postMessage({
         type: 'send',
-        messages,
+        messages: messagesWithSystem,
         temperature: options.temperature,
         topK: options.topK,
         maxTokens: options.maxTokens,

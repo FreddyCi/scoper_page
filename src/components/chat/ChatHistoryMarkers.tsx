@@ -2,6 +2,7 @@ import { Fragment, useMemo, type ReactNode } from 'react'
 import { FileStackIcon } from 'lucide-react'
 
 import { ChatHistoryQueryRow } from '@/components/chat/ChatHistoryQueryRow'
+import { AgentActivityMarkerRow } from '@/components/chat/AgentActivityMarkers'
 import {
   MessageScroller,
   MessageScrollerButton,
@@ -10,6 +11,7 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from '@/components/ui/message-scroller'
+import { tailAgentActivityLog } from '@/lib/agent-activity'
 import { groupChatQueryHistory } from '@/lib/chat-history'
 import { listProposalVolumeHistory } from '@/lib/proposal-history'
 import { cn } from '@/lib/utils'
@@ -65,11 +67,12 @@ function ProposalVolumeHistoryRow({
   )
 }
 
-/** History tab — agent queries; proposal volumes in proposal mode (BDA-125) */
+/** History tab — agent activity, queries, proposal volumes (BDA-125) */
 export function ChatHistoryMarkers() {
   const chatMessages = useSessionStore((state) => state.chatMessages)
   const chatThreads = useSessionStore((state) => state.chatThreads)
   const proposalRequirementsProfile = useSessionStore((state) => state.proposalRequirementsProfile)
+  const agentActivityLog = useSessionStore((state) => state.agentActivityLog)
   const mode = useSessionStore((state) => state.mode)
   const focusChatMessage = useSessionStore((state) => state.focusChatMessage)
   const setWorkspaceView = useSessionStore((state) => state.setWorkspaceView)
@@ -84,11 +87,17 @@ export function ChatHistoryMarkers() {
     [mode, proposalRequirementsProfile],
   )
 
-  if (chatGroups.length === 0 && proposalVolumeEntries.length === 0) {
+  const activityEntries = useMemo(() => tailAgentActivityLog(agentActivityLog, 48), [agentActivityLog])
+
+  if (
+    chatGroups.length === 0 &&
+    proposalVolumeEntries.length === 0 &&
+    activityEntries.length === 0
+  ) {
     return (
       <div className="text-muted-foreground m-auto max-w-xs px-2 text-center text-sm leading-relaxed">
         {mode === 'proposal'
-          ? 'Build a proposal profile or ask the agent — activity will appear here.'
+          ? 'Build a proposal profile or run generation — agent activity will appear here.'
           : 'Ask the agent a question — your queries from this session will appear here.'}
       </div>
     )
@@ -99,6 +108,24 @@ export function ChatHistoryMarkers() {
       <MessageScroller className="min-h-0 flex-1">
         <MessageScrollerViewport>
           <MessageScrollerContent className="gap-2 px-0.5">
+            {activityEntries.length > 0 ? (
+              <>
+                <MessageScrollerItem messageId="history-activity-intro" scrollAnchor={false}>
+                  <HistorySectionHeading>Agent activity</HistorySectionHeading>
+                </MessageScrollerItem>
+
+                {activityEntries.map((entry) => (
+                  <MessageScrollerItem
+                    key={entry.id}
+                    messageId={`activity-${entry.id}`}
+                    scrollAnchor={false}
+                  >
+                    <AgentActivityMarkerRow entry={entry} />
+                  </MessageScrollerItem>
+                ))}
+              </>
+            ) : null}
+
             {chatGroups.length > 0 ? (
               <>
                 <MessageScrollerItem messageId="history-chat-intro" scrollAnchor={false}>

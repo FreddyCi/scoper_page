@@ -20,7 +20,7 @@ import {
 } from '@/services/rfp-requirements'
 import { fetchRfpInstructionsForDoc } from '@/services/rfp-solicitation-meta'
 import { getScoperClient } from '@/services/scoper-client'
-import { clearAgentActivityState } from '@/lib/agent-activity'
+import { agentActivityEntriesFromShareRows } from '@/services/agent-activity-duckdb'
 import { useSessionStore } from '@/store/session-store'
 
 import { writeReviewerNamePreference } from '@/lib/reviewer-profile'
@@ -111,6 +111,7 @@ function emptyShareTables(): Record<ShareTableId, ShareTableRow[]> {
     rfp_requirements: [],
     rfp_requirement_scores: [],
     rfp_solicitation_meta: [],
+    agent_activity_log: [],
   }
 }
 
@@ -174,6 +175,8 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     mode,
   )
 
+  const agentActivityLog = agentActivityEntriesFromShareRows(tablesToImport.agent_activity_log ?? [])
+
   writeReviewerNamePreference(manifest.reviewerName)
   writeCompanyContextPreference(manifest.companyContext)
 
@@ -204,7 +207,9 @@ export async function applySharePackPayload(payload: SharePackPayload): Promise<
     chatGenerating: false,
     chatModelStatus: 'idle',
     uploadPopupOpen: false,
-    ...clearAgentActivityState(),
+    agentActivityLog,
+    contextPhase: 'idle',
+    contextUsageSnapshot: null,
   })
 }
 

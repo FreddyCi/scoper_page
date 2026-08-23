@@ -73,6 +73,12 @@ import {
   type AgentActivityEntry,
   type ContextPhase,
 } from '@/lib/agent-activity'
+import {
+  clearAgentActivityLogInDuckdb,
+  fetchAgentActivityLog,
+  insertAgentActivityEntry,
+  trimAgentActivityLogInDuckdb,
+} from '@/services/agent-activity-duckdb'
 import type { ContextUsageResult } from '@/lib/context-usage'
 
 const CHAT_COLLAPSED_STORAGE_KEY = 'bda-chat-collapsed'
@@ -298,6 +304,7 @@ export type SessionState = {
     entry: Omit<AgentActivityEntry, 'id' | 'at'> & { id?: string; at?: string },
   ) => void
   clearAgentActivity: () => void
+  hydrateAgentActivityFromDuckdb: () => Promise<void>
   setContextPhase: (phase: ContextPhase) => void
   setContextUsageSnapshot: (snapshot: ContextUsageResult | null) => void
 }
@@ -828,12 +835,28 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     }
   },
 
-  pushAgentActivity: (entry) =>
-    set((state) => ({
-      agentActivityLog: appendAgentActivityEntry(state.agentActivityLog, entry),
-    })),
+  pushAgentActivity: (entry) => {
+    const persisted = appendAgentActivityEntry(get().agentActivityLog, entry)
+    set({ agentActivityLog: persisted })
+    const latest = persisted[persisted.length - 1]
+    if (!latest) return
+    void insertAgentActivityEntry(latest)
+      .then(() => trimAgentActivityLogInDuckdb())
+      .catch((error) => {
+        console.warn('[session-store] agent activity persist failed', error)
+      })
+  },
 
   clearAgentActivity: () => set(clearAgentActivityState()),
+
+  hydrateAgentActivityFromDuckdb: async () => {
+    try {
+      const log = await fetchAgentActivityLog()
+      set({ agentActivityLog: log })
+    } catch (error) {
+      console.warn('[session-store] agent activity hydrate failed', error)
+    }
+  },
 
   setContextPhase: (contextPhase) => set({ contextPhase }),
 
@@ -1199,6 +1222,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     writeCompanyContextPreference('')
     getScoperClient().resetConversation()
     get().clearProposalGeneration()
+    void clearAgentActivityLogInDuckdb().catch((error) => {
+      console.warn('[session-store] agent activity clear failed', error)
+    })
     set({
       ...initialState,
       companyContext: '',

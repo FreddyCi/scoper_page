@@ -55,12 +55,14 @@ export function ChatTranscript() {
   const chatGenerating = useSessionStore((s) => s.chatGenerating)
   const proposalGenerating = useSessionStore((s) => s.proposalGenerating)
   const contextPhase = useSessionStore((s) => s.contextPhase)
+  const agentActivityLog = useSessionStore((s) => s.agentActivityLog)
 
-  const showActivityStrip = shouldShowAgentActivityStrip({
-    chatGenerating,
-    proposalGenerating,
-    contextPhase,
-  })
+  const showActivityStrip =
+    shouldShowAgentActivityStrip({
+      chatGenerating,
+      proposalGenerating,
+      contextPhase,
+    }) || agentActivityLog.length > 0
 
   const statusLabel =
     chatModelStatus === 'loading'

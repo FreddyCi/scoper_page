@@ -20,7 +20,7 @@ type AgentActivityMarkerRowProps = {
   entry: AgentActivityEntry
 }
 
-function AgentActivityMarkerRow({ entry }: AgentActivityMarkerRowProps) {
+export function AgentActivityMarkerRow({ entry }: AgentActivityMarkerRowProps) {
   const detailSuffix = entry.detail ? ` · ${entry.detail}` : ''
 
   if (entry.kind === 'separator') {

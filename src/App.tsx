@@ -59,6 +59,7 @@ import { runExportDocumentMarkdownHarness } from '@/services/export-document-mar
 import { runSharePackHarness } from '@/services/share-pack-harness'
 import { exposeScoperDevGlobals, runScoperDevToolsHarness } from '@/lib/scoper-dev-tools'
 import { runSessionStoreHarness } from '@/store/session-store'
+import { useSessionStore } from '@/store/session-store'
 import { subscribeScoutStorageSync } from '@/store/scout-store'
 import { subscribeCompanyProfileStorageSync } from '@/store/company-profile-store'
 import {
@@ -77,9 +78,11 @@ function App() {
     exposeScoperDevGlobals()
     const unsubscribeScoutSync = subscribeScoutStorageSync()
     const unsubscribeCompanyProfileSync = subscribeCompanyProfileStorageSync()
-    void initScoperEcpEnvironment().catch((error) => {
-      console.error('[ecp-init]', error)
-    })
+    void initScoperEcpEnvironment()
+      .then(() => useSessionStore.getState().hydrateAgentActivityFromDuckdb())
+      .catch((error) => {
+        console.error('[ecp-init]', error)
+      })
     return () => {
       unsubscribeScoutSync()
       unsubscribeCompanyProfileSync()

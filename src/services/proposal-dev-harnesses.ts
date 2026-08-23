@@ -10,6 +10,7 @@ import { runContextUsageHarness } from '@/lib/context-usage'
 import { runMarkerShimmerHarness } from '@/components/ui/marker'
 import { runShimmerHarness } from '@/components/ui/shimmer'
 import { runAgentActivityStoreHarness } from '@/services/agent-activity-store-harness'
+import { runAgentActivityDuckdbHarness } from '@/services/agent-activity-duckdb'
 import { runAgentActivityMarkersHarness } from '@/services/agent-activity-markers-harness'
 import { runAgentActivityEmissionsHarness } from '@/services/agent-activity-bridge'
 import { runPageContextManagerHarness } from '@/lib/page-context-manager'
@@ -29,8 +30,10 @@ import {
 } from '@/services/proposal-store-generate-harness'
 import { runProposalSectionEcpHarness } from '@/services/proposal-volume-ecp'
 import { runProposalGenerationHarness } from '@/services/proposal-generation-harness'
+import { runExportProposalPdfHarness } from '@/services/export-proposal-pdf'
 import { runProposalRfpProfileHarness } from '@/services/proposal-rfp-profile-harness'
 import { runProposalPanelSetupHarness } from '@/services/proposal-panel-setup-harness'
+import { runScoperChatSystemHarness } from '@/lib/scoper-chat-system'
 
 /** Sync proposal harnesses — no DuckDB ingest / ECP agent run required (BDA-150). */
 export function runProposalUnitHarnesses(): void {
@@ -58,12 +61,15 @@ export function runProposalUnitHarnesses(): void {
   runAnalyzeProposeLoopHarness()
   runChatStubProposalHarness()
   runProposalPanelSetupHarness()
+  runScoperChatSystemHarness()
 }
 
 /** Async proposal harnesses that need session + DuckDB state (BDA-150). */
 export async function runProposalAsyncUnitHarnesses(): Promise<void> {
   runAgentActivityStoreHarness()
   runAgentActivityMarkersHarness()
+  await runAgentActivityDuckdbHarness()
+  await runExportProposalPdfHarness()
   await runProposalStoreGeneratePreflightHarness()
   await runProposalStoreGenerateSingleVolumeHarness()
   await runProposalSectionEcpHarness()

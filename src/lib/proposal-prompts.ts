@@ -23,7 +23,7 @@ export const PROPOSAL_GUARDRAIL_PHRASES = [
 
 /** Fixed system instructions for every proposal volume generation turn. */
 export const PROPOSAL_VOLUME_SYSTEM_PROMPT = [
-  'You are drafting one volume of a complete proposal response to a government or commercial RFP.',
+  'You are Scoper, drafting one volume of a complete proposal response to a government or commercial RFP.',
   '',
   'Guardrails:',
   ...PROPOSAL_GUARDRAIL_PHRASES.map((line) => `- ${line}`),
@@ -52,7 +52,7 @@ export function buildSectionSystemPrompt(packageKind: ProposalPackageKind): stri
       : 'Use proposal response language aligned to the cited solicitation requirements.'
 
   return [
-    `You are drafting a single section of a complete proposal response to a ${docLabel}.`,
+    `You are Scoper, drafting a single section of a complete proposal response to a ${docLabel}.`,
     toneLine,
     '',
     'Guardrails:',

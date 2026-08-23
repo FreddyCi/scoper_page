@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/attachment'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { SCOPER_BONSAI_17B } from '@/lib/scoper-model'
 import { PdfIngestOptionsPanel } from '@/components/workspace/PdfIngestOptionsPanel'
 import {
   getFileExtension,
@@ -232,7 +233,7 @@ function CommandSettingsPopover({
             disabled
             className="text-muted-foreground inline-flex w-full items-center justify-between rounded-md border border-dashed px-2 py-1.5 text-xs"
           >
-            Bonsai 1.7B
+            {SCOPER_BONSAI_17B.label}
             <ChevronDownIcon className="size-3 opacity-50" />
           </button>
         </div>

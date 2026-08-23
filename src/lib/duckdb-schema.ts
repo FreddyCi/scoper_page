@@ -135,6 +135,14 @@ export const DUCKDB_SCHEMA_STATEMENTS = [
     citations_json VARCHAR,
     PRIMARY KEY (profile_id, volume_id, section_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS agent_activity_log (
+    activity_id VARCHAR PRIMARY KEY,
+    kind VARCHAR NOT NULL,
+    label VARCHAR NOT NULL,
+    detail VARCHAR,
+    logged_at VARCHAR NOT NULL,
+    shimmer INTEGER NOT NULL DEFAULT 0
+  )`,
   RFP_REQUIREMENTS_TABLE_SQL,
   RFP_REQUIREMENT_SCORES_TABLE_SQL,
   RFP_SOLICITATION_META_TABLE_SQL,
@@ -178,4 +186,13 @@ export const DUCKDB_MIGRATION_STATEMENTS = [
   RFP_REQUIREMENTS_TABLE_SQL,
   RFP_REQUIREMENT_SCORES_TABLE_SQL,
   RFP_SOLICITATION_META_TABLE_SQL,
+  'DROP TABLE IF EXISTS agent_activity_log',
+  `CREATE TABLE IF NOT EXISTS agent_activity_log (
+    activity_id VARCHAR PRIMARY KEY,
+    kind VARCHAR NOT NULL,
+    label VARCHAR NOT NULL,
+    detail VARCHAR,
+    logged_at VARCHAR NOT NULL,
+    shimmer INTEGER NOT NULL DEFAULT 0
+  )`,
 ] as const

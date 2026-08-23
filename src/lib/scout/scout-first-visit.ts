@@ -39,6 +39,12 @@ export function shouldAutoOpenScoutWelcomePanel(context: ScoutFirstVisitContext)
 
 /** Dev harness — first-visit auto-open predicates (BDA-298). */
 export function runScoutFirstVisitHarness(): void {
+  try {
+    localStorage.removeItem(SCOUT_STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+
   const base: ScoutFirstVisitContext = {
     dismissed: false,
     panelOpen: false,

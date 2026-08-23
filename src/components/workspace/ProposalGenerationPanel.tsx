@@ -32,6 +32,10 @@ import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import {
+  buildProposalPdfBytes,
+  proposalPdfExportFilename,
+} from '@/services/export-proposal-pdf'
+import {
   useProposalRequirementsProfile,
   useProposalSetupState,
   useSessionStore,
@@ -41,6 +45,8 @@ import {
   useCompanyProfileStore,
 } from '@/store/company-profile-store'
 import { shouldShowCompanyProfileSetupCta } from '@/lib/company-profile/onboarding-entry'
+
+type ProposalExportFormat = 'markdown' | 'pdf'
 
 type ProposalGenerationPanelProps = {
   className?: string
@@ -142,7 +148,7 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
         ? 'Complete generation with passing draft quality before exporting'
         : undefined
 
-  async function downloadProposalMarkdown(exportMode: ProposalExportMode) {
+  async function downloadProposal(exportMode: ProposalExportMode, format: ProposalExportFormat) {
     if (!profile || exportingProposal || proposalGenerating) return
 
     if (exportMode === 'complete') {
@@ -165,30 +171,47 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
         rfpFilename: rfpDoc?.filename,
         exportMode,
       })
-      const filename = proposalExportFilename(rfpDoc?.filename ?? 'proposal', exportMode)
+
+      if (format === 'markdown') {
+        const filename = proposalExportFilename(rfpDoc?.filename ?? 'proposal', exportMode)
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'text/markdown',
+          extension: '.md',
+        })
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
+        await writeBlob(blob)
+        return
+      }
+
+      const pdfFilename = proposalPdfExportFilename(rfpDoc?.filename ?? 'proposal', exportMode)
       const writeBlob = await beginBlobSave({
-        filename,
-        mime: 'text/markdown',
-        extension: '.md',
+        filename: pdfFilename,
+        mime: 'application/pdf',
+        extension: '.pdf',
       })
-      const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
-      await writeBlob(blob)
+      const pdfBytes = await buildProposalPdfBytes(markdown)
+      await writeBlob(new Blob([Uint8Array.from(pdfBytes)], { type: 'application/pdf' }))
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
       const message = error instanceof Error ? error.message : 'Export failed'
       setExportError(message)
-      console.error('[proposal-generation-panel] markdown export failed', error)
+      console.error('[proposal-generation-panel] export failed', error)
     } finally {
       setExportingProposal(false)
     }
   }
 
   async function handleExportProposal() {
-    await downloadProposalMarkdown('complete')
+    await downloadProposal('complete', 'markdown')
+  }
+
+  async function handleExportProposalPdf() {
+    await downloadProposal('complete', 'pdf')
   }
 
   async function handleExportDraftedVolumes() {
-    await downloadProposalMarkdown('drafted-only')
+    await downloadProposal('drafted-only', 'markdown')
   }
 
   async function handleBuildProfile() {
@@ -411,6 +434,16 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
                   onClick={() => void handleExportProposal()}
                 >
                   {exportingProposal ? 'Exporting…' : 'Export .md'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="sm:flex-1"
+                  disabled={!canExportProposal || exportingProposal || buildingProfile}
+                  title={exportButtonTitle ?? 'Download proposal as PDF'}
+                  onClick={() => void handleExportProposalPdf()}
+                >
+                  {exportingProposal ? 'Exporting…' : 'Export PDF'}
                 </Button>
                 <Button
                   type="button"

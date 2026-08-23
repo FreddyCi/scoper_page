@@ -1,10 +1,10 @@
 import type { WorkspaceMode, WorkspaceView } from '@/lib/types'
 
 /** Share pack format version — bump when payload shape changes. */
-export const SHARE_PACK_VERSION = 4 as const
+export const SHARE_PACK_VERSION = 5 as const
 
-/** Versions this build can import (missing v4 tables default to empty). */
-export const SUPPORTED_SHARE_PACK_VERSIONS = [3, 4] as const
+/** Versions this build can import (missing v5 tables default to empty). */
+export const SUPPORTED_SHARE_PACK_VERSIONS = [3, 4, 5] as const
 
 export type SharePackVersion = (typeof SUPPORTED_SHARE_PACK_VERSIONS)[number]
 
@@ -23,6 +23,7 @@ export type ShareTableId =
   | 'rfp_requirements'
   | 'rfp_requirement_scores'
   | 'rfp_solicitation_meta'
+  | 'agent_activity_log'
 
 export type ShareTableRow = Record<string, string | number | null>
 
@@ -229,6 +230,14 @@ export const SHARE_TABLE_REGISTRY: readonly ShareTableDefinition[] = [
                        body_markdown, error_message, edited, edited_at, citations_json
                 FROM proposal_volume_sections
                 ORDER BY profile_id, volume_id, section_id`,
+  },
+  {
+    id: 'agent_activity_log',
+    tableName: 'agent_activity_log',
+    columns: ['activity_id', 'kind', 'label', 'detail', 'logged_at', 'shimmer'],
+    importOrder: 14,
+    selectSql: `SELECT activity_id, kind, label, detail, logged_at, shimmer
+                FROM agent_activity_log ORDER BY logged_at`,
   },
 ] as const
 

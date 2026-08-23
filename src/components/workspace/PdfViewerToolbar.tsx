@@ -56,8 +56,16 @@ export function PdfViewerToolbar({
   const darkToolbarButtonClass = isDark
     ? 'text-zinc-300 hover:bg-zinc-700 hover:text-zinc-50'
     : undefined
-  const darkModeTabClass = isDark
-    ? 'text-zinc-400 hover:text-zinc-50 data-active:bg-zinc-700 data-active:text-white'
+  /** Override segmented tab variant hover (uses global `text-foreground` on dark chrome). */
+  const darkModeTabsListClass = isDark
+    ? cn(
+        'bg-zinc-800',
+        '[&_[data-slot=tabs-trigger]]:text-zinc-400',
+        '[&_[data-slot=tabs-trigger]:hover]:!text-zinc-50',
+        '[&_[data-slot=tabs-trigger][data-active]]:!bg-zinc-700',
+        '[&_[data-slot=tabs-trigger][data-active]]:!text-white',
+        '[&_[data-slot=tabs-trigger][data-active]]:shadow-sm',
+      )
     : undefined
 
   return (
@@ -172,10 +180,10 @@ export function PdfViewerToolbar({
           <TabsList
             variant="segmented"
             aria-label="PDF pane mode"
-            className={isDark ? 'bg-zinc-800' : undefined}
+            className={darkModeTabsListClass}
           >
-            <TabsTrigger value="view" className={darkModeTabClass}>View</TabsTrigger>
-            <TabsTrigger value="mark" className={darkModeTabClass}>Mark</TabsTrigger>
+            <TabsTrigger value="view">View</TabsTrigger>
+            <TabsTrigger value="mark">Mark</TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}

@@ -1,6 +1,7 @@
 import type { QuestionnaireItemDefinition } from '@shadcn/react/questionnaire'
 
 import type { CompanyProfile } from '@/lib/company-profile/schema'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 
 export type CompanyOnboardingChoice = {
   value: string
@@ -32,10 +33,10 @@ export const COMPANY_ONBOARDING_ITEMS: readonly CompanyOnboardingItem[] = [
     name: 'legalName',
     required: true,
     prompt: 'Legal company name',
-    description: 'As it appears on insurance certificates and bid bonds (e.g. Pro-Bel Enterprises Limited).',
+    description: `As it appears on insurance certificates and bid bonds (e.g. ${SAMPLE_FIXTURE_COMPANY.legalName}).`,
     input: {
       label: 'Legal name',
-      placeholder: 'Pro-Bel Enterprises Limited',
+      placeholder: SAMPLE_FIXTURE_COMPANY.legalName,
     },
   },
   {
@@ -214,7 +215,7 @@ export const COMPANY_ONBOARDING_ITEMS: readonly CompanyOnboardingItem[] = [
     ],
     input: {
       label: 'Other differentiator',
-      placeholder: 'e.g. Pro-Bel — fall protection and envelope sub serving DPR-class GC partners',
+      placeholder: `e.g. ${SAMPLE_FIXTURE_COMPANY.shortName} — fall protection and envelope sub serving DPR-class GC partners`,
     },
   },
   {

@@ -1,4 +1,8 @@
 import { ScoutJourneyPicker } from '@/components/scout/ScoutJourneyPicker'
+import {
+  WORKSPACE_LANDING_HEADLINE,
+  WORKSPACE_LANDING_SUBCOPY,
+} from '@/lib/workspace-landing-copy'
 import { cn } from '@/lib/utils'
 
 type WorkspaceLandingProps = {
@@ -15,11 +19,10 @@ export function WorkspaceLanding({ className }: WorkspaceLandingProps) {
     >
       <div className="flex w-full max-w-3xl flex-col items-center text-center">
         <h1 className="text-foreground font-serif text-3xl font-medium tracking-tight sm:text-4xl">
-          Qualify subs, mark plans, export CSV
+          {WORKSPACE_LANDING_HEADLINE}
         </h1>
         <p className="text-muted-foreground mt-4 max-w-xl text-sm leading-relaxed">
-          Pick a guided tour with sample construction docs — DPR bid packages, proposal rubrics, and
-          plan sheets. Everything parses locally in your browser; nothing is uploaded to a server.
+          {WORKSPACE_LANDING_SUBCOPY}
         </p>
       </div>
 

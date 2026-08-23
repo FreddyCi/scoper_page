@@ -5,6 +5,7 @@ import {
   parsePersistedCompanyProfile,
   type CompanyProfile,
 } from '@/lib/company-profile/schema'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 
 export const COMPANY_PROFILE_STORAGE_KEY = 'scoper.company-profile.v1'
 
@@ -216,7 +217,7 @@ export function subscribeCompanyProfileStorageSync(): () => void {
 
 function sampleProfile(): CompanyProfile {
   return {
-    legalName: 'Pro-Bel Enterprises Limited',
+    legalName: SAMPLE_FIXTURE_COMPANY.legalName,
     role: 'subcontractor',
     tradeDiscipline: 'fall-protection',
     serviceGeography: 'regional',

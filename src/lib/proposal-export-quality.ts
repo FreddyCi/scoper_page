@@ -1,4 +1,5 @@
 import type { ProposalRequirementsProfile } from '@/lib/types'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 
 export type ProposalDraftValidationResult = {
   ok: boolean
@@ -292,9 +293,8 @@ export function runProposalExportQualityHarness(): void {
     throw new Error('runProposalExportQualityHarness: handoff id leak should fail')
   }
 
-  const scoutFilename =
-    'DPR CONSTRUCTION - Fully Executed MSA - Pro-Bel Enterprises - 2025.pdf'
-  const filenameLeak = `## Scope of Work\n\nPer ${scoutFilename}, Pro-Bel will coordinate deliverables.\n\n${'Substantive alignment text for the master services agreement scope section. '.repeat(4)}`
+  const scoutFilename = SAMPLE_FIXTURE_COMPANY.msaDisplayFilename
+  const filenameLeak = `## Scope of Work\n\nPer ${scoutFilename}, ${SAMPLE_FIXTURE_COMPANY.shortName} will coordinate deliverables.\n\n${'Substantive alignment text for the master services agreement scope section. '.repeat(4)}`
   const sanitizedFilename = sanitizeProposalDraftMarkdown(filenameLeak, {
     knownFilenames: [scoutFilename],
   })

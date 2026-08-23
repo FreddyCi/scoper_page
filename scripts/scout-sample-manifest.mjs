@@ -3,7 +3,7 @@
  * Each file must stay under Workers' 25 MiB per-asset limit.
  */
 export const SCOUT_DEPLOY_SAMPLE_PATHS = [
-  'sample/dpr-msa-pro-bel-2025.pdf',
+  'sample/dpr-msa-summit-ridge-2025.pdf',
   'sample/contract-keyword-check.docx',
   'sample/windows-drawing.pdf',
   'sample/files/buyer-rubric.md',

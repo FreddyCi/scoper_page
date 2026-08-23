@@ -8,7 +8,7 @@ const scoutDeploy = process.argv.includes('--scout')
 
 const scoutSamplePaths = scoutDeploy
   ? [
-      'sample/dpr-msa-pro-bel-2025.pdf',
+      'sample/dpr-msa-summit-ridge-2025.pdf',
       'sample/contract-keyword-check.docx',
       'sample/windows-drawing.pdf',
       'sample/files/buyer-rubric.md',

@@ -1,3 +1,4 @@
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import { applyPostIngestModeEffects } from '@/lib/post-ingest-mode-effects'
 import {
   getProposalSetupState,
@@ -16,8 +17,7 @@ export const SAMPLE_PROPOSAL_RUBRIC_URL = '/sample/files/buyer-rubric.md'
 export const SAMPLE_PROPOSAL_RUBRIC_FILENAME = 'buyer-rubric.md'
 
 /** Pre-filled responder context so proposal setup readiness passes hasContext (BDA-284). */
-export const SAMPLE_PROPOSAL_COMPANY_CONTEXT =
-  'Pro-Bel Enterprises Limited — fall protection and building envelope subcontractor serving GC partners on commercial projects.'
+export const SAMPLE_PROPOSAL_COMPANY_CONTEXT = SAMPLE_FIXTURE_COMPANY.contextBlurb
 
 /**
  * Ingest solicitation PDF + buyer rubric markdown, switch to proposal mode, and open

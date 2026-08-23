@@ -1,3 +1,4 @@
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import { mimeFromFilename } from '@/lib/upload-accept'
 import { ingestFiles } from '@/services/ingest-router'
 import { setDocumentRole } from '@/services/document-roles'
@@ -8,9 +9,8 @@ export const SAMPLE_BIDDER_RESPONSE_URL = '/sample/demo-bidder-response.pdf'
 export const SAMPLE_BIDDER_RESPONSE_FILENAME = 'demo-bidder-response.pdf'
 
 /** Construction MSA + keyword checklist — Scout evaluate journey (BDA-283). */
-export const SAMPLE_EVALUATION_MSA_URL = '/sample/dpr-msa-pro-bel-2025.pdf'
-export const SAMPLE_EVALUATION_MSA_FILENAME =
-  'DPR CONSTRUCTION - Fully Executed MSA - Pro-Bel Enterprises - 2025.pdf'
+export const SAMPLE_EVALUATION_MSA_URL = `/sample/${SAMPLE_FIXTURE_COMPANY.msaFilename}`
+export const SAMPLE_EVALUATION_MSA_FILENAME = SAMPLE_FIXTURE_COMPANY.msaDisplayFilename
 
 export const SAMPLE_CONTRACT_CHECKLIST_URL = '/sample/contract-keyword-check.docx'
 export const SAMPLE_CONTRACT_CHECKLIST_FILENAME = 'Contract Key Word Check.docx'

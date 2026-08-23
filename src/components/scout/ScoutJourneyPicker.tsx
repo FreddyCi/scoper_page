@@ -91,7 +91,7 @@ function ScoutJourneyCard({ journey, completed, onStart }: ScoutJourneyCardProps
         >
           <Icon className={cn('size-6', accent.indicator)} />
         </span>
-        <span className={cn('text-sm font-medium', accent.title)}>Start guided tour</span>
+        <span className={cn('text-sm font-medium', accent.title)}>Walk the sample</span>
       </div>
     </button>
   )

@@ -196,7 +196,7 @@ flowchart TD
 **Status:** Done  
 **Dependencies:** BDA-282  
 **Priority:** Critical  
-**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`dpr-msa-pro-bel-2025.pdf`](../public/sample/dpr-msa-pro-bel-2025.pdf) + [`contract-keyword-check.docx`](../public/sample/contract-keyword-check.docx), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
+**Description:** Extend [`src/services/load-sample-documents.ts`](../src/services/load-sample-documents.ts): `loadSampleEvaluationWorkspace()` fetches [`dpr-msa-summit-ridge-2025.pdf`](../public/sample/dpr-msa-summit-ridge-2025.pdf) + [`contract-keyword-check.docx`](../public/sample/contract-keyword-check.docx), ingests both, sets evaluation baseline (RFP role + `evaluationDocId`), runs `syncRfpComplianceMatrixForQualification` path via `runRfpQualification`, sets `workspaceView` to `profiles`, `mode` `rfp`. Refactor existing `loadSampleBidderResponse` to reuse shared fetch helper.  
 **Completed Changes:**
 - ✅ Shared `fetchSampleFile(url, filename)` + construction sample URLs in `sample/` and `public/sample/`
 - ✅ `loadSampleEvaluationWorkspace` — MSA baseline + keyword checklist, `runRfpQualification` + `runContractKeywordReview`
@@ -219,7 +219,7 @@ flowchart TD
 **Priority:** High  
 **Description:** New [`src/services/load-sample-proposal.ts`](../src/services/load-sample-proposal.ts): ingest RFP sample + [`public/sample/files/buyer-rubric.md`](../public/sample/files/buyer-rubric.md) as context attachment; `setMode('proposal')`, `setWorkspaceView('profiles')`. Pre-fill minimal company context string for readiness if needed. Export `runLoadSampleProposalHarness`.  
 **Completed Changes:**
-- ✅ [`load-sample-proposal.ts`](../src/services/load-sample-proposal.ts) — DPR MSA solicitation + `buyer-rubric.md` supporting; Pro-Bel company context pre-fill
+- ✅ [`load-sample-proposal.ts`](../src/services/load-sample-proposal.ts) — DPR MSA solicitation + `buyer-rubric.md` supporting; Summit Ridge Envelope company context pre-fill
 - ✅ Proposal post-ingest routing via `applyPostIngestModeEffects`; baseline/supporting roles
 - ✅ `load_sample_proposal` scout action wired; generate journey copy updated
 - ✅ `runLoadSampleProposalHarness` in App dev chain
@@ -634,10 +634,10 @@ flowchart TD
 **Description:** [`src/lib/company-profile/to-company-context.ts`](../src/lib/company-profile/to-company-context.ts): pure `companyProfileToContext(profile) → string` — narrative paragraph(s) for proposal generation, RFP qualification relink ([`use-relink-rfp-profiles.ts`](../src/hooks/use-relink-rfp-profiles.ts)), and chat agent context. On save/submit: `useSessionStore.getState().setCompanyContext(...)` so existing readiness gates pass. Optional structured snippet block for share-pack export later. Wire [`assessProposalContextQuality`](../src/lib/proposal-context-quality.ts) to score derived context.  
 **Completed Changes:**
 - ✅ [`to-company-context.ts`](../src/lib/company-profile/to-company-context.ts) — `companyProfileToContext`, `companyProfileToContextSnippet`, `assessCompanyProfileContextQuality`, `syncCompanyProfileToSessionContext`
-- ✅ Minimum length guarantee via `PROPOSAL_CONTEXT_MIN_LENGTH`; Pro-Bel fixture includes trade + certifications
+- ✅ Minimum length guarantee via `PROPOSAL_CONTEXT_MIN_LENGTH`; Summit Ridge Envelope fixture includes trade + certifications
 - ✅ Onboarding submit calls `syncCompanyProfileToSessionContext` in [`CompanyOnboardingQuestionnaire.tsx`](../src/components/onboarding/CompanyOnboardingQuestionnaire.tsx)
 - ✅ `runCompanyContextSerializerHarness` — stable string, quality `ok`, session store sync
-**Test Strategy:** Harness: sample Pro-Bel-like profile → context length + quality not `empty`; session store updated on mock submit.  
+**Test Strategy:** Harness: sample Summit Ridge Envelope-like profile → context length + quality not `empty`; session store updated on mock submit.  
 **Test Results:**
 - ✅ `pnpm exec tsc -b` passes; harness validates length, trade/certs, quality, session sync
 **Assigned:** Unassigned  
@@ -769,7 +769,7 @@ flowchart TD
 
 ## Manual QA checklist (BDA-302)
 
-**Fixtures:** `public/sample/dpr-msa-pro-bel-2025.pdf`, `public/sample/contract-keyword-check.docx`, `public/sample/files/buyer-rubric.md`, `public/sample/windows-drawing.pdf` (alias `plan-windows-sample.pdf`), `public/sample/demo-bidder-response.pdf`, legacy `public/sample/rfp-it-services.pdf`.
+**Fixtures:** `public/sample/dpr-msa-summit-ridge-2025.pdf`, `public/sample/contract-keyword-check.docx`, `public/sample/files/buyer-rubric.md`, `public/sample/windows-drawing.pdf` (alias `plan-windows-sample.pdf`), `public/sample/demo-bidder-response.pdf`, legacy `public/sample/rfp-it-services.pdf`.
 
 **Automated preflight (before manual pass):**
 

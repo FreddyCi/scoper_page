@@ -30,6 +30,10 @@ import {
   overlayDescriptionClass,
   overlayTitleClass,
 } from '@/lib/overlay-chrome'
+import {
+  SCOUT_GUIDED_TOURS_HEADER,
+  SCOUT_WELCOME_DESCRIPTION,
+} from '@/lib/workspace-landing-copy'
 import { cn } from '@/lib/utils'
 import {
   selectActiveScoutJourney,
@@ -125,8 +129,7 @@ function ScoutWelcomePanelBody({
         <div className="min-w-0">
           <p className={overlayTitleClass}>Welcome to Scoper Scout</p>
           <p className={cn(overlayDescriptionClass, 'mt-0.5 text-xs')}>
-            Pick a guided tour with sample construction docs — everything parses locally in your
-            browser.
+            {SCOUT_WELCOME_DESCRIPTION}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
@@ -157,8 +160,8 @@ function ScoutWelcomePanelBody({
         <BrandMenuSection accent="neutral" className="mb-3">
           <BrandMenuSectionHeader
             accent="neutral"
-            title="Guided tours"
-            description="Sample DPR packages, proposal rubrics, and plan sheets"
+            title={SCOUT_GUIDED_TOURS_HEADER.title}
+            description={SCOUT_GUIDED_TOURS_HEADER.description}
           />
         </BrandMenuSection>
 

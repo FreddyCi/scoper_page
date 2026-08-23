@@ -12,6 +12,7 @@ import {
   expandClauseTerms,
   scoreBlockText,
 } from '@/services/document-search'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import {
   parseContractChecklistText,
   type ContractChecklistItem,
@@ -224,7 +225,7 @@ export async function loadChecklistItems(checklistDocId: string): Promise<Contra
   return parseContractChecklistText(text)
 }
 
-/** Run Pro-Bel–style checklist items against a single contract PDF (block search + heuristics). */
+/** Run construction subcontractor keyword checklist items against a single contract PDF (block search + heuristics). */
 export async function buildContractKeywordReview(
   documents: DocumentMeta[],
   options: BuildContractKeywordReviewOptions,
@@ -258,14 +259,14 @@ export async function buildContractKeywordReview(
 
 /** Dev harness — parser + empty blocks guard */
 export async function runContractKeywordReviewHarness(): Promise<void> {
-  const sample = `Check Entity Name. Must Match "Pro-Bel Enterprises Limited" Check value of the contract. Check value of liability insurance. Maximum $5,000,000.00 Check for liquidated damages.`
+  const sample = `Check Entity Name. Must Match "${SAMPLE_FIXTURE_COMPANY.legalName}" Check value of the contract. Check value of liability insurance. Maximum $5,000,000.00 Check for liquidated damages.`
   const items = parseContractChecklistText(sample)
 
   if (items.length < 3) {
     throw new Error('contract-keyword harness: expected at least 3 checklist items')
   }
 
-  const entity = items.find((item) => item.mustContain?.includes('Pro-Bel'))
+  const entity = items.find((item) => item.mustContain?.includes(SAMPLE_FIXTURE_COMPANY.shortName))
   if (!entity?.mustContain) {
     throw new Error('contract-keyword harness: expected entity mustContain')
   }

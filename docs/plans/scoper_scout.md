@@ -108,7 +108,7 @@ Structured onboarding via shadcn **Questionnaire** (`CompanyOnboardingQuestionna
 
 ## Copy guidelines
 
-- **Construction wedge** — subs, GC partners, shall/must compliance, envelope / fall protection examples (Pro-Bel-style fixtures).
+- **Construction wedge** — subs, GC partners, shall/must compliance, envelope / fall protection examples (Summit Ridge Envelope-style fixtures).
 - **Privacy** — “stays in this browser”, “on your machine”, no server upload of doc bytes.
 - **WebGPU** — first AI run may download ~290 MB Bonsai weights; degraded path when WebGPU unavailable.
 - **Tone** — coach, not marketing deck; short step titles + one paragraph body per step.

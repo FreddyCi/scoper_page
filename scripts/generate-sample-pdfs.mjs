@@ -141,7 +141,7 @@ console.log('[generate-sample-pdfs] corpus ready in sample/ and public/sample/')
 
 /** Binary fixtures checked into sample/ — Scout construction demo + plan drawing (BDA-283 / BDA-285). */
 const BINARY_FIXTURES = [
-  'dpr-msa-pro-bel-2025.pdf',
+  'dpr-msa-summit-ridge-2025.pdf',
   'contract-keyword-check.docx',
   'windows-drawing.pdf',
 ]

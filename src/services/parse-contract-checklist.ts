@@ -1,4 +1,4 @@
-/** One row from a Pro-Bel–style keyword checklist (Word / markdown). */
+/** One row from a construction subcontractor keyword checklist (Word / markdown). */
 export type ContractChecklistItem = {
   id: string
   label: string

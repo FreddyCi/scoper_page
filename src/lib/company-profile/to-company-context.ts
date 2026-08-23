@@ -1,5 +1,6 @@
 import { getCompanyOnboardingItem } from '@/lib/company-profile/questionnaire-items'
 import type { CompanyProfile } from '@/lib/company-profile/schema'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import {
   assessProposalContextQuality,
   type ProposalContextQualityResult,
@@ -187,9 +188,9 @@ export function syncCompanyProfileToSessionContext(profile: CompanyProfile): str
   return context
 }
 
-function proBelSampleProfile(): CompanyProfile {
+function sampleFixtureCompanyProfile(): CompanyProfile {
   return {
-    legalName: 'Pro-Bel Enterprises Limited',
+    legalName: SAMPLE_FIXTURE_COMPANY.legalName,
     role: 'subcontractor',
     tradeDiscipline: 'fall-protection',
     serviceGeography: 'regional',
@@ -202,9 +203,9 @@ function proBelSampleProfile(): CompanyProfile {
   }
 }
 
-/** Dev harness — Pro-Bel-like fixture → stable narrative + session sync (BDA-307). */
+/** Dev harness — sample fixture profile → stable narrative + session sync (BDA-307). */
 export function runCompanyContextSerializerHarness(): void {
-  const profile = proBelSampleProfile()
+  const profile = sampleFixtureCompanyProfile()
   const context = companyProfileToContext(profile)
 
   if (context.length < PROPOSAL_CONTEXT_MIN_LENGTH) {
@@ -220,7 +221,7 @@ export function runCompanyContextSerializerHarness(): void {
   if (!lower.includes('em 385') || !lower.includes('iso 9001')) {
     throw new Error('runCompanyContextSerializerHarness: expected certifications in narrative')
   }
-  if (!context.includes('Pro-Bel Enterprises Limited')) {
+  if (!context.includes(SAMPLE_FIXTURE_COMPANY.legalName)) {
     throw new Error('runCompanyContextSerializerHarness: expected legal name in narrative')
   }
 

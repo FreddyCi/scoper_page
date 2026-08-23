@@ -2,6 +2,7 @@ import {
   assertUniqueCompanyOnboardingItemNames,
   COMPANY_ONBOARDING_ITEMS,
 } from '@/lib/company-profile/questionnaire-items'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import {
   createEmptyCompanyProfile,
   DIFFERENTIATOR_PRESET_LABELS,
@@ -40,7 +41,7 @@ export function runCompanyProfileHarness(): void {
   }
 
   const partialForm = new FormData()
-  partialForm.set('legalName', 'Pro-Bel Enterprises Limited')
+  partialForm.set('legalName', SAMPLE_FIXTURE_COMPANY.legalName)
   partialForm.set('role', 'subcontractor')
   partialForm.set('tradeDiscipline', 'fall-protection')
   partialForm.set('serviceGeography', 'regional')
@@ -53,7 +54,7 @@ export function runCompanyProfileHarness(): void {
   }
 
   const skippedForm = new FormData()
-  skippedForm.set('legalName', 'Pro-Bel Enterprises Limited')
+  skippedForm.set('legalName', SAMPLE_FIXTURE_COMPANY.legalName)
   skippedForm.set('role', 'subcontractor')
   skippedForm.set('tradeDiscipline', 'building-envelope')
   skippedForm.set('serviceGeography', 'multi-state')

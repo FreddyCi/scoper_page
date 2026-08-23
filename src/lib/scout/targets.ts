@@ -37,6 +37,8 @@ export const SCOUT_TARGETS = {
   proposalSetupPanel: 'proposal-setup-panel',
   /** Proposal — company profile onboarding CTA / questionnaire entry */
   companyProfileSetup: 'company-profile-setup',
+  /** Saved company profile summary / drawer */
+  companyProfilePanel: 'company-profile-panel',
   /** Proposal — company / responder context field */
   proposalCompanyContext: 'proposal-company-context',
   /** Proposal — build requirements profile */

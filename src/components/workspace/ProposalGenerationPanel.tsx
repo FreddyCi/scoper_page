@@ -16,6 +16,7 @@ import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelec
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
 import { CompanyProfileEditLink } from '@/components/onboarding/CompanyProfileEditLink'
 import { CompanyProfileSetupPrompt } from '@/components/onboarding/CompanyProfileSetupPrompt'
+import { CompanyProfileSummary } from '@/components/onboarding/CompanyProfileSummary'
 import { ProposalSetupGateList } from '@/components/workspace/ProposalSetupGateList'
 import { ProposalVolumeRow } from '@/components/workspace/ProposalVolumeRow'
 import {
@@ -279,12 +280,13 @@ export function ProposalGenerationPanel({ className }: ProposalGenerationPanelPr
             <div className="flex min-w-0 flex-col gap-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label htmlFor="proposal-company-context">Your company / capabilities</Label>
-                {!showProfileSetupCta ? <CompanyProfileEditLink /> : null}
+                {showProfileSetupCta ? null : <CompanyProfileEditLink />}
               </div>
               {showProfileSetupCta ? (
                 <CompanyProfileSetupPrompt disabled={buildingProfile || proposalGenerating} />
               ) : (
                 <>
+                  <CompanyProfileSummary />
                   <Textarea
                     {...scoutTargetProps(SCOUT_TARGETS.proposalCompanyContext)}
                     id="proposal-company-context"

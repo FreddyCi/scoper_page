@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { DocumentPickerSelect } from '@/components/workspace/DocumentPickerSelect'
 import { CompanyProfileEditLink } from '@/components/onboarding/CompanyProfileEditLink'
+import { CompanyProfileSummary } from '@/components/onboarding/CompanyProfileSummary'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
@@ -26,6 +27,10 @@ import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleBidderResponse } from '@/services/load-sample-documents'
 import { setDocumentRole } from '@/services/document-roles'
 import { useSessionStore } from '@/store/session-store'
+import {
+  selectHasCompletedOnboarding,
+  useCompanyProfileStore,
+} from '@/store/company-profile-store'
 
 type RfpEvaluationPanelProps = {
   className?: string
@@ -196,6 +201,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const clearEvaluationSetup = useSessionStore((s) => s.clearEvaluationSetup)
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
+  const hasCompletedOnboarding = useCompanyProfileStore(selectHasCompletedOnboarding)
 
   const [running, setRunning] = useState(false)
   const [runningKeywordCheck, setRunningKeywordCheck] = useState(false)
@@ -390,8 +396,11 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
               <Label htmlFor="company-context" className="leading-snug">
                 Your organization
               </Label>
-              <CompanyProfileEditLink label="Set up company profile" />
+              {!hasCompletedOnboarding ? (
+                <CompanyProfileEditLink label="Set up company profile" />
+              ) : null}
             </div>
+            {hasCompletedOnboarding ? <CompanyProfileSummary /> : null}
             <Textarea
                 id="company-context"
                 value={companyContext}

@@ -8,6 +8,7 @@ import {
   shellWorkspaceColumnClass,
 } from '@/components/layout/shell-layout'
 import { ScoutProvider } from '@/components/scout/ScoutProvider'
+import { CompanyProfileSheet } from '@/components/onboarding/CompanyProfileSheet'
 import { ShareWorkspaceSheet } from '@/components/layout/ShareWorkspaceSheet'
 import { ProposalSetupFooterChecklist } from '@/components/layout/ProposalSetupFooterChecklist'
 import { WebGpuBanner } from '@/components/layout/WebGpuBanner'
@@ -98,6 +99,7 @@ export function AppShell({ children }: AppShellProps) {
                         <ProposalSetupFooterChecklist />
                       </div>
                       <div className="pointer-events-auto flex justify-self-end items-center gap-1">
+                        <CompanyProfileSheet />
                         <ShareWorkspaceSheet />
                         <Button
                           type="button"

@@ -102,10 +102,6 @@ export function WorkspaceHeaderTopRow({
     >
       <div className="flex min-w-0 items-center gap-2.5">
         <ScoperLogoMark />
-        <div className="min-w-0 leading-tight">
-          <p className="text-foreground text-sm font-semibold tracking-tight">Scoper Scout</p>
-          <p className="text-muted-foreground hidden text-[11px] sm:block">Local bid & plan workspace</p>
-        </div>
       </div>
 
       <div className="ml-auto flex items-center gap-2">

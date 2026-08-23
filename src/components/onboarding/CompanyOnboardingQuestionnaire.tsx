@@ -15,6 +15,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { BrandMenuSection, BrandMenuSectionHeader } from '@/components/ui/brand-menu'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Questionnaire,
   QuestionnaireActions,
@@ -48,8 +50,13 @@ import {
   type CompanyProfile,
 } from '@/lib/company-profile/schema'
 import {
+  demoCompanyProfile,
+  isDemoCompanyProfile,
+} from '@/lib/company-profile/demo-company-profile'
+import {
   syncCompanyProfileToSessionContext,
 } from '@/lib/company-profile/to-company-context'
+import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
 import { cn } from '@/lib/utils'
 import {
   selectCompanyProfile,
@@ -59,6 +66,43 @@ import {
 type CompanyOnboardingQuestionnaireCoreProps = {
   className?: string
   onSubmitted?: (profile: CompanyProfile) => void
+  showDemoCompanyToggle?: boolean
+}
+
+function DemoCompanyProfileToggle({
+  enabled,
+  disabled,
+  onEnabledChange,
+}: {
+  enabled: boolean
+  disabled?: boolean
+  onEnabledChange: (enabled: boolean) => void
+}) {
+  return (
+    <div className="border-border/70 bg-workspace/40 flex items-start justify-between gap-3 rounded-xl border px-3 py-2.5">
+      <div className="min-w-0">
+        <Label
+          htmlFor="demo-company-profile-toggle"
+          className="text-foreground cursor-pointer text-sm font-medium"
+        >
+          Use demo company
+        </Label>
+        <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+          Fills every answer with{' '}
+          <span className="text-foreground font-medium">{SAMPLE_FIXTURE_COMPANY.legalName}</span> —
+          fall-protection envelope sub for Scout tours.
+        </p>
+      </div>
+      <Switch
+        id="demo-company-profile-toggle"
+        checked={enabled}
+        disabled={disabled}
+        className="shrink-0"
+        aria-label="Use demo company profile"
+        onCheckedChange={onEnabledChange}
+      />
+    </div>
+  )
 }
 
 function isDifferentiatorPresetValue(value: string): boolean {
@@ -129,6 +173,7 @@ function renderOnboardingItem(
 export function CompanyOnboardingQuestionnaireCore({
   className,
   onSubmitted,
+  showDemoCompanyToggle = true,
 }: CompanyOnboardingQuestionnaireCoreProps) {
   const storedProfile = useCompanyProfileStore(selectCompanyProfile)
   const onboardingStep = useCompanyProfileStore((state) => state.onboardingStep)
@@ -145,9 +190,15 @@ export function CompanyOnboardingQuestionnaireCore({
 
   const [activeItem, setActiveItem] = useState(initialItem)
   const [invalidItem, setInvalidItem] = useState<string | null>(null)
+  const [useDemoCompany, setUseDemoCompany] = useState(() => isDemoCompanyProfile(storedProfile))
+  const [formInstanceKey, setFormInstanceKey] = useState(0)
   const [draftProfile, setDraftProfile] = useState(storedProfile)
 
-  const formDefaults = useMemo(() => companyProfileToFormDefaults(storedProfile), [storedProfile])
+  const profileForDefaults = useDemoCompany ? demoCompanyProfile() : storedProfile
+  const formDefaults = useMemo(
+    () => companyProfileToFormDefaults(profileForDefaults),
+    [profileForDefaults],
+  )
   const questionnaireItems = useMemo(
     () => buildCompanyOnboardingQuestionnaireItems(draftProfile),
     [draftProfile],
@@ -188,6 +239,20 @@ export function CompanyOnboardingQuestionnaireCore({
     [],
   )
 
+  const handleDemoCompanyToggle = useCallback(
+    (enabled: boolean) => {
+      setUseDemoCompany(enabled)
+      setInvalidItem(null)
+      skippedItemsRef.current.clear()
+
+      const profile = enabled ? demoCompanyProfile() : storedProfile
+      setDraftProfile(profile)
+      setOnboardingResumeState({ onboardingStep: activeItem, profile })
+      setFormInstanceKey((key) => key + 1)
+    },
+    [activeItem, setOnboardingResumeState, storedProfile],
+  )
+
   const handleSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault()
@@ -212,29 +277,38 @@ export function CompanyOnboardingQuestionnaireCore({
   )
 
   return (
-    <Questionnaire
-      ref={formRef}
-      key={`${storedProfile.legalName}:${onboardingStep ?? 'new'}`}
-      className={cn('max-w-md', className)}
-      items={questionnaireItems}
-      item={activeItem}
-      shortcuts="letters"
-      onItemChange={handleItemChange}
-      onSubmit={handleSubmit}
-    >
-      <QuestionnaireProgress />
+    <div className={cn('flex flex-col gap-4', className)}>
+      {showDemoCompanyToggle ? (
+        <DemoCompanyProfileToggle
+          enabled={useDemoCompany}
+          onEnabledChange={handleDemoCompanyToggle}
+        />
+      ) : null}
 
-      {COMPANY_ONBOARDING_ITEMS.map((item) =>
-        renderOnboardingItem(item, formDefaults, invalidItem, handleItemStatusChange),
-      )}
+      <Questionnaire
+        ref={formRef}
+        key={`${formInstanceKey}:${profileForDefaults.legalName}:${onboardingStep ?? 'new'}`}
+        className="max-w-md"
+        items={questionnaireItems}
+        item={activeItem}
+        shortcuts="letters"
+        onItemChange={handleItemChange}
+        onSubmit={handleSubmit}
+      >
+        <QuestionnaireProgress />
 
-      <QuestionnaireActions>
-        <QuestionnairePrevious />
-        <QuestionnaireSkip />
-        <QuestionnaireNext />
-        <QuestionnaireSubmit>Save company profile</QuestionnaireSubmit>
-      </QuestionnaireActions>
-    </Questionnaire>
+        {COMPANY_ONBOARDING_ITEMS.map((item) =>
+          renderOnboardingItem(item, formDefaults, invalidItem, handleItemStatusChange),
+        )}
+
+        <QuestionnaireActions>
+          <QuestionnairePrevious />
+          <QuestionnaireSkip />
+          <QuestionnaireNext />
+          <QuestionnaireSubmit>Save company profile</QuestionnaireSubmit>
+        </QuestionnaireActions>
+      </Questionnaire>
+    </div>
   )
 }
 

@@ -5,7 +5,7 @@ import {
   parsePersistedCompanyProfile,
   type CompanyProfile,
 } from '@/lib/company-profile/schema'
-import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
+import { DEMO_COMPANY_PROFILE } from '@/lib/company-profile/demo-company-profile'
 
 export const COMPANY_PROFILE_STORAGE_KEY = 'scoper.company-profile.v1'
 
@@ -217,16 +217,8 @@ export function subscribeCompanyProfileStorageSync(): () => void {
 
 function sampleProfile(): CompanyProfile {
   return {
-    legalName: SAMPLE_FIXTURE_COMPANY.legalName,
-    role: 'subcontractor',
-    tradeDiscipline: 'fall-protection',
-    serviceGeography: 'regional',
-    headcountBand: '51-200',
-    certifications: ['em385', 'iso-9001'],
-    insuranceLimit: '5m-10m',
-    bondingCapacity: '1m-5m',
-    differentiators: 'EM 385 compliant safety program and documented rescue plans',
-    freeformNotes: 'Serving DPR-class GC partners on commercial envelope work.',
+    ...DEMO_COMPANY_PROFILE,
+    certifications: [...DEMO_COMPANY_PROFILE.certifications],
   }
 }
 

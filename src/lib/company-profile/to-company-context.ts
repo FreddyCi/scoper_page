@@ -1,6 +1,6 @@
 import { getCompanyOnboardingItem } from '@/lib/company-profile/questionnaire-items'
 import type { CompanyProfile } from '@/lib/company-profile/schema'
-import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
+import { DEMO_COMPANY_PROFILE } from '@/lib/company-profile/demo-company-profile'
 import {
   assessProposalContextQuality,
   type ProposalContextQualityResult,
@@ -190,16 +190,8 @@ export function syncCompanyProfileToSessionContext(profile: CompanyProfile): str
 
 function sampleFixtureCompanyProfile(): CompanyProfile {
   return {
-    legalName: SAMPLE_FIXTURE_COMPANY.legalName,
-    role: 'subcontractor',
-    tradeDiscipline: 'fall-protection',
-    serviceGeography: 'regional',
-    headcountBand: '51-200',
-    certifications: ['em385', 'iso-9001'],
-    insuranceLimit: '5m-10m',
-    bondingCapacity: '1m-5m',
-    differentiators: 'EM 385 compliant safety program and documented rescue plans',
-    freeformNotes: 'Serving DPR-class GC partners on commercial envelope work.',
+    ...DEMO_COMPANY_PROFILE,
+    certifications: [...DEMO_COMPANY_PROFILE.certifications],
   }
 }
 
@@ -221,7 +213,7 @@ export function runCompanyContextSerializerHarness(): void {
   if (!lower.includes('em 385') || !lower.includes('iso 9001')) {
     throw new Error('runCompanyContextSerializerHarness: expected certifications in narrative')
   }
-  if (!context.includes(SAMPLE_FIXTURE_COMPANY.legalName)) {
+  if (!context.includes(DEMO_COMPANY_PROFILE.legalName)) {
     throw new Error('runCompanyContextSerializerHarness: expected legal name in narrative')
   }
 

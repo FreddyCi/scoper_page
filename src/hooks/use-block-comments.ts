@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import {
+  BLOCK_COMMENTS_CHANGED_EVENT,
+  type BlockCommentsChangedDetail,
   fetchCommentedBlockIds,
   fetchCommentsForBlock,
   insertBlockComment,
@@ -31,14 +33,18 @@ export function useCommentedBlockIds(docId: string | null) {
   }, [refresh])
 
   useEffect(() => {
-    function handleCommentsImported(event: Event) {
-      const detail = (event as CustomEvent<{ docId?: string }>).detail
+    function handleCommentsChanged(event: Event) {
+      const detail = (event as CustomEvent<BlockCommentsChangedDetail>).detail
       if (detail?.docId && detail.docId !== docId) return
       void refresh()
     }
 
-    window.addEventListener('scoper:comments-imported', handleCommentsImported)
-    return () => window.removeEventListener('scoper:comments-imported', handleCommentsImported)
+    window.addEventListener(BLOCK_COMMENTS_CHANGED_EVENT, handleCommentsChanged)
+    window.addEventListener('scoper:comments-imported', handleCommentsChanged)
+    return () => {
+      window.removeEventListener(BLOCK_COMMENTS_CHANGED_EVENT, handleCommentsChanged)
+      window.removeEventListener('scoper:comments-imported', handleCommentsChanged)
+    }
   }, [docId, refresh])
 
   return { blockIds, loading, refresh }

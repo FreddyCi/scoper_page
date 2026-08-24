@@ -156,11 +156,6 @@ export function ExtractedTextPane({
         onOpenChange={setCommentOpen}
         onCommentAdded={() => {
           void refreshCommentedBlockIds()
-          window.dispatchEvent(
-            new CustomEvent('scoper:comments-imported', {
-              detail: { docId },
-            }),
-          )
         }}
       />
 

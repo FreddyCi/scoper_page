@@ -1,7 +1,9 @@
 import { MapPinIcon } from 'lucide-react'
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { docMentionLabel } from '@/lib/chat-mentions'
+import { citationHasReviewNote } from '@/lib/block-review-notes'
 import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { CriterionRow } from '@/components/workspace/CriterionRow'
 import type { CitationRef, CriterionStatus, RfpResultsProfile, RfpVerdict } from '@/lib/types'
@@ -51,6 +53,7 @@ export function ResultsProfileCard({
   className,
 }: ResultsProfileCardProps) {
   const documents = useSessionStore((state) => state.documents)
+  const { blockIds: commentedBlockIds } = useCommentedBlockIds(profile.source_doc_id)
   const contractDoc = documents.find((doc) => doc.doc_id === profile.source_doc_id)
   const chatPromptOptions = {
     contractFilename: contractDoc?.filename,
@@ -114,6 +117,7 @@ export function ResultsProfileCard({
             <CriterionRow
               key={criterion.id}
               criterion={criterion}
+              hasReviewNote={citationHasReviewNote(commentedBlockIds, criterion.citation)}
               onCriterionClick={onCriterionClick}
               chatPromptOptions={chatPromptOptions}
             />

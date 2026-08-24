@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ChevronRightIcon, DownloadIcon } from 'lucide-react'
+import { ChevronRightIcon, DownloadIcon, MessageSquareIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import type { CitationRef, RfpRequirementScore, RfpRequirementScoreStatus } from '@/lib/types'
+import { citationHasReviewNote } from '@/lib/block-review-notes'
 import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
@@ -146,6 +148,7 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
   const instructions = useSessionStore(selectRfpInstructionsProfile)
   const evaluationDocId = useSessionStore((state) => state.evaluationDocId)
   const documents = useSessionStore((state) => state.documents)
+  const { blockIds: commentedBlockIds } = useCommentedBlockIds(evaluationDocId)
   const [exportingCsv, setExportingCsv] = useState(false)
 
   const baselineFilename = documents.find((doc) => doc.doc_id === evaluationDocId)?.filename
@@ -254,15 +257,26 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
           <tbody>
             {requirements.map((requirement, index) => {
               const clickable = Boolean(requirement.citation)
+              const hasReviewNote = citationHasReviewNote(commentedBlockIds, requirement.citation)
 
               return (
                 <tr
                   key={requirement.id}
-                  className="border-border/60 hover:bg-workspace-muted/30 border-b last:border-b-0"
+                  className={cn(
+                    'border-border/60 hover:bg-workspace-muted/30 border-b last:border-b-0',
+                    hasReviewNote && 'bg-amber-50/40',
+                  )}
                 >
                   <td className="text-muted-foreground px-2 py-2 align-top tabular-nums">{index + 1}</td>
                   <td className="px-2 py-2 align-top">
-                    <button
+                    <div className="space-y-1">
+                      {hasReviewNote ? (
+                        <span className="bg-amber-100 text-amber-900 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+                          <MessageSquareIcon className="size-3" />
+                          Review note
+                        </span>
+                      ) : null}
+                      <button
                       type="button"
                       disabled={!clickable}
                       onClick={() => requirement.citation && handleCitationClick(requirement.citation)}
@@ -274,6 +288,7 @@ export function ComplianceMatrix({ onCitationClick, className }: ComplianceMatri
                     >
                       {requirement.label}
                     </button>
+                    </div>
                   </td>
                   <td className="px-2 py-2 align-top">
                     {clickable ? (

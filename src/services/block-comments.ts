@@ -3,6 +3,32 @@ import { getDuckdbClient } from '@/services/duckdb-client'
 import { useSessionStore } from '@/store/session-store'
 import type { BlockRecord, CommentRecord } from '@/lib/types'
 
+export const BLOCK_COMMENTS_CHANGED_EVENT = 'scoper:block-comments-changed'
+
+export type BlockCommentsChangedDetail = {
+  docId: string
+  blockId?: string
+}
+
+/** Notify listeners that block review notes changed for a document. */
+export function notifyBlockCommentsChanged(docId: string, blockId?: string): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent<BlockCommentsChangedDetail>(BLOCK_COMMENTS_CHANGED_EVENT, {
+      detail: { docId, blockId },
+    }),
+  )
+}
+
+async function resolveBlockDocId(blockId: string): Promise<string | null> {
+  const duckdb = await getDuckdbClient()
+  const rows = await duckdb.query<{ doc_id: string }>(
+    `SELECT doc_id FROM blocks WHERE block_id = ? LIMIT 1`,
+    [blockId],
+  )
+  return rows[0]?.doc_id ?? null
+}
+
 type CommentRow = {
   comment_id: string
   block_id: string
@@ -61,6 +87,11 @@ export async function insertBlockComment(
       comment.created_at,
     ],
   )
+
+  const docId = await resolveBlockDocId(blockId)
+  if (docId) {
+    notifyBlockCommentsChanged(docId, blockId)
+  }
 
   return comment
 }

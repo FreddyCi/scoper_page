@@ -20,12 +20,14 @@ import { CriterionRow } from '@/components/workspace/CriterionRow'
 import { ComplianceMatrix } from '@/components/workspace/ComplianceMatrix'
 import { InstructionsCard } from '@/components/workspace/InstructionsCard'
 import type { CitationRef } from '@/lib/types'
+import { citationHasReviewNote } from '@/lib/block-review-notes'
 import { draftCompanyContext } from '@/lib/draft-company-context'
 import { SCOUT_TARGETS, scoutTargetProps } from '@/lib/scout/targets'
 import { cn } from '@/lib/utils'
 import { focusCitation } from '@/services/citation-bridge'
 import { loadSampleBidderResponse } from '@/services/load-sample-documents'
 import { setDocumentRole } from '@/services/document-roles'
+import { useCommentedBlockIds } from '@/hooks/use-block-comments'
 import { useSessionStore } from '@/store/session-store'
 import {
   selectHasCompletedOnboarding,
@@ -202,6 +204,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
   const runRfpQualification = useSessionStore((s) => s.runRfpQualification)
   const openUploadPopup = useSessionStore((s) => s.openUploadPopup)
   const hasCompletedOnboarding = useCompanyProfileStore(selectHasCompletedOnboarding)
+  const { blockIds: commentedBlockIds } = useCommentedBlockIds(evaluationDocId)
 
   const [running, setRunning] = useState(false)
   const [runningKeywordCheck, setRunningKeywordCheck] = useState(false)
@@ -377,6 +380,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                     <CriterionRow
                       key={criterion.id}
                       criterion={criterion}
+                      hasReviewNote={citationHasReviewNote(commentedBlockIds, criterion.citation)}
                       onCriterionClick={handleCriterionClick}
                       className="py-2"
                     />
@@ -516,6 +520,7 @@ export function RfpEvaluationPanel({ className }: RfpEvaluationPanelProps) {
                   <CriterionRow
                     key={criterion.id}
                     criterion={criterion}
+                    hasReviewNote={citationHasReviewNote(commentedBlockIds, criterion.citation)}
                     onCriterionClick={handleCriterionClick}
                     className="py-2"
                   />

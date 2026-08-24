@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   AlertTriangleIcon,
   MessageCircleDashedIcon,
+  MessageSquareIcon,
   CheckCircle2Icon,
   CheckIcon,
   ChevronRightIcon,
@@ -36,6 +37,7 @@ type CriterionRowProps = {
   criterion: CriterionResult
   onCriterionClick?: (citation: CitationRef) => void
   chatPromptOptions?: FormatCriterionChatOptions
+  hasReviewNote?: boolean
   className?: string
 }
 
@@ -43,6 +45,7 @@ export function CriterionRow({
   criterion,
   onCriterionClick,
   chatPromptOptions,
+  hasReviewNote = false,
   className,
 }: CriterionRowProps) {
   const [copied, setCopied] = useState(false)
@@ -88,6 +91,7 @@ export function CriterionRow({
       className={cn(
         'group flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5',
         'border-border/70 bg-workspace-muted/50',
+        hasReviewNote && 'border-amber-300/80 bg-amber-50/40',
         className,
       )}
     >
@@ -104,6 +108,12 @@ export function CriterionRow({
         )}
       >
         <span className="text-foreground block text-sm font-medium leading-snug">{criterion.label}</span>
+        {hasReviewNote ? (
+          <span className="bg-amber-100 text-amber-900 mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+            <MessageSquareIcon className="size-3" />
+            Review note
+          </span>
+        ) : null}
         {criterion.detail ? (
           <span className="text-muted-foreground mt-1 block text-xs leading-relaxed">
             {criterion.detail}

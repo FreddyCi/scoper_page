@@ -1,3 +1,4 @@
+import type { IParagraphOptions } from 'docx'
 import type {
   Content,
   ListItem,
@@ -109,7 +110,7 @@ function phrasingToPlainText(nodes: PhrasingContent[]): string {
 function paragraphFromPhrasing(
   nodes: PhrasingContent[],
   docx: DocxModule,
-  options: ConstructorParameters<DocxModule['Paragraph']>[0] = {},
+  options: IParagraphOptions = {},
 ): DocxParagraph {
   const { Paragraph } = docx
   const children = phrasingToRuns(nodes, docx)
@@ -121,29 +122,12 @@ function paragraphFromPhrasing(
 
 function tableCellParagraphs(cell: MdTableCell, docx: DocxModule, headerRow: boolean): DocxParagraph[] {
   const { Paragraph, TextRun } = docx
-  const paragraphs: DocxParagraph[] = []
-
-  for (const child of cell.children) {
-    if (child.type === 'paragraph') {
-      const runs = phrasingToRuns(child.children, docx, headerRow ? { bold: true } : {})
-      paragraphs.push(
-        new Paragraph({
-          children: runs.length > 0 ? runs : [new TextRun('')],
-        }),
-      )
-      continue
-    }
-
-    if (child.type === 'text') {
-      paragraphs.push(
-        new Paragraph({
-          children: [new TextRun({ text: child.value, bold: headerRow })],
-        }),
-      )
-    }
-  }
-
-  return paragraphs.length > 0 ? paragraphs : [new Paragraph({ children: [new TextRun('')] })]
+  const runs = phrasingToRuns(cell.children, docx, headerRow ? { bold: true } : {})
+  return [
+    new Paragraph({
+      children: runs.length > 0 ? runs : [new TextRun('')],
+    }),
+  ]
 }
 
 function listItemPrefix(item: ListItem): string {

@@ -217,6 +217,9 @@ function SplitDocumentViewFooter({
   onExportMenuOpenChange,
   markdownExportLoading = false,
   onExportMarkdownClick,
+  onExportMarkdownPdfClick,
+  onExportMarkdownExcelClick,
+  onExportMarkdownWordClick,
   markdownExportDescription,
   contextConvertLoading = false,
   onConvertToContextClick,
@@ -241,6 +244,9 @@ function SplitDocumentViewFooter({
   onExportMenuOpenChange?: (open: boolean) => void
   markdownExportLoading?: boolean
   onExportMarkdownClick?: () => void
+  onExportMarkdownPdfClick?: () => void
+  onExportMarkdownExcelClick?: () => void
+  onExportMarkdownWordClick?: () => void
   markdownExportDescription?: string
   contextConvertLoading?: boolean
   onConvertToContextClick?: () => void
@@ -278,7 +284,12 @@ function SplitDocumentViewFooter({
         {commentNavigator}
       </div>
       <div className="flex items-center gap-2">
-        {onExportClick || onExportMarkdownClick || onConvertToContextClick ? (
+        {onExportClick ||
+        onExportMarkdownClick ||
+        onExportMarkdownPdfClick ||
+        onExportMarkdownExcelClick ||
+        onExportMarkdownWordClick ||
+        onConvertToContextClick ? (
           <DropdownMenu
             onOpenChange={(open) => {
               if (open) onExportMenuOpenChange?.(true)
@@ -307,12 +318,20 @@ function SplitDocumentViewFooter({
               <DownloadIcon className="size-3.5" />
               {exportLoading || markdownExportLoading || contextConvertLoading
                 ? 'Working…'
-                : onExportClick || onExportMarkdownClick || onConvertToContextClick
+                : onExportClick ||
+                    onExportMarkdownClick ||
+                    onExportMarkdownPdfClick ||
+                    onExportMarkdownExcelClick ||
+                    onExportMarkdownWordClick ||
+                    onConvertToContextClick
                   ? 'Export'
                   : exportLabel}
             </DropdownMenuTrigger>
             <BrandDropdownContent align="end" side="top" sideOffset={10}>
-              {onExportMarkdownClick ? (
+              {onExportMarkdownClick ||
+              onExportMarkdownPdfClick ||
+              onExportMarkdownExcelClick ||
+              onExportMarkdownWordClick ? (
                 <BrandMenuSection accent="sky">
                   <BrandMenuSectionHeader
                     accent="sky"
@@ -323,16 +342,54 @@ function SplitDocumentViewFooter({
                     }
                   />
                   <div className="flex flex-col gap-1 p-1.5 pt-0">
-                    <DropdownMenuItem
-                      className={brandMenuItemClass('sky')}
-                      onClick={onExportMarkdownClick}
-                    >
-                      <MenuOptionContent
-                        title="Download .md"
-                        description="Browser-only conversion like the LiteParse demo — no server upload."
-                        titleClassName={brandAccentStyles('sky').title}
-                      />
-                    </DropdownMenuItem>
+                    {onExportMarkdownClick ? (
+                      <DropdownMenuItem
+                        className={brandMenuItemClass('sky')}
+                        onClick={onExportMarkdownClick}
+                      >
+                        <MenuOptionContent
+                          title="Download .md"
+                          description="Browser-only conversion like the LiteParse demo — no server upload."
+                          titleClassName={brandAccentStyles('sky').title}
+                        />
+                      </DropdownMenuItem>
+                    ) : null}
+                    {onExportMarkdownPdfClick ? (
+                      <DropdownMenuItem
+                        className={brandMenuItemClass('sky')}
+                        onClick={onExportMarkdownPdfClick}
+                      >
+                        <MenuOptionContent
+                          title="Export to PDF"
+                          description="Plain-text PDF layout from markdown headings and paragraphs."
+                          titleClassName={brandAccentStyles('sky').title}
+                        />
+                      </DropdownMenuItem>
+                    ) : null}
+                    {onExportMarkdownExcelClick ? (
+                      <DropdownMenuItem
+                        className={brandMenuItemClass('sky')}
+                        onClick={onExportMarkdownExcelClick}
+                      >
+                        <MenuOptionContent
+                          title="Export to Excel"
+                          description="Section and text columns from markdown blocks — browser-only SheetJS."
+                          titleClassName={brandAccentStyles('sky').title}
+                        />
+                      </DropdownMenuItem>
+                    ) : null}
+                    {onExportMarkdownWordClick ? (
+                      <DropdownMenuItem
+                        className={brandMenuItemClass('sky')}
+                        onClick={onExportMarkdownWordClick}
+                      >
+                        <MenuOptionContent
+                          title="Export to Word"
+                          description="Headings, bullets, and paragraphs as a .docx file — browser-only."
+                          titleClassName={brandAccentStyles('sky').title}
+                        />
+                      </DropdownMenuItem>
+                    ) : null}
                   </div>
                 </BrandMenuSection>
               ) : null}
@@ -480,6 +537,9 @@ export function SplitDocumentView({
   const [buildingProfiles, setBuildingProfiles] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
   const [exportingMarkdown, setExportingMarkdown] = useState(false)
+  const [exportingMarkdownPdf, setExportingMarkdownPdf] = useState(false)
+  const [exportingMarkdownExcel, setExportingMarkdownExcel] = useState(false)
+  const [exportingMarkdownWord, setExportingMarkdownWord] = useState(false)
   const [convertingToContext, setConvertingToContext] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [commentNavIndex, setCommentNavIndex] = useState(0)
@@ -591,11 +651,16 @@ export function SplitDocumentView({
 
   const canExportPdf = document.mime === 'application/pdf'
   const canExportMarkdown =
+    canExportPdf || isWordDocument(document) || isSpreadsheetDocument(document) || isMarkdown
+  const canExportMarkdownDerived = isMarkdown
+  const canConvertToContext =
     canExportPdf || isWordDocument(document) || isSpreadsheetDocument(document)
-  const canConvertToContext = canExportMarkdown
+  const markdownExportBusy =
+    exportingMarkdown || exportingMarkdownPdf || exportingMarkdownExcel || exportingMarkdownWord
 
-  const markdownExportDescription =
-    layoutKind === 'word'
+  const markdownExportDescription = isMarkdown
+    ? 'Download markdown or convert to Word, PDF, or Excel — browser-only, no server upload.'
+    : layoutKind === 'word'
       ? 'Headings and paragraphs exported from Word (mammoth, browser-only).'
       : layoutKind === 'spreadsheet'
         ? 'Sheets as markdown tables — Excel, CSV, ODS, or Google export.'
@@ -889,6 +954,106 @@ export function SplitDocumentView({
     })()
   }
 
+  function handleExportMarkdownPdf() {
+    if (!canExportMarkdownDerived || exportingMarkdownPdf) return
+
+    setExportError(null)
+    setExportingMarkdownPdf(true)
+
+    void (async () => {
+      try {
+        const { buildMarkdownDocumentPdfBytes, markdownPdfExportFilename } = await import(
+          '@/services/export-markdown-derived'
+        )
+        const filename = markdownPdfExportFilename(document.filename)
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'application/pdf',
+          extension: '.pdf',
+        })
+        const pdfBytes = await buildMarkdownDocumentPdfBytes(document)
+        const blob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
+        await writeBlob(blob)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'PDF export failed'
+        setExportError(message)
+        console.error('[split-document-view] markdown pdf export failed', error)
+      } finally {
+        setExportingMarkdownPdf(false)
+      }
+    })()
+  }
+
+  function handleExportMarkdownExcel() {
+    if (!canExportMarkdownDerived || exportingMarkdownExcel) return
+
+    setExportError(null)
+    setExportingMarkdownExcel(true)
+
+    void (async () => {
+      try {
+        const { buildMarkdownDocumentExcelBytes, markdownExcelExportFilename } = await import(
+          '@/services/export-markdown-derived'
+        )
+        const filename = markdownExcelExportFilename(document.filename)
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          extension: '.xlsx',
+        })
+        const xlsxBytes = await buildMarkdownDocumentExcelBytes(document)
+        const blob = new Blob([new Uint8Array(xlsxBytes)], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        await writeBlob(blob)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'Excel export failed'
+        setExportError(message)
+        console.error('[split-document-view] markdown excel export failed', error)
+      } finally {
+        setExportingMarkdownExcel(false)
+      }
+    })()
+  }
+
+  function handleExportMarkdownWord() {
+    if (!canExportMarkdownDerived || exportingMarkdownWord) return
+
+    setExportError(null)
+    setExportingMarkdownWord(true)
+
+    void (async () => {
+      try {
+        const { buildMarkdownDocumentDocxBytes, markdownWordExportFilename } = await import(
+          '@/services/export-markdown-derived'
+        )
+        const filename = markdownWordExportFilename(document.filename)
+        const writeBlob = await beginBlobSave({
+          filename,
+          mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          extension: '.docx',
+        })
+        const docxBytes = await buildMarkdownDocumentDocxBytes(document)
+        const blob = new Blob([new Uint8Array(docxBytes)], {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        })
+        await writeBlob(blob)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+
+        const message = error instanceof Error ? error.message : 'Word export failed'
+        setExportError(message)
+        console.error('[split-document-view] markdown word export failed', error)
+      } finally {
+        setExportingMarkdownWord(false)
+      }
+    })()
+  }
+
   function handleConvertToContext() {
     if (!canConvertToContext || convertingToContext) return
 
@@ -1003,8 +1168,17 @@ export function SplitDocumentView({
             onExportMenuOpenChange={() => {
               void refreshDrawingMarkCount()
             }}
-            markdownExportLoading={exportingMarkdown}
+            markdownExportLoading={markdownExportBusy}
             onExportMarkdownClick={canExportMarkdown ? handleExportMarkdown : undefined}
+            onExportMarkdownPdfClick={
+              canExportMarkdownDerived ? handleExportMarkdownPdf : undefined
+            }
+            onExportMarkdownExcelClick={
+              canExportMarkdownDerived ? handleExportMarkdownExcel : undefined
+            }
+            onExportMarkdownWordClick={
+              canExportMarkdownDerived ? handleExportMarkdownWord : undefined
+            }
             markdownExportDescription={markdownExportDescription}
             contextConvertLoading={convertingToContext}
             onConvertToContextClick={canConvertToContext ? handleConvertToContext : undefined}
@@ -1145,8 +1319,13 @@ export function SplitDocumentView({
         onExportMenuOpenChange={() => {
           void refreshDrawingMarkCount()
         }}
-        markdownExportLoading={exportingMarkdown}
+        markdownExportLoading={markdownExportBusy}
         onExportMarkdownClick={canExportMarkdown ? handleExportMarkdown : undefined}
+        onExportMarkdownPdfClick={canExportMarkdownDerived ? handleExportMarkdownPdf : undefined}
+        onExportMarkdownExcelClick={
+          canExportMarkdownDerived ? handleExportMarkdownExcel : undefined
+        }
+        onExportMarkdownWordClick={canExportMarkdownDerived ? handleExportMarkdownWord : undefined}
         markdownExportDescription={markdownExportDescription}
         contextConvertLoading={convertingToContext}
         onConvertToContextClick={canConvertToContext ? handleConvertToContext : undefined}

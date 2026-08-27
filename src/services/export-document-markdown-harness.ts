@@ -78,4 +78,10 @@ export async function runExportDocumentMarkdownHarness(): Promise<void> {
   if (!xlsxMd.includes('|') || !xlsxMd.includes('---')) {
     throw new Error('runExportDocumentMarkdownHarness: xlsx markdown export missing table or front matter')
   }
+
+  const { runExportMarkdownDerivedHarness } = await import('@/services/export-markdown-derived')
+  await runExportMarkdownDerivedHarness()
+
+  const { runMarkdownToDocxHarness } = await import('@/services/markdown-to-docx')
+  await runMarkdownToDocxHarness()
 }

@@ -1,8 +1,8 @@
-import { SAMPLE_FIXTURE_COMPANY } from '@/lib/sample-fixture-company'
+import { demoCompanyProfile } from '@/lib/company-profile/demo-company-profile'
+import { companyProfileToContext, syncCompanyProfileToSessionContext } from '@/lib/company-profile/to-company-context'
 import { applyPostIngestModeEffects } from '@/lib/post-ingest-mode-effects'
 import {
   getProposalSetupState,
-  PROPOSAL_CONTEXT_MIN_LENGTH,
 } from '@/lib/proposal-readiness'
 import { ingestFiles } from '@/services/ingest-router'
 import { setDocumentRole } from '@/services/document-roles'
@@ -11,13 +11,14 @@ import {
   SAMPLE_EVALUATION_MSA_FILENAME,
   SAMPLE_EVALUATION_MSA_URL,
 } from '@/services/load-sample-documents'
+import { useCompanyProfileStore } from '@/store/company-profile-store'
 import { useSessionStore } from '@/store/session-store'
 
 export const SAMPLE_PROPOSAL_RUBRIC_URL = '/sample/files/buyer-rubric.md'
 export const SAMPLE_PROPOSAL_RUBRIC_FILENAME = 'buyer-rubric.md'
 
-/** Pre-filled responder context so proposal setup readiness passes hasContext (BDA-284). */
-export const SAMPLE_PROPOSAL_COMPANY_CONTEXT = SAMPLE_FIXTURE_COMPANY.contextBlurb
+/** Full serialized demo profile — trade, certs, insurance, bonding, and past performance (BDA-284). */
+export const SAMPLE_PROPOSAL_COMPANY_CONTEXT = companyProfileToContext(demoCompanyProfile())
 
 /**
  * Ingest solicitation PDF + buyer rubric markdown, switch to proposal mode, and open
@@ -57,9 +58,8 @@ export async function loadSampleProposalWorkspace(): Promise<void> {
 
   store.setWorkspaceView('profiles')
 
-  if (store.companyContext.trim().length < PROPOSAL_CONTEXT_MIN_LENGTH) {
-    store.setCompanyContext(SAMPLE_PROPOSAL_COMPANY_CONTEXT)
-  }
+  syncCompanyProfileToSessionContext(demoCompanyProfile())
+  useCompanyProfileStore.getState().markOnboardingComplete(demoCompanyProfile())
 }
 
 /** Dev harness — proposal sample loads with RFP + context; profile build is optional (BDA-284). */
@@ -96,6 +96,12 @@ export async function runLoadSampleProposalHarness(): Promise<void> {
   }
   if (!setup.hasContext) {
     throw new Error('runLoadSampleProposalHarness: readiness hasContext should be true')
+  }
+  if (after.companyContext.length < 200) {
+    throw new Error('runLoadSampleProposalHarness: expected rich demo company context')
+  }
+  if (!after.companyContext.toLowerCase().includes('iso 9001')) {
+    throw new Error('runLoadSampleProposalHarness: demo context should mention certifications')
   }
   if (setup.readyToGenerate) {
     throw new Error(

@@ -11,8 +11,10 @@ export const DEMO_COMPANY_PROFILE: CompanyProfile = {
   certifications: ['em385', 'iso-9001'],
   insuranceLimit: '5m-10m',
   bondingCapacity: '1m-5m',
-  differentiators: 'EM 385 compliant safety program and documented rescue plans',
-  freeformNotes: 'Serving DPR-class GC partners on commercial envelope work.',
+  differentiators:
+    'EM 385-compliant site safety program with documented rescue and fall-arrest plans; ISO 9001 quality management on envelope installs; trained crews for rooftop anchors, horizontal lifelines, and atrium netting.',
+  freeformNotes:
+    'Past performance on DPR-class commercial envelope and fall-protection packages across regional metros — anchor layout, lifeline runs, perimeter netting, and compliance submittals for GC partners. Typical subcontract packages $500K–$4M with dedicated safety director and QC walkdowns on weatherproofing tie-ins. Bonding and insurance aligned with large CM/GC master agreements.',
 }
 
 export function demoCompanyProfile(): CompanyProfile {

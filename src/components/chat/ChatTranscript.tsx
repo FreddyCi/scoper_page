@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 
 import { AgentActivityMarkers } from '@/components/chat/AgentActivityMarkers'
 import { AssistantMessageBody } from '@/components/chat/AssistantMessageBody'
@@ -28,6 +28,28 @@ const MODEL_STATUS_COPY = {
   generating: 'Generating…',
   unavailable: 'On-device model unavailable — using demo replies',
 } as const
+
+/** Keep the transcript pinned to the latest turn (clears message-scroller anchor spacer). */
+function ChatTranscriptScrollEndSync() {
+  const chatMessages = useSessionStore((state) => state.chatMessages)
+  const chatGenerating = useSessionStore((state) => state.chatGenerating)
+  const { scrollToEnd } = useMessageScroller()
+  const lastMessageId = chatMessages.at(-1)?.id ?? null
+  const prevGenerating = useRef(chatGenerating)
+
+  useLayoutEffect(() => {
+    scrollToEnd({ behavior: 'auto' })
+  }, [lastMessageId, scrollToEnd])
+
+  useLayoutEffect(() => {
+    if (prevGenerating.current && !chatGenerating) {
+      scrollToEnd({ behavior: 'auto' })
+    }
+    prevGenerating.current = chatGenerating
+  }, [chatGenerating, scrollToEnd])
+
+  return null
+}
 
 function ChatScrollFocus() {
   const chatFocusMessageId = useSessionStore((state) => state.chatFocusMessageId)
@@ -89,11 +111,12 @@ export function ChatTranscript() {
         <p className="text-muted-foreground shrink-0 px-1 text-xs">{statusLabel}</p>
       ) : null}
 
-      <MessageScrollerProvider autoScroll defaultScrollPosition="last-anchor">
+      <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <ChatScrollFocus />
+        <ChatTranscriptScrollEndSync />
         <MessageScroller className="min-h-0 flex-1">
           <MessageScrollerViewport>
-            <MessageScrollerContent className="justify-end gap-4 px-1">
+            <MessageScrollerContent className="gap-4 px-1">
               {chatMessages.map((item) => {
                 const isUser = item.role === 'user'
 
@@ -101,7 +124,6 @@ export function ChatTranscript() {
                   <MessageScrollerItem
                     key={item.id}
                     messageId={item.id}
-                    scrollAnchor={isUser}
                     className={cn(item.streaming && 'scroll-mt-4')}
                   >
                     <MessageGroup>
@@ -128,11 +150,7 @@ export function ChatTranscript() {
               })}
 
               {showActivityStrip ? (
-                <MessageScrollerItem
-                  messageId="agent-activity-markers"
-                  scrollAnchor
-                  className="scroll-mt-2"
-                >
+                <MessageScrollerItem messageId="agent-activity-markers" className="scroll-mt-2">
                   <AgentActivityMarkers />
                 </MessageScrollerItem>
               ) : null}

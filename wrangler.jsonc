@@ -1,7 +1,18 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
+  // MyScoper product account — same as scoper_cx `scoper-console` and zone myscoper.app
+  "account_id": "5ecb3c7a22169164e467254a0afb788a",
   "name": "scout",
   "compatibility_date": "2025-04-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Zone route required — custom_domain alone served "Preview not found" on scout.myscoper.app
+  "routes": [
+    {
+      "pattern": "scout.myscoper.app/*",
+      "zone_name": "myscoper.app"
+    }
+  ],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"

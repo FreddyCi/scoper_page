@@ -132,11 +132,19 @@ pnpm deploy:scout     # scout build + wrangler deploy
 
 ### Custom domain
 
-In Cloudflare → **Workers & Pages** → **scout** → **Settings** → **Domains & Routes**, add `scout.myscoper.app` (proxied). Or ask the Cloudflare agent to create a proxied CNAME:
+`wrangler.jsonc` includes a **zone route** so `pnpm deploy:scout` binds the Worker to the app hostname (do not rely on `workers.dev` only):
 
-| Type | Name | Content |
-|------|------|---------|
-| CNAME | `scout` | `scout.<account>.workers.dev` (or value shown in dashboard) |
+```jsonc
+"workers_dev": true,
+"preview_urls": false,
+"routes": [
+  { "pattern": "scout.myscoper.app/*", "zone_name": "myscoper.app" }
+]
+```
+
+After deploy, Wrangler should list `scout.myscoper.app/* (zone name: myscoper.app)`.
+
+If `https://scout.<account>.workers.dev` returns **200** but `https://scout.myscoper.app` shows **`Preview not found`**, redeploy with the zone route above (custom-domain-only config is not enough for this zone). Confirm DNS record `scout` in **myscoper.app** is proxied and not pointing at an old Pages or preview hostname.
 
 Verify after deploy:
 
